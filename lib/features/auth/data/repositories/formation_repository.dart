@@ -34,4 +34,19 @@ class FormationRepository {
 
     return Formation.fromJson(data);
   }
+
+  Future<List<Formation>> getFormationsByStagiaire(int? stagiaireId) async {
+    if (stagiaireId == null) {
+      return [];
+    }
+    final response = await apiClient.get('${AppConstants.stagiaireFormations}/$stagiaireId');
+    final data = response.data;
+    if (data is List) {
+      return data.map((e) => Formation.fromJson(e)).toList();
+    } else if (data is Map && data['data'] is List) {
+      return (data['data'] as List).map((e) => Formation.fromJson(e)).toList();
+    } else {
+      throw Exception('Format de réponse inattendu');
+    }
+  }
 }

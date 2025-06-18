@@ -5,6 +5,7 @@ import 'package:wizi_learn/features/auth/presentation/bloc/auth_event.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_state.dart';
 import '../bloc/auth_bloc.dart';
 import '../widgets/auth_text_field.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/dashboard_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -161,7 +162,12 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 );
                 Future.microtask(() {
-                  Navigator.pushReplacementNamed(context, RouteConstants.dashboard);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DashboardPage(user: state.user),
+                    ),
+                  );
                 });
               }
             },

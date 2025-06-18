@@ -3,6 +3,7 @@ import 'package:wizi_learn/core/exceptions/api_exception.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository_contract.dart';
 import 'package:wizi_learn/features/auth/domain/user_entity.dart';
+import 'package:wizi_learn/features/auth/data/models/login_response.dart';
 import '../../../../core/exceptions/auth_exception.dart';
 import '../mappers/user_mapper.dart';
 
@@ -15,8 +16,8 @@ class AuthRepository implements AuthRepositoryContract {
   @override
   Future<UserEntity> login(String email, String password) async {
     try {
-      final userModel = await remoteDataSource.login(email, password);
-      return UserMapper.toEntity(userModel);
+      final loginResponse = await remoteDataSource.login(email, password);
+      return UserMapper.toEntity(loginResponse.user);
     } on ApiException catch (e) {
       throw AuthException(e.message);
     }
