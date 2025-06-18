@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
