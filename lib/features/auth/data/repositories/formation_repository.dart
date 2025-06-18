@@ -27,4 +27,11 @@ class FormationRepository {
         .where((formation) => formation.category.categorie == category)
         .toList();
   }
+
+  Future<Formation> getFormationDetail(int id) async {
+    final response = await apiClient.get('${AppConstants.catalogue_formation}/$id');
+    final data = response.data['catalogueFormation'];
+
+    return Formation.fromJson(data);
+  }
 }

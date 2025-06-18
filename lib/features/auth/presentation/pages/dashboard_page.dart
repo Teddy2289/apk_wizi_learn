@@ -15,14 +15,6 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int _currentIndex = 0;
 
-  final List<Widget> titles = [
-    const Text("Accueil"),
-    const Text("Formation"),
-    const Text("Quiz"),
-    const Text("Classement"),
-    const Text("Tutoriel"),
-  ];
-
   final List<Widget> _pages = [
     const HomePage(),
     const TrainingPage(),
@@ -41,6 +33,12 @@ class _DashboardPageState extends State<DashboardPage> {
           _currentIndex = index;
         });
       },
+      // Vous pouvez ajouter des actions personnalisées si nécessaire
+      actions: [
+        // Ajoutez d'autres actions ici si besoin
+      ],
+      // Contrôler l'affichage du bandeau (true par défaut dans l'implémentation)
+      showBanner: true,
     );
   }
 }

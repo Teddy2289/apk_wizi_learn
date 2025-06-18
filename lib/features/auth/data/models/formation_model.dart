@@ -11,7 +11,7 @@ class Formation {
   final int statut;
   final String duree;
   final FormationCategory category;
-
+  // Models
   Formation({
     required this.id,
     required this.titre,

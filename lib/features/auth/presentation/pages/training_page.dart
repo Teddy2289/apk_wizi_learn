@@ -6,6 +6,7 @@ import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/formation_repository.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/detail_formation_page.dart';
 
 class TrainingPage extends StatefulWidget {
   const TrainingPage({super.key});
@@ -286,7 +287,7 @@ class _TrainingPageState extends State<TrainingPage> {
                                     Text(
                                       '${formatPrice(formation.tarif)} €',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 20,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.orange.shade700,
                                       ),
@@ -296,7 +297,14 @@ class _TrainingPageState extends State<TrainingPage> {
                               ],
                             ),
                             onTap: () {
-                              // TODO: Naviguer vers la page de détail
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => FormationDetailPage(
+                                    formationId: formation.id,
+                                  ),
+                                ),
+                              );
                             },
                           ),
                         );

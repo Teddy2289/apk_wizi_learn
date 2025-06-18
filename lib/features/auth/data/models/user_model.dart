@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'stagiaire_model.dart';
-
+// Models
 class UserModel extends Equatable {
   final int id;
   final String name;
