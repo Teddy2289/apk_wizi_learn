@@ -3,6 +3,7 @@ import 'package:wizi_learn/features/auth/presentation/pages/dashboard_page.dart'
 import '../constants/route_constants.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
+import 'package:wizi_learn/features/auth/domain/user_entity.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -14,7 +15,9 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const LoginPage());
 
       case RouteConstants.dashboard:
-        return MaterialPageRoute(builder: (_) => const DashboardPage());
+        return MaterialPageRoute(
+          builder: (_) => DashboardPage(user: settings.arguments as UserEntity),
+        );
 
       default:
         return MaterialPageRoute(

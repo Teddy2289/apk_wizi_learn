@@ -17,7 +17,7 @@ class AuthRepository implements AuthRepositoryContract {
   Future<UserEntity> login(String email, String password) async {
     try {
       final loginResponse = await remoteDataSource.login(email, password);
-      return UserMapper.toEntity(loginResponse.user);
+      return UserMapper.toEntity(loginResponse);
     } on ApiException catch (e) {
       throw AuthException(e.message);
     }

@@ -9,9 +9,10 @@ import 'package:wizi_learn/features/auth/data/repositories/formation_repository.
 import 'package:wizi_learn/features/auth/data/repositories/media_repository.dart';
 import 'package:video_player/video_player.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:wizi_learn/features/auth/domain/user_entity.dart';
 
 class TutorialPage extends StatefulWidget {
-  final UserModel user;
+  final UserEntity user;
   const TutorialPage({super.key, required this.user});
 
   @override

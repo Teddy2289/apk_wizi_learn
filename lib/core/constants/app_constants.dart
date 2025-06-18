@@ -12,6 +12,7 @@ class AppConstants {
   static const String userKey = "auth_user";
 
   static const String catalogue_formation = "/catalogueFormations/formations";
+  static const String stagiaireFormations = "/stagiaire/formations";
 
   static const Duration splashDuration = Duration(seconds: 2);
 }

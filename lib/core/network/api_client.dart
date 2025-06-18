@@ -104,4 +104,6 @@ class ApiClient {
       throw ApiException.fromDioError(e);
     }
   }
+
+  Dio get dio => _dio;
 }
