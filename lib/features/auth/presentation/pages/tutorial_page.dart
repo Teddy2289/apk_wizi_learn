@@ -45,13 +45,14 @@ class Media {
 }
 
 class TutorialPage extends StatefulWidget {
-  const TutorialPage({super.key});
+  final dynamic user; // Remplace dynamic par ton vrai type User si tu l'as
+  const TutorialPage({super.key, required this.user});
   @override
   State<TutorialPage> createState() => _TutorialPageState();
 }
 
 class _TutorialPageState extends State<TutorialPage> {
-  static const String baseUrl = "https://wizi-learn.com/api";
+  static const String baseUrl = "http://localhost:8000/api";
   List<Formation> formations = [];
   String? selectedFormationId;
   String activeCategory = 'tutoriel';
@@ -66,6 +67,8 @@ class _TutorialPageState extends State<TutorialPage> {
   VideoPlayerController? _videoController;
   AudioPlayer? _audioPlayer;
   bool _isPlayerReady = false;
+
+  int? stagiaireId; // À initialiser selon ton contexte utilisateur
 
   @override
   void initState() {
@@ -82,8 +85,13 @@ class _TutorialPageState extends State<TutorialPage> {
 
   Future<void> fetchFormations() async {
     setState(() => isLoading = true);
+    if (stagiaireId == null) {
+      formations = [];
+      setState(() => isLoading = false);
+      return;
+    }
     try {
-      final res = await http.get(Uri.parse('$baseUrl/formations'));
+      final res = await http.get(Uri.parse('$baseUrl/formations?stagiaire_id=$stagiaireId'));
       if (res.statusCode == 200) {
         final data = json.decode(res.body);
         formations = (data as List).map((e) => Formation.fromJson(e)).toList();

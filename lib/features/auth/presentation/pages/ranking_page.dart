@@ -93,7 +93,7 @@ class RankingPage extends StatefulWidget {
 }
 
 class _RankingPageState extends State<RankingPage> {
-  static const String baseUrl = "https://wizi-learn.com/api";
+  static const String baseUrl = "http://localhost:8000/api";
   List<ClassementUser> classement = [];
   bool isLoading = true;
   String? errorMsg;
