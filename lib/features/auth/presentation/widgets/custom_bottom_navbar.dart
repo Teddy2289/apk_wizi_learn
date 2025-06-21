@@ -19,13 +19,27 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final isSmallScreen = width < 360;
-    final iconSize = isSmallScreen ? 20.0 : 24.0;
-    final labelFontSize = isSmallScreen ? 11.0 : 13.0;
-    final navBarHeight = isSmallScreen ? 60.0 : 80.0;
-    final fabSize = isSmallScreen ? 48.0 : 65.0;
-    final fabIconSize = isSmallScreen ? 22.0 : 30.0;
+    final size = MediaQuery.of(context).size;
+    final width = size.width;
+    final height = size.height;
+    final isLandscape = width > height;
+    // Adaptation fluide avec limites min/max
+    double clamp(double value, double min, double max) =>
+        value < min ? min : (value > max ? max : value);
+    final iconSize = clamp(width * 0.06, 20, 32); // 20-32px
+    final labelFontSize = clamp(width * 0.035, 11, 18); // 11-18px
+    final navBarHeight =
+        isLandscape
+            ? clamp(width * 0.13, 48, 70)
+            : clamp(width * 0.20, 60, 90); // plus bas en paysage
+    final fabSize = clamp(width * 0.16, 44, 80);
+    final fabIconSize = clamp(width * 0.08, 22, 40);
+    final horizontalPadding = clamp(width * 0.05, 8, 32);
+    final navItemPaddingH = clamp(width * 0.03, 6, 18);
+    final navItemPaddingV = clamp(width * 0.015, 4, 12);
+    final spaceForFab = clamp(width * 0.14, 36, 80);
+    final iconTextSpacing = iconSize < 22 ? 2.0 : 4.0;
+    final activeElevation = 8.0;
 
     return Container(
       height: navBarHeight,
@@ -44,34 +58,67 @@ class CustomBottomNavBar extends StatelessWidget {
           ),
         ],
       ),
-      padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 10 : 20),
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: Stack(
         alignment: Alignment.center,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(LucideIcons.home, "Accueil", 0, isSmallScreen),
+              _buildNavItem(
+                LucideIcons.home,
+                "Accueil",
+                0,
+                iconSize,
+                labelFontSize,
+                navItemPaddingH,
+                navItemPaddingV,
+                iconTextSpacing,
+                activeElevation,
+              ),
               _buildNavItem(
                 LucideIcons.bookOpen,
                 "Formation",
                 1,
-                isSmallScreen,
+                iconSize,
+                labelFontSize,
+                navItemPaddingH,
+                navItemPaddingV,
+                iconTextSpacing,
+                activeElevation,
               ),
-              SizedBox(
-                width: isSmallScreen ? 50 : 60,
-              ), // Espace pour l'icône centrale
-              _buildNavItem(LucideIcons.trophy, "Classement", 3, isSmallScreen),
-              _buildNavItem(LucideIcons.video, "Tutoriel", 4, isSmallScreen),
+              SizedBox(width: spaceForFab),
+              _buildNavItem(
+                LucideIcons.trophy,
+                "Classement",
+                3,
+                iconSize,
+                labelFontSize,
+                navItemPaddingH,
+                navItemPaddingV,
+                iconTextSpacing,
+                activeElevation,
+              ),
+              _buildNavItem(
+                LucideIcons.video,
+                "Tutoriel",
+                4,
+                iconSize,
+                labelFontSize,
+                navItemPaddingH,
+                navItemPaddingV,
+                iconTextSpacing,
+                activeElevation,
+              ),
             ],
           ),
           Positioned(
-            bottom: 15,
+            bottom: navBarHeight * 0.19,
             child: GestureDetector(
               onTap: () => onTap(2),
               child: Container(
-                height: isSmallScreen ? 55 : 65,
-                width: isSmallScreen ? 55 : 65,
+                height: fabSize,
+                width: fabSize,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFFFFA800), Color(0xFFFFD700)],
@@ -90,7 +137,7 @@ class CustomBottomNavBar extends StatelessWidget {
                 ),
                 child: Icon(
                   LucideIcons.helpCircle,
-                  size: isSmallScreen ? 26 : 30,
+                  size: fabIconSize,
                   color: Colors.white,
                 ),
               ),
@@ -105,7 +152,12 @@ class CustomBottomNavBar extends StatelessWidget {
     IconData icon,
     String label,
     int index,
-    bool isSmallScreen,
+    double iconSize,
+    double labelFontSize,
+    double paddingH,
+    double paddingV,
+    double iconTextSpacing,
+    double activeElevation,
   ) {
     final isActive = index == currentIndex;
 
@@ -115,31 +167,45 @@ class CustomBottomNavBar extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        padding: EdgeInsets.symmetric(
-          horizontal: isSmallScreen ? 8 : 12,
-          vertical: isSmallScreen ? 6 : 8,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: paddingH, vertical: paddingV),
         decoration: BoxDecoration(
           color:
               isActive ? selectedColor.withOpacity(0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
+          boxShadow:
+              isActive
+                  ? [
+                    BoxShadow(
+                      color: selectedColor.withOpacity(0.25),
+                      blurRadius: activeElevation,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                  : [],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: isActive ? selectedColor : unselectedColor,
-              size: isSmallScreen ? 22 : 24,
+            AnimatedScale(
+              scale: isActive ? 1.18 : 1.0,
+              duration: const Duration(milliseconds: 250),
+              child: Icon(
+                icon,
+                color: isActive ? selectedColor : unselectedColor,
+                size: iconSize,
+              ),
             ),
-            SizedBox(height: isSmallScreen ? 2 : 4),
+            SizedBox(height: iconTextSpacing),
             Text(
               label,
               style: TextStyle(
                 color: isActive ? selectedColor : unselectedColor,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                fontSize: isSmallScreen ? 11 : 13,
+                fontSize: labelFontSize,
+                letterSpacing: 0.1,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

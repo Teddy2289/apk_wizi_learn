@@ -18,39 +18,56 @@ class RandomFormationsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 375;
-    final cardWidth = isSmallScreen ? 160.0 : 180.0;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isLandscape = screenWidth > screenHeight;
+    double clamp(double value, double min, double max) =>
+        value < min ? min : (value > max ? max : value);
+
+    // Largeur de carte fluide avec limites
+    final cardWidth = clamp(screenWidth * 0.44, 140, 220);
+    final cardHeight = cardWidth * 1.4;
+    final headerFontSize = clamp(screenWidth * 0.045, 15, 22);
+    final iconSize = clamp(screenWidth * 0.06, 18, 28);
+    final refreshIconSize = clamp(screenWidth * 0.055, 18, 26);
+    final listPadding = clamp(screenWidth * 0.02, 6, 16);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Header avec bouton refresh
-        _buildHeader(context, isSmallScreen),
+        _buildHeader(context, headerFontSize, refreshIconSize),
 
         // Liste horizontale des formations
         SizedBox(
-          height: cardWidth * 1.4, // Hauteur proportionnelle à la largeur
+          height: cardHeight, // Hauteur proportionnelle à la largeur
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: EdgeInsets.symmetric(horizontal: listPadding),
             itemCount: formations.length,
-            itemBuilder: (context, index) => ConstrainedBox(
-              constraints: BoxConstraints(
-                minWidth: cardWidth,
-                maxWidth: cardWidth,
-              ),
-              child: _FormationCard(
-                formation: formations[index],
-                cardWidth: cardWidth,
-              ),
-            ),
+            itemBuilder:
+                (context, index) => ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: cardWidth,
+                    maxWidth: cardWidth,
+                  ),
+                  child: _FormationCard(
+                    formation: formations[index],
+                    cardWidth: cardWidth,
+                    iconSize: iconSize,
+                    headerFontSize: headerFontSize,
+                  ),
+                ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isSmallScreen) {
+  Widget _buildHeader(
+    BuildContext context,
+    double fontSize,
+    double refreshIconSize,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
@@ -59,14 +76,14 @@ class RandomFormationsWidget extends StatelessWidget {
           Text(
             'Formations recommandées',
             style: TextStyle(
-              fontSize: isSmallScreen ? 16 : 18,
+              fontSize: fontSize,
               fontWeight: FontWeight.bold,
               color: Theme.of(context).primaryColor,
             ),
           ),
           if (onRefresh != null)
             IconButton(
-              icon: Icon(Icons.refresh, size: isSmallScreen ? 20 : 24),
+              icon: Icon(Icons.refresh, size: refreshIconSize),
               onPressed: onRefresh,
               tooltip: 'Actualiser',
             ),
@@ -79,25 +96,37 @@ class RandomFormationsWidget extends StatelessWidget {
 class _FormationCard extends StatelessWidget {
   final Formation formation;
   final double cardWidth;
+  final double iconSize;
+  final double headerFontSize;
 
   const _FormationCard({
     required this.formation,
     required this.cardWidth,
+    required this.iconSize,
+    required this.headerFontSize,
   });
+
+  double clamp(double value, double min, double max) =>
+      value < min ? min : (value > max ? max : value);
 
   @override
   Widget build(BuildContext context) {
     final categoryColor = _getCategoryColor(formation.category.categorie);
     final textTheme = Theme.of(context).textTheme;
     final imageHeight = cardWidth * 0.6;
+    final badgeFontSize = clamp(cardWidth * 0.09, 9, 13);
+    final titleFontSize = clamp(cardWidth * 0.11, 13, 18);
+    final durationFontSize = clamp(cardWidth * 0.09, 10, 14);
+    final priceFontSize = clamp(cardWidth * 0.12, 13, 18);
+    final pdfFontSize = clamp(cardWidth * 0.09, 10, 14);
+    final cardPadding = clamp(cardWidth * 0.07, 8, 16);
+    final cardMargin = clamp(cardWidth * 0.03, 5, 12);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 6),
+      margin: EdgeInsets.symmetric(horizontal: cardMargin),
       child: Card(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () => _navigateToDetail(context),
@@ -109,25 +138,28 @@ class _FormationCard extends StatelessWidget {
 
               // Contenu texte
               Padding(
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.all(cardPadding),
                 child: SizedBox(
-                  width: cardWidth - 20, // Largeur fixe déduisant le padding
+                  width:
+                      cardWidth -
+                      2 * cardPadding, // Largeur fixe déduisant le padding
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Badge catégorie
-                      _buildCategoryBadge(categoryColor, textTheme),
+                      _buildCategoryBadge(categoryColor, badgeFontSize),
 
                       const SizedBox(height: 6),
 
                       // Titre avec hauteur fixe
                       SizedBox(
-                        height: 30, // Hauteur fixe pour 2 lignes
+                        height: titleFontSize * 2.2, // Hauteur pour 2 lignes
                         child: Text(
                           formation.titre,
                           style: textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             height: 1.2,
+                            fontSize: titleFontSize,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -137,11 +169,15 @@ class _FormationCard extends StatelessWidget {
                       const SizedBox(height: 8),
 
                       // Durée et prix
-                      _buildDurationAndPrice(textTheme),
+                      _buildDurationAndPrice(
+                        textTheme,
+                        durationFontSize,
+                        priceFontSize,
+                      ),
 
                       // Bouton PDF si disponible
                       if (formation.cursusPdf != null)
-                        _buildPdfButton(context, categoryColor, textTheme),
+                        _buildPdfButton(context, categoryColor, pdfFontSize),
                     ],
                   ),
                 ),
@@ -160,37 +196,42 @@ class _FormationCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
         color: categoryColor.withOpacity(0.1),
-        image: formation.imageUrl != null
-            ? DecorationImage(
-          image: CachedNetworkImageProvider('${AppConstants.baseUrlImg}/${formation.imageUrl}'),
-          fit: BoxFit.cover,
-        )
-            : null,
+        image:
+            formation.imageUrl != null
+                ? DecorationImage(
+                  image: CachedNetworkImageProvider(
+                    '${AppConstants.baseUrlImg}/${formation.imageUrl}',
+                  ),
+                  fit: BoxFit.cover,
+                )
+                : null,
       ),
-      child: formation.imageUrl == null
-          ? Center(
-        child: Icon(
-          Icons.school,
-          color: categoryColor,
-          size: 36,
-        ),
-      )
-          : null,
+      child:
+          formation.imageUrl == null
+              ? Center(
+                child: Icon(
+                  Icons.school,
+                  color: categoryColor,
+                  size: iconSize + 8,
+                ),
+              )
+              : null,
     );
   }
 
-  Widget _buildCategoryBadge(Color color, TextTheme textTheme) {
+  Widget _buildCategoryBadge(Color color, double fontSize) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         formation.category.categorie,
-        style: textTheme.labelSmall?.copyWith(
+        style: TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
+          fontSize: fontSize,
         ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
@@ -198,14 +239,25 @@ class _FormationCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDurationAndPrice(TextTheme textTheme) {
+  Widget _buildDurationAndPrice(
+    TextTheme textTheme,
+    double durationFontSize,
+    double priceFontSize,
+  ) {
     return Row(
       children: [
-        Icon(Icons.schedule, size: 14, color: Colors.grey.shade600),
+        Icon(
+          Icons.schedule,
+          size: durationFontSize,
+          color: Colors.grey.shade600,
+        ),
         const SizedBox(width: 4),
         Text(
           '${formation.duree} H',
-          style: textTheme.bodySmall?.copyWith(color: Colors.grey.shade700),
+          style: textTheme.bodySmall?.copyWith(
+            color: Colors.grey.shade700,
+            fontSize: durationFontSize,
+          ),
         ),
         const Spacer(),
         Text(
@@ -213,21 +265,29 @@ class _FormationCard extends StatelessWidget {
           style: textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.bold,
             color: Colors.amber.shade800,
+            fontSize: priceFontSize,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildPdfButton(BuildContext context, Color color, TextTheme textTheme) {
+  Widget _buildPdfButton(BuildContext context, Color color, double fontSize) {
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: SizedBox(
-        height: 28,
+        height: fontSize * 2.2,
         width: double.infinity,
         child: OutlinedButton.icon(
-          icon: Icon(Icons.picture_as_pdf, size: 14, color: color),
-          label: Text('PDF', style: textTheme.labelSmall?.copyWith(color: color)),
+          icon: Icon(Icons.picture_as_pdf, size: fontSize, color: color),
+          label: Text(
+            'PDF',
+            style: TextStyle(
+              color: color,
+              fontSize: fontSize,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           style: OutlinedButton.styleFrom(
             padding: EdgeInsets.zero,
             side: BorderSide(color: color),
@@ -259,19 +319,24 @@ class _FormationCard extends StatelessWidget {
         throw 'Impossible d\'ouvrir le PDF';
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
   Color _getCategoryColor(String category) {
     switch (category) {
-      case 'Bureautique': return const Color(0xFF3D9BE9);
-      case 'Langues': return const Color(0xFFA55E6E);
-      case 'Internet': return const Color(0xFFFFC533);
-      case 'Création': return const Color(0xFF9392BE);
-      default: return Colors.grey;
+      case 'Bureautique':
+        return const Color(0xFF3D9BE9);
+      case 'Langues':
+        return const Color(0xFFA55E6E);
+      case 'Internet':
+        return const Color(0xFFFFC533);
+      case 'Création':
+        return const Color(0xFF9392BE);
+      default:
+        return Colors.grey;
     }
   }
 }
