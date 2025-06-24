@@ -48,67 +48,81 @@ class _TutorialPageState extends State<TutorialPage> {
   Future<void> _loadFormations() async {
     try {
       final user = await _authRepository.getMe();
-      debugPrint("Utilisateur récupéré : $user");
-
       final stagiaireId = user.stagiaire?.id;
 
-      if (stagiaireId != null) {
-        setState(() {
-          _formationsFuture = _mediaRepository.getFormationsAvecMedias(stagiaireId);
-        });
-      } else {
-        debugPrint("Aucun stagiaire lié");
-        setState(() {
-          _formationsFuture = Future.value([]); // Vide seulement si pas de stagiaire
-        });
-      }
+      setState(() {
+        _formationsFuture = stagiaireId != null
+            ? _mediaRepository.getFormationsAvecMedias(stagiaireId)
+            : Future.value([]);
+      });
     } catch (e) {
       debugPrint("Erreur : $e");
       setState(() {
-        _formationsFuture = Future.error(e); // Ou Future.value([]) selon votre besoin
+        _formationsFuture = Future.error(e);
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.background,
-        title: const Text("Tutos et Astuces"),
+        title: ToggleButtons(
+          isSelected: [
+            _selectedCategory == 'tutoriel',
+            _selectedCategory == 'astuce',
+          ],
+          onPressed: (index) {
+            setState(() {
+              _selectedCategory = index == 0 ? 'tutoriel' : 'astuce';
+            });
+          },
+          borderRadius: BorderRadius.circular(12),
+          selectedColor: Colors.white,
+          fillColor: const Color(0xFFFEB823),
+          color: const Color(0xFF181818),
+          constraints: BoxConstraints(
+            minHeight: 40,
+            minWidth: screenWidth / 2 - 32,
+          ),
+          children: const [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12.0),
+              child: Text('Tutos'),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text('Astuces'),
+            ),
+          ],
+        ),
         elevation: 1,
         centerTitle: true,
       ),
-
       body: FutureBuilder<List<FormationWithMedias>>(
         future: _formationsFuture,
         builder: (context, snapshot) {
-          // État initial - pas encore chargé
-          if (_formationsFuture == null) {
+          if (_formationsFuture == null || snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // En cours de chargement
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          // Erreur
           if (snapshot.hasError) {
             return Center(child: Text("Erreur : ${snapshot.error}"));
           }
 
-          // Données chargées
           final formations = snapshot.data ?? [];
 
           if (formations.isEmpty) {
-            return const Center(child: Text("Aucune formation trouvée ny ino."));
+            return const Center(child: Text("Aucune formation trouvée."));
           }
 
           final selectedFormation = formations.firstWhere(
-                (f) => f.id == _selectedFormationId,
+            (f) => f.id == _selectedFormationId,
             orElse: () => formations.first,
           );
 
@@ -118,108 +132,64 @@ class _TutorialPageState extends State<TutorialPage> {
 
           return Column(
             children: [
-              // Section Filtres combinés
-              Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 500),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
-                    child: Row(
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWide = constraints.maxWidth > 500;
+
+                    // Hide the formation dropdown if there is only one formation
+                    if (formations.length <= 1) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      alignment: WrapAlignment.center,
                       children: [
-                        // Filtre Formation
-                        Expanded(
-                          flex: 2,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: colorScheme.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                              child: DropdownButton<int>(
-                                isExpanded: true,
-                                value: _selectedFormationId ?? selectedFormation.id,
-                                items: formations.map((formation) {
-                                  return DropdownMenuItem<int>(
-                                    value: formation.id,
-                                    child: Text(
-                                      formation.titre.toUpperCase(),
-                                      style: theme.textTheme.bodyMedium,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedFormationId = value;
-                                  });
-                                },
-                                underline: const SizedBox(),
-                                icon: Icon(Icons.arrow_drop_down, color: colorScheme.primary, size: 24),
-                                borderRadius: BorderRadius.circular(12),
+                        Container(
+                          width: isWide ? 220 : double.infinity,
+                          decoration: BoxDecoration(
+                            color: colorScheme.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
                               ),
-                            ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: DropdownButton<int>(
+                            isExpanded: true,
+                            value: _selectedFormationId ?? selectedFormation.id,
+                            items: formations.map((formation) {
+                              return DropdownMenuItem<int>(
+                                value: formation.id,
+                                child: Text(
+                                  formation.titre.toUpperCase(),
+                                  style: theme.textTheme.bodyMedium,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedFormationId = value;
+                              });
+                            },
+                            underline: const SizedBox(),
+                            icon: Icon(Icons.arrow_drop_down, color: colorScheme.primary),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-
-                        const SizedBox(width: 8),
-
-                        // Filtres Catégorie
-                        Expanded(
-                          flex: 1,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: colorScheme.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: ToggleButtons(
-                              isSelected: [
-                                _selectedCategory == 'tutoriel',
-                                _selectedCategory == 'astuce',
-                              ],
-                              onPressed: (index) {
-                                setState(() {
-                                  _selectedCategory = index == 0 ? 'tutoriel' : 'astuce';
-                                });
-                              },
-                              borderRadius: BorderRadius.circular(12),
-                              selectedColor: Colors.white,
-                              fillColor: Color(0xFFFEB823),
-                              color: Color(0xFF181818),
-                              constraints: const BoxConstraints(
-                                minHeight: 40,
-                                minWidth: 0,
-                              ),
-                              children: const [
-                                Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 12.0),
-                                  child: Text('Tutos'),
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 8.0),
-                                  child: Text('Astuces'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        
                       ],
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
 
@@ -229,101 +199,98 @@ class _TutorialPageState extends State<TutorialPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: mediasFiltres.isEmpty
                       ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.video_library_outlined,
-                          size: 64,
-                          color: colorScheme.onSurface.withOpacity(0.3),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          "Aucun média trouvé",
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: colorScheme.onSurface.withOpacity(0.5),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.video_library_outlined,
+                                size: 64,
+                                color: colorScheme.onSurface.withOpacity(0.3),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                "Aucun média trouvé",
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: colorScheme.onSurface.withOpacity(0.5),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  )
+                        )
                       : ListView.separated(
-                    itemCount: mediasFiltres.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final media = mediasFiltres[index];
-                      return Card(
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        color: const Color(0xFFFFF9C4), // Jaune clair
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => YoutubePlayerPage(
-                                  video: media,
-                                  videosInSameCategory: mediasFiltres,
+                          itemCount: mediasFiltres.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) {
+                            final media = mediasFiltres[index];
+                            return Card(
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              color: const Color(0xFFFFF9C4),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => YoutubePlayerPage(
+                                        video: media,
+                                        videosInSameCategory: mediasFiltres,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFFEB3B).withOpacity(0.8),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Icon(
+                                          Icons.play_circle_filled,
+                                          size: 32,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              media.titre,
+                                              style: theme.textTheme.bodyLarge?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            // const SizedBox(height: 4),
+                                            // Text(
+                                            //   media.url,
+                                            //   style: theme.textTheme.bodySmall?.copyWith(
+                                            //     color: Colors.black54,
+                                            //   ),
+                                            //   maxLines: 1,
+                                            //   overflow: TextOverflow.ellipsis,
+                                            // ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Icon(Icons.chevron_right, color: Colors.black54),
+                                    ],
+                                  ),
                                 ),
                               ),
                             );
                           },
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFFEB3B).withOpacity(0.8), // Jaune plus vif
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.play_circle_filled,
-                                    size: 32,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        media.titre,
-                                        style: theme.textTheme.bodyLarge?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        media.url,
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                          color: Colors.black54,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.chevron_right,
-                                  color: Colors.black54,
-                                ),
-                              ],
-                            ),
-                          ),
                         ),
-                      );
-                    },
-                  ),
                 ),
               ),
             ],

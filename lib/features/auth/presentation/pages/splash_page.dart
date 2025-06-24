@@ -165,29 +165,29 @@ class _SplashPageState extends State<SplashPage>
                       scale: _textScaleAnimation.value,
                       child: Opacity(
                         opacity: _fadeAnimation.value,
-                        child: Text(
-                          'Wizi Learn',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.headlineMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                            shadows: [
-                              Shadow(
-                                blurRadius: 10,
-                                color: Colors.black.withOpacity(0.3),
-                                offset: const Offset(2, 2),
-                              ),
-                            ],
-                          ),
-                        ),
+                        // child: Text(
+                        //   'Wizi Learn',
+                        //   style: Theme.of(
+                        //     context,
+                        //   ).textTheme.headlineMedium?.copyWith(
+                        //     color: Colors.white,
+                        //     fontWeight: FontWeight.bold,
+                        //     letterSpacing: 1.5,
+                        //     shadows: [
+                        //       Shadow(
+                        //         blurRadius: 10,
+                        //         color: Colors.black.withOpacity(0.3),
+                        //         offset: const Offset(2, 2),
+                        //       ),
+                        //     ],
+                        //   ),
+                        // ),
                       ),
                     );
                   },
                 ),
 
-                const SizedBox(height: 40),
+                // const SizedBox(height: 40),
 
                 // Barre de progression animée
                 Padding(
