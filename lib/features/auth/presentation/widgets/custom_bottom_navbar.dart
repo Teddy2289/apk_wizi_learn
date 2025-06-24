@@ -34,10 +34,10 @@ class CustomBottomNavBar extends StatelessWidget {
         ? 70.0 + safeAreaBottom
         : 80.0 + safeAreaBottom;
 
-    final iconSize = isVerySmallScreen ? 20.0 : isSmallScreen ? 22.0 : 24.0;
-    final labelFontSize = isVerySmallScreen ? 9.0 : isSmallScreen ? 11.0 : 12.0;
+    final iconSize = isVerySmallScreen ? 18.0 : isSmallScreen ? 20.0 : 24.0;
+    final labelFontSize = isVerySmallScreen ? 7.0 : isSmallScreen ? 9.0 : 12.0;
     final fabSize = isVerySmallScreen ? 50.0 : isSmallScreen ? 60.0 : 70.0;
-    final fabIconSize = isVerySmallScreen ? 24.0 : isSmallScreen ? 28.0 : 32.0;
+    final fabIconSize = isVerySmallScreen ? 18.0 : isSmallScreen ? 24.0 : 32.0;
     final itemPadding = isVerySmallScreen ? 4.0 : isSmallScreen ? 6.0 : 8.0;
 
     return SizedBox(
@@ -65,42 +65,42 @@ class CustomBottomNavBar extends StatelessWidget {
           ),
 
           // Bouton central flottant
-          Positioned(
+            Positioned(
             left: mediaQuery.size.width / 2 - fabSize / 2,
-            top: -fabSize * 0.35,
+            top: -fabSize * 0.15, // Redescendu un peu
             child: GestureDetector(
               onTap: () => onTap(2),
               child: Container(
-                height: fabSize,
-                width: fabSize,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFFFA800), Color(0xFFFFD700)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: selectedColor.withOpacity(0.3),
-                      blurRadius: 15,
-                      spreadRadius: 2,
-                      offset: Offset(0, 5),
-                    ),
-                  ],
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 3,
-                  ),
+              height: fabSize,
+              width: fabSize,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                colors: [Color(0xFFFFA800), Color(0xFFFFD700)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
                 ),
-                child: Icon(
-                  LucideIcons.ampersand,
-                  size: fabIconSize,
-                  color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                BoxShadow(
+                  color: selectedColor.withOpacity(0.3),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                  offset: Offset(0, 5),
+                ),
+                ],
+                border: Border.all(
+                color: Colors.white,
+                width: 3,
                 ),
               ),
+              child: Icon(
+                LucideIcons.brain,
+                size: isVerySmallScreen ? 22.0 : isSmallScreen ? 26.0 : 33.0,
+                color: Colors.white,
+              ),
+              ),
             ),
-          ),
+            ),
 
           // Contenu de la barre (icônes)
           Padding(

@@ -87,30 +87,32 @@ class CustomScaffold extends StatelessWidget {
                             fontSize: 16,
                             color: theme.colorScheme.onPrimary,
                           ),
-                          children: [
+                            children: [
                             const TextSpan(text: 'Parraine et gagne '),
                             WidgetSpan(
+                              alignment: PlaceholderAlignment.middle,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.amber,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  '50€',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.black,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black.withOpacity(0.3),
-                                        blurRadius: 2,
-                                        offset: const Offset(1, 1),
-                                      ),
-                                    ],
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.amber,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              margin: const EdgeInsets.only(bottom: 4), // Ajoute un espace en bas pour descendre le widget
+                              child: Text(
+                                '50€',
+                                style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                shadows: [
+                                  Shadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  blurRadius: 2,
+                                  offset: const Offset(1, 1),
                                   ),
+                                ],
                                 ),
+                              ),
                               ),
                             ),
                             const TextSpan(text: ' !'),

@@ -147,7 +147,7 @@ class _TutorialPageState extends State<TutorialPage> {
                               return DropdownMenuItem<int>(
                                 value: formation.id,
                                 child: Text(
-                                  formation.titre,
+                                  formation.titre.toUpperCase(),
                                   style: theme.textTheme.bodyMedium,
                                   overflow: TextOverflow.ellipsis,
                                 ),

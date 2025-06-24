@@ -18,8 +18,12 @@ class RandomFormationsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 375;
-    final cardWidth = isSmallScreen ? 160.0 : 180.0;
+    final isSmallScreen = screenWidth < 350;
+    final cardWidth = isSmallScreen
+      ? 180.0
+      : (screenWidth < 450
+        ? 200.0
+        : screenWidth / 2.75);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -29,7 +33,7 @@ class RandomFormationsWidget extends StatelessWidget {
 
         // Liste horizontale des formations
         SizedBox(
-          height: cardWidth * 1.5, // Augmentation de la hauteur pour les boutons
+            height: screenWidth < 768 ? cardWidth * 1.3 : (screenWidth < 1024 ? cardWidth * 1 :cardWidth*0.95), // Hauteur ajustée pour petits écrans
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -42,6 +46,7 @@ class RandomFormationsWidget extends StatelessWidget {
               child: _FormationCard(
                 formation: formations[index],
                 cardWidth: cardWidth,
+                isSmallScreen: isSmallScreen, // Pass down
               ),
             ),
           ),
@@ -79,10 +84,12 @@ class RandomFormationsWidget extends StatelessWidget {
 class _FormationCard extends StatelessWidget {
   final Formation formation;
   final double cardWidth;
+  final bool isSmallScreen;
 
   const _FormationCard({
     required this.formation,
     required this.cardWidth,
+    this.isSmallScreen = false,
   });
 
   @override
@@ -122,7 +129,7 @@ class _FormationCard extends StatelessWidget {
                       SizedBox(
                         height: 30,
                         child: Text(
-                          formation.titre,
+                          formation.titre.toUpperCase(),
                           style: textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             height: 1.2,
@@ -237,7 +244,10 @@ class _FormationCard extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: isSmallScreen
+                  ? const EdgeInsets.symmetric(vertical: 2, horizontal: 0)
+                  : const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+              minimumSize: isSmallScreen ? const Size(0, 28) : const Size(0, 36),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
               ),
@@ -248,6 +258,7 @@ class _FormationCard extends StatelessWidget {
               style: textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
+                fontSize: isSmallScreen ? 10 : null,
               ),
             ),
           ),
