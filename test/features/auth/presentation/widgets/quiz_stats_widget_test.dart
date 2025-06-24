@@ -13,9 +13,9 @@ void main() {
       totalPoints: 0,
       categoryStats: [],
       levelProgress: LevelProgress(
-        debutant: LevelData(completed: 0, averageScore: 0),
-        intermediaire: LevelData(completed: 0, averageScore: 0),
-        avance: LevelData(completed: 0, averageScore: 0),
+        debutant: LevelData(completed: 0, averageScore: 0.00),
+        intermediaire: LevelData(completed: 0, averageScore: 0.00),
+        avance: LevelData(completed: 0, averageScore: 0.00),
       ),
     );
     await tester.pumpWidget(MaterialApp(home: QuizStatsWidget(stats: stats)));

@@ -119,102 +119,107 @@ class _TutorialPageState extends State<TutorialPage> {
           return Column(
             children: [
               // Section Filtres combinés
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
-                child: Row(
-                  children: [
-                    // Filtre Formation
-                    Expanded(
-                      flex: 2,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                          child: DropdownButton<int>(
-                            isExpanded: true,
-                            value: _selectedFormationId ?? selectedFormation.id,
-                            items: formations.map((formation) {
-                              return DropdownMenuItem<int>(
-                                value: formation.id,
-                                child: Text(
-                                  formation.titre.toUpperCase(),
-                                  style: theme.textTheme.bodyMedium,
-                                  overflow: TextOverflow.ellipsis,
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 500),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
+                    child: Row(
+                      children: [
+                        // Filtre Formation
+                        Expanded(
+                          flex: 2,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: colorScheme.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
                                 ),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedFormationId = value;
-                              });
-                            },
-                            underline: const SizedBox(),
-                            icon: Icon(Icons.arrow_drop_down, color: colorScheme.primary, size: 24),
-                            borderRadius: BorderRadius.circular(12),
+                              ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                              child: DropdownButton<int>(
+                                isExpanded: true,
+                                value: _selectedFormationId ?? selectedFormation.id,
+                                items: formations.map((formation) {
+                                  return DropdownMenuItem<int>(
+                                    value: formation.id,
+                                    child: Text(
+                                      formation.titre.toUpperCase(),
+                                      style: theme.textTheme.bodyMedium,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedFormationId = value;
+                                  });
+                                },
+                                underline: const SizedBox(),
+                                icon: Icon(Icons.arrow_drop_down, color: colorScheme.primary, size: 24),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
 
-                    const SizedBox(width: 8),
+                        const SizedBox(width: 8),
 
-                    // Filtres Catégorie
-                    Expanded(
-                      flex: 1,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
+                        // Filtres Catégorie
+                        Expanded(
+                          flex: 1,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: colorScheme.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: ToggleButtons(
-                          isSelected: [
-                            _selectedCategory == 'tutoriel',
-                            _selectedCategory == 'astuce',
-                          ],
-                          onPressed: (index) {
-                            setState(() {
-                              _selectedCategory = index == 0 ? 'tutoriel' : 'astuce';
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(12),
-                          selectedColor: Colors.white,
-                          fillColor: Color(0xFFFEB823),
-                          color: Color(0xFF181818),
-                          constraints: const BoxConstraints(
-                            minHeight: 40,
-                            minWidth: 0,
+                            child: ToggleButtons(
+                              isSelected: [
+                                _selectedCategory == 'tutoriel',
+                                _selectedCategory == 'astuce',
+                              ],
+                              onPressed: (index) {
+                                setState(() {
+                                  _selectedCategory = index == 0 ? 'tutoriel' : 'astuce';
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              selectedColor: Colors.white,
+                              fillColor: Color(0xFFFEB823),
+                              color: Color(0xFF181818),
+                              constraints: const BoxConstraints(
+                                minHeight: 40,
+                                minWidth: 0,
+                              ),
+                              children: const [
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 12.0),
+                                  child: Text('Tutos'),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                                  child: Text('Astuces'),
+                                ),
+                              ],
+                            ),
                           ),
-                          children: const [
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 12.0),
-                              child: Text('Tutos'),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Text('Astuces'),
-                            ),
-                          ],
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
 

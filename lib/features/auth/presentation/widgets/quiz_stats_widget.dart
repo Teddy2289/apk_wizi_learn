@@ -25,7 +25,7 @@ class QuizStatsWidget extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildStatTile(Icons.check_circle, 'Quiz\ncomplétés', stats.totalQuizzes.toString(), Colors.blue),
-                  _buildStatTile(Icons.star, 'Score\nmoyen', '${stats.averageScore.toStringAsFixed(1)}%', Colors.orange),
+                  _buildStatTile(Icons.star, 'Score\nmoyen', '${stats.averageScore.toStringAsFixed(2)}%', Colors.orange),
                   _buildStatTile(Icons.emoji_events, 'Points\ntotaux', stats.totalPoints.toString(), Colors.green),
                 ],
               ),
@@ -89,7 +89,7 @@ class QuizStatsWidget extends StatelessWidget {
             minHeight: 6,
           ),
           const SizedBox(height: 4),
-          Text('${category.quizCount} quiz - Moyenne: ${category.averageScore}'),
+          Text('${category.quizCount} quiz - Moyenne: ${category.averageScore.toStringAsFixed(2)}'),
         ],
       ),
     );
@@ -123,7 +123,7 @@ class QuizStatsWidget extends StatelessWidget {
             minHeight: 6,
           ),
           const SizedBox(height: 4),
-          Text('${data.completed} quiz - Moyenne: ${data.averageScore?.toStringAsFixed(1) ?? 'N/A'}'),
+          Text('${data.completed} quiz - Moyenne: ${data.averageScore?.toStringAsFixed(2) ?? 'N/A'}'),
         ],
       ),
     );

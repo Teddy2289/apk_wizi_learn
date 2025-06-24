@@ -57,7 +57,7 @@ class GlobalRanking {
   final Stagiaire stagiaire;
   final int totalPoints;
   final int quizCount;
-  final int averageScore;
+  final double averageScore;
   final int rang;
 
   GlobalRanking({
@@ -127,7 +127,7 @@ class QuizStats {
 class CategoryStat {
   final String category;
   final int quizCount;
-  final int averageScore;
+  final double averageScore;
 
   CategoryStat({
     required this.category,
@@ -166,7 +166,7 @@ class LevelProgress {
 
 class LevelData {
   final int completed;
-  final int? averageScore;
+  final double? averageScore;
 
   LevelData({required this.completed, required this.averageScore});
 

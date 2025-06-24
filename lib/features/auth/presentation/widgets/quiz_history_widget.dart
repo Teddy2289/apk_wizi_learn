@@ -115,7 +115,7 @@ class QuizHistoryWidget extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Durée: ${item.timeSpent}s',
+                    'Durée: ${item.timeSpent ~/ 60}m ${item.timeSpent % 60}s',
                   style: TextStyle(
                     color: Colors.grey.shade700,
                   ),

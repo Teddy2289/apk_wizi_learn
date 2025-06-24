@@ -154,7 +154,7 @@ class GlobalRankingWidget extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${ranking.totalPoints} pts',
+                    '${ranking.totalPoints} ',
                     style: TextStyle(
                       color: Colors.blue.shade800,
                       fontWeight: FontWeight.bold,
