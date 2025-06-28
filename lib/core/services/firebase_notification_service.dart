@@ -6,30 +6,32 @@ import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/notification_model.dart';
 
 class FirebaseNotificationService {
-  static final FirebaseNotificationService _instance = FirebaseNotificationService._internal();
+  static final FirebaseNotificationService _instance =
+      FirebaseNotificationService._internal();
   factory FirebaseNotificationService() => _instance;
   FirebaseNotificationService._internal();
 
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
-  late final ApiClient _apiClient;
+  ApiClient? _apiClient;
 
   // Callback pour les nouvelles notifications
   Function(NotificationModel)? onNotificationReceived;
 
-  Future<void> initialize(ApiClient apiClient) async {
+  Future<void> initialize([ApiClient? apiClient]) async {
     _apiClient = apiClient;
-    
+
     // Configuration des notifications locales
     await _initializeLocalNotifications();
-    
+
     // Configuration FCM
     await _initializeFCM();
-    
+
     // Écouter les messages en premier plan
     _setupForegroundMessageHandler();
-    
+
     // Écouter les messages en arrière-plan
     _setupBackgroundMessageHandler();
   }
@@ -37,15 +39,15 @@ class FirebaseNotificationService {
   Future<void> _initializeLocalNotifications() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    
+
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings();
-    
+
     const InitializationSettings initializationSettings =
         InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsIOS,
+        );
 
     await _localNotifications.initialize(
       initializationSettings,
@@ -61,7 +63,9 @@ class FirebaseNotificationService {
     );
 
     await _localNotifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(channel);
   }
 
@@ -94,8 +98,13 @@ class FirebaseNotificationService {
   }
 
   Future<void> _sendTokenToServer(String token) async {
+    if (_apiClient == null) {
+      print('ApiClient non disponible, token non envoyé: $token');
+      return;
+    }
+
     try {
-      await _apiClient.post('/fcm-token', data: {'token': token});
+      await _apiClient!.post('/fcm-token', data: {'token': token});
       print('Token FCM envoyé au serveur: $token');
     } catch (e) {
       print('Erreur lors de l\'envoi du token FCM: $e');
@@ -105,10 +114,10 @@ class FirebaseNotificationService {
   void _setupForegroundMessageHandler() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('Message reçu en premier plan: ${message.messageId}');
-      
+
       // Créer une notification locale
       _showLocalNotification(message);
-      
+
       // Créer un modèle de notification
       final notification = NotificationModel(
         id: DateTime.now().millisecondsSinceEpoch,
@@ -118,7 +127,7 @@ class FirebaseNotificationService {
         createdAt: DateTime.now(),
         type: message.data['type'] ?? 'system',
       );
-      
+
       // Appeler le callback si défini
       if (onNotificationReceived != null) {
         onNotificationReceived!(notification);
@@ -133,16 +142,17 @@ class FirebaseNotificationService {
   Future<void> _showLocalNotification(RemoteMessage message) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'high_importance_channel',
-      'Notifications importantes',
-      channelDescription: 'Canal pour les notifications importantes',
-      importance: Importance.max,
-      priority: Priority.high,
-      showWhen: false,
-    );
+          'high_importance_channel',
+          'Notifications importantes',
+          channelDescription: 'Canal pour les notifications importantes',
+          importance: Importance.max,
+          priority: Priority.high,
+          showWhen: false,
+        );
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+    );
 
     await _localNotifications.show(
       message.hashCode,
@@ -170,6 +180,11 @@ class FirebaseNotificationService {
   Future<String?> getToken() async {
     return await _firebaseMessaging.getToken();
   }
+
+  // Méthode pour définir l'ApiClient après l'initialisation
+  void setApiClient(ApiClient apiClient) {
+    _apiClient = apiClient;
+  }
 }
 
 // Handler pour les messages en arrière-plan (doit être en dehors de la classe)
@@ -177,4 +192,4 @@ class FirebaseNotificationService {
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print('Message reçu en arrière-plan: ${message.messageId}');
   // Ici vous pouvez traiter les notifications en arrière-plan
-} 
+}
