@@ -5,13 +5,16 @@ import 'package:wizi_learn/core/services/firebase_notification_service.dart';
 
 class NotificationRepository {
   final ApiClient apiClient;
-  final FirebaseNotificationService _firebaseService = FirebaseNotificationService();
+  final FirebaseNotificationService _firebaseService =
+      FirebaseNotificationService();
 
   NotificationRepository({required this.apiClient});
 
   // Initialiser le service Firebase
   Future<void> initialize() async {
-    await _firebaseService.initialize(apiClient);
+    await _firebaseService.initialize();
+    // Définir l'ApiClient après l'initialisation
+    _firebaseService.setApiClient(apiClient);
   }
 
   // Définir le callback pour les nouvelles notifications
@@ -58,11 +61,14 @@ class NotificationRepository {
   // Envoyer une notification de test
   Future<void> sendTestNotification() async {
     try {
-      await apiClient.post('/send-notification', data: {
-        'user_id': 1, // Remplacer par l'ID de l'utilisateur connecté
-        'title': 'Test notification',
-        'body': 'Ceci est une notification de test',
-      });
+      await apiClient.post(
+        '/send-notification',
+        data: {
+          'user_id': 1, // Remplacer par l'ID de l'utilisateur connecté
+          'title': 'Test notification',
+          'body': 'Ceci est une notification de test',
+        },
+      );
     } catch (e) {
       print('Erreur lors de l\'envoi de la notification de test: $e');
     }
