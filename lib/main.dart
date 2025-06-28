@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:wizi_learn/firebase_options.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_event.dart';
 import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
@@ -10,9 +12,19 @@ import 'features/auth/data/repositories/auth_repository.dart';
 import 'core/services/fcm_service_mobile.dart'
     if (dart.library.html) 'core/services/fcm_service_web.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:wizi_learn/core/services/notification_manager.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialiser Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  // Initialiser le gestionnaire de notifications
+  await NotificationManager().initialize();
+  
   // Initialize dependencies
   await auth_injection.initAuthDependencies();
   runApp(const MyApp());
