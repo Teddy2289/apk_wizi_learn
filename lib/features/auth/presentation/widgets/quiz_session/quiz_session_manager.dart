@@ -49,16 +49,55 @@ class QuizSessionManager {
     final question = questions[currentQuestionIndex.value];
     final questionId = question.id.toString();
 
-    if (question.type == "correspondance" && answer is Map) {
+    debugPrint("Raw answer received for $questionId: $answer");
+
+    if (question.type == "question audio") {
+      // Cas spécial pour les questions audio
+      if (answer is Map) {
+        _userAnswers[questionId] = {
+          'id': answer['id']?.toString(),
+          'text': answer['text']
+        };
+      } else if (answer is List && answer.isNotEmpty) {
+        // Si c'est une liste, prendre le premier élément
+        final firstAnswer = answer.first;
+        if (firstAnswer is Map) {
+          _userAnswers[questionId] = {
+            'id': firstAnswer['id']?.toString(),
+            'text': firstAnswer['text']
+          };
+        } else {
+          _userAnswers[questionId] = {
+            'id': null,
+            'text': firstAnswer.toString()
+          };
+        }
+      } else if (answer is String) {
+        _userAnswers[questionId] = {
+          'id': null,
+          'text': answer
+        };
+      }
+    }else if(question.type == "carte flash" && answer is Map){
+      if (question.type == "carte flash") {
+        // Special handling for flashcard questions
+        if (answer is Map) {
+          _userAnswers[questionId] = answer.values.first ?? '';
+        } else {
+          _userAnswers[questionId] = answer.toString();
+        }
+      }
+    }
+    else if (question.type == "correspondance" && answer is Map) {
       _userAnswers[questionId] = answer;
-    } else if (question.type == "vrai/faux" && answer is List) {
+    }
+    else if (question.type == "vrai/faux" && answer is List) {
       _userAnswers[questionId] = answer;
-    } else if (question.type == "choix multiples") {
-      // Toujours stocker la réponse, même si c'est une liste vide
+    }
+    else if (question.type == "choix multiples") {
       _userAnswers[questionId] = answer is List ? answer : [];
-    } else if (answer is Map && answer.containsKey('id')) {
-      _userAnswers[questionId] = [answer['id'].toString()];
-    } else {
+    }
+    else {
       _userAnswers[questionId] = answer;
     }
 

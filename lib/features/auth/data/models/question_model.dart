@@ -68,12 +68,31 @@ class Question {
     // Handle selected answers - support both Map and List formats
     dynamic selectedAnswers;
     if (json['selectedAnswers'] != null || json['selected_answers'] != null) {
-      final rawSelectedAnswers =
-          json['selectedAnswers'] ?? json['selected_answers'];
+      final rawSelectedAnswers = json['selectedAnswers'] ?? json['selected_answers'];
+
       if (rawSelectedAnswers is Map) {
         selectedAnswers = Map<String, String>.from(rawSelectedAnswers);
-      } else if (rawSelectedAnswers is List) {
-        selectedAnswers = List<dynamic>.from(rawSelectedAnswers);
+      }
+      else if (rawSelectedAnswers is List) {
+        // Cas spécial pour les questions audio
+        if (json['type'] == 'question audio' && rawSelectedAnswers.isNotEmpty) {
+          final firstAnswer = rawSelectedAnswers.first;
+          if (firstAnswer is Map) {
+            selectedAnswers = firstAnswer;
+          } else {
+            selectedAnswers = {'text': firstAnswer.toString()};
+          }
+        } else {
+          selectedAnswers = List<dynamic>.from(rawSelectedAnswers);
+        }
+      }
+      else if (rawSelectedAnswers is String) {
+        // Pour les questions audio avec réponse directe en String
+        if (json['type'] == 'question audio') {
+          selectedAnswers = {'text': rawSelectedAnswers};
+        } else {
+          selectedAnswers = rawSelectedAnswers;
+        }
       }
     }
 

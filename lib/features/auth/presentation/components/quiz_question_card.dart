@@ -61,35 +61,65 @@
     }
 
     String _formatUserAnswer(Question question) {
+      debugPrint("QUESTION REPONSE====${question.meta?.selectedAnswers}");
+      debugPrint("Formatting answer for question ${question.id} of type ${question.type}");
+      debugPrint("Selected answers raw: ${question.selectedAnswers}");
+
+      // 1. Vérifier d'abord les métadonnées
       if (question.meta?.selectedAnswers != null) {
         return _formatAnswer(question.meta!.selectedAnswers);
       }
 
-      debugPrint("selectedAnswers for ${question.id}: ${question.selectedAnswers}");
-
-      // Cas particulier pour les choix multiples
-      if (question.type == "choix multiples") {
-        // Vérifier explicitement si selectedAnswers est null
+      // 2. Cas spécial pour les questions audio
+      if (question.type == "question audio") {
         if (question.selectedAnswers == null) {
           return "Non répondue";
         }
 
-        // Si c'est une liste vide, l'utilisateur a explicitement soumis une réponse vide
-        if (question.selectedAnswers.isEmpty) {
-          return "Aucune réponse sélectionnée";
+        // Le serveur peut renvoyer soit un Map, soit une String directe
+        if (question.selectedAnswers is Map) {
+          return question.selectedAnswers['text'] ?? "Réponse audio";
         }
 
-        // Si selectedAnswers contient déjà des textes
-        if (question.selectedAnswers.first is String) {
-          return question.selectedAnswers.join(", ");
+        if (question.selectedAnswers is String) {
+          return question.selectedAnswers;
         }
 
-        // Si selectedAnswers contient des objets avec id/text
-        if (question.selectedAnswers.first is Map) {
-          return question.selectedAnswers.map((a) => a['text'] ?? a['id'].toString()).join(", ");
+        // Cas par défaut
+        return question.selectedAnswers.toString();
+      }
+
+      // 3. Pour les choix multiples
+      if (question.type == "choix multiples" || question.type == "rearrangement") {
+        if (question.selectedAnswers is List) {
+          return question.selectedAnswers.map((a) {
+            if (a is Map) return a['text'] ?? a['id'].toString();
+            return a.toString();
+          }).join(", ");
         }
       }
 
+      if (question.type == "carte flash") {
+        if (question.selectedAnswers == null ||
+            question.selectedAnswers.isEmpty) {
+          return "Non répondue";
+        }
+
+        // Flashcard answers should be a simple string
+        if (question.selectedAnswers is String) {
+          return question.selectedAnswers;
+        }
+
+        // If it's a map, get the first value
+        if (question.selectedAnswers is Map) {
+          return question.selectedAnswers.values.first?.toString() ?? "Non répondue";
+        }
+
+        // Default case
+        return question.selectedAnswers.toString();
+      }
+
+      // 4. Cas général
       return _formatAnswer(question.selectedAnswers);
     }
 

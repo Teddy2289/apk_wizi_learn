@@ -46,6 +46,7 @@ class _FlashcardQuestionState extends State<FlashcardQuestion> {
     }
   }
 
+  // In _FlashcardQuestionState
   void _handleAnswer(Answer answer) {
     setState(() {
       _userAnswer = answer.text;
@@ -58,7 +59,8 @@ class _FlashcardQuestionState extends State<FlashcardQuestion> {
         _streak = 0;
       }
 
-      widget.onAnswer([answer.text]);
+      // Send answer as a map with question ID as key and answer text as value
+      widget.onAnswer({widget.question.id.toString(): answer.text} as List<String>);
     });
   }
 

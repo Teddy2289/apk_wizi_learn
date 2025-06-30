@@ -138,20 +138,24 @@ class _AudioQuestionState extends State<AudioQuestion> {
   void _handleAnswer(String answerId) {
     if (widget.showFeedback) return;
 
-    if (mounted) {
-      setState(() {
-        _selectedAnswer = answerId;
-      });
-    }
-
     final selected = widget.question.answers.firstWhere(
           (a) => a.id.toString() == answerId,
       orElse: () => Answer(id: "-1", text: '', correct: false),
     );
 
-    widget.onAnswer({'id': selected.id, 'text': selected.text});
-  }
+    // Envoyer un format cohérent avec ce que le serveur attend
+    widget.onAnswer({
+      'id': selected.id,
+      'text': selected.text,
+      'isCorrect': selected.correct
+    });
 
+    if (mounted) {
+      setState(() {
+        _selectedAnswer = answerId;
+      });
+    }
+  }
   bool _isCorrectAnswer(String answerId) {
     if (!widget.showFeedback) return false;
 
