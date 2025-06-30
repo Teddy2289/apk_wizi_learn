@@ -137,40 +137,50 @@ class _FormationCardState extends State<_FormationCard> {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () => _navigateToDetail(context),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildImageSection(imageHeight, categoryColor),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-                child: SizedBox(
-                  width: widget.cardWidth - 20,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildCategoryBadge(categoryColor, textTheme),
-                      const SizedBox(height: 4),
-                      SizedBox(
-                        height: 30,
-                        child: Text(
-                          widget.formation.titre.toUpperCase(),
-                          style: textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            height: 1.2,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildImageSection(imageHeight, categoryColor),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                      child: SizedBox(
+                        width: widget.cardWidth - 20,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildCategoryBadge(categoryColor, textTheme),
+                            const SizedBox(height: 4),
+                            SizedBox(
+                              height: 30,
+                              child: Text(
+                                widget.formation.titre.toUpperCase(),
+                                style: textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.2,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            _buildDurationAndPrice(textTheme),
+                            const SizedBox(height: 6),
+                            _buildActionButtons(
+                              context,
+                              categoryColor,
+                              textTheme,
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      _buildDurationAndPrice(textTheme),
-                      const SizedBox(height: 6),
-                      _buildActionButtons(context, categoryColor, textTheme),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
