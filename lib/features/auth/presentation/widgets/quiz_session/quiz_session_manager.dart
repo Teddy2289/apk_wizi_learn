@@ -13,7 +13,7 @@ class QuizSessionManager {
   Timer? _timer;
   DateTime? _questionStartTime;
   int _totalTimeSpent = 0;
-  Map<String, dynamic> _userAnswers = {};
+  final Map<String, dynamic> _userAnswers = {};
   final QuizSubmissionHandler _submissionHandler;
 
   QuizSessionManager({required this.questions, required this.quizId})
@@ -102,6 +102,7 @@ class QuizSessionManager {
 
     debugPrint("Stored answer for $questionId: ${_userAnswers[questionId]}");
   }
+
   void goToNextQuestion() {
     final currentQuestionId =
         questions[currentQuestionIndex.value].id.toString();

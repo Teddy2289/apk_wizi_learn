@@ -11,8 +11,11 @@ class QuizSessionPage extends StatefulWidget {
   final Quiz quiz;
   final List<Question> questions;
 
-  const QuizSessionPage({Key? key, required this.quiz, required this.questions})
-    : super(key: key);
+  const QuizSessionPage({
+    super.key,
+    required this.quiz,
+    required this.questions,
+  });
 
   @override
   State<QuizSessionPage> createState() => _QuizSessionPageState();

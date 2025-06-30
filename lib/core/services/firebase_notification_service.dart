@@ -1,7 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:dio/dio.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/notification_model.dart';
 
@@ -99,15 +98,20 @@ class FirebaseNotificationService {
 
   Future<void> _sendTokenToServer(String token) async {
     if (_apiClient == null) {
-      print('ApiClient non disponible, token non envoyé: $token');
+      print('ApiClient non disponible, token stocké localement: $token');
+      await _storage.write(key: 'pending_fcm_token', value: token);
       return;
     }
 
     try {
       await _apiClient!.post('/fcm-token', data: {'token': token});
       print('Token FCM envoyé au serveur: $token');
+      // Si l'envoi a réussi, supprime le token stocké
+      await _storage.delete(key: 'pending_fcm_token');
     } catch (e) {
       print('Erreur lors de l\'envoi du token FCM: $e');
+      // En cas d'échec, stocke le token pour un nouvel essai
+      await _storage.write(key: 'pending_fcm_token', value: token);
     }
   }
 
@@ -184,6 +188,16 @@ class FirebaseNotificationService {
   // Méthode pour définir l'ApiClient après l'initialisation
   void setApiClient(ApiClient apiClient) {
     _apiClient = apiClient;
+    // Tente d'envoyer un token FCM stocké localement si présent
+    _sendPendingFcmTokenIfAny();
+  }
+
+  Future<void> _sendPendingFcmTokenIfAny() async {
+    final token = await _storage.read(key: 'pending_fcm_token');
+    if (token != null && _apiClient != null) {
+      print('Envoi du token FCM stocké localement après login: $token');
+      await _sendTokenToServer(token);
+    }
   }
 }
 

@@ -5,33 +5,38 @@ import 'package:wizi_learn/firebase_options.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_event.dart';
 import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
-import 'core/routes/app_router.dart';
-import 'core/constants/route_constants.dart';
 import 'features/auth/auth_injection_container.dart' as auth_injection;
 import 'features/auth/data/repositories/auth_repository.dart';
 import 'core/services/fcm_service_mobile.dart'
     if (dart.library.html) 'core/services/fcm_service_web.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:wizi_learn/core/services/notification_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wizi_learn/presentation/onboarding_flow/onboarding_flow.dart';
+import 'features/auth/presentation/pages/auth/login_page.dart';
+import 'core/routes/app_router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialiser Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   // Initialiser le gestionnaire de notifications
   await NotificationManager().initialize();
-  
+
   // Initialize dependencies
   await auth_injection.initAuthDependencies();
-  runApp(const MyApp());
+
+  final prefs = await SharedPreferences.getInstance();
+  final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
+
+  runApp(MyApp(onboardingCompleted: onboardingCompleted));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool onboardingCompleted;
+  const MyApp({required this.onboardingCompleted, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -131,8 +136,19 @@ class MyApp extends StatelessWidget {
             useMaterial3: true, // Pour Material 3
           ),
           scrollBehavior: CustomScrollBehavior(),
-          initialRoute: RouteConstants.splash,
-          onGenerateRoute: AppRouter.generateRoute,
+          initialRoute: onboardingCompleted ? '/login' : '/onboarding',
+          onGenerateRoute: (settings) {
+            // Pour l'onboarding et le login, routes directes
+            if (settings.name == '/onboarding') {
+              return MaterialPageRoute(builder: (_) => const OnboardingFlow());
+            }
+            if (settings.name == '/login') {
+              return MaterialPageRoute(builder: (_) => const LoginPage());
+            }
+            // Pour toutes les autres routes, utiliser AppRouter
+            // (import à ajouter en haut du fichier)
+            return AppRouter.generateRoute(settings);
+          },
         ),
       ),
     );

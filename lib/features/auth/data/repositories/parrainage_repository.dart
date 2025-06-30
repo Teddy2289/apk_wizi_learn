@@ -11,7 +11,7 @@ class ParrainageRepository {
 
       if (response.data['success'] == true && response.data['token'] != null) {
         final token = response.data['token'];
-        return "https://wizi-learn.testeninterne.com/parrainage/$token";
+        return "https://wizi-learn.com/parrainage/$token";
       }
 
       return null;

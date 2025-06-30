@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-
 class MultipleChoiceQuestion extends StatefulWidget {
   final Question question;
   final Function(dynamic) onAnswer;
@@ -63,11 +62,12 @@ class _MultipleChoiceQuestionState extends State<MultipleChoiceQuestion> {
     }
 
     // Récupérer les textes des réponses sélectionnées
-    final selectedTexts = _selectedAnswers.map((id) {
-      return widget.question.answers
-          .firstWhere((a) => a.id.toString() == id)
-          .text;
-    }).toList();
+    final selectedTexts =
+        _selectedAnswers.map((id) {
+          return widget.question.answers
+              .firstWhere((a) => a.id.toString() == id)
+              .text;
+        }).toList();
 
     widget.onAnswer(selectedTexts);
     setState(() {
@@ -83,11 +83,11 @@ class _MultipleChoiceQuestionState extends State<MultipleChoiceQuestion> {
       fontSize: 16.0,
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-
         const SizedBox(height: 20),
         ...widget.question.answers.map((answer) {
           final isSelected = _selectedAnswers.contains(answer.id.toString());
@@ -120,14 +120,14 @@ class _MultipleChoiceQuestionState extends State<MultipleChoiceQuestion> {
               ),
             ),
           );
-        }).toList(),
+        }),
         const SizedBox(height: 20),
         if (_selectedAnswers.isNotEmpty)
           if (_selectedAnswers.isNotEmpty && !_answerConfirmed)
-          ElevatedButton(
-            onPressed: _submitAnswer,
-            child: const Text('Confirmer la réponse'),
-          ),
+            ElevatedButton(
+              onPressed: _submitAnswer,
+              child: const Text('Confirmer la réponse'),
+            ),
       ],
     );
   }
