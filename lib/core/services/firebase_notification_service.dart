@@ -89,11 +89,16 @@ class FirebaseNotificationService {
     // Obtenir le token FCM
     String? token = await _firebaseMessaging.getToken();
     if (token != null) {
-      await _sendTokenToServer(token);
+      // Ne pas envoyer le token ici, juste le stocker localement
+      print('[FCM] Token obtenu après permission, stocké localement en attente de login: $token');
+      await _storage.write(key: 'pending_fcm_token', value: token);
     }
 
     // Écouter les changements de token
-    _firebaseMessaging.onTokenRefresh.listen(_sendTokenToServer);
+    _firebaseMessaging.onTokenRefresh.listen((String refreshedToken) async {
+      print('[FCM] Nouveau token FCM reçu (refresh), stocké localement en attente de login: $refreshedToken');
+      await _storage.write(key: 'pending_fcm_token', value: refreshedToken);
+    });
   }
 
   Future<void> _sendTokenToServer(String token) async {
@@ -104,7 +109,13 @@ class FirebaseNotificationService {
     }
 
     try {
-      await _apiClient!.post('/fcm-token', data: {'token': token});
+      print('[FCM] Tentative d\'envoi du token au backend:');
+      print('  URL: /fcm-token');
+      // Impossible d'afficher les headers car ApiClient n'expose pas 'options'.
+      print('  Headers: (non affichés, structure ApiClient inconnue)');
+      print('  Data: {token: $token}');
+      final response = await _apiClient!.post('/fcm-token', data: {'token': token});
+      print('Réponse backend: statusCode=${response.statusCode}, data=${response.data}');
       print('Token FCM envoyé au serveur: $token');
       // Si l'envoi a réussi, supprime le token stocké
       await _storage.delete(key: 'pending_fcm_token');
