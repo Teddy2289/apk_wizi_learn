@@ -113,14 +113,7 @@ class _QuizPageState extends State<QuizPage> {
       appBar: AppBar(
         title: const Text('Mes Quiz'),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed:
-              () => Navigator.pushReplacementNamed(
-                context,
-                RouteConstants.dashboard,
-              ),
-        ),
+
         backgroundColor:
             isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
         elevation: 1,

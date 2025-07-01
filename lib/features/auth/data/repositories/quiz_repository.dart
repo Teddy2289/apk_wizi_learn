@@ -13,7 +13,6 @@ class QuizRepository {
   Future<List<Quiz>> getQuizzesForStagiaire({int? stagiaireId}) async {
     try {
       final response = await apiClient.get('/stagiaire/quizzes');
-      debugPrint('Quiz API raw response: ${response.data}');
 
       if (response.data == null || response.data['data'] == null) {
         return [];
@@ -78,7 +77,6 @@ class QuizRepository {
     try {
       final response = await apiClient.get('/quiz/$quizId/questions');
       final formattedJson = const JsonEncoder.withIndent('  ').convert(response.data);
-      debugPrint('Questions:\n$formattedJson');
 
       if (response.data == null || response.data['data'] == null) return [];
 

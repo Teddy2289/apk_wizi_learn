@@ -17,6 +17,7 @@
 
     @override
     Widget build(BuildContext context) {
+      debugPrint("Full question data for ${question.id}: ${question.toJson()}");
       return Card(
         color: isCorrect ? Colors.green[50] : Colors.red[50],
         child: Padding(
@@ -69,6 +70,17 @@
       if (question.meta?.selectedAnswers != null) {
         return _formatAnswer(question.meta!.selectedAnswers);
       }
+      if (question.type == "carte flash") {
+        // Try all possible locations for the answer
+        final answer = question.selectedAnswers ??
+            question.meta?.selectedAnswers ??
+            "Pas de réponse";
+
+        if (answer is Map) {
+          return answer['text'] ?? answer.values.first?.toString() ?? '';
+        }
+        return answer.toString();
+      }
 
       // 2. Cas spécial pour les questions audio
       if (question.type == "question audio") {
@@ -98,27 +110,6 @@
           }).join(", ");
         }
       }
-
-      if (question.type == "carte flash") {
-        if (question.selectedAnswers == null ||
-            question.selectedAnswers.isEmpty) {
-          return "Non répondue";
-        }
-
-        // Flashcard answers should be a simple string
-        if (question.selectedAnswers is String) {
-          return question.selectedAnswers;
-        }
-
-        // If it's a map, get the first value
-        if (question.selectedAnswers is Map) {
-          return question.selectedAnswers.values.first?.toString() ?? "Non répondue";
-        }
-
-        // Default case
-        return question.selectedAnswers.toString();
-      }
-
       // 4. Cas général
       return _formatAnswer(question.selectedAnswers);
     }

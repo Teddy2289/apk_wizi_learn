@@ -78,15 +78,14 @@ class QuizSessionManager {
           'text': answer
         };
       }
-    }else if(question.type == "carte flash" && answer is Map){
-      if (question.type == "carte flash") {
-        // Special handling for flashcard questions
-        if (answer is Map) {
-          _userAnswers[questionId] = answer.values.first ?? '';
-        } else {
-          _userAnswers[questionId] = answer.toString();
-        }
+    }else if(question.type == "carte flash") {
+      if (answer is Map) {
+        // Handle both front and back of flashcard if needed
+        _userAnswers[questionId] = answer['text'] ?? answer.values.first?.toString() ?? '';
+      } else {
+        _userAnswers[questionId] = answer.toString();
       }
+      debugPrint("Flashcard answer stored: ${_userAnswers[questionId]}");
     }
     else if (question.type == "correspondance" && answer is Map) {
       _userAnswers[questionId] = answer;

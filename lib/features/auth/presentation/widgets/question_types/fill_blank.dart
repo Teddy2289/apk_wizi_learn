@@ -25,6 +25,7 @@ class _FillBlankQuestionState extends State<FillBlankQuestion> {
   late String _userAnswer;
   late Timer _timer;
   int _remainingSeconds = 30;
+  bool _hasAnswered = false;
 
   @override
   void initState() {
@@ -32,13 +33,14 @@ class _FillBlankQuestionState extends State<FillBlankQuestion> {
     _controller = TextEditingController();
     _userAnswer = '';
 
-    // Initialiser avec la réponse existante si disponible
+    // Initialize with existing answer if available
     if (widget.question.selectedAnswers != null &&
         widget.question.selectedAnswers is Map) {
       final answers = widget.question.selectedAnswers as Map;
       if (answers.containsKey('reponse')) {
         _controller.text = answers['reponse'];
         _userAnswer = answers['reponse'];
+        _hasAnswered = _userAnswer.isNotEmpty;
       }
     }
 
@@ -63,70 +65,148 @@ class _FillBlankQuestionState extends State<FillBlankQuestion> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildQuestionText() {
     final questionText = widget.question.text;
     final blankStart = questionText.indexOf('{');
     final blankEnd = questionText.indexOf('}');
 
-    // Extraire les parties du texte
+    // Extract text parts
     final beforeText = questionText.substring(0, blankStart);
     final afterText = questionText.substring(blankEnd + 1);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Timer (optionnel - à décommenter si besoin)
-        /*
-        LinearProgressIndicator(
-          value: _remainingSeconds / 30,
-          backgroundColor: Colors.grey[200],
-          color: Colors.blue,
+    return RichText(
+      text: TextSpan(
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          fontSize: 20,
+          color: Colors.black87,
+          height: 1.4,
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            'Temps restant: $_remainingSeconds secondes',
-            style: const TextStyle(fontSize: 16),
-          ),
-        ),
-        */
-
-        // Affichage de la question avec le champ de saisie
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (beforeText.isNotEmpty)
-                Text(beforeText, style: const TextStyle(fontSize: 18)),
-
-              // Champ de saisie pour remplacer {reponse}
-              SizedBox(
-                width: 150,
-                child: TextField(
-                  controller: _controller,
-                  onChanged: (value) {
-                    setState(() => _userAnswer = value);
-                    widget.onAnswer({'reponse': value});
-                  },
-                  decoration: InputDecoration(
-                    hintText: '______',
-                    border: const OutlineInputBorder(),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                    filled: true,
-                    fillColor: Colors.grey[100],
+        children: [
+          TextSpan(text: beforeText),
+          WidgetSpan(
+            child: Container(
+              width: 180,
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              child: TextField(
+                controller: _controller,
+                onChanged: (value) {
+                  setState(() {
+                    _userAnswer = value;
+                    _hasAnswered = value.isNotEmpty;
+                  });
+                  widget.onAnswer({'reponse': value});
+                },
+                decoration: InputDecoration(
+                  hintText: 'Entrer votre réponse',
+                  hintStyle: TextStyle(color: Colors.grey.shade400),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: _hasAnswered ? Colors.green : Colors.yellowAccent,
+                      width: 2,
+                    ),
                   ),
-                  enabled: !widget.showFeedback,
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: _hasAnswered ? Colors.green : Colors.yellow,
+                      width: 2,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Colors.yellow,
+                      width: 2.5,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+                enabled: !widget.showFeedback,
+                style: const TextStyle(
+                  fontSize: 18,
+                  color: Colors.black87,
                 ),
               ),
-
-              if (afterText.isNotEmpty)
-                Text(afterText, style: const TextStyle(fontSize: 18)),
-            ],
+            ),
           ),
-        ),
-      ],
+          TextSpan(text: afterText),
+        ],
+      ),
+    );
+  }
+
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 3,
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Timer indicator
+          const SizedBox(height: 24),
+
+          // Question text with fill-in blank
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: _buildQuestionText(),
+          ),
+
+          // Feedback if enabled
+          if (widget.showFeedback && _hasAnswered) ...[
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.green.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    color: Colors.green[600],
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Your answer has been saved!',
+                      style: TextStyle(
+                        color: Colors.green[800],
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

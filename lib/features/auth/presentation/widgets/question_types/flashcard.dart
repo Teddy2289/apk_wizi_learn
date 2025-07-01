@@ -3,7 +3,7 @@ import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 
 class FlashcardQuestion extends StatefulWidget {
   final Question question;
-  final Function(List<String>) onAnswer;
+  final Function(Map<String, dynamic>) onAnswer; // Changed from List<String>
   final bool showFeedback;
 
   const FlashcardQuestion({
@@ -33,8 +33,7 @@ class _FlashcardQuestionState extends State<FlashcardQuestion> {
 
   void _shuffleAnswers() {
     setState(() {
-      _shuffledAnswers = List<Answer>.from(widget.question.answers)
-        ..shuffle();
+      _shuffledAnswers = List<Answer>.from(widget.question.answers)..shuffle();
     });
   }
 
@@ -48,22 +47,11 @@ class _FlashcardQuestionState extends State<FlashcardQuestion> {
 
   // In _FlashcardQuestionState
   void _handleAnswer(Answer answer) {
-    setState(() {
-      _userAnswer = answer.text;
-      _isCorrect = answer.correct;
-
-      if (_isCorrect == true) {
-        _points += 10;
-        _streak += 1;
-      } else {
-        _streak = 0;
-      }
-
-      // Send answer as a map with question ID as key and answer text as value
-      widget.onAnswer({widget.question.id.toString(): answer.text} as List<String>);
+    print('Question ID: ${widget.question.id}, Answer: ${answer.text}');
+    widget.onAnswer({
+      widget.question.id.toString(): answer.text
     });
   }
-
   void _resetCard() {
     setState(() {
       _isFlipped = false;
@@ -75,7 +63,7 @@ class _FlashcardQuestionState extends State<FlashcardQuestion> {
 
   Answer? get _correctAnswer {
     return widget.question.answers.firstWhere(
-          (r) => r.correct,
+      (r) => r.correct,
       orElse: () => Answer(id: "-1", text: '', correct: false),
     );
   }
@@ -91,10 +79,9 @@ class _FlashcardQuestionState extends State<FlashcardQuestion> {
             Expanded(
               child: Text(
                 widget.question.text,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w500),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w500),
               ),
             ),
             Row(
@@ -103,8 +90,10 @@ class _FlashcardQuestionState extends State<FlashcardQuestion> {
                   children: [
                     const Icon(Icons.star, color: Colors.amber, size: 20),
                     const SizedBox(width: 4),
-                    Text('$_points',
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      '$_points',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ],
                 ),
                 if (_streak > 0) ...[
@@ -116,7 +105,7 @@ class _FlashcardQuestionState extends State<FlashcardQuestion> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ]
+                ],
               ],
             ),
           ],
@@ -139,11 +128,9 @@ class _FlashcardQuestionState extends State<FlashcardQuestion> {
             'Quelle est votre réponse ?',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w500,
-              color: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.color
-                  ?.withOpacity(0.6),
+              color: Theme.of(
+                context,
+              ).textTheme.bodySmall?.color?.withOpacity(0.6),
             ),
           ),
           const SizedBox(height: 8),
@@ -153,22 +140,26 @@ class _FlashcardQuestionState extends State<FlashcardQuestion> {
             crossAxisCount: 2,
             mainAxisSpacing: 16,
             crossAxisSpacing: 16,
-            children: _shuffledAnswers
-                .map((answer) => ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side:
-                  BorderSide(color: Theme.of(context).dividerColor),
-                ),
-              ),
-              onPressed: () => _handleAnswer(answer),
-              child: Text(answer.text),
-            ))
-                .toList(),
+            children:
+                _shuffledAnswers
+                    .map(
+                      (answer) => ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: Theme.of(context).dividerColor,
+                            ),
+                          ),
+                        ),
+                        onPressed: () => _handleAnswer(answer),
+                        child: Text(answer.text),
+                      ),
+                    )
+                    .toList(),
           ),
         ],
         if (widget.showFeedback && _isCorrect != null) ...[
@@ -225,21 +216,18 @@ class _FlashcardQuestionState extends State<FlashcardQuestion> {
                 Text(
                   widget.question.text,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 if (!widget.showFeedback) ...[
                   const SizedBox(height: 16),
                   Text(
                     'Cliquez pour retourner la carte',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.color
-                          ?.withOpacity(0.6),
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.color?.withOpacity(0.6),
                     ),
                   ),
                 ],
@@ -267,21 +255,18 @@ class _FlashcardQuestionState extends State<FlashcardQuestion> {
                 Text(
                   _correctAnswer?.flashcardBack ?? '',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 if (!widget.showFeedback) ...[
                   const SizedBox(height: 16),
                   Text(
                     'Cliquez pour retourner la carte',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.color
-                          ?.withOpacity(0.6),
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.color?.withOpacity(0.6),
                     ),
                   ),
                 ],
@@ -296,7 +281,7 @@ class _FlashcardQuestionState extends State<FlashcardQuestion> {
 
 class Rotation3d extends AnimatedWidget {
   const Rotation3d({super.key, required this.rotationY, required this.child})
-      : super(listenable: rotationY);
+    : super(listenable: rotationY);
 
   final Animation<double> rotationY;
   final Widget child;
@@ -305,9 +290,10 @@ class Rotation3d extends AnimatedWidget {
   Widget build(BuildContext context) {
     final angle = rotationY.value * 3.1415926535897932;
     return Transform(
-      transform: Matrix4.identity()
-        ..setEntry(3, 2, 0.001)
-        ..rotateY(angle),
+      transform:
+          Matrix4.identity()
+            ..setEntry(3, 2, 0.001)
+            ..rotateY(angle),
       alignment: Alignment.center,
       child: child,
     );
