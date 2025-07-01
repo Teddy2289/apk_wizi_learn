@@ -1,8 +1,7 @@
 class AppConstants {
   static const String appName = "Wizi Learn";
-  // static const String baseUrl = "https://wizi-learn.testeninterne.com/api";
-  static const String baseUrl = "http://192.168.96.180:8000/api";
-  static const String baseUrlImg = "http://192.168.96.180:8000";
+  static const String baseUrl = "https://wizi-learn.testeninterne.com/api";
+  static const String baseUrlImg = "https://wizi-learn.testeninterne.com";
   static const String loginEndpoint = "/login";
   static const String logoutEndpoint = "/logout";
   static const String userEndpoint = "/user";
