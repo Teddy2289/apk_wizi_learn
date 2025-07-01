@@ -33,10 +33,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
     try {
       // Initialiser le service Firebase
       await repository.initialize();
-      
+
       // Définir le callback pour les nouvelles notifications
       repository.setNotificationCallback(_onNewNotification);
-      
+
       // Charger les données initiales
       await _loadData();
     } catch (e) {
@@ -48,6 +48,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   void _onNewNotification(NotificationModel notification) {
+    if (!mounted) return;
     setState(() {
       // Ajouter la nouvelle notification en haut de la liste
       _notifications.insert(0, notification);
@@ -57,32 +58,34 @@ class _NotificationsPageState extends State<NotificationsPage> {
     });
 
     // Afficher un snackbar pour informer l'utilisateur
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.notifications, color: Colors.white),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                notification.title,
-                style: TextStyle(color: Colors.white),
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.notifications, color: Colors.white),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  notification.title,
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 3),
+          action: SnackBarAction(
+            label: 'Voir',
+            textColor: Colors.white,
+            onPressed: () {
+              // Navigation vers la page appropriée selon le type
+              _navigateToNotificationPage(notification);
+            },
+          ),
         ),
-        backgroundColor: Colors.orange,
-        duration: Duration(seconds: 3),
-        action: SnackBarAction(
-          label: 'Voir',
-          textColor: Colors.white,
-          onPressed: () {
-            // Navigation vers la page appropriée selon le type
-            _navigateToNotificationPage(notification);
-          },
-        ),
-      ),
-    );
+      );
+    }
   }
 
   void _navigateToNotificationPage(NotificationModel notification) {
@@ -118,9 +121,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors du chargement: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erreur lors du chargement: $e')));
     }
   }
 
@@ -144,16 +147,18 @@ class _NotificationsPageState extends State<NotificationsPage> {
       }
       unreadCount = 0;
     });
-    
+
     try {
       await repository.markAllAsRead();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Toutes les notifications ont été marquées comme lues')),
+        const SnackBar(
+          content: Text('Toutes les notifications ont été marquées comme lues'),
+        ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
     }
   }
 
@@ -162,19 +167,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
       _notifications.clear();
       unreadCount = 0;
     });
-    
+
     try {
       // Supprimer toutes les notifications du backend
       for (final notif in List<NotificationModel>.from(_notifications)) {
         await repository.delete(notif.id);
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Toutes les notifications ont été supprimées')),
+        const SnackBar(
+          content: Text('Toutes les notifications ont été supprimées'),
+        ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
     }
   }
 
@@ -186,9 +193,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
         const SnackBar(content: Text('Notification de test envoyée')),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de l\'envoi: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erreur lors de l\'envoi: $e')));
     }
   }
 
@@ -201,7 +208,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
       appBar: AppBar(
         title: Row(
           children: [
-            const Text('Notifications', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Notifications',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             if (unreadCount > 0) ...[
               const SizedBox(width: 8),
               Container(
@@ -212,10 +222,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 ),
                 child: Text(
                   '$unreadCount',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
                 ),
               ),
-            ]
+            ],
           ],
         ),
         actions: [
@@ -236,111 +250,150 @@ class _NotificationsPageState extends State<NotificationsPage> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _refreshData,
-              child: _notifications.isEmpty
-                  ? const Center(child: Text('Aucune notification'))
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount: _notifications.length,
-                      separatorBuilder: (context, index) => const Divider(height: 1, indent: 72),
-                      itemBuilder: (context, index) {
-                        final notif = _notifications[index];
-                        return Dismissible(
-                          key: ValueKey(notif.id),
-                          direction: DismissDirection.endToStart,
-                          background: Container(
-                            color: Colors.red,
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: const Icon(Icons.delete, color: Colors.white),
-                          ),
-                          onDismissed: (_) async {
-                            setState(() {
-                              _notifications.removeAt(index);
-                              if (!notif.read && unreadCount > 0) unreadCount--;
-                            });
-                            try {
-                              await repository.delete(notif.id);
-                            } catch (e) {
-                              print('Erreur lors de la suppression: $e');
-                            }
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 8),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              color: notif.read ? Colors.transparent : primaryColor.withOpacity(0.05),
-                            ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              leading: Icon(Icons.notifications, color: notif.read ? colorScheme.onSurface : primaryColor),
-                              title: Text(
-                                notif.title,
-                                style: TextStyle(
-                                  fontWeight: notif.read ? FontWeight.normal : FontWeight.bold,
-                                  color: notif.read ? colorScheme.onSurface : primaryColor,
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                onRefresh: _refreshData,
+                child:
+                    _notifications.isEmpty
+                        ? const Center(child: Text('Aucune notification'))
+                        : ListView.separated(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: _notifications.length,
+                          separatorBuilder:
+                              (context, index) =>
+                                  const Divider(height: 1, indent: 72),
+                          itemBuilder: (context, index) {
+                            final notif = _notifications[index];
+                            return Dismissible(
+                              key: ValueKey(notif.id),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                color: Colors.red,
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                ),
+                                child: const Icon(
+                                  Icons.delete,
+                                  color: Colors.white,
                                 ),
                               ),
-                              subtitle: Text(
-                                notif.message,
-                                style: TextStyle(
-                                  color: notif.read
-                                      ? colorScheme.onSurface.withOpacity(0.6)
-                                      : primaryColor.withOpacity(0.8),
+                              onDismissed: (_) async {
+                                setState(() {
+                                  _notifications.removeAt(index);
+                                  if (!notif.read && unreadCount > 0)
+                                    unreadCount--;
+                                });
+                                try {
+                                  await repository.delete(notif.id);
+                                } catch (e) {
+                                  print('Erreur lors de la suppression: $e');
+                                }
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 8,
                                 ),
-                              ),
-                              trailing: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '${notif.createdAt.hour.toString().padLeft(2, '0')}:${notif.createdAt.minute.toString().padLeft(2, '0')}',
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  color:
+                                      notif.read
+                                          ? Colors.transparent
+                                          : primaryColor.withOpacity(0.05),
+                                ),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  leading: Icon(
+                                    Icons.notifications,
+                                    color:
+                                        notif.read
+                                            ? colorScheme.onSurface
+                                            : primaryColor,
+                                  ),
+                                  title: Text(
+                                    notif.title,
                                     style: TextStyle(
-                                      color: colorScheme.onSurface.withOpacity(0.6),
-                                      fontSize: 12,
+                                      fontWeight:
+                                          notif.read
+                                              ? FontWeight.normal
+                                              : FontWeight.bold,
+                                      color:
+                                          notif.read
+                                              ? colorScheme.onSurface
+                                              : primaryColor,
                                     ),
                                   ),
-                                  if (!notif.read)
-                                    Container(
-                                      margin: const EdgeInsets.only(top: 4),
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: primaryColor,
-                                        shape: BoxShape.circle,
-                                      ),
+                                  subtitle: Text(
+                                    notif.message,
+                                    style: TextStyle(
+                                      color:
+                                          notif.read
+                                              ? colorScheme.onSurface
+                                                  .withOpacity(0.6)
+                                              : primaryColor.withOpacity(0.8),
                                     ),
-                                ],
+                                  ),
+                                  trailing: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        '${notif.createdAt.hour.toString().padLeft(2, '0')}:${notif.createdAt.minute.toString().padLeft(2, '0')}',
+                                        style: TextStyle(
+                                          color: colorScheme.onSurface
+                                              .withOpacity(0.6),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      if (!notif.read)
+                                        Container(
+                                          margin: const EdgeInsets.only(top: 4),
+                                          width: 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            color: primaryColor,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  onTap: () async {
+                                    if (!notif.read) {
+                                      setState(() {
+                                        _notifications[index] =
+                                            NotificationModel(
+                                              id: notif.id,
+                                              title: notif.title,
+                                              message: notif.message,
+                                              read: true,
+                                              createdAt: notif.createdAt,
+                                              type: notif.type,
+                                            );
+                                        unreadCount =
+                                            unreadCount > 0
+                                                ? unreadCount - 1
+                                                : 0;
+                                      });
+                                      try {
+                                        await repository.markAsRead(notif.id);
+                                      } catch (e) {
+                                        print(
+                                          'Erreur lors du marquage comme lu: $e',
+                                        );
+                                      }
+                                    }
+                                    _navigateToNotificationPage(notif);
+                                  },
+                                ),
                               ),
-                              onTap: () async {
-                                if (!notif.read) {
-                                  setState(() {
-                                    _notifications[index] = NotificationModel(
-                                      id: notif.id,
-                                      title: notif.title,
-                                      message: notif.message,
-                                      read: true,
-                                      createdAt: notif.createdAt,
-                                      type: notif.type,
-                                    );
-                                    unreadCount = unreadCount > 0 ? unreadCount - 1 : 0;
-                                  });
-                                  try {
-                                    await repository.markAsRead(notif.id);
-                                  } catch (e) {
-                                    print('Erreur lors du marquage comme lu: $e');
-                                  }
-                                }
-                                _navigateToNotificationPage(notif);
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
+                            );
+                          },
+                        ),
+              ),
     );
   }
 }
