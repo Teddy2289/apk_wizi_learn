@@ -13,12 +13,32 @@ class ContactPage extends StatelessWidget {
         backgroundColor: Color(0xFFFEB823),
         title: const Text('Tous mes contacts'),
       ),
-      body: contacts.isEmpty
-          ? const Center(child: Text('Aucun contact disponible'))
-          : ListView.builder(
-              itemCount: contacts.length,
-              itemBuilder: (context, index) => ContactCard(contact: contacts[index]),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              "Retrouvez ici les contacts utiles mis à votre disposition dans le cadre de votre formation.",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.brown.shade700,
+                fontWeight: FontWeight.w500,
+              ),
             ),
+          ),
+          Expanded(
+            child:
+                contacts.isEmpty
+                    ? const Center(child: Text('Aucun contact disponible'))
+                    : ListView.builder(
+                      itemCount: contacts.length,
+                      itemBuilder:
+                          (context, index) =>
+                              ContactCard(contact: contacts[index]),
+                    ),
+          ),
+        ],
+      ),
     );
   }
 }
