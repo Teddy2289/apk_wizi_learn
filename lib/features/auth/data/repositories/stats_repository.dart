@@ -7,11 +7,14 @@ class StatsRepository {
 
   StatsRepository({required this.apiClient});
 
-  Future<List<QuizHistory>> getQuizHistory() async {
-    final response = await apiClient.get(AppConstants.quizHistory);
+  Future<List<QuizHistory>> getQuizHistory({int page = 1, int limit = 10}) async {
+    final response = await apiClient.get(
+        '${AppConstants.quizHistory}?page=$page&limit=$limit'
+    );
     final data = response.data as List;
     return data.map((e) => QuizHistory.fromJson(e)).toList();
   }
+
 
   Future<List<GlobalRanking>> getGlobalRanking() async {
     final response = await apiClient.get(AppConstants.globalRanking);

@@ -16,11 +16,10 @@ class CustomDrawer extends StatelessWidget {
       backgroundColor: Colors.white,
       child: Column(
         children: [
-          // Header avec informations complètes de l'utilisateur et du stagiaire
+          // Header simplifié avec juste les infos essentielles
           BlocBuilder<AuthBloc, AuthState>(
             builder: (context, state) {
               if (state is Authenticated) {
-                print('Stagiaire: ${state.user.stagiaire}');
                 return Container(
                   color: const Color(0xFFFEB823),
                   padding: const EdgeInsets.only(
@@ -35,7 +34,6 @@ class CustomDrawer extends StatelessWidget {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Avatar avec photo ou initiale
                           CircleAvatar(
                             radius: 30,
                             backgroundColor: Colors.white,
@@ -56,7 +54,6 @@ class CustomDrawer extends StatelessWidget {
                                 : null,
                           ),
                           const SizedBox(width: 16),
-                          // Informations principales
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,53 +73,11 @@ class CustomDrawer extends StatelessWidget {
                                     fontSize: 14,
                                   ),
                                 ),
-                                if (state.user.stagiaire != null) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${state.user.stagiaire!.civilite} ${state.user.stagiaire!.prenom}',
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
                               ],
                             ),
                           ),
                         ],
                       ),
-                      // Section supplémentaire pour les détails du stagiaire
-                      if (state.user.stagiaire != null) ...[
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildInfoRow(
-                                icon: Icons.phone,
-                                text: state.user.stagiaire!.telephone,
-                              ),
-                              const SizedBox(height: 8),
-                              _buildInfoRow(
-                                icon: Icons.location_on,
-                                text:
-                                    '${state.user.stagiaire!.adresse}, ${state.user.stagiaire!.codePostal} ${state.user.stagiaire!.ville}',
-                              ),
-                              const SizedBox(height: 8),
-                              _buildInfoRow(
-                                icon: Icons.calendar_today,
-                                text:
-                                    'Formation depuis: ${state.user.stagiaire!.dateDebutFormation}',
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 );
@@ -157,16 +112,6 @@ class CustomDrawer extends StatelessWidget {
                   },
                 ),
                 _buildDrawerItem(
-                  icon: Icons.analytics,
-                  label: 'Mes Statistiques',
-                  onTap: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      RouteConstants.myStatistics,
-                    );
-                  },
-                ),
-                _buildDrawerItem(
                   icon: Icons.timeline,
                   label: 'Mes Progrès',
                   onTap: () {
@@ -176,21 +121,73 @@ class CustomDrawer extends StatelessWidget {
                     );
                   },
                 ),
-                _buildDrawerItem(
-                  icon: Icons.assignment,
-                  label: 'Mes Résultats',
-                  onTap: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      RouteConstants.myResults,
-                    );
+
+                // Section des informations supplémentaires du stagiaire
+                BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, state) {
+                    if (state is Authenticated && state.user.stagiaire != null) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Mes informations',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                children: [
+                                  _buildInfoRow(
+                                    icon: Icons.person,
+                                    text:
+                                    '${state.user.stagiaire!.civilite} ${state.user.stagiaire!.prenom}',
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _buildInfoRow(
+                                    icon: Icons.phone,
+                                    text: state.user.stagiaire!.telephone,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _buildInfoRow(
+                                    icon: Icons.location_on,
+                                    text:
+                                    '${state.user.stagiaire!.adresse}, ${state.user.stagiaire!.codePostal} ${state.user.stagiaire!.ville}',
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _buildInfoRow(
+                                    icon: Icons.calendar_today,
+                                    text:
+                                    'Formation depuis: ${state.user.stagiaire!.dateDebutFormation}',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    return const SizedBox();
                   },
                 ),
               ],
             ),
           ),
 
-          // Bouton de déconnexion fixé en bas
+          // Bouton de déconnexion
           Container(
             padding: const EdgeInsets.symmetric(vertical: 16),
             decoration: const BoxDecoration(
@@ -230,12 +227,15 @@ class CustomDrawer extends StatelessWidget {
   Widget _buildInfoRow({required IconData icon, required String text}) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.white70),
+        Icon(icon, size: 18, color: Colors.grey.shade600),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
+            style: TextStyle(
+              color: Colors.grey.shade800,
+              fontSize: 14,
+            ),
           ),
         ),
       ],

@@ -32,8 +32,8 @@ class CustomBottomNavBar extends StatelessWidget {
         ? 70.0 + safeAreaBottom
         : 80.0 + safeAreaBottom;
 
-    final iconSize = isVerySmallScreen ? 18.0 : isSmallScreen ? 23.0 : 25.0;
-    final labelFontSize = isVerySmallScreen ? 7.0 : isSmallScreen ? 11.2 : 14.0;
+    final iconSize = isVerySmallScreen ? 18.0 : isSmallScreen ? 20.0 : 24.0;
+    final labelFontSize = isVerySmallScreen ? 7.0 : isSmallScreen ? 14.0 : 12.0;
     final fabSize = isVerySmallScreen ? 50.0 : isSmallScreen ? 60.0 : 70.0;
     final fabIconSize = isVerySmallScreen ? 18.0 : isSmallScreen ? 24.0 : 32.0;
     final itemPadding = isVerySmallScreen ? 4.0 : isSmallScreen ? 6.0 : 8.0;
@@ -65,7 +65,7 @@ class CustomBottomNavBar extends StatelessWidget {
           // Bouton central flottant
             Positioned(
             left: mediaQuery.size.width / 2 - fabSize / 2,
-            top: -fabSize * 0.15, // Redescendu un peu
+            top: -fabSize * 0.30, // Redescendu un peu
             child: GestureDetector(
               onTap: () => onTap(2),
               child: Container(
@@ -103,10 +103,10 @@ class CustomBottomNavBar extends StatelessWidget {
           // Contenu de la barre (icônes)
           Padding(
             padding: EdgeInsets.only(
-              left: 8,
-              right: 8,
+              left: 12,
+              right: 12,
               top: 8,
-              bottom: 5 + safeAreaBottom,
+              bottom: 8 + safeAreaBottom,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

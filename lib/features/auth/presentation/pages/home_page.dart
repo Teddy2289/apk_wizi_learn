@@ -115,7 +115,7 @@ class _HomePageState extends State<HomePage> {
           slivers: [
             // Section Formations
             SliverPadding(
-              padding: const EdgeInsets.only(top: 16, bottom: 8),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               sliver: SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
