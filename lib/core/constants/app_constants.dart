@@ -1,7 +1,7 @@
 class AppConstants {
   static const String appName = "Wizi Learn";
-  static const String baseUrl = "https://wizi-learn.testeninterne.com/api";
-  static const String baseUrlImg = "https://wizi-learn.testeninterne.com";
+  static const String baseUrl = "https://wizi-learn.com/api";
+  static const String baseUrlImg = "https://wizi-learn.com/";
   static const String loginEndpoint = "/login";
   static const String logoutEndpoint = "/logout";
   static const String userEndpoint = "/user";
@@ -34,4 +34,11 @@ class AppConstants {
   }
 
   static const String quizProgress = '/quiz/stats/progress';
+
+  static String getAudioStreamUrl(String relativePath) {
+    // Nettoie le / éventuel en début
+    relativePath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
+    return '$baseUrl/media/stream/$relativePath';
+  }
+
 }

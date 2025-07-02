@@ -16,8 +16,10 @@ class RankingPage extends StatefulWidget {
   State<RankingPage> createState() => _RankingPageState();
 }
 
-class _RankingPageState extends State<RankingPage> {
+class _RankingPageState extends State<RankingPage>
+    with SingleTickerProviderStateMixin {
   late final StatsRepository _repository;
+  late TabController _tabController;
   Future<List<QuizHistory>>? _historyFuture;
   Future<List<GlobalRanking>>? _rankingFuture;
   Future<QuizStats>? _statsFuture;
@@ -33,7 +35,14 @@ class _RankingPageState extends State<RankingPage> {
       storage: const FlutterSecureStorage(),
     );
     _repository = StatsRepository(apiClient: apiClient);
+    _tabController = TabController(length: 3, vsync: this);
     _loadAllData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadAllData() async {
@@ -44,17 +53,11 @@ class _RankingPageState extends State<RankingPage> {
     });
 
     try {
-      // Réinitialiser les futures avant de les relancer
       _historyFuture = _repository.getQuizHistory();
       _rankingFuture = _repository.getGlobalRanking();
       _statsFuture = _repository.getQuizStats();
 
-      // Attendre que toutes les requêtes soient terminées
-      await Future.wait([
-        _historyFuture!,
-        _rankingFuture!,
-        _statsFuture!,
-      ]);
+      await Future.wait([_historyFuture!, _rankingFuture!, _statsFuture!]);
     } catch (e) {
       setState(() {
         _hasError = true;
@@ -66,102 +69,146 @@ class _RankingPageState extends State<RankingPage> {
       });
     }
   }
-
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        appBar: _RankingAppBar(),
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_hasError) {
-      return Scaffold(
-        appBar: const _RankingAppBar(),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Erreur: $_errorMessage'),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _loadAllData,
-                child: const Text('Réessayer'),
-              ),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Classement et Statistiques',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
           ),
         ),
-      );
-    }
-
-    return Scaffold(
-      appBar: const _RankingAppBar(),
-      body: SingleChildScrollView(
+        backgroundColor: AppColors.background,
+        elevation: 1,
+        centerTitle: true,
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(icon: Icon(Icons.assessment), text: 'Statistiques'),
+            Tab(icon: Icon(Icons.leaderboard), text: 'Classement'),
+            Tab(icon: Icon(Icons.history), text: 'Historique'),
+          ],
+          labelColor: AppColors.accent,
+          unselectedLabelColor: Colors.grey,
+          indicatorColor: AppColors.accent,
+        ),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _hasError
+          ? Center(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            FutureBuilder<QuizStats>(
-              future: _statsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                }
-                if (snapshot.hasError || !snapshot.hasData) {
-                  return const Text('Erreur de chargement des statistiques');
-                }
-                return QuizStatsWidget(stats: snapshot.data!);
-              },
+            Text(
+              'Erreur: $_errorMessage',
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
             ),
-            FutureBuilder<List<GlobalRanking>>(
-              future: _rankingFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                }
-                if (snapshot.hasError || !snapshot.hasData) {
-                  return const Text('Erreur de chargement du classement');
-                }
-                return GlobalRankingWidget(rankings: snapshot.data!);
-              },
-            ),
-            FutureBuilder<List<QuizHistory>>(
-              future: _historyFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                }
-                if (snapshot.hasError || !snapshot.hasData) {
-                  return const Text('Erreur de chargement de l\'historique');
-                }
-                return QuizHistoryWidget(history: snapshot.data!);
-              },
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _loadAllData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Réessayer'),
             ),
           ],
         ),
+      )
+          : TabBarView(
+        controller: _tabController,
+        children: [
+          _buildStatsTab(),
+          _buildRankingTab(),
+          _buildHistoryTab(),
+        ],
       ),
     );
   }
-}
-class _RankingAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const _RankingAppBar();
 
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      title: const Text(
-        'Statistiques',
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: Colors.black87,
-        ),
+  Widget _buildStatsTab() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: FutureBuilder<QuizStats>(
+        future: _statsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError || !snapshot.hasData) {
+            return const Center(
+              child: Text('Erreur de chargement des statistiques'),
+            );
+          }
+          return Card(
+            margin: EdgeInsets.zero, // Supprime la marge interne du Card
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: QuizStatsWidget(stats: snapshot.data!),
+          );
+        },
       ),
-      backgroundColor: AppColors.background,
-      elevation: 1,
-      centerTitle: true,
     );
   }
 
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Widget _buildRankingTab() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: FutureBuilder<List<GlobalRanking>>(
+        future: _rankingFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError || !snapshot.hasData) {
+            return const Center(
+              child: Text('Erreur de chargement du classement'),
+            );
+          }
+          return Card(
+            margin: EdgeInsets.zero,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: GlobalRankingWidget(rankings: snapshot.data!),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildHistoryTab() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: FutureBuilder<List<QuizHistory>>(
+        future: _historyFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError || !snapshot.hasData) {
+            return const Center(
+              child: Text('Erreur de chargement de l\'historique'),
+            );
+          }
+          return Card(
+            margin: EdgeInsets.zero,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: QuizHistoryWidget(history: snapshot.data!),
+          );
+        },
+      ),
+    );
+  }
 }

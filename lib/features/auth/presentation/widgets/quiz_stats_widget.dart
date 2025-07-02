@@ -8,172 +8,390 @@ class QuizStatsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 600;
+
     return SingleChildScrollView(
-      child: Card(
-        margin: const EdgeInsets.all(12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        elevation: 4,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSectionHeader('📊 Mes Statistiques'),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildStatTile(
-                    Icons.check_circle,
-                    'Quiz\ncomplétés',
-                    stats.totalQuizzes.toString(),
-                    Colors.blue,
-                  ),
-                  _buildStatTile(
-                    Icons.star,
-                    'Score\nmoyen',
-                    '${stats.averageScore.toStringAsFixed(2)}%',
-                    Colors.orange,
-                  ),
-                  _buildStatTile(
-                    Icons.emoji_events,
-                    'Points\ntotaux',
-                    stats.totalPoints.toString(),
-                    Colors.green,
-                  ),
-                ],
+      child: Padding(
+        padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+        child: Column(
+          children: [
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              const SizedBox(height: 24),
-              _buildSectionHeader('📚 Statistiques par catégorie'),
-              const SizedBox(height: 8),
-              ...stats.categoryStats.map(
-                (category) => _buildCategoryStat(category),
+              color: Theme.of(context).colorScheme.surfaceVariant,
+              child: Padding(
+                padding: const EdgeInsets.all(16), // Réduit de 20 à 16
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Vos Performances',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: isSmallScreen ? 18 : 20,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildCompactStatCard(
+                            context,
+                            Icons.assignment_turned_in,
+                            'Quiz complétés',
+                            stats.totalQuizzes.toString(),
+                            Colors.blueAccent,
+                          ),
+                          const SizedBox(width: 12),
+                          _buildCompactStatCard(
+                            context,
+                            Icons.star_rate_rounded,
+                            'Score moyen',
+                            '${stats.averageScore.toStringAsFixed(1)}%',
+                            Colors.amber,
+                          ),
+                          const SizedBox(width: 12),
+                          _buildCompactStatCard(
+                            context,
+                            Icons.bolt_rounded,
+                            'Points totaux',
+                            stats.totalPoints.toString(),
+                            Colors.greenAccent,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 24),
-              _buildSectionHeader('🎯 Progression par niveau'),
-              const SizedBox(height: 8),
-              _buildLevelProgress(stats.levelProgress),
-            ],
-          ),
+            ),
+
+            const SizedBox(height: 16),
+            // Category stats
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              color: Theme.of(context).colorScheme.surfaceVariant,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Par Catégorie',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: isSmallScreen ? 18 : 20,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ...stats.categoryStats.map(
+                      (category) => _buildCategoryItem(context, category),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Level progress
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              color: Theme.of(context).colorScheme.surfaceVariant,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Progression par Niveau',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: isSmallScreen ? 18 : 20,                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildLevelProgress(context, stats.levelProgress),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: Colors.black87,
-      ),
-    );
-  }
-
-  Widget _buildStatTile(
+  Widget _buildStatCard(
+    BuildContext context,
     IconData icon,
-    String label,
+    String title,
     String value,
     Color color,
   ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryItem(BuildContext context, CategoryStat category) {
+    final percentage = (category.quizCount / stats.totalQuizzes * 100)
+        .toStringAsFixed(1);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                category.category,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                '$percentage%',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: category.quizCount / stats.totalQuizzes,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(4),
+            minHeight: 8,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${category.quizCount} quiz',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
+                ),
+              ),
+              Text(
+                'Moyenne: ${category.averageScore.toStringAsFixed(1)}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+
+// Version compacte des cartes de statistiques
+  Widget _buildCompactStatCard(
+      BuildContext context,
+      IconData icon,
+      String title,
+      String value,
+      Color color,
+      ) {
+    return Container(
+      width: 120, // Largeur fixe pour uniformité
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall,
+            maxLines: 2,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLevelProgress(BuildContext context, LevelProgress progress) {
     return Column(
       children: [
-        CircleAvatar(
-          backgroundColor: color.withOpacity(0.1),
-          radius: 24,
-          child: Icon(icon, color: color, size: 28),
+        _buildLevelProgressItem(
+          context,
+          'Débutant',
+          progress.debutant,
+          Colors.greenAccent,
+        ),
+        const SizedBox(height: 16),
+        _buildLevelProgressItem(
+          context,
+          'Intermédiaire',
+          progress.intermediaire,
+          Colors.orangeAccent,
+        ),
+        const SizedBox(height: 16),
+        _buildLevelProgressItem(
+          context,
+          'Avancé',
+          progress.avance,
+          Colors.redAccent,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLevelProgressItem(
+    BuildContext context,
+    String level,
+    LevelData data,
+    Color color,
+  ) {
+    final total = stats.totalQuizzes;
+    final percentage = total == 0 ? 0.0 : (data.completed / total * 100);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  level,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            Text(
+              '${percentage.toStringAsFixed(1)}%',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: color),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        LinearProgressIndicator(
+          value: total == 0 ? 0.0 : data.completed / total,
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(4),
+          minHeight: 8,
+          valueColor: AlwaysStoppedAnimation<Color>(color),
         ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.black54),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${data.completed} quiz complétés',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+            Text(
+              'Moyenne: ${data.averageScore?.toStringAsFixed(1) ?? '0.0'}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+          ],
         ),
       ],
     );
-  }
-
-  Widget _buildCategoryStat(CategoryStat category) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            category.category,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          LinearProgressIndicator(
-            value:
-                stats.totalQuizzes == 0
-                    ? 0
-                    : category.quizCount / stats.totalQuizzes,
-            backgroundColor: Colors.grey[200],
-            valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
-            minHeight: 6,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${category.quizCount} quiz - Moyenne: ${(category.averageScore is double ? category.averageScore : (category.averageScore as int).toDouble()).toStringAsFixed(2)}',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLevelProgress(LevelProgress progress) {
-    return Column(
-      children: [
-        _buildLevelItem('Débutant', progress.debutant),
-        _buildLevelItem('Intermédiaire', progress.intermediaire),
-        _buildLevelItem('Avancé', progress.avance),
-      ],
-    );
-  }
-
-  Widget _buildLevelItem(String label, LevelData data) {
-    final total = stats.totalQuizzes;
-    final progressValue = total == 0 ? 0.0 : data.completed / total;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          LinearProgressIndicator(
-            value: progressValue,
-            backgroundColor: Colors.grey[200],
-            valueColor: AlwaysStoppedAnimation<Color>(_getLevelColor(label)),
-            minHeight: 6,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${data.completed} quiz - Moyenne: ${data.averageScore == null ? '0' : (data.averageScore is double ? data.averageScore!.toStringAsFixed(2) : (data.averageScore as int).toDouble().toStringAsFixed(2))}',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getLevelColor(String level) {
-    switch (level) {
-      case 'Débutant':
-        return Colors.green;
-      case 'Intermédiaire':
-        return Colors.orange;
-      case 'Avancé':
-        return Colors.red;
-      default:
-        return Colors.blue;
-    }
   }
 }

@@ -78,12 +78,6 @@ class RandomFormationsWidget extends StatelessWidget {
               color: Theme.of(context).primaryColor,
             ),
           ),
-          if (onRefresh != null)
-            IconButton(
-              icon: Icon(Icons.refresh, size: isSmallScreen ? 20 : 24),
-              onPressed: onRefresh,
-              tooltip: 'Actualiser',
-            ),
         ],
       ),
     );

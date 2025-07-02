@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 
 class AudioQuestion extends StatefulWidget {
@@ -44,8 +45,18 @@ class _AudioQuestionState extends State<AudioQuestion> {
 
   Future<void> _initAudioPlayer() async {
     try {
-      await _audioPlayer.setSource(UrlSource(widget.question.mediaUrl!));
+      final mediaUrl = widget.question.mediaUrl;
+      if (mediaUrl == null || mediaUrl.isEmpty) {
+        throw Exception('Aucune URL audio fournie');
+      }
+
+      // Corrige l'URL pour qu'elle soit complète
+      final fullAudioUrl = AppConstants.getAudioStreamUrl(mediaUrl);
+      print('🟣 Audio full URL = $fullAudioUrl');
+
+      await _audioPlayer.setSource(UrlSource(fullAudioUrl));
     } catch (e) {
+      print('Erreur lors du chargement audio: $e');
       if (mounted) {
         setState(() {
           _audioError = true;
