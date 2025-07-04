@@ -64,11 +64,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.star,
-                color: Colors.amber,
-                size: 60,
-              ),
+              const Icon(Icons.star, color: Colors.amber, size: 60),
               const SizedBox(height: 20),
               Text(
                 'Félicitations !',
@@ -118,6 +114,9 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final answeredQuestions =
+        widget.questions.where((q) => q.selectedAnswers != null).toList();
+
     final calculatedScore =
         widget.questions.where((q) => q.isCorrect == true).length * 2;
     final calculatedCorrectAnswers =
@@ -132,8 +131,8 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
           IconButton(
             icon: const Icon(Icons.list),
             tooltip: 'Retour à la liste des quiz',
-            onPressed: () =>
-                Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed:
+                () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
       ),
@@ -144,7 +143,8 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
               QuizScoreHeader(
                 score: calculatedScore,
                 correctAnswers: calculatedCorrectAnswers,
-                totalQuestions: widget.totalQuestions,
+                totalQuestions:
+                    answeredQuestions.length, // Utiliser le nouveau total
                 timeSpent: widget.timeSpent,
               ),
               Expanded(
@@ -206,8 +206,8 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
           const SizedBox(width: 16),
           FloatingActionButton(
             heroTag: 'quiz_list',
-            onPressed: () =>
-                Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed:
+                () => Navigator.of(context).popUntil((route) => route.isFirst),
             tooltip: 'Retour à la liste des quiz',
             child: const Icon(Icons.assignment),
           ),
