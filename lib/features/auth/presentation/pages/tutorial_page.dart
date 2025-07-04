@@ -51,9 +51,10 @@ class _TutorialPageState extends State<TutorialPage> {
       final stagiaireId = user.stagiaire?.id;
 
       setState(() {
-        _formationsFuture = stagiaireId != null
-            ? _mediaRepository.getFormationsAvecMedias(stagiaireId)
-            : Future.value([]);
+        _formationsFuture =
+            stagiaireId != null
+                ? _mediaRepository.getFormationsAvecMedias(stagiaireId)
+                : Future.value([]);
       });
     } catch (e) {
       debugPrint("Erreur : $e");
@@ -72,6 +73,7 @@ class _TutorialPageState extends State<TutorialPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.background,
+        automaticallyImplyLeading: false,
         title: ToggleButtons(
           isSelected: [
             _selectedCategory == 'tutoriel',
@@ -107,7 +109,8 @@ class _TutorialPageState extends State<TutorialPage> {
       body: FutureBuilder<List<FormationWithMedias>>(
         future: _formationsFuture,
         builder: (context, snapshot) {
-          if (_formationsFuture == null || snapshot.connectionState == ConnectionState.waiting) {
+          if (_formationsFuture == null ||
+              snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -126,9 +129,10 @@ class _TutorialPageState extends State<TutorialPage> {
             orElse: () => formations.first,
           );
 
-          final mediasFiltres = selectedFormation.medias
-              .where((m) => m.categorie == _selectedCategory)
-              .toList();
+          final mediasFiltres =
+              selectedFormation.medias
+                  .where((m) => m.categorie == _selectedCategory)
+                  .toList();
 
           return Column(
             children: [
@@ -150,7 +154,7 @@ class _TutorialPageState extends State<TutorialPage> {
                       alignment: WrapAlignment.center,
                       children: [
                         Container(
-                          width:  double.infinity,
+                          width: double.infinity,
                           decoration: BoxDecoration(
                             color: colorScheme.surface,
                             borderRadius: BorderRadius.circular(12),
@@ -166,27 +170,30 @@ class _TutorialPageState extends State<TutorialPage> {
                           child: DropdownButton<int>(
                             isExpanded: true,
                             value: _selectedFormationId ?? selectedFormation.id,
-                            items: formations.map((formation) {
-                              return DropdownMenuItem<int>(
-                                value: formation.id,
-                                child: Text(
-                                  formation.titre.toUpperCase(),
-                                  style: theme.textTheme.bodyMedium,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              );
-                            }).toList(),
+                            items:
+                                formations.map((formation) {
+                                  return DropdownMenuItem<int>(
+                                    value: formation.id,
+                                    child: Text(
+                                      formation.titre.toUpperCase(),
+                                      style: theme.textTheme.bodyMedium,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
+                                }).toList(),
                             onChanged: (value) {
                               setState(() {
                                 _selectedFormationId = value;
                               });
                             },
                             underline: const SizedBox(),
-                            icon: Icon(Icons.arrow_drop_down, color: colorScheme.primary),
+                            icon: Icon(
+                              Icons.arrow_drop_down,
+                              color: colorScheme.primary,
+                            ),
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        
                       ],
                     );
                   },
@@ -197,100 +204,116 @@ class _TutorialPageState extends State<TutorialPage> {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: mediasFiltres.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.video_library_outlined,
-                                size: 64,
-                                color: colorScheme.onSurface.withOpacity(0.3),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                "Aucun média trouvé",
-                                style: theme.textTheme.bodyLarge?.copyWith(
-                                  color: colorScheme.onSurface.withOpacity(0.5),
+                  child:
+                      mediasFiltres.isEmpty
+                          ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.video_library_outlined,
+                                  size: 64,
+                                  color: colorScheme.onSurface.withOpacity(0.3),
                                 ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.separated(
-                          itemCount: mediasFiltres.length,
-                          separatorBuilder: (context, index) => const SizedBox(height: 8),
-                          itemBuilder: (context, index) {
-                            final media = mediasFiltres[index];
-                            return Card(
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              color: const Color(0xFFFFF9C4),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => YoutubePlayerPage(
-                                        video: media,
-                                        videosInSameCategory: mediasFiltres,
-                                      ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  "Aucun média trouvé",
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    color: colorScheme.onSurface.withOpacity(
+                                      0.5,
                                     ),
-                                  );
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 60,
-                                        height: 60,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFFFEB3B).withOpacity(0.8),
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: const Icon(
-                                          Icons.play_circle_filled,
-                                          size: 32,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              media.titre,
-                                              style: theme.textTheme.bodyLarge?.copyWith(
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            // const SizedBox(height: 4),
-                                            // Text(
-                                            //   media.url,
-                                            //   style: theme.textTheme.bodySmall?.copyWith(
-                                            //     color: Colors.black54,
-                                            //   ),
-                                            //   maxLines: 1,
-                                            //   overflow: TextOverflow.ellipsis,
-                                            // ),
-                                          ],
-                                        ),
-                                      ),
-                                      const Icon(Icons.chevron_right, color: Colors.black54),
-                                    ],
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
+                              ],
+                            ),
+                          )
+                          : ListView.separated(
+                            itemCount: mediasFiltres.length,
+                            separatorBuilder:
+                                (context, index) => const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              final media = mediasFiltres[index];
+                              return Card(
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                color: const Color(0xFFFFF9C4),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (_) => YoutubePlayerPage(
+                                              video: media,
+                                              videosInSameCategory:
+                                                  mediasFiltres,
+                                            ),
+                                      ),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 60,
+                                          height: 60,
+                                          decoration: BoxDecoration(
+                                            color: const Color(
+                                              0xFFFFEB3B,
+                                            ).withOpacity(0.8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.play_circle_filled,
+                                            size: 32,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                media.titre,
+                                                style: theme.textTheme.bodyLarge
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              // const SizedBox(height: 4),
+                                              // Text(
+                                              //   media.url,
+                                              //   style: theme.textTheme.bodySmall?.copyWith(
+                                              //     color: Colors.black54,
+                                              //   ),
+                                              //   maxLines: 1,
+                                              //   overflow: TextOverflow.ellipsis,
+                                              // ),
+                                            ],
+                                          ),
+                                        ),
+                                        const Icon(
+                                          Icons.chevron_right,
+                                          color: Colors.black54,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                 ),
               ),
             ],
