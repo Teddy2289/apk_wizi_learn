@@ -80,10 +80,11 @@ class _CustomScaffoldState extends State<CustomScaffold> {
   Future<int> _loadUserPoints() async {
     try {
       final user = await _authRepository.getMe();
-      debugPrint('User: ${user.stagiaire}');
+      debugPrint('User stagiaire ID: ${user.stagiaire?.id}');
       if (user.stagiaire?.id == null) return 0;
 
       final rankings = await _statsRepository.getGlobalRanking();
+      debugPrint('Rankings loaded: ${rankings} entries');
       final userRanking = rankings.firstWhere(
             (r) => r.stagiaire.id == user.stagiaire!.id.toString(),
         orElse: () => GlobalRanking(
