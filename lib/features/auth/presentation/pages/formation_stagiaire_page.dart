@@ -8,6 +8,8 @@ import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/formation_repository.dart';
 import 'package:intl/intl.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/contact_page.dart';
+import 'package:wizi_learn/features/auth/data/models/contact_model.dart';
 
 class FormationStagiairePage extends StatefulWidget {
   const FormationStagiairePage({super.key});
@@ -361,6 +363,18 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                 ),
                 const SizedBox(height: 8),
                 _buildInfoRow(
+                  Icons.calendar_today,
+                  'Début de formation: ${formation.dateDebut ?? "-"}',
+                  theme,
+                ),
+                const SizedBox(height: 8),
+                _buildInfoRow(
+                  Icons.calendar_month,
+                  'Fin de formation: ${formation.dateFin ?? "-"}',
+                  theme,
+                ),
+                const SizedBox(height: 8),
+                _buildInfoRow(
                   Icons.euro_symbol,
                   'Prix: ${NumberFormat('#,##0', 'fr_FR').format(formation.tarif)} €',
                   theme,
@@ -374,7 +388,36 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                     color: Colors.green,
                   ),
                 ],
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                if (formation.formateur != null) ...[
+                  GestureDetector(
+                    // onTap: () {
+                    //   Navigator.push(
+                    //     context,
+                    //     MaterialPageRoute(
+                    //       builder: (context) => ContactPage(
+                    //         contacts: [
+                    //           Contact(
+                    //             nom: formation.formateur!.user!.nom,
+                    //             prenom: formation.formateur!.prenom,
+                    //             email: formation.formateur!.user!.email,
+                    //             telephone: formation.formateur!.telephone,
+                    //           ),
+                    //         ],
+                    //       ),
+                    //     ),
+                    //   );
+                    // },
+                    child: _buildInfoRow(
+                      Icons.person,
+                      'Formateur: ${formation.formateur!.prenom} ${formation.formateur!.nom.toUpperCase()}',
+                      theme,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                const SizedBox(height: 8),
                 Text(
                   'Description',
                   style: theme.textTheme.bodyMedium?.copyWith(

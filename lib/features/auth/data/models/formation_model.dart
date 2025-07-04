@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/data/models/stagiaire_model.dart';
+import 'package:wizi_learn/features/auth/data/models/formateur_model.dart';
+
 class Formation {
   final int id;
   final String titre;
@@ -13,6 +15,9 @@ class Formation {
   final String duree;
   final FormationCategory category;
   final List<StagiaireModel>? stagiaires;
+  final FormateurModel? formateur;
+  final String? dateDebut;
+  final String? dateFin;
 
   // Models
   Formation({
@@ -27,7 +32,10 @@ class Formation {
     required this.statut,
     required this.duree,
     required this.category,
-    required this.stagiaires
+    required this.stagiaires,
+    this.formateur,
+    this.dateDebut,
+    this.dateFin,
   });
 
   factory Formation.fromJson(Map<String, dynamic> json) {
@@ -43,9 +51,18 @@ class Formation {
       statut: json['statut'],
       duree: json['duree'],
       category: FormationCategory.fromJson(json['formation']),
-      stagiaires: json['stagiaires'] != null
-          ? (json['stagiaires'] as List).map((s) => StagiaireModel.fromJson(s)).toList()
-          : null,
+      stagiaires:
+          json['stagiaires'] != null
+              ? (json['stagiaires'] as List)
+                  .map((s) => StagiaireModel.fromJson(s))
+                  .toList()
+              : null,
+      formateur:
+          json['formateur'] != null
+              ? FormateurModel.fromJson(json['formateur'])
+              : null,
+      dateDebut: json['date_debut'],
+      dateFin: json['date_fin'],
     );
   }
 }

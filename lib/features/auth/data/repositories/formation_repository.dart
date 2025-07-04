@@ -3,6 +3,7 @@ import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
 import 'package:wizi_learn/features/auth/data/models/stagiaire_model.dart';
+import 'package:wizi_learn/features/auth/data/models/formateur_model.dart';
 
 class FormationRepository {
   final ApiClient apiClient;
@@ -30,65 +31,62 @@ class FormationRepository {
   }
 
   Future<Formation> getFormationDetail(int id) async {
-    final response = await apiClient.get('${AppConstants.catalogue_formation}/$id');
+    final response =
+        await apiClient.get('${AppConstants.catalogue_formation}/$id');
     final data = response.data['catalogueFormation'];
 
     return Formation.fromJson(data);
   }
+
   Future<List<Formation>> getRandomFormations(int count) async {
     final allFormations = await getFormations();
-    // Mélange la liste
     allFormations.shuffle();
-    // Prend les 'count' premiers
     return allFormations.take(count).toList();
   }
 
   Future<List<Formation>> getCatalogueFormations({int? stagiaireId}) async {
     try {
       final response = await apiClient.get(AppConstants.formationStagiaire);
-      // debugPrint('getCatalogueFormations: ${response.data}');
-
       final data = response.data;
 
       if (data is Map && data['data'] is List) {
         final List<Formation> catalogueFormations = [];
+        final formationList = data['data'];
 
-        for (final formationItem in data['data']) {
-          final List<dynamic> catalogues = formationItem['catalogue_formation'] ?? [];
+        for (final formationItem in formationList) {
+          final catalogue = formationItem['catalogue'];
+          final formation = formationItem['formation'];
+          final formateur = formationItem['formateur'];
+          final pivot = formationItem['pivot'] ?? {};
 
-          // Nouveau : Filtrer d'abord les catalogues qui concernent le stagiaire
-          final filteredCatalogues = catalogues.where((catalogue) {
-            if (stagiaireId == null) return true;
+          // Extraction des dates depuis le pivot
+          final String? dateDebut = pivot['date_debut']?.toString();
+          final String? dateFin = pivot['date_fin']?.toString();
 
-            final stagiaires = (catalogue['stagiaires'] as List?)?.map((s) => StagiaireModel.fromJson(s)).toList() ?? [];
-            return stagiaires.any((s) => s.id == stagiaireId);
-          }).toList();
-
-          // Si aucun catalogue ne correspond, passer à la formation suivante
-          if (filteredCatalogues.isEmpty) continue;
-
-          // Prendre seulement le premier catalogue correspondant (ou ajustez selon vos besoins)
-          final catalogue = filteredCatalogues.first;
+          print('Formation: \\n  titre: \\${formation['titre']} \\n  date_debut: \\${dateDebut} \\n  date_fin: \\${dateFin}');
 
           catalogueFormations.add(Formation(
-            id: formationItem['id'], // Utiliser l'ID de la formation, pas du catalogue
-            titre: formationItem['titre'],
-            description: formationItem['description'],
+            id: formation['id'],
+            titre: formation['titre'],
+            description: formation['description'],
             prerequis: catalogue['prerequis'],
             imageUrl: catalogue['image_url'],
             cursusPdf: catalogue['cursus_pdf'],
             tarif: double.tryParse(catalogue['tarif'].toString()) ?? 0,
             certification: catalogue['certification'],
-            statut: formationItem['statut'],
-            duree: formationItem['duree'],
+            statut: formation['statut'],
+            duree: formation['duree'],
             category: FormationCategory(
-              id: formationItem['id'],
-              titre: formationItem['titre'],
-              categorie: formationItem['categorie'],
+              id: formation['id'],
+              titre: formation['titre'],
+              categorie: formation['categorie'],
             ),
             stagiaires: (catalogue['stagiaires'] as List?)
                 ?.map((s) => StagiaireModel.fromJson(s))
                 .toList(),
+            formateur: FormateurModel.fromJson(formateur),
+            dateDebut: dateDebut,
+            dateFin: dateFin,
           ));
         }
 
@@ -103,11 +101,10 @@ class FormationRepository {
   }
 
   Future<void> inscrireAFormation(int formationId) async {
-    // À adapter selon l'endpoint réel de votre API
-    final response = await apiClient.post('/stagiaire/inscription-catalogue-formation', data: {
-      'catalogue_formation_id': formationId,
-    });
-    // Vous pouvez traiter la réponse ici si besoin
+    final response = await apiClient.post(
+      '/stagiaire/inscription-catalogue-formation',
+      data: {'catalogue_formation_id': formationId},
+    );
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('Erreur lors de l\'inscription');
     }
