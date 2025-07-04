@@ -5,10 +5,8 @@ import 'package:wizi_learn/features/auth/presentation/bloc/auth_event.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_state.dart';
 import '../../bloc/auth_bloc.dart';
 import '../../components/auth_text_field.dart';
-
 import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
-import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
-import 'package:wizi_learn/core/services/firebase_notification_service.dart';
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -41,7 +39,10 @@ class _LoginPageState extends State<LoginPage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [AppColors.primaryAccent, Colors.white],
+            colors: [
+              AppColors.primaryAccent,
+              Colors.orange,
+            ],
           ),
         ),
         child: Stack(
@@ -109,9 +110,7 @@ class _LoginPageState extends State<LoginPage> {
                         // Titre
                         Text(
                           'Bienvenue',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.headlineSmall?.copyWith(
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: AppColors.primary,
                           ),
@@ -119,8 +118,9 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 8),
                         Text(
                           'Connectez-vous à votre compte',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: Colors.grey.shade600),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey.shade600,
+                          ),
                         ),
                         const SizedBox(height: 32),
 
@@ -135,9 +135,8 @@ class _LoginPageState extends State<LoginPage> {
                             if (value == null || value.isEmpty) {
                               return 'Veuillez entrer votre email';
                             }
-                            if (!RegExp(
-                              r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                            ).hasMatch(value)) {
+                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                .hasMatch(value)) {
                               return 'Email invalide';
                             }
                             return null;
@@ -186,7 +185,9 @@ class _LoginPageState extends State<LoginPage> {
                             },
                             child: Text(
                               'Mot de passe oublié ?',
-                              style: TextStyle(color: AppColors.primary),
+                              style: TextStyle(
+                                color: AppColors.primary,
+                              ),
                             ),
                           ),
                         ),
@@ -202,8 +203,7 @@ class _LoginPageState extends State<LoginPage> {
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      AppColors.primary,
-                                    ),
+                                        AppColors.primary),
                                   ),
                                 ),
                               );
@@ -218,17 +218,14 @@ class _LoginPageState extends State<LoginPage> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
                                 ),
                                 onPressed: () {
                                   if (_formKey.currentState!.validate()) {
                                     context.read<AuthBloc>().add(
                                       LoginEvent(
                                         email: _emailController.text.trim(),
-                                        password:
-                                            _passwordController.text.trim(),
+                                        password: _passwordController.text.trim(),
                                       ),
                                     );
                                   }
@@ -255,7 +252,7 @@ class _LoginPageState extends State<LoginPage> {
 
             // Gestion des états (erreur ou succès)
             BlocListener<AuthBloc, AuthState>(
-              listener: (context, state) async {
+              listener: (context, state) {
                 if (state is AuthError) {
                   final isUnauthorized = state.message.contains('401');
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -283,23 +280,9 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   );
-                  // Envoi du token FCM après login
-                  try {
-                    final authRepo = context.read<AuthBloc>().authRepository;
-                    final apiClient = (authRepo as AuthRepository).apiClient;
-                    if (apiClient != null) {
-                      FirebaseNotificationService().setApiClient(apiClient);
-                    }
-                  } catch (e) {
-                    print(
-                      'Erreur lors de l\'envoi du token FCM après login: $e',
-                    );
-                  }
                   Future.microtask(() {
                     Navigator.pushReplacementNamed(
-                      context,
-                      RouteConstants.dashboard,
-                    );
+                        context, RouteConstants.dashboard);
                   });
                 }
               },

@@ -28,7 +28,6 @@ class _MultipleChoiceQuestionState extends State<MultipleChoiceQuestion> {
     _selectedAnswers = [];
     _answerConfirmed = widget.question.selectedAnswers != null;
 
-    // Initialiser avec les réponses existantes si disponibles
     if (widget.question.selectedAnswers != null) {
       if (widget.question.selectedAnswers is List) {
         _selectedAnswers = List<String>.from(
@@ -42,7 +41,6 @@ class _MultipleChoiceQuestionState extends State<MultipleChoiceQuestion> {
 
   void _handleAnswerSelect(String answerId) {
     setState(() {
-      // Pour choix multiple uniquement: toggle la sélection
       if (_selectedAnswers.contains(answerId)) {
         _selectedAnswers.remove(answerId);
       } else {
@@ -53,7 +51,6 @@ class _MultipleChoiceQuestionState extends State<MultipleChoiceQuestion> {
 
   void _submitAnswer() {
     if (_selectedAnswers.isEmpty) {
-      // Envoyer une liste vide explicitement si aucune réponse n'est sélectionnée
       widget.onAnswer([]);
       setState(() {
         _answerConfirmed = true;
@@ -61,13 +58,11 @@ class _MultipleChoiceQuestionState extends State<MultipleChoiceQuestion> {
       return;
     }
 
-    // Récupérer les textes des réponses sélectionnées
-    final selectedTexts =
-        _selectedAnswers.map((id) {
-          return widget.question.answers
-              .firstWhere((a) => a.id.toString() == id)
-              .text;
-        }).toList();
+    final selectedTexts = _selectedAnswers.map((id) {
+      return widget.question.answers
+          .firstWhere((a) => a.id.toString() == id)
+          .text;
+    }).toList();
 
     widget.onAnswer(selectedTexts);
     setState(() {
@@ -86,49 +81,117 @@ class _MultipleChoiceQuestionState extends State<MultipleChoiceQuestion> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const SizedBox(height: 20),
-        ...widget.question.answers.map((answer) {
-          final isSelected = _selectedAnswers.contains(answer.id.toString());
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
 
-          return InkWell(
-            onTap: () => _handleAnswerSelect(answer.id.toString()),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color:
-                      isSelected ? Theme.of(context).primaryColor : Colors.grey,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                color:
-                    isSelected
-                        ? Theme.of(context).primaryColor.withOpacity(0.1)
-                        : null,
-              ),
-              child: Row(
-                children: [
-                  Checkbox(
-                    value: isSelected,
-                    onChanged: (_) => _handleAnswerSelect(answer.id.toString()),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Question text
+          Text(
+            widget.question.text,
+            style: textTheme.bodyLarge?.copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Answers list
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: widget.question.answers.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final answer = widget.question.answers[index];
+              final isSelected = _selectedAnswers.contains(answer.id.toString());
+
+              return Material(
+                borderRadius: BorderRadius.circular(12),
+                color: isSelected
+                    ? theme.colorScheme.primary.withOpacity(0.1)
+                    : Colors.grey[100],
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => _handleAnswerSelect(answer.id.toString()),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected
+                                  ? theme.colorScheme.primary
+                                  : Colors.grey[400]!,
+                              width: 2,
+                            ),
+                          ),
+                          child: isSelected
+                              ? Center(
+                            child: Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          )
+                              : null,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            answer.text,
+                            style: textTheme.bodyMedium?.copyWith(
+                              fontSize: 14,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(answer.text)),
-                ],
+                ),
+              );
+            },
+          ),
+
+          const SizedBox(height: 24),
+
+          // Submit button
+          if (_selectedAnswers.isNotEmpty && !_answerConfirmed)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: _submitAnswer,
+                child: Text(
+                  'Confirmer la réponse',
+                  style: textTheme.labelLarge?.copyWith(
+                    fontSize: 14,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
-          );
-        }),
-        const SizedBox(height: 20),
-        if (_selectedAnswers.isNotEmpty)
-          if (_selectedAnswers.isNotEmpty && !_answerConfirmed)
-            ElevatedButton(
-              onPressed: _submitAnswer,
-              child: const Text('Confirmer la réponse'),
-            ),
-      ],
+        ],
+      ),
     );
   }
 }

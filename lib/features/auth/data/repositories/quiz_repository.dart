@@ -18,9 +18,8 @@ class QuizRepository {
         return [];
       }
 
-      final List<dynamic> rawQuizzes = response.data['data'] is List
-          ? response.data['data']
-          : [];
+      final List<dynamic> rawQuizzes =
+          response.data['data'] is List ? response.data['data'] : [];
 
       final List<Quiz> quizzes = [];
       for (var rawQuiz in rawQuizzes) {
@@ -62,7 +61,8 @@ class QuizRepository {
       final response = await apiClient.get(AppConstants.globalRanking);
       final List<dynamic> ranking = response.data is List ? response.data : [];
       return ranking.firstWhere(
-            (entry) => entry is Map &&
+        (entry) =>
+            entry is Map &&
             entry['stagiaire'] is Map &&
             entry['stagiaire']['id']?.toString() == stagiaireId.toString(),
         orElse: () => null,
@@ -76,7 +76,9 @@ class QuizRepository {
   Future<List<Question>> getQuizQuestions(int quizId) async {
     try {
       final response = await apiClient.get('/quiz/$quizId/questions');
-      final formattedJson = const JsonEncoder.withIndent('  ').convert(response.data);
+      final formattedJson = const JsonEncoder.withIndent(
+        '  ',
+      ).convert(response.data);
 
       if (response.data == null || response.data['data'] == null) return [];
 
@@ -101,10 +103,7 @@ class QuizRepository {
     try {
       final response = await apiClient.post(
         '/quiz/$quizId/result',
-        data: {
-          'answers': answers,
-          'timeSpent': timeSpent,
-        },
+        data: {'answers': answers, 'timeSpent': timeSpent},
       );
 
       return response.data ?? {};
