@@ -25,7 +25,8 @@ class _HomePageState extends State<HomePage> {
   List<Contact> _contacts = [];
   List<Formation> _randomFormations = [];
   bool _isLoading = true;
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
@@ -75,9 +76,9 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors du chargement: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erreur lors du chargement: $e')));
     }
   }
 
@@ -107,91 +108,104 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-        onRefresh: _refreshData,
-        child: CustomScrollView(
-          slivers: [
-            // Section Formations
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              sliver: SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: RandomFormationsWidget(
-                    formations: _randomFormations,
-                    onRefresh: _refreshData,
-                  ),
-                ),
-              ),
-            ),
-            // Section Contacts
-            SliverPadding(
-              padding: const EdgeInsets.all(16.0),
-              sliver: SliverToBoxAdapter(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Mes contacts',
-                        style: TextStyle(
-                          fontSize: screenWidth < 350 ? 16 : 18,
-                          color: const Color(0xFFB07661),
-                          fontWeight: FontWeight.bold,
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                onRefresh: _refreshData,
+                child: CustomScrollView(
+                  slivers: [
+                    // Section Formations
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      sliver: SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: RandomFormationsWidget(
+                            formations: _randomFormations,
+                            onRefresh: _refreshData,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                ContactPage(contacts: _contacts),
+                    // Section Contacts
+                    SliverPadding(
+                      padding: const EdgeInsets.all(16.0),
+                      sliver: SliverToBoxAdapter(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Mes contacts',
+                                style: TextStyle(
+                                  fontSize: screenWidth < 350 ? 16 : 18,
+                                  color: const Color(0xFFB07661),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) =>
+                                            ContactPage(contacts: _contacts),
+                                  ),
+                                );
+                              },
+                              child: const Text('Voir tous'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Contacts ou message si vide
+                    if (_contacts.isEmpty)
+                      SliverFillRemaining(
+                        child: const Center(
+                          child: Text('Aucun contact disponible'),
+                        ),
+                      )
+                    else
+                      (() {
+                        final wantedRoles = [
+                          'commercial',
+                          'formateur',
+                          'pôle relation client',
+                          'pôle_relation_client',
+                        ];
+                        final filteredContacts = <String, Contact>{};
+                        for (final c in _contacts) {
+                          final role = c.role.toLowerCase().replaceAll(
+                            '_',
+                            ' ',
+                          );
+                          if (wantedRoles.contains(role) &&
+                              !filteredContacts.containsKey(role)) {
+                            filteredContacts[role] = c;
+                          }
+                        }
+                        final contactsToShow = filteredContacts.values.toList();
+                        return SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => ContactCard(
+                              contact: contactsToShow[index],
+                              showFormations: false,
+                            ),
+                            childCount: contactsToShow.length,
                           ),
                         );
-                      },
-                      child: const Text('Voir tous'),
-                    ),
+                      })(),
                   ],
                 ),
               ),
-            ),
-
-            // Contacts ou message si vide
-            if (_contacts.isEmpty)
-              SliverFillRemaining(
-                child: const Center(
-                    child: Text('Aucun contact disponible')),
-              )
-            else
-              (() {
-                final wantedRoles = [
-                  'commercial',
-                  'formateur',
-                  'pole_relation_client'
-                ];
-                final filteredContacts = <String, Contact>{};
-                for (final c in _contacts) {
-                  if (wantedRoles.contains(c.role) &&
-                      !filteredContacts.containsKey(c.role)) {
-                    filteredContacts[c.role] = c;
-                  }
-                }
-                final contactsToShow = filteredContacts.values.toList();
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                        (context, index) => ContactCard(
-                        contact: contactsToShow[index]),
-                    childCount: contactsToShow.length,
-                  ),
-                );
-              })(),
-          ],
-        ),
-      ),
     );
   }
 }

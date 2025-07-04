@@ -5,56 +5,30 @@ class Contact extends Equatable {
   final int id;
   final String prenom;
   final String role;
-  final int userId;
   final String telephone;
-  final String? deletedAt;
-  final String createdAt;
-  final String updatedAt;
-  final UserModel user;
+  final String email;
+  final List<dynamic>? formations;
 
   const Contact({
     required this.id,
     required this.prenom,
     required this.role,
-    required this.userId,
     required this.telephone,
-    this.deletedAt,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.user,
+    required this.email,
+    this.formations,
   });
 
   factory Contact.fromJson(Map<String, dynamic> json) {
-  final userJson = {
-    'user': json['user'] ?? {},
-    if (json.containsKey('user') && (json['user'] as Map).containsKey('stagiaire'))
-      'stagiaire': json['user']['stagiaire'],
-  };
-
     return Contact(
       id: json['id'],
-      prenom: json['prenom'],
-      role: json['role'],
-      userId: json['user_id'],
+      prenom: json['name'], // correspond à "name" dans l'API
+      role: json['type'], // correspond à "type" dans l'API
       telephone: json['telephone'],
-      deletedAt: json['deleted_at'],
-      createdAt: json['created_at'],
-      updatedAt: json['updated_at'],
-    user: UserModel.fromJson(userJson),
+      email: json['email'],
+      formations: json['formations'],
     );
   }
 
-
   @override
-  List<Object?> get props => [
-    id,
-    prenom,
-    role,
-    userId,
-    telephone,
-    deletedAt,
-    createdAt,
-    updatedAt,
-    user,
-  ];
+  List<Object?> get props => [id, prenom, role, telephone, email, formations];
 }

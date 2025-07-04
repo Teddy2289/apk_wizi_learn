@@ -5,8 +5,13 @@ import 'package:wizi_learn/features/auth/data/models/contact_model.dart';
 
 class ContactCard extends StatelessWidget {
   final Contact contact;
+  final bool showFormations;
 
-  const ContactCard({super.key, required this.contact});
+  const ContactCard({
+    super.key,
+    required this.contact,
+    this.showFormations = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +116,7 @@ class ContactCard extends StatelessWidget {
                             onTap: () async {
                               final mailUrl = Uri(
                                 scheme: 'mailto',
-                                path: contact.user.email,
+                                path: contact.email,
                               );
                               try {
                                 await launchUrl(mailUrl);
@@ -126,7 +131,7 @@ class ContactCard extends StatelessWidget {
                               }
                             },
                             child: Text(
-                              contact.user.email,
+                              contact.email,
                               style: TextStyle(fontSize: infoFontSize),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -135,6 +140,51 @@ class ContactCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                    // Ajout de l'affichage des formations pour les formateurs
+                    if (showFormations &&
+                        contact.role.toLowerCase().contains('formateur') &&
+                        contact.formations != null &&
+                        contact.formations!.isNotEmpty) ...[
+                      SizedBox(height: isSmallScreen ? 2 : 6),
+                      Text(
+                        'Formations :',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: infoFontSize,
+                          color: Colors.brown.shade700,
+                        ),
+                      ),
+                      ...contact.formations!.map((f) {
+                        String formatDate(String? date) {
+                          if (date == null || date.isEmpty) return '';
+                          try {
+                            final d = DateTime.parse(date);
+                            return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+                          } catch (_) {
+                            return date;
+                          }
+                        }
+
+                        final debut = formatDate(f['dateDebut']);
+                        final fin = formatDate(f['dateFin']);
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              f['titre'] ?? '',
+                              style: TextStyle(fontSize: infoFontSize),
+                            ),
+                            Text(
+                              '(${debut} - ${fin})',
+                              style: TextStyle(
+                                fontSize: infoFontSize,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+                    ],
                   ],
                 ),
               ),
