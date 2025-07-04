@@ -252,7 +252,7 @@ class _CustomScaffoldState extends State<CustomScaffold> {
                     color: theme.colorScheme.onPrimary,
                   ),
                   children: [
-                    const TextSpan(text: 'Parraine et gagne '),
+                    const TextSpan(text: 'Je parraine et je gagne '),
                     WidgetSpan(
                       alignment: PlaceholderAlignment.middle,
                       child: Container(
@@ -266,11 +266,12 @@ class _CustomScaffoldState extends State<CustomScaffold> {
                           vertical: 2,
                         ),
                         child: const Text(
-                          '50€ ',
+                          '50 € ',
                           style: TextStyle(
                             color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 25,
+                            fontFamily: 'Montserrat',
                           ),
                         ),
                       ),

@@ -23,6 +23,15 @@ class QuizSessionManager {
     _startQuestionTimer();
   }
 
+  // Méthodes de navigation ajoutées
+  void goToQuestion(int index) {
+    if (index >= 0 && index < questions.length) {
+      _recordTimeSpent();
+      currentQuestionIndex.value = index;
+      _resetQuestionTimer();
+    }
+  }
+
   void _startQuestionTimer() {
     _questionStartTime = DateTime.now();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {

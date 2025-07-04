@@ -113,10 +113,9 @@ class _QuizPageState extends State<QuizPage> {
       appBar: AppBar(
         title: const Text('Mes Quiz'),
         centerTitle: true,
-
         backgroundColor:
             isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
-        elevation: 1,
+        elevation: 0,
         foregroundColor: isDarkMode ? Colors.white : Colors.black87,
       ),
       body:
@@ -157,37 +156,40 @@ class _QuizPageState extends State<QuizPage> {
       child: CustomScrollView(
         controller: _scrollController,
         slivers: [
-          SliverToBoxAdapter(child: _buildHeader(theme)),
-          _buildQuizListContent(theme),
-          const SliverToBoxAdapter(child: SizedBox(height: 20)),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            sliver: SliverToBoxAdapter(child: _buildHeader(theme)),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: _buildQuizListContent(theme),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
         ],
       ),
     );
   }
 
   Widget _buildHeader(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 16),
-          Text(
-            'Vos quiz disponibles',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Vos quiz disponibles',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Testez vos connaissances avec ces quiz',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
-            ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Testez vos connaissances avec ces quiz',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
           ),
-          const SizedBox(height: 24),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 
@@ -199,7 +201,6 @@ class _QuizPageState extends State<QuizPage> {
     return FutureBuilder<List<Quiz>>(
       future: _futureQuizzes,
       builder: (context, snapshot) {
-        // Pendant le refresh (mais après le premier chargement)
         if (snapshot.connectionState == ConnectionState.waiting &&
             !_isInitialLoad) {
           return SliverList(
@@ -210,21 +211,22 @@ class _QuizPageState extends State<QuizPage> {
           );
         }
 
-        // Erreur
         if (snapshot.hasError) {
           return SliverFillRemaining(child: _buildErrorState(theme));
         }
 
-        // Données disponibles
         if (snapshot.hasData) {
           final quizzes = snapshot.data!;
           if (quizzes.isNotEmpty) {
             return SliverList(
               delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildQuizCard(
-                  quizzes[index],
-                  _expandedQuizzes[quizzes[index].id] ?? false,
-                  theme,
+                (context, index) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildQuizCard(
+                    quizzes[index],
+                    _expandedQuizzes[quizzes[index].id] ?? false,
+                    theme,
+                  ),
                 ),
                 childCount: quizzes.length,
               ),
@@ -233,17 +235,18 @@ class _QuizPageState extends State<QuizPage> {
           return SliverFillRemaining(child: _buildEmptyState(theme));
         }
 
-        // Cas par défaut (ne devrait normalement pas arriver)
         return SliverFillRemaining(child: _buildLoadingScreen(theme));
       },
     );
   }
 
   Widget _buildQuizShimmer(ThemeData theme) {
-    return Card(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -301,12 +304,15 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   Widget _buildInfoRow(IconData icon, String text, ThemeData theme) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: theme.colorScheme.primary),
-        const SizedBox(width: 8),
-        Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
+        ],
+      ),
     );
   }
 
@@ -373,10 +379,18 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   Widget _buildQuizCard(Quiz quiz, bool isExpanded, ThemeData theme) {
-    return Card(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
@@ -394,7 +408,7 @@ class _QuizPageState extends State<QuizPage> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.2),
+                      color: theme.colorScheme.primary.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(Icons.quiz, color: theme.colorScheme.primary),
@@ -428,36 +442,36 @@ class _QuizPageState extends State<QuizPage> {
               ),
               if (isExpanded) ...[
                 const SizedBox(height: 16),
-                Divider(color: theme.dividerColor.withOpacity(0.3)),
-                const SizedBox(height: 8),
+                Divider(height: 1, color: theme.dividerColor.withOpacity(0.3)),
+                const SizedBox(height: 12),
                 _buildInfoRow(
                   Icons.school,
                   'Formation: ${quiz.formation.titre}',
                   theme,
                 ),
-                const SizedBox(height: 8),
                 _buildInfoRow(
                   Icons.star,
                   'Points: ${quiz.nbPointsTotal}',
                   theme,
                 ),
-                const SizedBox(height: 8),
                 _buildInfoRow(
                   Icons.assessment,
                   'Niveau: ${quiz.niveau}',
                   theme,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Text(
                   'Description',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   quiz.description ?? 'Aucune description disponible',
-                  style: theme.textTheme.bodyMedium,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.8),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -466,10 +480,11 @@ class _QuizPageState extends State<QuizPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: theme.colorScheme.onPrimary,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      elevation: 0,
                     ),
                     onPressed: () async {
                       try {
@@ -495,10 +510,11 @@ class _QuizPageState extends State<QuizPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => QuizSessionPage(
-                              quiz: quiz,
-                              questions: questions,
-                            ),
+                            builder:
+                                (_) => QuizSessionPage(
+                                  quiz: quiz,
+                                  questions: questions,
+                                ),
                           ),
                         );
                       } catch (e) {

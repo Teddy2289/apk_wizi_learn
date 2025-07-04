@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 
@@ -23,8 +22,6 @@ class FillBlankQuestion extends StatefulWidget {
 class _FillBlankQuestionState extends State<FillBlankQuestion> {
   late TextEditingController _controller;
   late String _userAnswer;
-  late Timer _timer;
-  int _remainingSeconds = 30;
   bool _hasAnswered = false;
 
   @override
@@ -33,7 +30,6 @@ class _FillBlankQuestionState extends State<FillBlankQuestion> {
     _controller = TextEditingController();
     _userAnswer = '';
 
-    // Initialize with existing answer if available
     if (widget.question.selectedAnswers != null &&
         widget.question.selectedAnswers is Map) {
       final answers = widget.question.selectedAnswers as Map;
@@ -43,168 +39,165 @@ class _FillBlankQuestionState extends State<FillBlankQuestion> {
         _hasAnswered = _userAnswer.isNotEmpty;
       }
     }
-
-    _startTimer();
   }
 
   @override
   void dispose() {
     _controller.dispose();
-    _timer.cancel();
     super.dispose();
   }
 
-  void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingSeconds > 0) {
-        setState(() => _remainingSeconds--);
-      } else {
-        _timer.cancel();
-        widget.onTimeout();
-      }
-    });
-  }
-
-  Widget _buildQuestionText() {
+  Widget _buildQuestionText(BuildContext context) {
+    final theme = Theme.of(context);
     final questionText = widget.question.text;
     final blankStart = questionText.indexOf('{');
     final blankEnd = questionText.indexOf('}');
 
-    // Extract text parts
     final beforeText = questionText.substring(0, blankStart);
     final afterText = questionText.substring(blankEnd + 1);
 
-    return RichText(
-      text: TextSpan(
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          fontSize: 20,
-          color: Colors.black87,
-          height: 1.4,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RichText(
+          text: TextSpan(
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontSize: 18,
+              height: 1.5,
+            ),
+            children: [
+              TextSpan(text: beforeText),
+            ],
+          ),
         ),
-        children: [
-          TextSpan(text: beforeText),
-          WidgetSpan(
-            child: Container(
-              width: 180,
-              margin: const EdgeInsets.symmetric(horizontal: 8),
-              child: TextField(
-                controller: _controller,
-                onChanged: (value) {
-                  setState(() {
-                    _userAnswer = value;
-                    _hasAnswered = value.isNotEmpty;
-                  });
-                  widget.onAnswer({'reponse': value});
-                },
-                decoration: InputDecoration(
-                  hintText: 'Entrer votre réponse',
-                  hintStyle: TextStyle(color: Colors.grey.shade400),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: _hasAnswered ? Colors.green : Colors.yellowAccent,
-                      width: 2,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: _hasAnswered ? Colors.green : Colors.yellow,
-                      width: 2,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Colors.yellow,
-                      width: 2.5,
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-                enabled: !widget.showFeedback,
-                style: const TextStyle(
-                  fontSize: 18,
-                  color: Colors.black87,
+        const SizedBox(height: 12),
+        Container(
+          constraints: const BoxConstraints(minWidth: 200, maxWidth: 500),
+          child: TextField(
+            controller: _controller,
+            onChanged: (value) {
+              setState(() {
+                _userAnswer = value;
+                _hasAnswered = value.isNotEmpty;
+              });
+              widget.onAnswer({'reponse': value});
+            },
+            decoration: InputDecoration(
+              hintText: 'Tapez votre réponse ici...',
+              hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.hintColor,
+              ),
+              filled: true,
+              fillColor: theme.cardColor,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: _hasAnswered
+                      ? theme.colorScheme.primary
+                      : theme.dividerColor,
+                  width: 1.5,
                 ),
               ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: theme.colorScheme.primary,
+                  width: 2,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
             ),
+            enabled: !widget.showFeedback,
+            style: theme.textTheme.bodyLarge,
+            maxLines: null,
           ),
-          TextSpan(text: afterText),
-        ],
-      ),
+        ),
+        const SizedBox(height: 12),
+        RichText(
+          text: TextSpan(
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontSize: 18,
+              height: 1.5,
+            ),
+            children: [
+              TextSpan(text: afterText),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 3,
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Timer indicator
-          const SizedBox(height: 24),
-
-          // Question text with fill-in blank
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: _buildQuestionText(),
-          ),
-
-          // Feedback if enabled
-          if (widget.showFeedback && _hasAnswered) ...[
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.green.withOpacity(0.3),
-                  width: 1,
+  Widget _buildFeedback(BuildContext context) {
+    final theme = Theme.of(context);
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: _hasAnswered
+          ? Container(
+        margin: const EdgeInsets.only(top: 16),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.check_circle,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Réponse enregistrée',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.primary,
                 ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.check_circle,
-                    color: Colors.green[600],
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Your answer has been saved!',
-                      style: TextStyle(
-                        color: Colors.green[800],
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ),
           ],
+        ),
+      )
+          : const SizedBox.shrink(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            color: theme.scaffoldBackgroundColor,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Question text with blank
+                  _buildQuestionText(context),
+
+                  // Feedback
+                  if (widget.showFeedback) _buildFeedback(context),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
