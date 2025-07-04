@@ -4,9 +4,12 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:wizi_learn/features/auth/data/models/quiz_model.dart';
+import 'package:wizi_learn/features/auth/data/models/quiz_model.dart'
+    as quiz_model;
+import 'package:wizi_learn/features/auth/data/models/stats_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/quiz_repository.dart';
+import 'package:wizi_learn/features/auth/data/repositories/stats_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_session_page.dart';
 
 class QuizPage extends StatefulWidget {
@@ -19,17 +22,20 @@ class QuizPage extends StatefulWidget {
 class _QuizPageState extends State<QuizPage> {
   late final QuizRepository _quizRepository;
   late final AuthRepository _authRepository;
-  Future<List<Quiz>>? _futureQuizzes;
+  late final StatsRepository _statsRepository;
+  Future<List<quiz_model.Quiz>>? _futureQuizzes;
   final Map<int, bool> _expandedQuizzes = {};
   final ScrollController _scrollController = ScrollController();
   bool _showBackToTopButton = false;
   bool _isInitialLoad = true;
+  int? _connectedStagiaireId;
+  int _userPoints = 0;
 
   @override
   void initState() {
     super.initState();
     _initializeRepositories();
-    _loadQuizzesForConnectedStagiaire();
+    _loadConnectedUserAndQuizzes();
     _scrollController.addListener(_scrollListener);
   }
 
@@ -68,6 +74,7 @@ class _QuizPageState extends State<QuizPage> {
       ),
       storage: storage,
     );
+    _statsRepository = StatsRepository(apiClient: apiClient);
   }
 
   Future<void> _loadQuizzesForConnectedStagiaire() async {
@@ -101,6 +108,91 @@ class _QuizPageState extends State<QuizPage> {
         _futureQuizzes = Future.value([]);
         _isInitialLoad = false;
       });
+    }
+  }
+
+  Future<void> _loadConnectedUserAndQuizzes() async {
+    setState(() => _isInitialLoad = true);
+    try {
+      // Récupérer l'utilisateur connecté
+      final user = await _authRepository.getMe();
+      _connectedStagiaireId = user.stagiaire?.id;
+
+      if (_connectedStagiaireId == null) {
+        setState(() {
+          _futureQuizzes = Future.value([]);
+          _isInitialLoad = false;
+        });
+        return;
+      }
+
+      // Récupérer les points du stagiaire
+      final rankings = await _statsRepository.getGlobalRanking();
+      final userRanking = rankings.firstWhere(
+        (r) => r.stagiaire.id == _connectedStagiaireId,
+        orElse:
+            () => GlobalRanking(
+              stagiaire: Stagiaire(id: '0', prenom: '', image: ''),
+              totalPoints: 0,
+              quizCount: 0,
+              averageScore: 0,
+              rang: 0,
+            ),
+      );
+      _userPoints = userRanking.totalPoints;
+
+      // Récupérer tous les quiz
+      final allQuizzes = await _quizRepository.getQuizzesForStagiaire(
+        stagiaireId: _connectedStagiaireId!,
+      );
+
+      // Filtrer les quiz en fonction des points
+      final filteredQuizzes = _filterQuizzesByPoints(allQuizzes, _userPoints);
+
+      setState(() {
+        _futureQuizzes = Future.value(filteredQuizzes);
+        _isInitialLoad = false;
+        for (var quiz in filteredQuizzes) {
+          _expandedQuizzes.putIfAbsent(quiz.id, () => false);
+        }
+      });
+    } catch (e) {
+      debugPrint('Erreur chargement quiz: $e');
+      setState(() {
+        _futureQuizzes = Future.value([]);
+        _isInitialLoad = false;
+      });
+    }
+  }
+
+  List<quiz_model.Quiz> _filterQuizzesByPoints(
+    List<quiz_model.Quiz> allQuizzes,
+    int userPoints,
+  ) {
+    // Trier les quiz par niveau (débutant -> intermédiaire -> avancé)
+    allQuizzes.sort((a, b) => a.niveau.compareTo(b.niveau));
+
+    // Filtrer selon les points
+    if (userPoints < 20) {
+      // Seulement les quiz débutant
+      return allQuizzes.where((q) => q.niveau == 'débutant').toList();
+    } else if (userPoints >= 20 && userPoints < 40) {
+      // Tous les quiz débutant + 2 quiz intermédiaire
+      final debutant = allQuizzes.where((q) => q.niveau == 'débutant').toList();
+      final intermediaire =
+          allQuizzes.where((q) => q.niveau == 'intermédiaire').take(2).toList();
+      return [...debutant, ...intermediaire];
+    } else if (userPoints >= 40 && userPoints < 80) {
+      // Tous les quiz débutant + intermédiaire + 2 quiz avancé
+      final debutant = allQuizzes.where((q) => q.niveau == 'débutant').toList();
+      final intermediaire =
+          allQuizzes.where((q) => q.niveau == 'intermédiaire').toList();
+      final avance =
+          allQuizzes.where((q) => q.niveau == 'avancé').take(2).toList();
+      return [...debutant, ...intermediaire, ...avance];
+    } else {
+      // Tous les quiz
+      return allQuizzes;
     }
   }
 
@@ -198,7 +290,7 @@ class _QuizPageState extends State<QuizPage> {
       return SliverFillRemaining(child: _buildEmptyState(theme));
     }
 
-    return FutureBuilder<List<Quiz>>(
+    return FutureBuilder<List<quiz_model.Quiz>>(
       future: _futureQuizzes,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting &&
@@ -378,7 +470,11 @@ class _QuizPageState extends State<QuizPage> {
     );
   }
 
-  Widget _buildQuizCard(Quiz quiz, bool isExpanded, ThemeData theme) {
+  Widget _buildQuizCard(
+    quiz_model.Quiz quiz,
+    bool isExpanded,
+    ThemeData theme,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: theme.cardColor,
