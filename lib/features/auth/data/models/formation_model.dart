@@ -32,17 +32,17 @@ class Formation {
 
   factory Formation.fromJson(Map<String, dynamic> json) {
     return Formation(
-      id: json['id'],
-      titre: json['titre'],
-      description: json['description'],
+      id: json['id'] ?? 0,
+      titre: json['titre'] ?? '',
+      description: json['description'] ?? '',
       prerequis: json['prerequis'],
       imageUrl: json['image_url'],
       cursusPdf: json['cursus_pdf'],
-      tarif: double.tryParse(json['tarif'].toString()) ?? 0,
+      tarif: double.tryParse(json['tarif']?.toString() ?? '0') ?? 0,
       certification: json['certification'],
-      statut: json['statut'],
-      duree: json['duree'],
-      category: FormationCategory.fromJson(json['formation']),
+      statut: json['statut'] ?? 0,
+      duree: json['duree'] ?? '',
+      category: FormationCategory.fromJson(json['formation'] ?? {}),
       stagiaires: json['stagiaires'] != null
           ? (json['stagiaires'] as List).map((s) => StagiaireModel.fromJson(s)).toList()
           : null,
@@ -63,9 +63,9 @@ class FormationCategory {
 
   factory FormationCategory.fromJson(Map<String, dynamic> json) {
     return FormationCategory(
-      id: json['id'],
-      titre: json['titre'],
-      categorie: json['categorie'],
+      id: json['id'] ?? 0,
+      titre: json['titre'] ?? '',
+      categorie: json['categorie'] ?? '',
     );
   }
 
