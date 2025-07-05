@@ -8,7 +8,7 @@ class ContactRepository {
   ContactRepository({required this.apiClient});
   Future<List<Contact>> getContacts() async {
     final response = await apiClient.get(AppConstants.contact);
-    // print('Données reçues : ${response.data}');
+    print('Données reçues : ${response.data}');
 
     final data = response.data;
     List<Contact> contacts = [];

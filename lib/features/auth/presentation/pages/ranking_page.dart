@@ -69,7 +69,6 @@ class _RankingPageState extends State<RankingPage>
       });
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -83,7 +82,6 @@ class _RankingPageState extends State<RankingPage>
           ),
         ),
         backgroundColor: AppColors.background,
-        automaticallyImplyLeading: false,
         elevation: 1,
         centerTitle: true,
         bottom: TabBar(
@@ -98,39 +96,38 @@ class _RankingPageState extends State<RankingPage>
           indicatorColor: AppColors.accent,
         ),
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _hasError
-              ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Erreur: $_errorMessage',
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _loadAllData,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Réessayer'),
-                    ),
-                  ],
-                ),
-              )
-              : TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildStatsTab(),
-                  _buildRankingTab(),
-                  _buildHistoryTab(),
-                ],
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _hasError
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Erreur: $_errorMessage',
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _loadAllData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
               ),
+              child: const Text('Réessayer'),
+            ),
+          ],
+        ),
+      )
+          : TabBarView(
+        controller: _tabController,
+        children: [
+          _buildStatsTab(),
+          _buildRankingTab(),
+          _buildHistoryTab(),
+        ],
+      ),
     );
   }
 

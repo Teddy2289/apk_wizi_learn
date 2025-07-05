@@ -114,9 +114,9 @@ class _QuizPageState extends State<QuizPage> {
   Future<void> _loadConnectedUserAndQuizzes() async {
     setState(() => _isInitialLoad = true);
     try {
-      // Récupérer l'utilisateur connecté
       final user = await _authRepository.getMe();
       _connectedStagiaireId = user.stagiaire?.id;
+      debugPrint("ID du stagiaire connecté: $_connectedStagiaireId");
 
       if (_connectedStagiaireId == null) {
         setState(() {
@@ -126,27 +126,26 @@ class _QuizPageState extends State<QuizPage> {
         return;
       }
 
-      // Récupérer les points du stagiaire
       final rankings = await _statsRepository.getGlobalRanking();
-      final userRanking = rankings.firstWhere(
-        (r) => r.stagiaire.id == _connectedStagiaireId,
-        orElse:
-            () => GlobalRanking(
-              stagiaire: Stagiaire(id: '0', prenom: '', image: ''),
-              totalPoints: 0,
-              quizCount: 0,
-              averageScore: 0,
-              rang: 0,
-            ),
-      );
-      _userPoints = userRanking.totalPoints;
+      debugPrint("Classement global reçu: ${rankings.length} éléments");
 
-      // Récupérer tous les quiz
+      final userRanking = rankings.firstWhere(
+            (r) => r.stagiaire.id == _connectedStagiaireId.toString(),
+        orElse: () {
+          debugPrint("Utilisateur non trouvé dans le classement");
+          return GlobalRanking.empty();
+        },
+      );
+
+      _userPoints = userRanking.totalPoints;
+      debugPrint("Points de l'utilisateur: $_userPoints");
+
       final allQuizzes = await _quizRepository.getQuizzesForStagiaire(
         stagiaireId: _connectedStagiaireId!,
       );
 
-      // Filtrer les quiz en fonction des points
+      debugPrint("Quiz reçus: ${allQuizzes.length}");
+
       final filteredQuizzes = _filterQuizzesByPoints(allQuizzes, _userPoints);
 
       setState(() {
@@ -156,42 +155,63 @@ class _QuizPageState extends State<QuizPage> {
           _expandedQuizzes.putIfAbsent(quiz.id, () => false);
         }
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Erreur chargement quiz: $e');
+      debugPrint('Stack trace: $stackTrace');
       setState(() {
         _futureQuizzes = Future.value([]);
         _isInitialLoad = false;
       });
     }
   }
-
   List<quiz_model.Quiz> _filterQuizzesByPoints(
-    List<quiz_model.Quiz> allQuizzes,
-    int userPoints,
-  ) {
-    // Trier les quiz par niveau (débutant -> intermédiaire -> avancé)
-    allQuizzes.sort((a, b) => a.niveau.compareTo(b.niveau));
+      List<quiz_model.Quiz> allQuizzes,
+      int userPoints,
+      ) {
+    if (allQuizzes.isEmpty) {
+      debugPrint("Aucun quiz à filtrer");
+      return [];
+    }
 
-    // Filtrer selon les points
+    // Normaliser les niveaux
+    String normalizeLevel(String? level) {
+      final lvl = level?.toLowerCase().trim() ?? 'débutant';
+      if (lvl.contains('inter') || lvl.contains('moyen')) return 'intermédiaire';
+      if (lvl.contains('avancé') || lvl.contains('expert')) return 'avancé';
+      return 'débutant'; // Par défaut
+    }
+
+    // Trier par niveau
+    allQuizzes.sort((a, b) => normalizeLevel(a.niveau).compareTo(normalizeLevel(b.niveau)));
+
+    debugPrint("Filtrage pour $userPoints points");
+
     if (userPoints < 20) {
-      // Seulement les quiz débutant
-      return allQuizzes.where((q) => q.niveau == 'débutant').toList();
-    } else if (userPoints >= 20 && userPoints < 40) {
-      // Tous les quiz débutant + 2 quiz intermédiaire
-      final debutant = allQuizzes.where((q) => q.niveau == 'débutant').toList();
-      final intermediaire =
-          allQuizzes.where((q) => q.niveau == 'intermédiaire').take(2).toList();
+      return allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
+    } else if (userPoints < 40) {
+      final debutant = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
+      final intermediaire = allQuizzes
+          .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
+          .take(1)
+          .toList();
       return [...debutant, ...intermediaire];
-    } else if (userPoints >= 40 && userPoints < 80) {
-      // Tous les quiz débutant + intermédiaire + 2 quiz avancé
-      final debutant = allQuizzes.where((q) => q.niveau == 'débutant').toList();
-      final intermediaire =
-          allQuizzes.where((q) => q.niveau == 'intermédiaire').toList();
-      final avance =
-          allQuizzes.where((q) => q.niveau == 'avancé').take(2).toList();
+    } else if (userPoints < 60) {
+      final debutant = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
+      final intermediaire = allQuizzes
+          .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
+          .take(2)
+          .toList();
+      return [...debutant, ...intermediaire,];
+    }
+    else if (userPoints < 80) {
+      final debutant = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
+      final intermediaire = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'intermédiaire').toList();
+      final avance = allQuizzes
+          .where((q) => normalizeLevel(q.niveau) == 'avancé')
+          .take(2)
+          .toList();
       return [...debutant, ...intermediaire, ...avance];
     } else {
-      // Tous les quiz
       return allQuizzes;
     }
   }

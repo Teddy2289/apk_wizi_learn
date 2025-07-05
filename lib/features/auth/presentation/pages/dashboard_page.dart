@@ -27,6 +27,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
+
       body: _pages[_currentIndex],
       currentIndex: _currentIndex,
       onTabSelected: (index) {

@@ -70,34 +70,45 @@ class GlobalRanking {
 
   factory GlobalRanking.fromJson(Map<String, dynamic> json) {
     return GlobalRanking(
-      stagiaire: Stagiaire.fromJson(json['stagiaire']),
-      totalPoints: json['totalPoints'],
-      quizCount: json['quizCount'],
-      averageScore:
-          (json['averageScore'] is int)
-              ? (json['averageScore'] as int).toDouble()
-              : json['averageScore'],
-      rang: json['rang'],
+      stagiaire: Stagiaire.fromJson(json['stagiaire'] ?? {}), // Gestion du null
+      totalPoints: json['totalPoints'] as int? ?? 0,
+      quizCount: json['quizCount'] as int? ?? 0,
+      averageScore: (json['averageScore'] is int)
+          ? (json['averageScore'] as int).toDouble()
+          : json['averageScore'] as double? ?? 0.0,
+      rang: json['rang'] as int? ?? 0,
+    );
+  }
+
+  static GlobalRanking empty() {
+    return GlobalRanking(
+      stagiaire: Stagiaire(id: '0', prenom: 'Inconnu', image: ''),
+      totalPoints: 0,
+      quizCount: 0,
+      averageScore: 0,
+      rang: 0,
     );
   }
 }
-
 class Stagiaire {
   final String id;
   final String prenom;
   final String image;
 
-  Stagiaire({required this.id, required this.prenom, required this.image});
+  Stagiaire({
+    required this.id,
+    required this.prenom,
+    required this.image,
+  });
 
   factory Stagiaire.fromJson(Map<String, dynamic> json) {
     return Stagiaire(
-      id: json['id'].toString(),
-      prenom: json['prenom'],
-      image: json['image'],
+      id: json['id']?.toString() ?? '0', // Gestion du null
+      prenom: json['prenom']?.toString() ?? 'Inconnu', // Gestion du null
+      image: json['image']?.toString() ?? '', // Gestion du null
     );
   }
 }
-
 class QuizStats {
   final int totalQuizzes;
   final double averageScore;
