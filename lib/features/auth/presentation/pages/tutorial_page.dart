@@ -8,6 +8,8 @@ import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart'
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/youtube_player_page.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
+import 'package:wizi_learn/core/constants/route_constants.dart';
 
 class TutorialPage extends StatefulWidget {
   const TutorialPage({super.key});
@@ -24,6 +26,7 @@ class _TutorialPageState extends State<TutorialPage> {
 
   int? _selectedFormationId;
   String _selectedCategory = 'tutoriel';
+  bool _fromNotification = false;
 
   @override
   void initState() {
@@ -43,6 +46,16 @@ class _TutorialPageState extends State<TutorialPage> {
     );
 
     _loadFormations();
+
+    // Vérifier si on vient d'une notification
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic> && args['fromNotification'] == true) {
+        setState(() {
+          _fromNotification = true;
+        });
+      }
+    });
   }
 
   Future<void> _loadFormations() async {
@@ -70,6 +83,226 @@ class _TutorialPageState extends State<TutorialPage> {
     final colorScheme = theme.colorScheme;
     final screenWidth = MediaQuery.of(context).size.width;
 
+    final body = FutureBuilder<List<FormationWithMedias>>(
+      future: _formationsFuture,
+      builder: (context, snapshot) {
+        if (_formationsFuture == null ||
+            snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text("Erreur : ${snapshot.error}"));
+        }
+
+        final formations = snapshot.data ?? [];
+
+        if (formations.isEmpty) {
+          return const Center(child: Text("Aucune formation trouvée."));
+        }
+
+        final selectedFormation = formations.firstWhere(
+          (f) => f.id == _selectedFormationId,
+          orElse: () => formations.first,
+        );
+
+        final mediasFiltres =
+            selectedFormation.medias
+                .where((m) => m.categorie == _selectedCategory)
+                .toList();
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWide = constraints.maxWidth > 500;
+
+                  // Hide the formation dropdown if there is only one formation
+                  if (formations.length <= 1) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: DropdownButton<int>(
+                          isExpanded: true,
+                          value: _selectedFormationId ?? selectedFormation.id,
+                          items:
+                              formations.map((formation) {
+                                return DropdownMenuItem<int>(
+                                  value: formation.id,
+                                  child: Text(
+                                    formation.titre.toUpperCase(),
+                                    style: theme.textTheme.bodyMedium,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                );
+                              }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedFormationId = value;
+                            });
+                          },
+                          underline: const SizedBox(),
+                          icon: Icon(
+                            Icons.arrow_drop_down,
+                            color: colorScheme.primary,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+
+            // Liste des médias
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child:
+                    mediasFiltres.isEmpty
+                        ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.video_library_outlined,
+                                size: 64,
+                                color: colorScheme.onSurface.withOpacity(0.3),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                "Aucun média trouvé",
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: colorScheme.onSurface.withOpacity(0.5),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                        : ListView.separated(
+                          itemCount: mediasFiltres.length,
+                          separatorBuilder:
+                              (context, index) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) {
+                            final media = mediasFiltres[index];
+                            return Card(
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              color: const Color(0xFFFFF9C4),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (_) => YoutubePlayerPage(
+                                            video: media,
+                                            videosInSameCategory: mediasFiltres,
+                                          ),
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          color: const Color(
+                                            0xFFFFEB3B,
+                                          ).withOpacity(0.8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.play_circle_filled,
+                                          size: 32,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              media.titre,
+                                              style: theme.textTheme.bodyLarge
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Icon(
+                                        Icons.chevron_right,
+                                        color: Colors.black54,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    // Si on vient d'une notification, utiliser CustomScaffold
+    if (_fromNotification) {
+      return CustomScaffold(
+        body: body,
+        currentIndex: 4, // Index de l'onglet Tutoriel
+        onTabSelected: (index) {
+          // Navigation vers les autres onglets
+          Navigator.pushReplacementNamed(
+            context,
+            RouteConstants.dashboard,
+            arguments: index,
+          );
+        },
+        showBanner: true,
+      );
+    }
+
+    // Sinon, utiliser le Scaffold normal
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.background,
@@ -106,220 +339,7 @@ class _TutorialPageState extends State<TutorialPage> {
         elevation: 1,
         centerTitle: true,
       ),
-      body: FutureBuilder<List<FormationWithMedias>>(
-        future: _formationsFuture,
-        builder: (context, snapshot) {
-          if (_formationsFuture == null ||
-              snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(child: Text("Erreur : ${snapshot.error}"));
-          }
-
-          final formations = snapshot.data ?? [];
-
-          if (formations.isEmpty) {
-            return const Center(child: Text("Aucune formation trouvée."));
-          }
-
-          final selectedFormation = formations.firstWhere(
-            (f) => f.id == _selectedFormationId,
-            orElse: () => formations.first,
-          );
-
-          final mediasFiltres =
-              selectedFormation.medias
-                  .where((m) => m.categorie == _selectedCategory)
-                  .toList();
-
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isWide = constraints.maxWidth > 500;
-
-                    // Hide the formation dropdown if there is only one formation
-                    if (formations.length <= 1) {
-                      return const SizedBox.shrink();
-                    }
-
-                    return Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      alignment: WrapAlignment.center,
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: colorScheme.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: DropdownButton<int>(
-                            isExpanded: true,
-                            value: _selectedFormationId ?? selectedFormation.id,
-                            items:
-                                formations.map((formation) {
-                                  return DropdownMenuItem<int>(
-                                    value: formation.id,
-                                    child: Text(
-                                      formation.titre.toUpperCase(),
-                                      style: theme.textTheme.bodyMedium,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  );
-                                }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedFormationId = value;
-                              });
-                            },
-                            underline: const SizedBox(),
-                            icon: Icon(
-                              Icons.arrow_drop_down,
-                              color: colorScheme.primary,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-
-              // Liste des médias
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child:
-                      mediasFiltres.isEmpty
-                          ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.video_library_outlined,
-                                  size: 64,
-                                  color: colorScheme.onSurface.withOpacity(0.3),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  "Aucun média trouvé",
-                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                    color: colorScheme.onSurface.withOpacity(
-                                      0.5,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                          : ListView.separated(
-                            itemCount: mediasFiltres.length,
-                            separatorBuilder:
-                                (context, index) => const SizedBox(height: 8),
-                            itemBuilder: (context, index) {
-                              final media = mediasFiltres[index];
-                              return Card(
-                                elevation: 2,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                color: const Color(0xFFFFF9C4),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(12),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (_) => YoutubePlayerPage(
-                                              video: media,
-                                              videosInSameCategory:
-                                                  mediasFiltres,
-                                            ),
-                                      ),
-                                    );
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 60,
-                                          height: 60,
-                                          decoration: BoxDecoration(
-                                            color: const Color(
-                                              0xFFFFEB3B,
-                                            ).withOpacity(0.8),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          child: const Icon(
-                                            Icons.play_circle_filled,
-                                            size: 32,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                media.titre,
-                                                style: theme.textTheme.bodyLarge
-                                                    ?.copyWith(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              // const SizedBox(height: 4),
-                                              // Text(
-                                              //   media.url,
-                                              //   style: theme.textTheme.bodySmall?.copyWith(
-                                              //     color: Colors.black54,
-                                              //   ),
-                                              //   maxLines: 1,
-                                              //   overflow: TextOverflow.ellipsis,
-                                              // ),
-                                            ],
-                                          ),
-                                        ),
-                                        const Icon(
-                                          Icons.chevron_right,
-                                          color: Colors.black54,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+      body: body,
     );
   }
 }

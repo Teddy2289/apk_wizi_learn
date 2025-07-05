@@ -25,9 +25,22 @@ class _DashboardPageState extends State<DashboardPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Vérifier s'il y a des arguments de navigation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is int && args >= 0 && args < _pages.length) {
+        setState(() {
+          _currentIndex = args;
+        });
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-
       body: _pages[_currentIndex],
       currentIndex: _currentIndex,
       onTabSelected: (index) {

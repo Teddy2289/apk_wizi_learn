@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/notification_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/notification_repository.dart';
+import 'package:wizi_learn/core/constants/route_constants.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -91,13 +92,25 @@ class _NotificationsPageState extends State<NotificationsPage> {
   void _navigateToNotificationPage(NotificationModel notification) {
     switch (notification.type) {
       case 'quiz':
-        Navigator.pushNamed(context, '/quiz');
+        Navigator.pushReplacementNamed(
+          context,
+          RouteConstants.quiz,
+          arguments: {'fromNotification': true},
+        );
         break;
       case 'media':
-        Navigator.pushNamed(context, 'tutorial_page');
+        Navigator.pushReplacementNamed(
+          context,
+          RouteConstants.tutorialPage,
+          arguments: {'fromNotification': true},
+        );
         break;
       case 'formation':
-        Navigator.pushNamed(context, '/formations');
+        Navigator.pushReplacementNamed(
+          context,
+          RouteConstants.formations,
+          arguments: {'fromNotification': true},
+        );
         break;
       default:
         // Pas de navigation pour les autres types

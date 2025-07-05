@@ -11,6 +11,7 @@ import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart'
 import 'package:wizi_learn/features/auth/data/repositories/quiz_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/stats_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_session_page.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 
 class QuizPage extends StatefulWidget {
   const QuizPage({super.key});
@@ -30,6 +31,7 @@ class _QuizPageState extends State<QuizPage> {
   bool _isInitialLoad = true;
   int? _connectedStagiaireId;
   int _userPoints = 0;
+  bool _fromNotification = false;
 
   @override
   void initState() {
@@ -37,6 +39,16 @@ class _QuizPageState extends State<QuizPage> {
     _initializeRepositories();
     _loadConnectedUserAndQuizzes();
     _scrollController.addListener(_scrollListener);
+
+    // Vérifier si on vient d'une notification
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic> && args['fromNotification'] == true) {
+        setState(() {
+          _fromNotification = true;
+        });
+      }
+    });
   }
 
   @override
@@ -252,6 +264,27 @@ class _QuizPageState extends State<QuizPage> {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
 
+    // Si on vient d'une notification, utiliser CustomScaffold
+    if (_fromNotification) {
+      return CustomScaffold(
+        body:
+            _isInitialLoad
+                ? _buildLoadingScreen(theme)
+                : _buildMainContent(theme),
+        currentIndex: 2, // Index de l'onglet Quiz
+        onTabSelected: (index) {
+          // Navigation vers les autres onglets
+          Navigator.pushReplacementNamed(
+            context,
+            RouteConstants.dashboard,
+            arguments: index,
+          );
+        },
+        showBanner: true,
+      );
+    }
+
+    // Sinon, utiliser le Scaffold normal
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes Quiz'),

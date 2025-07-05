@@ -6,6 +6,8 @@ import 'package:wizi_learn/features/auth/presentation/pages/notifications_page.d
 import 'package:wizi_learn/features/auth/presentation/pages/ranking_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/sponsor_ship_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/user_point_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/tutorial_page.dart';
 import '../constants/route_constants.dart';
 import '../../features/auth/presentation/pages/auth/login_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
@@ -43,6 +45,17 @@ class AppRouter {
       case RouteConstants.myProgress:
         return MaterialPageRoute(builder: (_) => const ProgressPage());
 
+      // Nouvelles routes ajoutées
+      case RouteConstants.quiz:
+        return MaterialPageRoute(builder: (_) => const QuizPage());
+
+      case RouteConstants.tutorialPage:
+        return MaterialPageRoute(builder: (_) => const TutorialPage());
+
+      case RouteConstants.formations:
+        return MaterialPageRoute(
+          builder: (_) => const FormationStagiairePage(),
+        );
 
       default:
         return MaterialPageRoute(

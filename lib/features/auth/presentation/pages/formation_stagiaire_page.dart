@@ -10,6 +10,7 @@ import 'package:wizi_learn/features/auth/data/repositories/formation_repository.
 import 'package:intl/intl.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/contact_page.dart';
 import 'package:wizi_learn/features/auth/data/models/contact_model.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 
 class FormationStagiairePage extends StatefulWidget {
   const FormationStagiairePage({super.key});
@@ -25,6 +26,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
   final Map<int, bool> _expandedFormations = {};
   final ScrollController _scrollController = ScrollController();
   bool _showBackToTopButton = false;
+  bool _fromNotification = false;
 
   // Styles par catégorie
   final Map<String, Map<String, dynamic>> _categoryStyles = {
@@ -56,6 +58,16 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
     _initializeRepositories();
     _loadFormationsForConnectedStagiaire();
     _scrollController.addListener(_scrollListener);
+
+    // Vérifier si on vient d'une notification
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic> && args['fromNotification'] == true) {
+        setState(() {
+          _fromNotification = true;
+        });
+      }
+    });
   }
 
   @override
@@ -121,6 +133,26 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
 
+    final body = _buildBody(theme);
+
+    // Si on vient d'une notification, utiliser CustomScaffold
+    if (_fromNotification) {
+      return CustomScaffold(
+        body: body,
+        currentIndex: 1, // Index de l'onglet Formations
+        onTabSelected: (index) {
+          // Navigation vers les autres onglets
+          Navigator.pushReplacementNamed(
+            context,
+            RouteConstants.dashboard,
+            arguments: index,
+          );
+        },
+        showBanner: true,
+      );
+    }
+
+    // Sinon, utiliser le Scaffold normal
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes Formations'),
@@ -138,7 +170,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
         elevation: 1,
         foregroundColor: isDarkMode ? Colors.white : Colors.black87,
       ),
-      body: _buildBody(theme),
+      body: body,
       floatingActionButton:
           _showBackToTopButton
               ? FloatingActionButton(
