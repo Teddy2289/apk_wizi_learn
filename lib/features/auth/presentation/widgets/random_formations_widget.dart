@@ -70,16 +70,16 @@ class RandomFormationsWidget extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Formations recommandées',
-            style: TextStyle(
-              fontSize: isSmallScreen ? 16 : 18,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).primaryColor,
-            ),
-          ),
-        ],
+        // children: [
+        //   Text(
+        //     'Formations recommandées',
+        //     style: TextStyle(
+        //       fontSize: isSmallScreen ? 16 : 18,
+        //       fontWeight: FontWeight.bold,
+        //       color: Theme.of(context).primaryColor,
+        //     ),
+        //   ),
+        // ],
       ),
     );
   }

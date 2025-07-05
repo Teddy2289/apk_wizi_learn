@@ -113,156 +113,165 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-        onRefresh: _refreshData,
-        child: CustomScrollView(
-          slivers: [
-            // Section Formations
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(
-                isSmallScreen ? 16 : 24,
-                16,
-                isSmallScreen ? 16 : 24,
-                8,
-              ),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        'Formations aléatoires',
-                        style: TextStyle(
-                          fontSize: isSmallScreen ? 18 : 20,
-                          color: const Color(0xFFB07661),
-                          fontWeight: FontWeight.bold,
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                onRefresh: _refreshData,
+                child: CustomScrollView(
+                  slivers: [
+                    // Section Formations
+                    SliverPadding(
+                      padding: EdgeInsets.fromLTRB(
+                        isSmallScreen ? 16 : 24,
+                        16,
+                        isSmallScreen ? 16 : 24,
+                        8,
+                      ),
+                      sliver: SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Text(
+                                'Formations recommandées',
+                                style: TextStyle(
+                                  fontSize: isSmallScreen ? 18 : 20,
+                                  color: const Color(0xFFB07661),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            RandomFormationsWidget(
+                              formations: _randomFormations,
+                              onRefresh: _refreshData,
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    RandomFormationsWidget(
-                      formations: _randomFormations,
-                      onRefresh: _refreshData,
-                    ),
-                  ],
-                ),
-              ),
-            ),
 
-            // Divider entre les sections
-            SliverPadding(
-              padding: EdgeInsets.symmetric(
-                horizontal: isSmallScreen ? 16 : 24,
-                vertical: 8,
-              ),
-              sliver: SliverToBoxAdapter(
-                child: Divider(
-                  color: Colors.grey[300],
-                  thickness: 1,
-                ),
-              ),
-            ),
-
-            // Section Contacts
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(
-                isSmallScreen ? 16 : 24,
-                8,
-                isSmallScreen ? 16 : 24,
-                16,
-              ),
-              sliver: SliverToBoxAdapter(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Mes contacts',
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 18 : 20,
-                        color: const Color(0xFFB07661),
-                        fontWeight: FontWeight.bold,
+                    // Divider entre les sections
+                    SliverPadding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isSmallScreen ? 16 : 24,
+                        vertical: 8,
+                      ),
+                      sliver: SliverToBoxAdapter(
+                        child: Divider(color: Colors.grey[300], thickness: 1),
                       ),
                     ),
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+
+                    // Section Contacts
+                    SliverPadding(
+                      padding: EdgeInsets.fromLTRB(
+                        isSmallScreen ? 16 : 24,
+                        8,
+                        isSmallScreen ? 16 : 24,
+                        16,
                       ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                ContactPage(contacts: _contacts),
+                      sliver: SliverToBoxAdapter(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Mes contacts',
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 18 : 20,
+                                color: const Color(0xFFB07661),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) =>
+                                            ContactPage(contacts: _contacts),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                'Voir tous',
+                                style: TextStyle(
+                                  color: Colors.blue[700],
+                                  fontSize: isSmallScreen ? 14 : 16,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Liste des contacts ou message si vide
+                    if (_contacts.isEmpty)
+                      SliverFillRemaining(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              'Aucun contact disponible',
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 16 : 18,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ),
-                        );
-                      },
-                      child: Text(
-                        'Voir tous',
-                        style: TextStyle(
-                          color: Colors.blue[700],
-                          fontSize: isSmallScreen ? 14 : 16,
+                        ),
+                      )
+                    else
+                      SliverPadding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 16 : 24,
+                        ),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final wantedRoles = [
+                              'commercial',
+                              'formateur',
+                              'pôle relation client',
+                              'pôle_relation_client',
+                            ];
+                            final filteredContacts = <String, Contact>{};
+                            for (final c in _contacts) {
+                              final role = c.role.toLowerCase().replaceAll(
+                                '_',
+                                ' ',
+                              );
+                              if (wantedRoles.contains(role) &&
+                                  !filteredContacts.containsKey(role)) {
+                                filteredContacts[role] = c;
+                              }
+                            }
+                            final contactsToShow =
+                                filteredContacts.values.toList();
+
+                            if (index >= contactsToShow.length) return null;
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: ContactCard(
+                                contact: contactsToShow[index],
+                                showFormations: false,
+                              ),
+                            );
+                          }),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
-            ),
-
-            // Liste des contacts ou message si vide
-            if (_contacts.isEmpty)
-              SliverFillRemaining(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'Aucun contact disponible',
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 16 : 18,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
-              )
-            else
-              SliverPadding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isSmallScreen ? 16 : 24,
-                ),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                      final wantedRoles = [
-                        'commercial',
-                        'formateur',
-                        'pole_relation_client'
-                      ];
-                      final filteredContacts = <String, Contact>{};
-                      for (final c in _contacts) {
-                        if (wantedRoles.contains(c.role) &&
-                            !filteredContacts.containsKey(c.role)) {
-                          filteredContacts[c.role] = c;
-                        }
-                      }
-                      final contactsToShow = filteredContacts.values.toList();
-
-                      if (index >= contactsToShow.length) return null;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: ContactCard(contact: contactsToShow[index]),
-                      );
-                    },
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
     );
   }
 }

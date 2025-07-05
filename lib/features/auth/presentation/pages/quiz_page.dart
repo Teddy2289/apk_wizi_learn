@@ -130,7 +130,7 @@ class _QuizPageState extends State<QuizPage> {
       debugPrint("Classement global reçu: ${rankings.length} éléments");
 
       final userRanking = rankings.firstWhere(
-            (r) => r.stagiaire.id == _connectedStagiaireId.toString(),
+        (r) => r.stagiaire.id == _connectedStagiaireId.toString(),
         orElse: () {
           debugPrint("Utilisateur non trouvé dans le classement");
           return GlobalRanking.empty();
@@ -164,10 +164,11 @@ class _QuizPageState extends State<QuizPage> {
       });
     }
   }
+
   List<quiz_model.Quiz> _filterQuizzesByPoints(
-      List<quiz_model.Quiz> allQuizzes,
-      int userPoints,
-      ) {
+    List<quiz_model.Quiz> allQuizzes,
+    int userPoints,
+  ) {
     if (allQuizzes.isEmpty) {
       debugPrint("Aucun quiz à filtrer");
       return [];
@@ -176,44 +177,74 @@ class _QuizPageState extends State<QuizPage> {
     // Normaliser les niveaux
     String normalizeLevel(String? level) {
       final lvl = level?.toLowerCase().trim() ?? 'débutant';
-      if (lvl.contains('inter') || lvl.contains('moyen')) return 'intermédiaire';
+      if (lvl.contains('inter') || lvl.contains('moyen'))
+        return 'intermédiaire';
       if (lvl.contains('avancé') || lvl.contains('expert')) return 'avancé';
       return 'débutant'; // Par défaut
     }
 
     // Trier par niveau
-    allQuizzes.sort((a, b) => normalizeLevel(a.niveau).compareTo(normalizeLevel(b.niveau)));
+    allQuizzes.sort(
+      (a, b) => normalizeLevel(a.niveau).compareTo(normalizeLevel(b.niveau)),
+    );
 
     debugPrint("Filtrage pour $userPoints points");
 
     if (userPoints < 20) {
-      return allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
-    } else if (userPoints < 40) {
-      final debutant = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
-      final intermediaire = allQuizzes
-          .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
-          .take(1)
+      return allQuizzes
+          .where((q) => normalizeLevel(q.niveau) == 'débutant')
           .toList();
+    } else if (userPoints < 40) {
+      final debutant =
+          allQuizzes
+              .where((q) => normalizeLevel(q.niveau) == 'débutant')
+              .toList();
+      final intermediaire =
+          allQuizzes
+              .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
+              .take(1)
+              .toList();
       return [...debutant, ...intermediaire];
     } else if (userPoints < 60) {
-      final debutant = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
-      final intermediaire = allQuizzes
-          .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
-          .take(2)
-          .toList();
-      return [...debutant, ...intermediaire,];
-    }
-    else if (userPoints < 80) {
-      final debutant = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
-      final intermediaire = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'intermédiaire').toList();
-      final avance = allQuizzes
-          .where((q) => normalizeLevel(q.niveau) == 'avancé')
-          .take(2)
-          .toList();
+      final debutant =
+          allQuizzes
+              .where((q) => normalizeLevel(q.niveau) == 'débutant')
+              .toList();
+      final intermediaire =
+          allQuizzes
+              .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
+              .take(2)
+              .toList();
+      return [...debutant, ...intermediaire];
+    } else if (userPoints < 80) {
+      final debutant =
+          allQuizzes
+              .where((q) => normalizeLevel(q.niveau) == 'débutant')
+              .toList();
+      final intermediaire =
+          allQuizzes
+              .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
+              .toList();
+      final avance =
+          allQuizzes
+              .where((q) => normalizeLevel(q.niveau) == 'avancé')
+              .take(2)
+              .toList();
       return [...debutant, ...intermediaire, ...avance];
     } else {
       return allQuizzes;
     }
+  }
+
+  int _getLimitedPoints(String level, int points) {
+    if (level == 'débutant') {
+      return points > 10 ? 10 : points;
+    } else if (level == 'intermédiaire') {
+      return points > 20 ? 20 : points;
+    } else if (level == 'avancé') {
+      return points > 20 ? 20 : points;
+    }
+    return points;
   }
 
   @override
@@ -228,6 +259,7 @@ class _QuizPageState extends State<QuizPage> {
         backgroundColor:
             isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
         elevation: 0,
+        automaticallyImplyLeading: false,
         foregroundColor: isDarkMode ? Colors.white : Colors.black87,
       ),
       body:
@@ -567,7 +599,7 @@ class _QuizPageState extends State<QuizPage> {
                 ),
                 _buildInfoRow(
                   Icons.star,
-                  'Points: ${quiz.nbPointsTotal}',
+                  'Points: ${_getLimitedPoints(quiz.niveau, quiz.nbPointsTotal)}',
                   theme,
                 ),
                 _buildInfoRow(
