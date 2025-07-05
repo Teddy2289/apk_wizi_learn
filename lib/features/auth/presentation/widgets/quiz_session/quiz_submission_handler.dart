@@ -20,6 +20,23 @@ class QuizSubmissionHandler {
     required Map<String, dynamic> userAnswers,
     required int timeSpent,
   }) async {
+    final validatedAnswers = Map<String, dynamic>.from(userAnswers);
+
+    validatedAnswers.forEach((id, answer) {
+      if (answer is List && answer.length == 1) {
+        // Si une liste avec un seul élément, peut-être simplifier
+        validatedAnswers[id] = answer.first;
+      }
+    });
+
+    debugPrint('Validated answers: $validatedAnswers');
+
+    debugPrint('=== Validation avant soumission ===');
+    debugPrint('Quiz ID: $quizId');
+    debugPrint('Questions/réponses:');
+    userAnswers.forEach((id, answer) {
+      debugPrint('- Question $id: $answer (${answer.runtimeType})');
+    });
     try {
       debugPrint('======== SUB =========: $userAnswers');
       if (userAnswers.containsKey('1594')) {
@@ -28,7 +45,7 @@ class QuizSubmissionHandler {
 
       final response = await _repository.submitQuizResults(
         quizId: int.parse(quizId),
-        answers: userAnswers,
+        answers: validatedAnswers,
         timeSpent: timeSpent,
       );
 

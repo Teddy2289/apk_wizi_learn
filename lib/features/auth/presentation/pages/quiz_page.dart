@@ -192,10 +192,18 @@ class _QuizPageState extends State<QuizPage> {
       final debutant = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
       final intermediaire = allQuizzes
           .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
-          .take(2)
+          .take(1)
           .toList();
       return [...debutant, ...intermediaire];
-    } else if (userPoints < 80) {
+    } else if (userPoints < 60) {
+      final debutant = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
+      final intermediaire = allQuizzes
+          .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
+          .take(2)
+          .toList();
+      return [...debutant, ...intermediaire,];
+    }
+    else if (userPoints < 80) {
       final debutant = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
       final intermediaire = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'intermédiaire').toList();
       final avance = allQuizzes

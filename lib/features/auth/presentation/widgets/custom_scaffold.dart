@@ -11,6 +11,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_app_bar.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_bottom_navbar.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_drawer.dart';
+import 'dart:async';
 
 class CustomScaffold extends StatefulWidget {
   final Widget body;
@@ -36,9 +37,11 @@ class _CustomScaffoldState extends State<CustomScaffold> {
   late final NotificationRepository _notificationRepository;
   late final StatsRepository _statsRepository;
   late final AuthRepository _authRepository;
+  late StreamSubscription<int> _pointsSubscription;
 
   Future<int>? _unreadCountFuture;
-  Future<int>? _userPointsFuture;
+  int _currentPoints = 0;
+  String? _userId;
 
   @override
   void initState() {
@@ -58,53 +61,50 @@ class _CustomScaffoldState extends State<CustomScaffold> {
       storage: const FlutterSecureStorage(),
     );
 
-    _loadData();
+    _initializeData();
   }
 
-  void _loadData() {
+  Future<void> _initializeData() async {
+    try {
+      final user = await _authRepository.getMe();
+      if (user.stagiaire?.id != null) {
+        _userId = user.stagiaire!.id.toString();
+        _pointsSubscription = _statsRepository.getLivePoints(_userId!).listen((points) {
+          if (mounted) {
+            setState(() {
+              _currentPoints = points;
+            });
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error initializing user data: $e');
+    }
+
+    _loadUnreadCount();
+  }
+
+  void _loadUnreadCount() {
     setState(() {
-      _unreadCountFuture = _loadUnreadCount();
-      _userPointsFuture = _loadUserPoints();
+      _unreadCountFuture = _notificationRepository.getUnreadCount().catchError((e) {
+        debugPrint('Error loading unread count: $e');
+        return 0;
+      });
     });
   }
 
-  Future<int> _loadUnreadCount() async {
-    try {
-      return await _notificationRepository.getUnreadCount();
-    } catch (e) {
-      debugPrint('Error loading unread count: $e');
-      return 0;
-    }
-  }
-
-  Future<int> _loadUserPoints() async {
-    try {
-      final user = await _authRepository.getMe();
-      debugPrint('User stagiaire ID: ${user.stagiaire?.id}');
-      if (user.stagiaire?.id == null) return 0;
-
-      final rankings = await _statsRepository.getGlobalRanking();
-      debugPrint('Rankings loaded: ${rankings} entries');
-      final userRanking = rankings.firstWhere(
-            (r) => r.stagiaire.id == user.stagiaire!.id.toString(),
-        orElse: () => GlobalRanking(
-          stagiaire: Stagiaire(id: '0', prenom: '', image: ''),
-          totalPoints: 0,
-          quizCount: 0,
-          averageScore: 0,
-          rang: 0,
-        ),
-      );
-
-      return userRanking.totalPoints;
-    } catch (e) {
-      debugPrint('Error loading user points: $e');
-      return 0;
-    }
+  @override
+  void dispose() {
+    _pointsSubscription.cancel();
+    _statsRepository.dispose();
+    super.dispose();
   }
 
   void refreshData() {
-    _loadData();
+    _loadUnreadCount();
+    if (_userId != null) {
+      _statsRepository.forceRefreshPoints(_userId!);
+    }
   }
 
   @override
@@ -116,7 +116,6 @@ class _CustomScaffoldState extends State<CustomScaffold> {
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
         actions: [
-          // Points et notifications
           _buildUserPointsAndNotifications(context),
           ...?widget.actions,
         ],
@@ -143,14 +142,8 @@ class _CustomScaffoldState extends State<CustomScaffold> {
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
         children: [
-          // Points utilisateur
-          FutureBuilder<int>(
-            future: _userPointsFuture,
-            builder: (context, snapshot) {
-              final points = snapshot.data ?? 0;
-              return _buildPointsBadge(points, context);
-            },
-          ),
+          // Points utilisateur (temps réel)
+          _buildPointsBadge(_currentPoints, context),
           const SizedBox(width: 8),
           // Notifications
           FutureBuilder<int>(
