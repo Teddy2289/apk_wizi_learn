@@ -94,7 +94,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         Navigator.pushNamed(context, '/quiz');
         break;
       case 'media':
-        Navigator.pushNamed(context, '/tutoriel');
+        Navigator.pushNamed(context, 'tutorial_page');
         break;
       case 'formation':
         Navigator.pushNamed(context, '/formations');
@@ -243,11 +243,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
             tooltip: 'Tout supprimer',
             onPressed: _notifications.isEmpty ? null : _deleteAll,
           ),
-          IconButton(
-            icon: const Icon(Icons.send),
-            tooltip: 'Envoyer notification de test',
-            onPressed: _sendTestNotification,
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.send),
+          //   tooltip: 'Envoyer notification de test',
+          //   onPressed: _sendTestNotification,
+          // ),
         ],
       ),
       body:

@@ -364,13 +364,13 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                 const SizedBox(height: 8),
                 _buildInfoRow(
                   Icons.calendar_today,
-                  'Début de formation: ${formation.dateDebut ?? "-"}',
+                  'Début de formation: ${_formatDate(formation.dateDebut)}',
                   theme,
                 ),
                 const SizedBox(height: 8),
                 _buildInfoRow(
                   Icons.calendar_month,
-                  'Fin de formation: ${formation.dateFin ?? "-"}',
+                  'Fin de formation: ${_formatDate(formation.dateFin)}',
                   theme,
                 ),
                 const SizedBox(height: 8),
@@ -455,5 +455,17 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
         ),
       ],
     );
+  }
+
+  String _formatDate(String? date) {
+    if (date == null || date.isEmpty) {
+      return '-';
+    }
+    try {
+      final d = DateTime.parse(date);
+      return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+    } catch (_) {
+      return date;
+    }
   }
 }
