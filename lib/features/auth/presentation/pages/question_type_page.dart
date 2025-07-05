@@ -27,57 +27,64 @@ class QuestionTypePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isFillBlank = question.type == "remplir le champ vide";
+    final screenWidth = MediaQuery.of(context).size.width;
 
-    return Container(
-      decoration: BoxDecoration(
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: screenWidth > 600 ? 24 : 16, // Responsive padding
+        vertical: 12,
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Question Card
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+            Container(
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Padding(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Question Type Badge
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: theme.colorScheme.primary.withOpacity(0.3),
-                        ),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
                         question.type.toUpperCase(),
-                        style: theme.textTheme.labelLarge?.copyWith(
+                        style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
 
                     // Question Text (if not fill in blank)
-                    if (!isFillBlank)
-                      Text(
-                        question.text,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    const SizedBox(height: 24),
+                    // if (!isFillBlank)
+                    //   Text(
+                    //     question.text,
+                    //     style: theme.textTheme.titleMedium?.copyWith(
+                    //       fontWeight: FontWeight.w600,
+                    //       fontSize: 16, // Reduced font size
+                    //     ),
+                    //   ),
+                    const SizedBox(height: 16),
 
                     // Question Content
                     _buildQuestionByType(),
@@ -85,17 +92,20 @@ class QuestionTypePage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // Explanation (if showing feedback)
             if (showFeedback && question.explication != null)
               AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: Card(
+                duration: const Duration(milliseconds: 200),
+                child: Container(
                   key: ValueKey(showFeedback),
-                  elevation: 2,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondary.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -103,13 +113,14 @@ class QuestionTypePage extends StatelessWidget {
                           children: [
                             Icon(
                               Icons.lightbulb_outline,
+                              size: 20,
                               color: theme.colorScheme.secondary,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               "Explication",
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.secondary,
                               ),
                             ),
@@ -118,8 +129,9 @@ class QuestionTypePage extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           question.explication!,
-                          style: theme.textTheme.bodyMedium?.copyWith(
+                          style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurface.withOpacity(0.8),
+                            height: 1.4,
                           ),
                         ),
                       ],
@@ -186,32 +198,35 @@ class QuestionTypePage extends StatelessWidget {
         );
       default:
         return Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Colors.red[50],
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.red),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(Icons.error_outline, color: Colors.red[800]),
+                  Icon(Icons.error_outline, size: 20, color: Colors.red[800]),
                   const SizedBox(width: 8),
                   Text(
-                    "Type de question non supporté",
+                    "Type non supporté",
                     style: TextStyle(
+                      fontSize: 14,
                       color: Colors.red[800],
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Text(
-                "Type de question non pris en charge: ${question.type}",
-                style: TextStyle(color: Colors.red[700]),
+                "Type: ${question.type}",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.red[700],
+                ),
               ),
             ],
           ),

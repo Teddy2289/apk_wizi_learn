@@ -58,7 +58,7 @@ class _WordBankState extends State<WordBankQuestion> {
       orElse: () => Answer(correct: false, id: '', text: ''),
     );
 
-    return answer?.correct ?? answer?.correct;
+    return answer.correct ?? answer.correct;
   }
 
   @override

@@ -36,6 +36,11 @@ class ContactRepository {
       print('⚠ pole_relation n’est pas une liste : $poleRelation');
     }
 
-    return contacts;
+    // Filtrer les doublons par email
+    final contactsUniques = <String, Contact>{};
+    for (var c in contacts) {
+      contactsUniques[c.email] = c;
+    }
+    return contactsUniques.values.toList();
   }
 }

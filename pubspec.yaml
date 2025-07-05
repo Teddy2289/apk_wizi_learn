@@ -57,6 +57,8 @@ dependencies:
   firebase_core_web: ^2.23.0
   firebase_messaging_web: ^3.10.7
   flutter_local_notifications: ^19.3.0
+  flutter_html: ^3.0.0
+  confetti: ^0.7.0
 
 dev_dependencies:
   flutter_test:
@@ -66,11 +68,11 @@ dev_dependencies:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/logo1.png"
+  image_path: "assets/images/favicon.ico"
   remove_alpha_ios: true
   min_sdk_android: 21
   adaptive_icon_background: "#ffffff" # Couleur de fond pour Android (optionnel)
-  adaptive_icon_foreground: "assets/images/logo1.png"
+  adaptive_icon_foreground: "assets/images/favicon.ico"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
+import 'package:wizi_learn/core/widgets/notification_icon_button.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget>? actions;
@@ -8,7 +9,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({
     super.key,
     this.actions,
-    this.title, required Color backgroundColor, required Color foregroundColor,
+    this.title,
+    required Color backgroundColor,
+    required Color foregroundColor,
   });
 
   @override
@@ -19,13 +22,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: true,
       title: title != null
           ? Text(
-        title!,
-        style: const TextStyle(
-          color: Colors.black87,
-          fontWeight: FontWeight.w600,
-          fontSize: 18,
-        ),
-      )
+              title!,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+                fontSize: 18,
+              ),
+            )
           : null,
       iconTheme: const IconThemeData(color: Colors.black87),
       actions: actions,

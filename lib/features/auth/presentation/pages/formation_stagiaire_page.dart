@@ -7,6 +7,9 @@ import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_sourc
 import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/formation_repository.dart';
+import 'package:intl/intl.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/contact_page.dart';
+import 'package:wizi_learn/features/auth/data/models/contact_model.dart';
 
 class FormationStagiairePage extends StatefulWidget {
   const FormationStagiairePage({super.key});
@@ -124,21 +127,30 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pushReplacementNamed(context, RouteConstants.dashboard)
+          onPressed:
+              () => Navigator.pushReplacementNamed(
+                context,
+                RouteConstants.dashboard,
+              ),
         ),
-        backgroundColor: isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
+        backgroundColor:
+            isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
         elevation: 1,
         foregroundColor: isDarkMode ? Colors.white : Colors.black87,
       ),
       body: _buildBody(theme),
-      floatingActionButton: _showBackToTopButton
-          ? FloatingActionButton(
-        onPressed: _scrollToTop,
-        mini: true,
-        backgroundColor: theme.colorScheme.primary,
-        child: Icon(Icons.arrow_upward, color: theme.colorScheme.onPrimary),
-      )
-          : null,
+      floatingActionButton:
+          _showBackToTopButton
+              ? FloatingActionButton(
+                onPressed: _scrollToTop,
+                mini: true,
+                backgroundColor: theme.colorScheme.primary,
+                child: Icon(
+                  Icons.arrow_upward,
+                  color: theme.colorScheme.onPrimary,
+                ),
+              )
+              : null,
     );
   }
 
@@ -156,7 +168,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                 children: [
                   const SizedBox(height: 16),
                   Text(
-                    'Vos formations en cours',
+                    'Mes formations en cours',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -186,33 +198,28 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                 }
 
                 if (snapshot.hasError) {
-                  return SliverFillRemaining(
-                    child: _buildErrorState(theme),
-                  );
+                  return SliverFillRemaining(child: _buildErrorState(theme));
                 }
 
                 final formations = snapshot.data ?? [];
                 if (formations.isEmpty) {
-                  return SliverFillRemaining(
-                    child: _buildEmptyState(theme),
-                  );
+                  return SliverFillRemaining(child: _buildEmptyState(theme));
                 }
 
                 return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                      final formation = formations[index];
-                      final category = formation.category.categorie;
-                      final styles = _categoryStyles[category] ?? {
-                        'icon': Icons.school,
-                        'color': Colors.grey,
-                        'lightColor': Colors.grey.shade200,
-                      };
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final formation = formations[index];
+                    final category = formation.category.categorie;
+                    final styles =
+                        _categoryStyles[category] ??
+                        {
+                          'icon': Icons.school,
+                          'color': Colors.grey,
+                          'lightColor': Colors.grey.shade200,
+                        };
 
-                      return _buildFormationCard(formation, styles, theme);
-                    },
-                    childCount: formations.length,
-                  ),
+                    return _buildFormationCard(formation, styles, theme);
+                  }, childCount: formations.length),
                 );
               },
             ),
@@ -227,16 +234,9 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
-          Icons.error_outline,
-          size: 48,
-          color: theme.colorScheme.error,
-        ),
+        Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
         const SizedBox(height: 16),
-        Text(
-          'Erreur de chargement',
-          style: theme.textTheme.titleMedium,
-        ),
+        Text('Erreur de chargement', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -269,10 +269,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
           color: theme.colorScheme.primary.withOpacity(0.5),
         ),
         const SizedBox(height: 16),
-        Text(
-          'Aucune formation',
-          style: theme.textTheme.titleMedium,
-        ),
+        Text('Aucune formation', style: theme.textTheme.titleMedium),
         const SizedBox(height: 8),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -294,16 +291,17 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
   }
 
   Widget _buildFormationCard(
-      Formation formation, Map<String, dynamic> styles, ThemeData theme) {
+    Formation formation,
+    Map<String, dynamic> styles,
+    ThemeData theme,
+  ) {
     final isExpanded = _expandedFormations[formation.id] ?? false;
     final isDarkMode = theme.brightness == Brightness.dark;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       color: isDarkMode ? theme.cardTheme.color : styles['lightColor'],
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -325,10 +323,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                       color: styles['color'].withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      styles['icon'],
-                      color: styles['color'],
-                    ),
+                    child: Icon(styles['icon'], color: styles['color']),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -336,7 +331,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          formation.titre,
+                          formation.titre.toUpperCase(),
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -368,20 +363,61 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                 ),
                 const SizedBox(height: 8),
                 _buildInfoRow(
+                  Icons.calendar_today,
+                  'Début de formation: ${formation.dateDebut ?? "-"}',
+                  theme,
+                ),
+                const SizedBox(height: 8),
+                _buildInfoRow(
+                  Icons.calendar_month,
+                  'Fin de formation: ${formation.dateFin ?? "-"}',
+                  theme,
+                ),
+                const SizedBox(height: 8),
+                _buildInfoRow(
                   Icons.euro_symbol,
-                  'Prix: ${formation.tarif.toStringAsFixed(2)} €',
+                  'Prix: ${NumberFormat('#,##0', 'fr_FR').format(formation.tarif)} €',
                   theme,
                 ),
                 if (formation.certification != null) ...[
                   const SizedBox(height: 8),
                   _buildInfoRow(
                     Icons.verified,
-                    'Formation certifiante',
+                    formation.certification ?? 'Formation certifiante',
                     theme,
                     color: Colors.green,
                   ),
                 ],
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                if (formation.formateur != null) ...[
+                  GestureDetector(
+                    // onTap: () {
+                    //   Navigator.push(
+                    //     context,
+                    //     MaterialPageRoute(
+                    //       builder: (context) => ContactPage(
+                    //         contacts: [
+                    //           Contact(
+                    //             nom: formation.formateur!.user!.nom,
+                    //             prenom: formation.formateur!.prenom,
+                    //             email: formation.formateur!.user!.email,
+                    //             telephone: formation.formateur!.telephone,
+                    //           ),
+                    //         ],
+                    //       ),
+                    //     ),
+                    //   );
+                    // },
+                    child: _buildInfoRow(
+                      Icons.person,
+                      'Formateur: ${formation.formateur!.prenom} ${formation.formateur!.nom.toUpperCase()}',
+                      theme,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                const SizedBox(height: 8),
                 Text(
                   'Description',
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -401,14 +437,15 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text, ThemeData theme, {Color? color}) {
+  Widget _buildInfoRow(
+    IconData icon,
+    String text,
+    ThemeData theme, {
+    Color? color,
+  }) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 20,
-          color: color ?? theme.colorScheme.primary,
-        ),
+        Icon(icon, size: 20, color: color ?? theme.colorScheme.primary),
         const SizedBox(width: 8),
         Text(
           text,

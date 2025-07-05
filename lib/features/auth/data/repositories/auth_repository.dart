@@ -3,6 +3,7 @@ import 'package:wizi_learn/core/exceptions/api_exception.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository_contract.dart';
 import 'package:wizi_learn/features/auth/domain/user_entity.dart';
+import 'package:wizi_learn/core/network/api_client.dart';
 import '../../../../core/exceptions/auth_exception.dart';
 import '../mappers/user_mapper.dart';
 
@@ -11,6 +12,14 @@ class AuthRepository implements AuthRepositoryContract {
   final FlutterSecureStorage storage;
 
   AuthRepository({required this.remoteDataSource, required this.storage});
+
+  /// Getter public pour accéder à l'ApiClient utilisé pour les requêtes authentifiées
+  ApiClient? get apiClient {
+    if (remoteDataSource is AuthRemoteDataSourceImpl) {
+      return (remoteDataSource as AuthRemoteDataSourceImpl).apiClient;
+    }
+    return null;
+  }
 
   @override
   Future<UserEntity> login(String email, String password) async {

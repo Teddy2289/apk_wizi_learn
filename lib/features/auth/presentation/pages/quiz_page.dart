@@ -4,9 +4,12 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:wizi_learn/features/auth/data/models/quiz_model.dart';
+import 'package:wizi_learn/features/auth/data/models/quiz_model.dart'
+    as quiz_model;
+import 'package:wizi_learn/features/auth/data/models/stats_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/quiz_repository.dart';
+import 'package:wizi_learn/features/auth/data/repositories/stats_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_session_page.dart';
 
 class QuizPage extends StatefulWidget {
@@ -19,17 +22,20 @@ class QuizPage extends StatefulWidget {
 class _QuizPageState extends State<QuizPage> {
   late final QuizRepository _quizRepository;
   late final AuthRepository _authRepository;
-  Future<List<Quiz>>? _futureQuizzes;
+  late final StatsRepository _statsRepository;
+  Future<List<quiz_model.Quiz>>? _futureQuizzes;
   final Map<int, bool> _expandedQuizzes = {};
   final ScrollController _scrollController = ScrollController();
   bool _showBackToTopButton = false;
   bool _isInitialLoad = true;
+  int? _connectedStagiaireId;
+  int _userPoints = 0;
 
   @override
   void initState() {
     super.initState();
     _initializeRepositories();
-    _loadQuizzesForConnectedStagiaire();
+    _loadConnectedUserAndQuizzes();
     _scrollController.addListener(_scrollListener);
   }
 
@@ -68,6 +74,7 @@ class _QuizPageState extends State<QuizPage> {
       ),
       storage: storage,
     );
+    _statsRepository = StatsRepository(apiClient: apiClient);
   }
 
   Future<void> _loadQuizzesForConnectedStagiaire() async {
@@ -104,6 +111,91 @@ class _QuizPageState extends State<QuizPage> {
     }
   }
 
+  Future<void> _loadConnectedUserAndQuizzes() async {
+    setState(() => _isInitialLoad = true);
+    try {
+      // Récupérer l'utilisateur connecté
+      final user = await _authRepository.getMe();
+      _connectedStagiaireId = user.stagiaire?.id;
+
+      if (_connectedStagiaireId == null) {
+        setState(() {
+          _futureQuizzes = Future.value([]);
+          _isInitialLoad = false;
+        });
+        return;
+      }
+
+      // Récupérer les points du stagiaire
+      final rankings = await _statsRepository.getGlobalRanking();
+      final userRanking = rankings.firstWhere(
+        (r) => r.stagiaire.id == _connectedStagiaireId,
+        orElse:
+            () => GlobalRanking(
+              stagiaire: Stagiaire(id: '0', prenom: '', image: ''),
+              totalPoints: 0,
+              quizCount: 0,
+              averageScore: 0,
+              rang: 0,
+            ),
+      );
+      _userPoints = userRanking.totalPoints;
+
+      // Récupérer tous les quiz
+      final allQuizzes = await _quizRepository.getQuizzesForStagiaire(
+        stagiaireId: _connectedStagiaireId!,
+      );
+
+      // Filtrer les quiz en fonction des points
+      final filteredQuizzes = _filterQuizzesByPoints(allQuizzes, _userPoints);
+
+      setState(() {
+        _futureQuizzes = Future.value(filteredQuizzes);
+        _isInitialLoad = false;
+        for (var quiz in filteredQuizzes) {
+          _expandedQuizzes.putIfAbsent(quiz.id, () => false);
+        }
+      });
+    } catch (e) {
+      debugPrint('Erreur chargement quiz: $e');
+      setState(() {
+        _futureQuizzes = Future.value([]);
+        _isInitialLoad = false;
+      });
+    }
+  }
+
+  List<quiz_model.Quiz> _filterQuizzesByPoints(
+    List<quiz_model.Quiz> allQuizzes,
+    int userPoints,
+  ) {
+    // Trier les quiz par niveau (débutant -> intermédiaire -> avancé)
+    allQuizzes.sort((a, b) => a.niveau.compareTo(b.niveau));
+
+    // Filtrer selon les points
+    if (userPoints < 20) {
+      // Seulement les quiz débutant
+      return allQuizzes.where((q) => q.niveau == 'débutant').toList();
+    } else if (userPoints >= 20 && userPoints < 40) {
+      // Tous les quiz débutant + 2 quiz intermédiaire
+      final debutant = allQuizzes.where((q) => q.niveau == 'débutant').toList();
+      final intermediaire =
+          allQuizzes.where((q) => q.niveau == 'intermédiaire').take(2).toList();
+      return [...debutant, ...intermediaire];
+    } else if (userPoints >= 40 && userPoints < 80) {
+      // Tous les quiz débutant + intermédiaire + 2 quiz avancé
+      final debutant = allQuizzes.where((q) => q.niveau == 'débutant').toList();
+      final intermediaire =
+          allQuizzes.where((q) => q.niveau == 'intermédiaire').toList();
+      final avance =
+          allQuizzes.where((q) => q.niveau == 'avancé').take(2).toList();
+      return [...debutant, ...intermediaire, ...avance];
+    } else {
+      // Tous les quiz
+      return allQuizzes;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -113,10 +205,9 @@ class _QuizPageState extends State<QuizPage> {
       appBar: AppBar(
         title: const Text('Mes Quiz'),
         centerTitle: true,
-
         backgroundColor:
             isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
-        elevation: 1,
+        elevation: 0,
         foregroundColor: isDarkMode ? Colors.white : Colors.black87,
       ),
       body:
@@ -157,37 +248,40 @@ class _QuizPageState extends State<QuizPage> {
       child: CustomScrollView(
         controller: _scrollController,
         slivers: [
-          SliverToBoxAdapter(child: _buildHeader(theme)),
-          _buildQuizListContent(theme),
-          const SliverToBoxAdapter(child: SizedBox(height: 20)),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            sliver: SliverToBoxAdapter(child: _buildHeader(theme)),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: _buildQuizListContent(theme),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
         ],
       ),
     );
   }
 
   Widget _buildHeader(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 16),
-          Text(
-            'Vos quiz disponibles',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Vos quiz disponibles',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Testez vos connaissances avec ces quiz',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
-            ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Testez vos connaissances avec ces quiz',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
           ),
-          const SizedBox(height: 24),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 
@@ -196,10 +290,9 @@ class _QuizPageState extends State<QuizPage> {
       return SliverFillRemaining(child: _buildEmptyState(theme));
     }
 
-    return FutureBuilder<List<Quiz>>(
+    return FutureBuilder<List<quiz_model.Quiz>>(
       future: _futureQuizzes,
       builder: (context, snapshot) {
-        // Pendant le refresh (mais après le premier chargement)
         if (snapshot.connectionState == ConnectionState.waiting &&
             !_isInitialLoad) {
           return SliverList(
@@ -210,21 +303,22 @@ class _QuizPageState extends State<QuizPage> {
           );
         }
 
-        // Erreur
         if (snapshot.hasError) {
           return SliverFillRemaining(child: _buildErrorState(theme));
         }
 
-        // Données disponibles
         if (snapshot.hasData) {
           final quizzes = snapshot.data!;
           if (quizzes.isNotEmpty) {
             return SliverList(
               delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildQuizCard(
-                  quizzes[index],
-                  _expandedQuizzes[quizzes[index].id] ?? false,
-                  theme,
+                (context, index) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildQuizCard(
+                    quizzes[index],
+                    _expandedQuizzes[quizzes[index].id] ?? false,
+                    theme,
+                  ),
                 ),
                 childCount: quizzes.length,
               ),
@@ -233,17 +327,18 @@ class _QuizPageState extends State<QuizPage> {
           return SliverFillRemaining(child: _buildEmptyState(theme));
         }
 
-        // Cas par défaut (ne devrait normalement pas arriver)
         return SliverFillRemaining(child: _buildLoadingScreen(theme));
       },
     );
   }
 
   Widget _buildQuizShimmer(ThemeData theme) {
-    return Card(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -301,12 +396,15 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   Widget _buildInfoRow(IconData icon, String text, ThemeData theme) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: theme.colorScheme.primary),
-        const SizedBox(width: 8),
-        Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
+        ],
+      ),
     );
   }
 
@@ -372,11 +470,23 @@ class _QuizPageState extends State<QuizPage> {
     );
   }
 
-  Widget _buildQuizCard(Quiz quiz, bool isExpanded, ThemeData theme) {
-    return Card(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  Widget _buildQuizCard(
+    quiz_model.Quiz quiz,
+    bool isExpanded,
+    ThemeData theme,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
@@ -394,7 +504,7 @@ class _QuizPageState extends State<QuizPage> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.2),
+                      color: theme.colorScheme.primary.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(Icons.quiz, color: theme.colorScheme.primary),
@@ -428,36 +538,36 @@ class _QuizPageState extends State<QuizPage> {
               ),
               if (isExpanded) ...[
                 const SizedBox(height: 16),
-                Divider(color: theme.dividerColor.withOpacity(0.3)),
-                const SizedBox(height: 8),
+                Divider(height: 1, color: theme.dividerColor.withOpacity(0.3)),
+                const SizedBox(height: 12),
                 _buildInfoRow(
                   Icons.school,
                   'Formation: ${quiz.formation.titre}',
                   theme,
                 ),
-                const SizedBox(height: 8),
                 _buildInfoRow(
                   Icons.star,
                   'Points: ${quiz.nbPointsTotal}',
                   theme,
                 ),
-                const SizedBox(height: 8),
                 _buildInfoRow(
                   Icons.assessment,
                   'Niveau: ${quiz.niveau}',
                   theme,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Text(
                   'Description',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   quiz.description ?? 'Aucune description disponible',
-                  style: theme.textTheme.bodyMedium,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.8),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -466,10 +576,11 @@ class _QuizPageState extends State<QuizPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: theme.colorScheme.onPrimary,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      elevation: 0,
                     ),
                     onPressed: () async {
                       try {
@@ -495,10 +606,11 @@ class _QuizPageState extends State<QuizPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => QuizSessionPage(
-                              quiz: quiz,
-                              questions: questions,
-                            ),
+                            builder:
+                                (_) => QuizSessionPage(
+                                  quiz: quiz,
+                                  questions: questions,
+                                ),
                           ),
                         );
                       } catch (e) {

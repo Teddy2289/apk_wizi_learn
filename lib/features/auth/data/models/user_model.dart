@@ -15,7 +15,6 @@ class UserModel extends Equatable {
   final String? lastLoginIp;
   final bool isOnline;
   final StagiaireModel? stagiaire;
-
   const UserModel({
     required this.id,
     required this.name,
@@ -31,11 +30,9 @@ class UserModel extends Equatable {
     required this.isOnline,
     this.stagiaire,
   });
-
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final userJson = json['user'] as Map<String, dynamic>? ?? {};
-    final stagiaireJson = json['stagiaire'] as Map<String, dynamic>?;
-
+    final stagiaireJson = userJson['stagiaire'] ?? json['stagiaire'];
     // Gestion robuste de is_online
     bool isOnline;
     if (userJson['is_online'] is bool) {
@@ -45,7 +42,6 @@ class UserModel extends Equatable {
     } else {
       isOnline = false; // Valeur par défaut si le type est inattendu
     }
-
     return UserModel(
       id: (userJson['id'] as int?) ?? 0,
       name: (userJson['name'] as String?) ?? '',
@@ -64,7 +60,6 @@ class UserModel extends Equatable {
           : null,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -82,7 +77,6 @@ class UserModel extends Equatable {
       'stagiaire': stagiaire?.toJson(),
     };
   }
-
   @override
   List<Object?> get props => [
     id,

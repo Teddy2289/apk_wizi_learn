@@ -18,9 +18,8 @@ class QuizRepository {
         return [];
       }
 
-      final List<dynamic> rawQuizzes = response.data['data'] is List
-          ? response.data['data']
-          : [];
+      final List<dynamic> rawQuizzes =
+          response.data['data'] is List ? response.data['data'] : [];
 
       final List<Quiz> quizzes = [];
       for (var rawQuiz in rawQuizzes) {
@@ -62,7 +61,8 @@ class QuizRepository {
       final response = await apiClient.get(AppConstants.globalRanking);
       final List<dynamic> ranking = response.data is List ? response.data : [];
       return ranking.firstWhere(
-            (entry) => entry is Map &&
+        (entry) =>
+            entry is Map &&
             entry['stagiaire'] is Map &&
             entry['stagiaire']['id']?.toString() == stagiaireId.toString(),
         orElse: () => null,
@@ -80,37 +80,59 @@ class QuizRepository {
 
       if (response.data == null || response.data['data'] == null) return [];
 
-      return (response.data['data'] as List).map((q) {
+      // Convertir toutes les questions
+      final allQuestions = (response.data['data'] as List).map((q) {
         // Ajouter les réponses si elles ne sont pas présentes
         if (q['reponses'] == null) {
           q['reponses'] = [];
         }
         return Question.fromJson(q);
       }).toList();
+
+      // Mélanger la liste des questions
+      allQuestions.shuffle();
+
+      // Prendre seulement 5 questions (ou moins si il y en a moins de 5)
+      final randomQuestions = allQuestions.take(5).toList();
+
+      return randomQuestions;
     } catch (e, stack) {
       debugPrint('Error loading questions: $e\n$stack');
       return [];
     }
   }
-
   Future<Map<String, dynamic>> submitQuizResults({
     required int quizId,
     required Map<String, dynamic> answers,
     required int timeSpent,
   }) async {
     try {
+      // Valider le payload avant envoi
+      if (answers.isEmpty) {
+        throw Exception('Aucune réponse à soumettre');
+      }
+
+      // Créer le payload avec le format exact attendu par le serveur
+      final payload = {
+        'answers': answers,
+        'timeSpent': timeSpent,
+      };
+
+      debugPrint('Sending payload to server: $payload');
+
       final response = await apiClient.post(
         '/quiz/$quizId/result',
-        data: {
-          'answers': answers,
-          'timeSpent': timeSpent,
-        },
+        data: payload,
       );
 
-      return response.data ?? {};
+      if (response.data == null) {
+        throw Exception('Réponse vide du serveur');
+      }
+
+      return response.data;
     } catch (e, stack) {
       debugPrint('Error submitting quiz results: $e\n$stack');
-      throw Exception('Failed to submit quiz results');
+      throw Exception('Échec de la soumission: ${e.toString()}');
     }
   }
 }

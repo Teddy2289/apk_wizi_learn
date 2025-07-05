@@ -1,4 +1,3 @@
-
 class Question {
   final String id;
   final int? quizId;
@@ -217,9 +216,7 @@ class Question {
                 null
                     as Answer, // This line will still cause a warning, so let's fix it properly below
       );
-      if (right != null) {
-        pairs[left.text] = right.text;
-      }
+      pairs[left.text] = right.text;
     }
     return pairs;
   }

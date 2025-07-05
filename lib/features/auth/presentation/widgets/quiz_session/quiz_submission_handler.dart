@@ -21,7 +21,7 @@ class QuizSubmissionHandler {
     required int timeSpent,
   }) async {
     try {
-      debugPrint('Submitting quiz with answers: $userAnswers');
+      debugPrint('======== SUB =========: $userAnswers');
       if (userAnswers.containsKey('1594')) {
         debugPrint('Flashcard answer for 1594: ${userAnswers['1594']}');
       }
@@ -32,7 +32,10 @@ class QuizSubmissionHandler {
         timeSpent: timeSpent,
       );
 
-      final transformedResponse = _transformResponse(response);
+      final transformedResponse = _transformResponse(
+        response,
+        userAnswers: userAnswers,
+      );
       debugPrint('Transformed response: $transformedResponse');
 
       return transformedResponse;
@@ -42,89 +45,92 @@ class QuizSubmissionHandler {
     }
   }
 
-  Map<String, dynamic> _transformResponse(Map<String, dynamic> response) {
+  Map<String, dynamic> _transformResponse(
+      Map<String, dynamic> response, {
+        Map<String, dynamic>? userAnswers,
+      }) {
     if (response.containsKey('questions') && response['questions'] is List) {
       final questions = List<Map<String, dynamic>>.from(response['questions']);
 
-      final transformedQuestions =
-          questions.map((question) {
-            // Ne pas transformer les questions sans réponse
-            if (question['selectedAnswers'] == null) {
-              return question;
-            }
+      final transformedQuestions = questions
+          .where((question) {
+        final qid = question['id']?.toString();
+        final hasSelected = question['selectedAnswers'] != null &&
+            question['selectedAnswers'].toString().trim().isNotEmpty;
+        final hasUserAnswer =
+            userAnswers != null && userAnswers.containsKey(qid);
+        return hasSelected && hasUserAnswer;
+      })
+          .map((question) {
+        if (question['selectedAnswers'] == null) return question;
 
-            // Cas spécial pour les questions audio
-            if (question['type'] == 'question audio') {
-              // Si c'est déjà dans le bon format Map
-              if (question['selectedAnswers'] is Map) {
-                return question;
-              }
-
-              // Si c'est une String, la convertir en Map
-              if (question['selectedAnswers'] is String) {
-                return {
-                  ...question,
-                  'selectedAnswers': {
-                    'text': question['selectedAnswers'],
-                    'id': _findAnswerId(
-                      question['answers'],
-                      question['selectedAnswers'],
-                    ),
-                  },
-                };
-              }
-
-              // Si c'est une liste, prendre le premier élément
-              if (question['selectedAnswers'] is List &&
-                  question['selectedAnswers'].isNotEmpty) {
-                final first = question['selectedAnswers'].first;
-                return {
-                  ...question,
-                  'selectedAnswers': {
-                    'text': first is Map ? first['text'] : first.toString(),
-                    'id':
-                        first is Map
-                            ? first['id']?.toString()
-                            : _findAnswerId(question['answers'], first),
-                  },
-                };
-              }
-            }
-
-            if (question['type'] == 'carte flash') {
-              // Get all correct answers (handling both isCorrect and is_correct formats)
-              final correctAnswers = (question['answers'] as List)
-                  .where((a) =>
-              a['isCorrect'] == true ||
-                  a['is_correct'] == true ||
-                  a['isCorrect'] == 1) // Also handle numeric 1/0 values
-                  .map((a) => a['text'].toString().trim())
-                  .toList();
-
-              // Format user's answer
-              dynamic userAnswer = question['selectedAnswers'];
-              if (userAnswer is Map) {
-                userAnswer = userAnswer['text'] ?? userAnswer['id'] ?? '';
-              }
-
-              // Clean and compare answers
-              final cleanUserAnswer = userAnswer.toString().trim();
-              final isActuallyCorrect = correctAnswers.any(
-                      (correct) => correct.trim() == cleanUserAnswer
-              );
-
-              return {
-                ...question,
-                'selectedAnswers': cleanUserAnswer,
-                'correctAnswers': correctAnswers,
-                'isCorrect': isActuallyCorrect,
-              };
-            }
+        if (question['type'] == 'question audio') {
+          if (question['selectedAnswers'] is Map) {
             return question;
-          }).toList();
+          }
+
+          if (question['selectedAnswers'] is String) {
+            return {
+              ...question,
+              'selectedAnswers': {
+                'text': question['selectedAnswers'],
+                'id': _findAnswerId(
+                  question['answers'],
+                  question['selectedAnswers'],
+                ),
+              },
+            };
+          }
+
+          if (question['selectedAnswers'] is List &&
+              question['selectedAnswers'].isNotEmpty) {
+            final first = question['selectedAnswers'].first;
+            return {
+              ...question,
+              'selectedAnswers': {
+                'text': first is Map ? first['text'] : first.toString(),
+                'id': first is Map
+                    ? first['id']?.toString()
+                    : _findAnswerId(question['answers'], first),
+              },
+            };
+          }
+        }
+
+        if (question['type'] == 'carte flash') {
+          final correctAnswers = (question['answers'] as List)
+              .where((a) =>
+          a['isCorrect'] == true ||
+              a['is_correct'] == true ||
+              a['isCorrect'] == 1)
+              .map((a) => a['text'].toString().trim())
+              .toList();
+
+          dynamic userAnswer = question['selectedAnswers'];
+          if (userAnswer is Map) {
+            userAnswer =
+                userAnswer['text'] ?? userAnswer['id'] ?? '';
+          }
+
+          final cleanUserAnswer = userAnswer.toString().trim();
+          final isActuallyCorrect = correctAnswers.any(
+                (correct) => correct.trim() == cleanUserAnswer,
+          );
+
+          return {
+            ...question,
+            'selectedAnswers': cleanUserAnswer,
+            'correctAnswers': correctAnswers,
+            'isCorrect': isActuallyCorrect,
+          };
+        }
+
+        return question;
+      }).toList();
 
       return {...response, 'questions': transformedQuestions};
     }
+
     return response;
   }
 
@@ -133,10 +139,10 @@ class QuizSubmissionHandler {
       if (answers == null) return null;
 
       final answerText =
-          answerValue is Map ? answerValue['text'] : answerValue.toString();
+      answerValue is Map ? answerValue['text'] : answerValue.toString();
 
       final matching = answers.firstWhere(
-        (a) => a['text'] == answerText,
+            (a) => a['text'] == answerText,
         orElse: () => null,
       );
 

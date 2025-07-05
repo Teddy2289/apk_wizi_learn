@@ -39,7 +39,7 @@ class FcmService {
     String? authToken = await storage.read(key: 'token');
     try {
       await Dio().post(
-        'https://wizi-learn.testeninterne.com/api/fcm-token',
+        'https://wizi-learn.com/api/fcm-token',
         data: {'token': token},
         options: Options(
           headers: {

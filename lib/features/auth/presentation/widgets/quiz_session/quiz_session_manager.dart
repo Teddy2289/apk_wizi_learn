@@ -13,7 +13,7 @@ class QuizSessionManager {
   Timer? _timer;
   DateTime? _questionStartTime;
   int _totalTimeSpent = 0;
-  Map<String, dynamic> _userAnswers = {};
+  final Map<String, dynamic> _userAnswers = {};
   final QuizSubmissionHandler _submissionHandler;
 
   QuizSessionManager({required this.questions, required this.quizId})
@@ -21,6 +21,15 @@ class QuizSessionManager {
 
   void startSession() {
     _startQuestionTimer();
+  }
+
+  // Méthodes de navigation ajoutées
+  void goToQuestion(int index) {
+    if (index >= 0 && index < questions.length) {
+      _recordTimeSpent();
+      currentQuestionIndex.value = index;
+      _resetQuestionTimer();
+    }
   }
 
   void _startQuestionTimer() {
@@ -56,7 +65,7 @@ class QuizSessionManager {
       if (answer is Map) {
         _userAnswers[questionId] = {
           'id': answer['id']?.toString(),
-          'text': answer['text']
+          'text': answer['text'],
         };
       } else if (answer is List && answer.isNotEmpty) {
         // Si c'est une liste, prendre le premier élément
@@ -64,44 +73,39 @@ class QuizSessionManager {
         if (firstAnswer is Map) {
           _userAnswers[questionId] = {
             'id': firstAnswer['id']?.toString(),
-            'text': firstAnswer['text']
+            'text': firstAnswer['text'],
           };
         } else {
           _userAnswers[questionId] = {
             'id': null,
-            'text': firstAnswer.toString()
+            'text': firstAnswer.toString(),
           };
         }
       } else if (answer is String) {
-        _userAnswers[questionId] = {
-          'id': null,
-          'text': answer
-        };
+        _userAnswers[questionId] = {'id': null, 'text': answer};
       }
-    }else if(question.type == "carte flash") {
+    } else if (question.type == "carte flash") {
       if (answer is Map) {
         // Handle both front and back of flashcard if needed
-        _userAnswers[questionId] = answer['text'] ?? answer.values.first?.toString() ?? '';
+        _userAnswers[questionId] =
+            answer['text'] ?? answer.values.first?.toString() ?? '';
       } else {
         _userAnswers[questionId] = answer.toString();
       }
       debugPrint("Flashcard answer stored: ${_userAnswers[questionId]}");
-    }
-    else if (question.type == "correspondance" && answer is Map) {
+    } else if (question.type == "correspondance" && answer is Map) {
       _userAnswers[questionId] = answer;
-    }
-    else if (question.type == "vrai/faux" && answer is List) {
+    } else if (question.type == "vrai/faux" && answer is List) {
       _userAnswers[questionId] = answer;
-    }
-    else if (question.type == "choix multiples") {
+    } else if (question.type == "choix multiples") {
       _userAnswers[questionId] = answer is List ? answer : [];
-    }
-    else {
+    } else {
       _userAnswers[questionId] = answer;
     }
 
     debugPrint("Stored answer for $questionId: ${_userAnswers[questionId]}");
   }
+
   void goToNextQuestion() {
     final currentQuestionId =
         questions[currentQuestionIndex.value].id.toString();
@@ -131,12 +135,33 @@ class QuizSessionManager {
     _recordTimeSpent();
 
     try {
-      // Ajoutez return ici pour retourner les résultats
-      return await _submissionHandler.submitQuiz(
+      // Valider qu'il y a des réponses à soumettre
+      if (_userAnswers.isEmpty) {
+        throw Exception('Aucune réponse à soumettre');
+      }
+
+      final response = await _submissionHandler.submitQuiz(
         userAnswers: _userAnswers,
         timeSpent: _totalTimeSpent,
       );
-    } catch (e) {
+
+      // Filtrer les questions non répondues
+      if (response.containsKey('questions') && response['questions'] is List) {
+        final answeredQuestions =
+            (response['questions'] as List)
+                .where((q) => q['selectedAnswers'] != null)
+                .toList();
+
+        return {
+          ...response,
+          'questions': answeredQuestions,
+          'totalQuestions': answeredQuestions.length,
+        };
+      }
+
+      return response;
+    } catch (e, stack) {
+      debugPrint('Error completing quiz: $e\n$stack');
       throw Exception('Erreur lors de la soumission: ${e.toString()}');
     }
   }
