@@ -16,6 +16,30 @@ class SponsorshipPage extends StatefulWidget {
 class _SponsorshipPageState extends State<SponsorshipPage> {
   String? _referralLink;
   bool _isGenerating = false;
+  Map<String, dynamic>? _stats;
+  bool _isLoadingStats = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    setState(() {
+      _isLoadingStats = true;
+    });
+
+    final repo = ParrainageRepository(
+      apiClient: ApiClient(dio: Dio(), storage: const FlutterSecureStorage()),
+    );
+    final stats = await repo.getStatsParrainage();
+
+    setState(() {
+      _stats = stats;
+      _isLoadingStats = false;
+    });
+  }
 
   Future<void> _genererLien() async {
     setState(() {
@@ -82,55 +106,55 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
             _isGenerating
                 ? const Center(child: CircularProgressIndicator())
                 : Center(
-                  child: ElevatedButton.icon(
-                    onPressed: _genererLien,
-                    icon: const Icon(Icons.link),
-                    label: const Text("Générer mon lien"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFEB823),
-                      foregroundColor: Colors.black,
-                    ),
-                  ),
+              child: ElevatedButton.icon(
+                onPressed: _genererLien,
+                icon: const Icon(Icons.link),
+                label: const Text("Générer mon lien"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFEB823),
+                  foregroundColor: Colors.black,
                 ),
+              ),
+            ),
 
             const SizedBox(height: 20),
             if (_referralLink != null) _buildReferralLinkSection(context),
+            const SizedBox(height: 20),
+            if (_isLoadingStats)
+              const Center(child: CircularProgressIndicator())
+            else if (_stats != null)
+              _buildStatsSection(context),
             const SizedBox(height: 30),
             _buildStep(
               context,
               number: '1',
               title: 'Copiez votre lien unique',
-              description:
-                  'Utilisez le bouton ci-dessus pour copier ou partager votre lien',
+              description: 'Utilisez le bouton ci-dessus pour copier ou partager votre lien',
             ),
             _buildStep(
               context,
               number: '2',
               title: 'Partagez avec vos amis',
-              description:
-                  'Envoyez-le par message, email ou sur les réseaux sociaux',
+              description: 'Envoyez-le par message, email ou sur les réseaux sociaux',
             ),
             _buildStep(
               context,
               number: '3',
               title: 'Vos amis s\'inscrivent',
-              description:
-                  'Ils doivent utiliser votre lien pour créer leur compte',
+              description: 'Ils doivent utiliser votre lien pour créer leur compte',
             ),
             _buildStep(
               context,
               number: '4',
               title: 'Vous gagnez tous les deux',
-              description:
-                  'Dès qu\'ils suivent leur première formation payante',
+              description: 'Dès qu\'ils suivent leur première formation payante',
             ),
             const SizedBox(height: 30),
             _buildInfoCard(
               context,
               icon: Icons.help_outline,
               title: 'Questions fréquentes',
-              content:
-                  'Consultez notre FAQ pour plus d\'informations sur le programme de parrainage.',
+              content: 'Consultez notre FAQ pour plus d\'informations sur le programme de parrainage.',
               onTap: () {
                 // TODO: Navigation vers FAQ
               },
@@ -138,6 +162,121 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildStatsSection(BuildContext context) {
+
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Vos statistiques de parrainage',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatItem(
+                  context,
+                  value: _stats?['nombre_filleuls']?.toString() ?? '0',
+                  label: 'Filleuls',
+                  icon: Icons.people_alt_outlined,
+                ),
+                _buildStatItem(
+                  context,
+                  value: _stats?['total_points']?.toString() ?? '0',
+                  label: 'Points',
+                  icon: Icons.star_border,
+                ),
+                _buildStatItem(
+                  context,
+                  value: _stats?['gains']?.toString() ?? '0',
+                  label: 'Gains (€)',
+                  icon: Icons.euro_outlined,
+                ),
+
+              ],
+            ),
+            const SizedBox(height: 20),
+            if ((double.tryParse(_stats?['gains']?.toString() ?? '0') ?? 0) > 0.00)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _demanderRetrait,
+                  icon: const Icon(Icons.monetization_on_outlined),
+                  label: const Text("Retirer mes gains"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.brown[400],
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+  Future<void> _demanderRetrait() async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Demande de retrait"),
+          content: const Text(
+              "Votre demande est en cours de traitement. Merci de patienter un délai de 1 à 2 jours ouvrés."),
+          actions: [
+            TextButton(
+              child: const Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Ici vous pourriez ajouter l'appel API pour enregistrer la demande
+                // _enregistrerDemandeRetrait();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+  Widget _buildStatItem(BuildContext context, {
+    required String value,
+    required String label,
+    required IconData icon,
+  }) {
+    // Conversion de la valeur en double puis formatage
+    final numValue = double.tryParse(value) ?? 0;
+    final formattedValue = numValue % 1 == 0
+        ? numValue.toInt().toString()  // Affiche sans décimales si .00
+        : numValue.toStringAsFixed(2); // Affiche avec 2 décimales sinon
+
+    return Column(
+      children: [
+        Icon(icon, size: 32, color: const Color(0xFFFEB823)),
+        const SizedBox(height: 8),
+        Text(
+          formattedValue,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFFFEB823),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ],
     );
   }
 
@@ -153,9 +292,9 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
           children: [
             Text(
               'Votre lien de parrainage',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 10),
             Container(
@@ -177,9 +316,7 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
                   IconButton(
                     icon: const Icon(Icons.copy),
                     onPressed: () async {
-                      await Clipboard.setData(
-                        ClipboardData(text: referralLink),
-                      );
+                      await Clipboard.setData(ClipboardData(text: referralLink));
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Lien copié !')),
                       );
@@ -208,9 +345,7 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
                   child: ElevatedButton(
                     child: const Text('Copier'),
                     onPressed: () async {
-                      await Clipboard.setData(
-                        ClipboardData(text: referralLink),
-                      );
+                      await Clipboard.setData(ClipboardData(text: referralLink));
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Lien copié !')),
                       );
@@ -226,11 +361,11 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
   }
 
   Widget _buildStep(
-    BuildContext context, {
-    required String number,
-    required String title,
-    required String description,
-  }) {
+      BuildContext context, {
+        required String number,
+        required String title,
+        required String description,
+      }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -278,12 +413,12 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
   }
 
   Widget _buildInfoCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String content,
-    required VoidCallback onTap,
-  }) {
+      BuildContext context, {
+        required IconData icon,
+        required String title,
+        required String content,
+        required VoidCallback onTap,
+      }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),

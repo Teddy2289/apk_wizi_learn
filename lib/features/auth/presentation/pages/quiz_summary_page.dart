@@ -204,13 +204,13 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
             child: const Icon(Icons.refresh),
           ),
           const SizedBox(width: 16),
-          FloatingActionButton(
-            heroTag: 'quiz_list',
-            onPressed:
-                () => Navigator.of(context).popUntil((route) => route.isFirst),
-            tooltip: 'Retour à la liste des quiz',
-            child: const Icon(Icons.assignment),
-          ),
+          // FloatingActionButton(
+          //   heroTag: 'quiz_list',
+          //   onPressed:
+          //       () => Navigator.of(context).popUntil((route) => route.isFirst),
+          //   tooltip: 'Retour à la liste des quiz',
+          //   child: const Icon(Icons.assignment),
+          // ),
         ],
       ),
     );

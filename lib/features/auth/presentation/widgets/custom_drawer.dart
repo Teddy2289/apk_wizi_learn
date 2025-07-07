@@ -101,45 +101,60 @@ class CustomDrawer extends StatelessWidget {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
+
+                // --- SECTION MENU PRINCIPAL ---
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Text(
+                    'Navigation',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                ),
                 _buildDrawerItem(
                   icon: Icons.school,
                   label: 'Mes formations',
                   onTap: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      RouteConstants.myTrainings,
-                    );
+                    Navigator.pushReplacementNamed(context, RouteConstants.myTrainings);
                   },
                 ),
                 _buildDrawerItem(
                   icon: Icons.timeline,
                   label: 'Mes Progrès',
                   onTap: () {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      RouteConstants.myProgress,
-                    );
+                    Navigator.pushReplacementNamed(context, RouteConstants.myProgress);
                   },
                 ),
 
-                // Section des informations supplémentaires du stagiaire
+                /// Séparateur clair
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Divider(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                    thickness: 1.2,
+                    indent: 16,
+                    endIndent: 16,
+                  )
+                ),
+
+                // --- SECTION INFOS STAGIAIRE ---
                 BlocBuilder<AuthBloc, AuthState>(
                   builder: (context, state) {
                     if (state is Authenticated && state.user.stagiaire != null) {
                       return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Mes informations',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: Colors.black87,
+                                color: Colors.grey.shade800,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -148,6 +163,7 @@ class CustomDrawer extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: Colors.grey.shade100,
                                 borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.grey.shade300),
                               ),
                               child: Column(
                                 children: [
@@ -186,12 +202,14 @@ class CustomDrawer extends StatelessWidget {
               ],
             ),
           ),
-
           // Bouton de déconnexion
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: Colors.grey, width: 0.5)),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: Colors.grey.shade300),
+              ),
+              color: Colors.grey.shade50,
             ),
             child: _buildDrawerItem(
               icon: Icons.logout,
@@ -213,16 +231,44 @@ class CustomDrawer extends StatelessWidget {
     required String label,
     required VoidCallback onTap,
     Color iconColor = Colors.black87,
+    Color? backgroundColor,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: iconColor),
-      title: Text(
-        label,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: backgroundColor ?? Colors.grey.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.withOpacity(0.2)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
+            child: Row(
+              children: [
+                Icon(icon, color: iconColor, size: 24),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: Colors.grey),
+              ],
+            ),
+          ),
+        ),
       ),
-      onTap: onTap,
     );
   }
+
 
   Widget _buildInfoRow({required IconData icon, required String text}) {
     return Row(

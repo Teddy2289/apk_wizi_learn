@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 
@@ -25,19 +26,11 @@ class _MatchingQuestionState extends State<MatchingQuestion> {
   @override
   void initState() {
     super.initState();
-    debugPrint("🔍 Initialisation de MatchingQuestion pour la question : ${widget.question.text}");
-    debugPrint("👉 Type de question : ${widget.question.type}");
     _initMatchingData();
   }
 
   void _initMatchingData() {
     _matches = {};
-
-    // Debug: Afficher toutes les réponses
-    debugPrint("🔍 Toutes les réponses:");
-    for (var answer in widget.question.answers) {
-      debugPrint("- ${answer.text} (bankGroup: ${answer.bankGroup}, matchPair: ${answer.matchPair})");
-    }
 
     // Group answers by bankGroup
     final answerGroups = <String, List<Answer>>{};
@@ -46,7 +39,7 @@ class _MatchingQuestionState extends State<MatchingQuestion> {
       answerGroups.putIfAbsent(group, () => []).add(answer);
     }
 
-    // Séparer les left/right en fonction de match_pair
+    // Séparer les left/right en fonction de matchPair
     _leftItems = [];
     _availableOptions = [];
 
@@ -65,36 +58,38 @@ class _MatchingQuestionState extends State<MatchingQuestion> {
       if (rightItem.id.isNotEmpty) _availableOptions.add(rightItem);
     });
 
-    // Alternative si matchPair n'est pas utilisé
+    // Alternative fallback
     if (_leftItems.isEmpty && _availableOptions.isEmpty) {
-      _leftItems = widget.question.answers.where((a) => a.position != null && a.position! % 2 == 1).toList();
-      _availableOptions = widget.question.answers.where((a) => a.position != null && a.position! % 2 == 0).toList();
+      _leftItems = widget.question.answers
+          .where((a) => a.position != null && a.position! % 2 == 1)
+          .toList();
+      _availableOptions = widget.question.answers
+          .where((a) => a.position != null && a.position! % 2 == 0)
+          .toList();
     }
 
-    // Tri par position
+    // Tri
     _leftItems.sort((a, b) => (a.position ?? 0).compareTo(b.position ?? 0));
     _availableOptions.sort((a, b) => (a.position ?? 0).compareTo(b.position ?? 0));
 
-    debugPrint("🧩 Éléments LEFT (question): ${_leftItems.map((e) => e.text).toList()}");
-    debugPrint("🧩 Éléments RIGHT (réponses): ${_availableOptions.map((e) => e.text).toList()}");
+    // ✅ Shuffle right options for randomness
+    _availableOptions.shuffle(Random());
+
+    setState(() {});
   }
 
   void _updateMatch(String leftId, String? rightValue) {
-    debugPrint("🔁 Mise à jour du match : $leftId → $rightValue");
     if (rightValue == null || rightValue == "_empty") {
       setState(() {
         _matches.remove(leftId);
-        debugPrint("❌ Suppression du match pour $leftId");
       });
       return;
     }
 
     setState(() {
       _matches[leftId] = rightValue;
-      debugPrint("✅ Match enregistré : $_matches");
     });
 
-    // Envoyer les paires de correspondances
     widget.onAnswer(_matches);
   }
 
@@ -118,149 +113,170 @@ class _MatchingQuestionState extends State<MatchingQuestion> {
   }
 
   String _getCorrectMatch(String leftId) {
-    final leftItem = _leftItems.firstWhere(
-      (item) => item.id.toString() == leftId,
-    );
+    final leftItem = _leftItems.firstWhere((item) => item.id == leftId);
     final correctMatch = _availableOptions.firstWhere(
-      (option) => option.matchPair == leftItem.id.toString(),
+          (option) => option.matchPair == leftItem.id,
       orElse: () => Answer(id: "-1", text: "Non trouvé", correct: false),
     );
-    debugPrint("📌 Correspondance correcte pour $leftId = ${correctMatch.text}");
     return correctMatch.text;
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 3,
+      // shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.all(0),
+      color: theme.colorScheme.surface,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Question header
+            Text(
+              widget.question.text,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Matching items
             ..._leftItems.map((leftItem) {
-              final isCorrect = _isCorrectMatch(leftItem.id.toString());
-              final selectedValue =
-                  _matches[leftItem.id.toString()] ?? "_empty";
+              final isCorrect = _isCorrectMatch(leftItem.id);
+              final selectedValue = _matches[leftItem.id] ?? "_empty";
 
               return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 14),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color:
-                        widget.showFeedback
-                            ? isCorrect
-                                ? Colors.green
-                                : Colors.red
-                            : Colors.grey[300]!,
-                  ),
-                  color:
-                      widget.showFeedback
-                          ? isCorrect
-                              ? Colors.green[50]
-                              : Colors.red[50]
-                          : null,
+                  color: widget.showFeedback
+                      ? isCorrect
+                      ? Colors.green[50]
+                      : Colors.red[50]
+                      : theme.colorScheme.surfaceVariant.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        leftItem.text,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                    const Icon(Icons.arrow_forward, color: Colors.grey),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: selectedValue,
-                        items: [
-                          DropdownMenuItem(
-                            value: "_empty",
-                            child: Text(
-                              "Sélectionnez...",
-                              style: TextStyle(color: Colors.grey[600]),
-                            ),
-                          ),
-                          ..._availableOptions.map((option) {
-                            return DropdownMenuItem(
-                              value: option.text,
-                              child: Container(
-                                color:
-                                    widget.showFeedback &&
-                                            option.matchPair ==
-                                                leftItem.id.toString()
-                                        ? Colors.green[50]
-                                        : null,
-                                child: Text(option.text),
-                              ),
-                            );
-                          }),
-                        ],
-                        onChanged:
-                            widget.showFeedback
-                                ? null
-                                : (value) =>
-                                    _updateMatch(leftItem.id.toString(), value),
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
+                  child: Row(
+                    children: [
+                      // Left label
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          leftItem.text,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        isExpanded: true,
                       ),
-                    ),
-                    if (widget.showFeedback) ...[
+                      const Icon(Icons.arrow_forward, size: 20, color: Colors.grey),
                       const SizedBox(width: 12),
-                      Icon(
-                        isCorrect ? Icons.check : Icons.close,
-                        color: isCorrect ? Colors.green : Colors.red,
+
+                      // Dropdown
+                      Expanded(
+                        flex: 3,
+                        child: DropdownButtonFormField<String>(
+                          value: selectedValue,
+                          items: [
+                            DropdownMenuItem(
+                              value: "_empty",
+                              child: Text(
+                                "Sélectionnez...",
+                                style: TextStyle(color: Colors.grey[500]),
+                              ),
+                            ),
+                            ..._availableOptions.map((option) {
+                              return DropdownMenuItem(
+                                value: option.text,
+                                child: Text(option.text),
+                              );
+                            }),
+                          ],
+                          onChanged: widget.showFeedback
+                              ? null
+                              : (value) => _updateMatch(leftItem.id, value),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: theme.dividerColor,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: theme.dividerColor,
+                              ),
+                            ),
+                          ),
+                          isExpanded: true,
+                        ),
                       ),
+                      if (widget.showFeedback) ...[
+                        const SizedBox(width: 12),
+                        Icon(
+                          isCorrect ? Icons.check_circle : Icons.cancel,
+                          color: isCorrect ? Colors.green : Colors.red,
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               );
             }),
+
+            // Feedback
             if (widget.showFeedback) ...[
-              const SizedBox(height: 12),
-              ..._leftItems
-                  .where((leftItem) {
-                    return !_isCorrectMatch(leftItem.id.toString());
-                  })
-                  .map((leftItem) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text.rich(
-                        TextSpan(
-                          children: [
-                            const TextSpan(
-                              text: "La correspondance correcte pour ",
-                              style: TextStyle(color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                "Corrections :",
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red[700],
+                ),
+              ),
+              const SizedBox(height: 8),
+              ..._leftItems.where((item) => !_isCorrectMatch(item.id)).map(
+                    (leftItem) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: "${leftItem.text} ",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
                             ),
-                            TextSpan(
-                              text: leftItem.text,
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          ),
+                          const TextSpan(text: "→ "),
+                          TextSpan(
+                            text: _getCorrectMatch(leftItem.id),
+                            style: TextStyle(
+                              color: Colors.red[700],
+                              fontWeight: FontWeight.bold,
                             ),
-                            TextSpan(
-                              text:
-                                  " était : ${_getCorrectMatch(leftItem.id.toString())}",
-                              style: const TextStyle(color: Colors.red),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    );
-                  })
-                  ,
+                    ),
+                  );
+                },
+              ),
             ],
           ],
         ),

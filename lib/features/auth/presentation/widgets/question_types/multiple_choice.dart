@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 class MultipleChoiceQuestion extends StatefulWidget {
   final Question question;
@@ -20,13 +19,11 @@ class MultipleChoiceQuestion extends StatefulWidget {
 
 class _MultipleChoiceQuestionState extends State<MultipleChoiceQuestion> {
   late List<String> _selectedAnswers;
-  bool _answerConfirmed = false;
 
   @override
   void initState() {
     super.initState();
     _selectedAnswers = [];
-    _answerConfirmed = widget.question.selectedAnswers != null;
 
     if (widget.question.selectedAnswers != null) {
       if (widget.question.selectedAnswers is List) {
@@ -47,17 +44,8 @@ class _MultipleChoiceQuestionState extends State<MultipleChoiceQuestion> {
         _selectedAnswers.add(answerId);
       }
     });
-  }
 
-  void _submitAnswer() {
-    if (_selectedAnswers.isEmpty) {
-      widget.onAnswer([]);
-      setState(() {
-        _answerConfirmed = true;
-      });
-      return;
-    }
-
+    // Persister immédiatement la réponse sélectionnée
     final selectedTexts = _selectedAnswers.map((id) {
       return widget.question.answers
           .firstWhere((a) => a.id.toString() == id)
@@ -65,18 +53,6 @@ class _MultipleChoiceQuestionState extends State<MultipleChoiceQuestion> {
     }).toList();
 
     widget.onAnswer(selectedTexts);
-    setState(() {
-      _answerConfirmed = true;
-    });
-
-    Fluttertoast.showToast(
-      msg: "Réponse sauvegardée avec succès !",
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.TOP,
-      backgroundColor: Colors.green[500],
-      textColor: Colors.white,
-      fontSize: 16.0,
-    );
   }
 
   @override
@@ -89,7 +65,7 @@ class _MultipleChoiceQuestionState extends State<MultipleChoiceQuestion> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Question text
+          // Texte de la question
           Text(
             widget.question.text,
             style: textTheme.bodyLarge?.copyWith(
@@ -99,7 +75,7 @@ class _MultipleChoiceQuestionState extends State<MultipleChoiceQuestion> {
           ),
           const SizedBox(height: 16),
 
-          // Answers list
+          // Liste des réponses
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -166,30 +142,6 @@ class _MultipleChoiceQuestionState extends State<MultipleChoiceQuestion> {
               );
             },
           ),
-
-          const SizedBox(height: 24),
-
-          // Submit button
-          if (_selectedAnswers.isNotEmpty && !_answerConfirmed)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: _submitAnswer,
-                child: Text(
-                  'Confirmer la réponse',
-                  style: textTheme.labelLarge?.copyWith(
-                    fontSize: 14,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );

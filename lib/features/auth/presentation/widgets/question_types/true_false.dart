@@ -72,123 +72,157 @@ class _TrueFalseQuestionState extends State<TrueFalseQuestion> {
     return widget.showFeedback &&
         (_selectedAnswers.contains(answerId) || _isCorrectAnswer(answerId));
   }
-
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            ...widget.question.answers.map((answer) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Texte de la question
+          Text(
+            widget.question.text,
+            style: textTheme.bodyLarge?.copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Liste des réponses (True/False)
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: widget.question.answers.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final answer = widget.question.answers[index];
               final answerId = answer.id.toString();
               final isSelected = _selectedAnswers.contains(answerId);
-              final showCorrectIndicator = _shouldShowCorrectIndicator(
-                answerId,
-              );
+              final showCorrectIndicator = _shouldShowCorrectIndicator(answerId);
+              final isCorrect = _isCorrectAnswer(answerId);
 
-              return Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color:
-                        isSelected
-                            ? widget.showFeedback
-                                ? _isSelectedAnswerCorrect(answerId)
-                                    ? Colors.green
-                                    : Colors.red
-                                : Theme.of(context).colorScheme.primary
-                            : widget.showFeedback && _isCorrectAnswer(answerId)
-                            ? Colors.green
-                            : Colors.grey[300]!,
-                  ),
-                  color:
-                      isSelected
-                          ? widget.showFeedback
-                              ? _isSelectedAnswerCorrect(answerId)
-                                  ? Colors.green[50]
-                                  : Colors.red[50]
-                              : Theme.of(
-                                context,
-                              ).colorScheme.primary.withOpacity(0.1)
-                          : widget.showFeedback && _isCorrectAnswer(answerId)
-                          ? Colors.green[50]
-                          : null,
-                ),
-                child: RadioListTile<String>(
-                  title: Text(
-                    answer.text,
-                    style: TextStyle(
-                      color:
-                          isSelected
-                              ? widget.showFeedback
-                                  ? _isSelectedAnswerCorrect(answerId)
-                                      ? Colors.green[800]
-                                      : Colors.red[800]
-                                  : null
-                              : widget.showFeedback &&
-                                  _isCorrectAnswer(answerId)
-                              ? Colors.green[800]
+              Color backgroundColor;
+              if (isSelected) {
+                backgroundColor = theme.colorScheme.primary.withOpacity(0.1);
+                if (widget.showFeedback) {
+                  backgroundColor = _isSelectedAnswerCorrect(answerId)
+                      ? Colors.green[50]!
+                      : Colors.red[50]!;
+                }
+              } else {
+                backgroundColor = Colors.grey[100]!;
+                if (widget.showFeedback && isCorrect) {
+                  backgroundColor = Colors.green[50]!;
+                }
+              }
+
+              return Material(
+                borderRadius: BorderRadius.circular(12),
+                color: backgroundColor,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: widget.showFeedback
+                      ? null
+                      : () => _handleAnswerSelect(answerId),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
+                    child: Row(
+                      children: [
+                        // Pastille sélection
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected
+                                  ? theme.colorScheme.primary
+                                  : Colors.grey[400]!,
+                              width: 2,
+                            ),
+                          ),
+                          child: isSelected
+                              ? Center(
+                            child: Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          )
                               : null,
+                        ),
+                        const SizedBox(width: 16),
+
+                        // Texte réponse
+                        Expanded(
+                          child: Text(
+                            answer.text,
+                            style: textTheme.bodyMedium?.copyWith(
+                              fontSize: 14,
+                              color: isSelected
+                                  ? widget.showFeedback
+                                  ? _isSelectedAnswerCorrect(answerId)
+                                  ? Colors.green[800]
+                                  : Colors.red[800]
+                                  : Colors.grey[800]
+                                  : widget.showFeedback && isCorrect
+                                  ? Colors.green[800]
+                                  : Colors.grey[800],
+                            ),
+                          ),
+                        ),
+
+                        // Check ou Close en feedback
+                        if (showCorrectIndicator)
+                          Icon(
+                            isCorrect ? Icons.check : Icons.close,
+                            color: isCorrect ? Colors.green : Colors.red,
+                          ),
+                      ],
                     ),
                   ),
-                  value: answerId,
-                  groupValue:
-                      _selectedAnswers.isNotEmpty
-                          ? _selectedAnswers.first
-                          : null,
-                  onChanged:
-                      widget.showFeedback
-                          ? null
-                          : (value) => _handleAnswerSelect(value!),
-                  secondary:
-                      showCorrectIndicator
-                          ? Icon(
-                            _isCorrectAnswer(answerId)
-                                ? Icons.check
-                                : Icons.close,
-                            color:
-                                _isCorrectAnswer(answerId)
-                                    ? Colors.green
-                                    : Colors.red,
-                          )
-                          : null,
                 ),
               );
-            }),
-            if (widget.showFeedback) ...[
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color:
-                      _selectedAnswers.isNotEmpty &&
-                              _selectedAnswers.every(_isCorrectAnswer)
-                          ? Colors.green[50]
-                          : Colors.red[50],
-                ),
-                child: Text(
-                  _selectedAnswers.isNotEmpty &&
-                          _selectedAnswers.every(_isCorrectAnswer)
-                      ? "Bonne réponse !"
-                      : "Réponse incorrecte. La bonne réponse était: ${widget.question.answers.where((a) => a.correct == true).map((a) => a.text).join(", ")}",
-                  style: TextStyle(
-                    color:
-                        _selectedAnswers.isNotEmpty &&
-                                _selectedAnswers.every(_isCorrectAnswer)
-                            ? Colors.green[800]
-                            : Colors.red[800],
-                    fontWeight: FontWeight.bold,
-                  ),
+            },
+          ),
+
+          if (widget.showFeedback) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: _selectedAnswers.isNotEmpty &&
+                    _selectedAnswers.every(_isCorrectAnswer)
+                    ? Colors.green[50]
+                    : Colors.red[50],
+              ),
+              child: Text(
+                _selectedAnswers.isNotEmpty &&
+                    _selectedAnswers.every(_isCorrectAnswer)
+                    ? "Bonne réponse !"
+                    : "Réponse incorrecte. La bonne réponse était: ${widget.question.answers.where((a) => a.correct == true).map((a) => a.text).join(", ")}",
+                style: TextStyle(
+                  color: _selectedAnswers.isNotEmpty &&
+                      _selectedAnswers.every(_isCorrectAnswer)
+                      ? Colors.green[800]
+                      : Colors.red[800],
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

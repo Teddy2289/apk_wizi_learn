@@ -142,39 +142,18 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
 
           // Question area
           Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onHorizontalDragUpdate: _handleHorizontalDragUpdate,
-              onHorizontalDragEnd: _handleHorizontalDragEnd,
-              child: ValueListenableBuilder<int>(
-                valueListenable: _sessionManager.currentQuestionIndex,
-                builder: (_, index, __) {
-                  return PageView.builder(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: widget.questions.length,
-                    itemBuilder: (context, pageIndex) {
-                      final isActive = pageIndex == index;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Transform.translate(
-                          offset: Offset(isActive ? _dragOffset : 0, 0),
-                          child: AnimatedOpacity(
-                            opacity: isActive ? 1.0 : 0.4,
-                            duration: const Duration(milliseconds: 200),
-                            child: QuestionTypePage(
-                              key: ValueKey(widget.questions[pageIndex].id),
-                              onAnswer: _sessionManager.handleAnswer,
-                              question: widget.questions[pageIndex],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    onPageChanged: _handlePageChanged,
-                  );
-                },
-              ),
+            child: PageView.builder(
+              controller: _pageController,
+              physics: const BouncingScrollPhysics(),
+              onPageChanged: _handlePageChanged,
+              itemCount: widget.questions.length,
+              itemBuilder: (context, pageIndex) {
+                return QuestionTypePage(
+                  key: ValueKey(widget.questions[pageIndex].id),
+                  onAnswer: _sessionManager.handleAnswer,
+                  question: widget.questions[pageIndex],
+                );
+              },
             ),
           ),
 

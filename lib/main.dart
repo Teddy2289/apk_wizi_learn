@@ -60,6 +60,7 @@ class MyApp extends StatelessWidget {
           title: 'Wizi Learn',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
+            fontFamily: "Montserrat",
             colorScheme: ColorScheme(
               primary: AppColors.primary,
               primaryContainer: AppColors.primaryDark,

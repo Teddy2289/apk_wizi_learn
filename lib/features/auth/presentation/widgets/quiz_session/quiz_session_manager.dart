@@ -80,57 +80,6 @@ class QuizSessionManager {
     }
   }
 
-  // void handleAnswer(dynamic answer) {
-  //   final question = questions[currentQuestionIndex.value];
-  //   final questionId = question.id.toString();
-  //
-  //   debugPrint("Raw answer received for $questionId: $answer");
-  //
-  //   if (question.type == "question audio") {
-  //     // Cas spécial pour les questions audio
-  //     if (answer is Map) {
-  //       _userAnswers[questionId] = {
-  //         'id': answer['id']?.toString(),
-  //         'text': answer['text'],
-  //       };
-  //     } else if (answer is List && answer.isNotEmpty) {
-  //       // Si c'est une liste, prendre le premier élément
-  //       final firstAnswer = answer.first;
-  //       if (firstAnswer is Map) {
-  //         _userAnswers[questionId] = {
-  //           'id': firstAnswer['id']?.toString(),
-  //           'text': firstAnswer['text'],
-  //         };
-  //       } else {
-  //         _userAnswers[questionId] = {
-  //           'id': null,
-  //           'text': firstAnswer.toString(),
-  //         };
-  //       }
-  //     } else if (answer is String) {
-  //       _userAnswers[questionId] = {'id': null, 'text': answer};
-  //     }
-  //   } else if (question.type == "carte flash") {
-  //     if (answer is Map) {
-  //       // Handle both front and back of flashcard if needed
-  //       _userAnswers[questionId] =
-  //           answer['text'] ?? answer.values.first?.toString() ?? '';
-  //     } else {
-  //       _userAnswers[questionId] = answer.toString();
-  //     }
-  //     debugPrint("Flashcard answer stored: ${_userAnswers[questionId]}");
-  //   } else if (question.type == "correspondance" && answer is Map) {
-  //     _userAnswers[questionId] = answer;
-  //   } else if (question.type == "vrai/faux" && answer is List) {
-  //     _userAnswers[questionId] = answer;
-  //   } else if (question.type == "choix multiples") {
-  //     _userAnswers[questionId] = answer is List ? answer : [];
-  //   } else {
-  //     _userAnswers[questionId] = answer;
-  //   }
-  //
-  //   debugPrint("Stored answer for $questionId: ${_userAnswers[questionId]}");
-  // }
 
   void handleAnswer(dynamic answer) {
     final question = questions[currentQuestionIndex.value];
