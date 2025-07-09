@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
-import 'package:wizi_learn/core/widgets/notification_icon_button.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget>? actions;

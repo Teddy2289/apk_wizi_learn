@@ -8,12 +8,10 @@ import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.
 import 'features/auth/auth_injection_container.dart' as auth_injection;
 import 'features/auth/data/repositories/auth_repository.dart';
 import 'core/services/fcm_service_mobile.dart'
-    if (dart.library.html) 'core/services/fcm_service_web.dart';
+if (dart.library.html) 'core/services/fcm_service_web.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:wizi_learn/core/services/notification_manager.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:wizi_learn/presentation/onboarding_flow/onboarding_flow.dart';
-import 'features/auth/presentation/pages/auth/login_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/splash_page.dart';
 import 'core/routes/app_router.dart';
 
 Future<void> main() async {
@@ -25,26 +23,25 @@ Future<void> main() async {
   // Initialiser le gestionnaire de notifications
   await NotificationManager().initialize();
 
-  // Initialize dependencies
+  // Initialiser les dépendances
   await auth_injection.initAuthDependencies();
+  const String.fromEnvironment('BASE_URL', defaultValue: 'https://wizi-learn.com');
 
-  final prefs = await SharedPreferences.getInstance();
-  final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
-
-  runApp(MyApp(onboardingCompleted: onboardingCompleted));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final bool onboardingCompleted;
-  const MyApp({required this.onboardingCompleted, super.key});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Initialiser FCM sur mobile
     if (!kIsWeb) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         FcmService().initFcm(context);
       });
     }
+
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider<AuthRepository>(
@@ -52,10 +49,9 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: BlocProvider<AuthBloc>(
-        create:
-            (context) =>
-                AuthBloc(authRepository: context.read<AuthRepository>())
-                  ..add(CheckAuthEvent()),
+        create: (context) =>
+        AuthBloc(authRepository: context.read<AuthRepository>())
+          ..add(CheckAuthEvent()),
         child: MaterialApp(
           title: 'Wizi Learn',
           debugShowCheckedModeBanner: false,
@@ -134,22 +130,11 @@ class MyApp extends StatelessWidget {
               fillColor: Colors.white,
             ),
             visualDensity: VisualDensity.adaptivePlatformDensity,
-            useMaterial3: true, // Pour Material 3
+            useMaterial3: true,
           ),
           scrollBehavior: CustomScrollBehavior(),
-          initialRoute: onboardingCompleted ? '/login' : '/onboarding',
-          onGenerateRoute: (settings) {
-            // Pour l'onboarding et le login, routes directes
-            if (settings.name == '/onboarding') {
-              return MaterialPageRoute(builder: (_) => const OnboardingFlow());
-            }
-            if (settings.name == '/login') {
-              return MaterialPageRoute(builder: (_) => const LoginPage());
-            }
-            // Pour toutes les autres routes, utiliser AppRouter
-            // (import à ajouter en haut du fichier)
-            return AppRouter.generateRoute(settings);
-          },
+          home: const SplashPage(),
+          onGenerateRoute: AppRouter.generateRoute,
         ),
       ),
     );
@@ -159,10 +144,10 @@ class MyApp extends StatelessWidget {
 class CustomScrollBehavior extends MaterialScrollBehavior {
   @override
   Widget buildOverscrollIndicator(
-    BuildContext context,
-    Widget child,
-    ScrollableDetails details,
-  ) {
+      BuildContext context,
+      Widget child,
+      ScrollableDetails details,
+      ) {
     return GlowingOverscrollIndicator(
       axisDirection: details.direction,
       color: Colors.orange.shade200,

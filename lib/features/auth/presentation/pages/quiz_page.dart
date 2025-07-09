@@ -103,14 +103,25 @@ class _QuizPageState extends State<QuizPage> {
         return;
       }
 
+      // Récupérer aussi les points pour le filtrage
+      final rankings = await _statsRepository.getGlobalRanking();
+      final userRanking = rankings.firstWhere(
+            (r) => r.stagiaire.id == connectedStagiaireId.toString(),
+        orElse: () => GlobalRanking.empty(),
+      );
+      final currentPoints = userRanking.totalPoints;
+
       final quizzes = await _quizRepository.getQuizzesForStagiaire(
         stagiaireId: connectedStagiaireId,
       );
 
+      final filteredQuizzes = _filterQuizzesByPoints(quizzes, currentPoints);
+
       setState(() {
-        _futureQuizzes = Future.value(quizzes);
+        _futureQuizzes = Future.value(filteredQuizzes);
         _isInitialLoad = false;
-        for (var quiz in quizzes) {
+        _expandedQuizzes.clear();
+        for (var quiz in filteredQuizzes) {
           _expandedQuizzes.putIfAbsent(quiz.id, () => false);
         }
       });
@@ -141,8 +152,13 @@ class _QuizPageState extends State<QuizPage> {
       final rankings = await _statsRepository.getGlobalRanking();
       debugPrint("Classement global reçu: ${rankings.length} éléments");
 
+      // Ajoutez ce log pour voir tous les classements
+      for (var rank in rankings) {
+        debugPrint("${rank.stagiaire.id}: ${rank.totalPoints} points");
+      }
+
       final userRanking = rankings.firstWhere(
-        (r) => r.stagiaire.id == _connectedStagiaireId.toString(),
+            (r) => r.stagiaire.id == _connectedStagiaireId.toString(),
         orElse: () {
           debugPrint("Utilisateur non trouvé dans le classement");
           return GlobalRanking.empty();
@@ -150,15 +166,27 @@ class _QuizPageState extends State<QuizPage> {
       );
 
       _userPoints = userRanking.totalPoints;
-      debugPrint("Points de l'utilisateur: $_userPoints");
+      debugPrint("Points de l'utilisateur: $_userPoints"); // Ce log est crucial
 
       final allQuizzes = await _quizRepository.getQuizzesForStagiaire(
+
         stagiaireId: _connectedStagiaireId!,
       );
 
+
+
       debugPrint("Quiz reçus: ${allQuizzes.length}");
+      debugPrint("Avant filtrage - tous les quiz:");
+      for (var quiz in allQuizzes) {
+        debugPrint("${quiz.titre} - ${quiz.niveau}");
+      }
 
       final filteredQuizzes = _filterQuizzesByPoints(allQuizzes, _userPoints);
+
+      debugPrint("Après filtrage - quiz filtrés:");
+      for (var quiz in filteredQuizzes) {
+        debugPrint("${quiz.titre} - ${quiz.niveau}");
+      }
 
       setState(() {
         _futureQuizzes = Future.value(filteredQuizzes);
@@ -178,73 +206,52 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   List<quiz_model.Quiz> _filterQuizzesByPoints(
-    List<quiz_model.Quiz> allQuizzes,
-    int userPoints,
-  ) {
+      List<quiz_model.Quiz> allQuizzes,
+      int userPoints,
+      ) {
     if (allQuizzes.isEmpty) {
       debugPrint("Aucun quiz à filtrer");
       return [];
     }
 
-    // Normaliser les niveaux
     String normalizeLevel(String? level) {
-      final lvl = level?.toLowerCase().trim() ?? 'débutant';
-      if (lvl.contains('inter') || lvl.contains('moyen'))
-        return 'intermédiaire';
+      if (level == null) return 'débutant';
+      final lvl = level.toLowerCase().trim();
+      if (lvl.contains('inter') || lvl.contains('moyen')) return 'intermédiaire';
       if (lvl.contains('avancé') || lvl.contains('expert')) return 'avancé';
-      return 'débutant'; // Par défaut
+      return 'débutant';
     }
 
-    // Trier par niveau
-    allQuizzes.sort(
-      (a, b) => normalizeLevel(a.niveau).compareTo(normalizeLevel(b.niveau)),
-    );
+    // Séparer les quiz par niveau
+    final debutant = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
+    final intermediaire = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'intermédiaire').toList();
+    final avance = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
 
-    debugPrint("Filtrage pour $userPoints points");
+    debugPrint("Débutant: ${debutant.length}");
+    debugPrint("Intermédiaire: ${intermediaire.length}");
+    debugPrint("Avancé: ${avance.length}");
 
-    if (userPoints < 20) {
-      return allQuizzes
-          .where((q) => normalizeLevel(q.niveau) == 'débutant')
-          .toList();
+    if (userPoints < 10) {
+      // Moins de 10 points: 2 quiz débutant max
+      return debutant.take(2).toList();
+    } else if (userPoints < 20) {
+      // Entre 10 et 19 points: 4 quiz débutant max
+      return debutant.take(4).toList();
     } else if (userPoints < 40) {
-      final debutant =
-          allQuizzes
-              .where((q) => normalizeLevel(q.niveau) == 'débutant')
-              .toList();
-      final intermediaire =
-          allQuizzes
-              .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
-              .take(1)
-              .toList();
-      return [...debutant, ...intermediaire];
+      // Entre 20 et 39 points: tous les débutants + 2 intermédiaires max
+      return [...debutant, ...intermediaire.take(2)];
     } else if (userPoints < 60) {
-      final debutant =
-          allQuizzes
-              .where((q) => normalizeLevel(q.niveau) == 'débutant')
-              .toList();
-      final intermediaire =
-          allQuizzes
-              .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
-              .take(2)
-              .toList();
+      // Entre 40 et 59 points: tous les débutants + tous les intermédiaires
       return [...debutant, ...intermediaire];
     } else if (userPoints < 80) {
-      final debutant =
-          allQuizzes
-              .where((q) => normalizeLevel(q.niveau) == 'débutant')
-              .toList();
-      final intermediaire =
-          allQuizzes
-              .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
-              .toList();
-      final avance =
-          allQuizzes
-              .where((q) => normalizeLevel(q.niveau) == 'avancé')
-              .take(2)
-              .toList();
-      return [...debutant, ...intermediaire, ...avance];
+      // Entre 60 et 79 points: tous les débutants + tous les intermédiaires + 2 avancés max
+      return [...debutant, ...intermediaire, ...avance.take(2)];
+    } else if (userPoints < 100) {
+      // Entre 80 et 99 points: tous les débutants + tous les intermédiaires + 4 avancés max
+      return [...debutant, ...intermediaire, ...avance.take(4)];
     } else {
-      return allQuizzes;
+      // 100 points et plus: tous les quiz
+      return [...debutant, ...intermediaire, ...avance];
     }
   }
 
@@ -555,6 +562,10 @@ class _QuizPageState extends State<QuizPage> {
     );
   }
 
+  String _removeHtmlTags(String htmlText) {
+    return htmlText.replaceAll(RegExp(r'<[^>]*>'), '').trim();
+  }
+
   Widget _buildQuizCard(
     quiz_model.Quiz quiz,
     bool isExpanded,
@@ -649,7 +660,7 @@ class _QuizPageState extends State<QuizPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  quiz.description ?? 'Aucune description disponible',
+                  _removeHtmlTags(quiz.description ?? 'Aucune description disponible'),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurface.withOpacity(0.8),
                   ),

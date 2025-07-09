@@ -8,8 +8,6 @@ import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/formation_repository.dart';
 import 'package:intl/intl.dart';
-import 'package:wizi_learn/features/auth/presentation/pages/contact_page.dart';
-import 'package:wizi_learn/features/auth/data/models/contact_model.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 
 class FormationStagiairePage extends StatefulWidget {
@@ -22,13 +20,14 @@ class FormationStagiairePage extends StatefulWidget {
 class _FormationStagiairePageState extends State<FormationStagiairePage> {
   late final FormationRepository _repository;
   late final AuthRepository _authRepository;
-  Future<List<Formation>> _futureFormations = Future.value([]);
+  List<Formation> _formations = [];
+  bool _isLoading = true;
+  String? _errorMessage;
   final Map<int, bool> _expandedFormations = {};
   final ScrollController _scrollController = ScrollController();
   bool _showBackToTopButton = false;
   bool _fromNotification = false;
 
-  // Styles par catégorie
   final Map<String, Map<String, dynamic>> _categoryStyles = {
     'Bureautique': {
       'icon': Icons.computer,
@@ -59,13 +58,10 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
     _loadFormationsForConnectedStagiaire();
     _scrollController.addListener(_scrollListener);
 
-    // Vérifier si on vient d'une notification
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map<String, dynamic> && args['fromNotification'] == true) {
-        setState(() {
-          _fromNotification = true;
-        });
+        setState(() => _fromNotification = true);
       }
     });
   }
@@ -109,81 +105,93 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
 
   Future<void> _loadFormationsForConnectedStagiaire() async {
     try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
       final user = await _authRepository.getMe();
       final connectedStagiaireId = user.stagiaire?.id;
 
       if (connectedStagiaireId == null) {
-        setState(() => _futureFormations = Future.value([]));
+        setState(() {
+          _isLoading = false;
+          _formations = [];
+        });
         return;
       }
 
+      final formations = await _repository.getCatalogueFormations(
+        stagiaireId: connectedStagiaireId,
+      );
+
+      // Filtre les formations invalides
+      final validFormations = formations.where((f) =>
+      f.titre != null && f.titre.isNotEmpty && f.titre != 'null'
+      ).toList();
+
       setState(() {
-        _futureFormations = _repository.getCatalogueFormations(
-          stagiaireId: connectedStagiaireId,
-        );
+        _formations = validFormations;
+        _isLoading = false;
       });
     } catch (e) {
       debugPrint('Erreur chargement formations: $e');
-      setState(() => _futureFormations = Future.error(e));
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Erreur lors du chargement des formations';
+        _formations = [];
+      });
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
 
-    final body = _buildBody(theme);
-
-    // Si on vient d'une notification, utiliser CustomScaffold
-    if (_fromNotification) {
-      return CustomScaffold(
-        body: body,
-        currentIndex: 1, // Index de l'onglet Formations
-        onTabSelected: (index) {
-          // Navigation vers les autres onglets
-          Navigator.pushReplacementNamed(
-            context,
-            RouteConstants.dashboard,
-            arguments: index,
-          );
-        },
-        showBanner: true,
-      );
-    }
-
-    // Sinon, utiliser le Scaffold normal
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mes Formations'),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed:
-              () => Navigator.pushReplacementNamed(
-                context,
-                RouteConstants.dashboard,
-              ),
-        ),
-        backgroundColor:
-            isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
-        elevation: 1,
-        foregroundColor: isDarkMode ? Colors.white : Colors.black87,
-      ),
-      body: body,
-      floatingActionButton:
-          _showBackToTopButton
-              ? FloatingActionButton(
-                onPressed: _scrollToTop,
-                mini: true,
-                backgroundColor: theme.colorScheme.primary,
-                child: Icon(
-                  Icons.arrow_upward,
-                  color: theme.colorScheme.onPrimary,
-                ),
-              )
-              : null,
-    );
+    return _fromNotification
+        ? CustomScaffold(
+          body: _buildBody(theme),
+          currentIndex: 1,
+          onTabSelected: (index) {
+            Navigator.pushReplacementNamed(
+              context,
+              RouteConstants.dashboard,
+              arguments: index,
+            );
+          },
+          showBanner: true,
+        )
+        : Scaffold(
+          appBar: AppBar(
+            title: const Text('Mes Formations'),
+            centerTitle: true,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed:
+                  () => Navigator.pushReplacementNamed(
+                    context,
+                    RouteConstants.dashboard,
+                  ),
+            ),
+            backgroundColor:
+                isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
+            elevation: 1,
+            foregroundColor: isDarkMode ? Colors.white : Colors.black87,
+          ),
+          body: _buildBody(theme),
+          floatingActionButton:
+              _showBackToTopButton
+                  ? FloatingActionButton(
+                    onPressed: _scrollToTop,
+                    mini: true,
+                    backgroundColor: theme.colorScheme.primary,
+                    child: Icon(
+                      Icons.arrow_upward,
+                      color: theme.colorScheme.onPrimary,
+                    ),
+                  )
+                  : null,
+        );
   }
 
   Widget _buildBody(ThemeData theme) {
@@ -216,32 +224,22 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                 ],
               ),
             ),
-            FutureBuilder<List<Formation>>(
-              future: _futureFormations,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return SliverFillRemaining(
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: theme.colorScheme.primary,
-                      ),
+            _isLoading
+                ? SliverFillRemaining(
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: theme.colorScheme.primary,
                     ),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return SliverFillRemaining(child: _buildErrorState(theme));
-                }
-
-                final formations = snapshot.data ?? [];
-                if (formations.isEmpty) {
-                  return SliverFillRemaining(child: _buildEmptyState(theme));
-                }
-
-                return SliverList(
+                  ),
+                )
+                : _errorMessage != null
+                ? SliverFillRemaining(child: _buildErrorState(theme))
+                : _formations.isEmpty
+                ? SliverFillRemaining(child: _buildEmptyState(theme))
+                : SliverList(
                   delegate: SliverChildBuilderDelegate((context, index) {
-                    final formation = formations[index];
-                    final category = formation.category.categorie;
+                    final formation = _formations[index];
+                    final category = formation.category?.categorie ?? 'Autre';
                     final styles =
                         _categoryStyles[category] ??
                         {
@@ -251,74 +249,12 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                         };
 
                     return _buildFormationCard(formation, styles, theme);
-                  }, childCount: formations.length),
-                );
-              },
-            ),
+                  }, childCount: _formations.length),
+                ),
             const SliverToBoxAdapter(child: SizedBox(height: 80)),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildErrorState(ThemeData theme) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
-        const SizedBox(height: 16),
-        Text('Erreur de chargement', style: theme.textTheme.titleMedium),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Text(
-            'Nous n\'avons pas pu charger vos formations. Veuillez réessayer.',
-            style: theme.textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: _loadFormationsForConnectedStagiaire,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: theme.colorScheme.primary,
-            foregroundColor: theme.colorScheme.onPrimary,
-          ),
-          child: const Text('Réessayer'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEmptyState(ThemeData theme) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.school_outlined,
-          size: 48,
-          color: theme.colorScheme.primary.withOpacity(0.5),
-        ),
-        const SizedBox(height: 16),
-        Text('Aucune formation', style: theme.textTheme.titleMedium),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Text(
-            'Vous n\'êtes actuellement inscrit à aucune formation.',
-            style: theme.textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const SizedBox(height: 16),
-        OutlinedButton(
-          onPressed: () {
-            // Naviguer vers le catalogue des formations
-          },
-          child: const Text('Découvrir les formations'),
-        ),
-      ],
     );
   }
 
@@ -337,11 +273,9 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
       color: isDarkMode ? theme.cardTheme.color : styles['lightColor'],
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          setState(() {
-            _expandedFormations[formation.id] = !isExpanded;
-          });
-        },
+        onTap:
+            () =>
+                setState(() => _expandedFormations[formation.id] = !isExpanded),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -370,7 +304,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          formation.category.categorie,
+                          formation.category?.categorie ?? 'Autre',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: styles['color'],
                           ),
@@ -396,13 +330,13 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                 const SizedBox(height: 8),
                 _buildInfoRow(
                   Icons.calendar_today,
-                  'Début de formation: ${_formatDate(formation.dateDebut)}',
+                  'Début: ${_formatDate(formation.dateDebut)}',
                   theme,
                 ),
                 const SizedBox(height: 8),
                 _buildInfoRow(
                   Icons.calendar_month,
-                  'Fin de formation: ${_formatDate(formation.dateFin)}',
+                  'Fin: ${_formatDate(formation.dateFin)}',
                   theme,
                 ),
                 const SizedBox(height: 8),
@@ -411,43 +345,23 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                   'Prix: ${NumberFormat('#,##0', 'fr_FR').format(formation.tarif)} €',
                   theme,
                 ),
-                if (formation.certification != null) ...[
+                if (formation.certification != null && formation.certification!.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   _buildInfoRow(
                     Icons.verified,
-                    formation.certification ?? 'Formation certifiante',
+                    formation.certification!,
                     theme,
                     color: Colors.green,
                   ),
                 ],
-                const SizedBox(height: 8),
                 if (formation.formateur != null) ...[
-                  GestureDetector(
-                    // onTap: () {
-                    //   Navigator.push(
-                    //     context,
-                    //     MaterialPageRoute(
-                    //       builder: (context) => ContactPage(
-                    //         contacts: [
-                    //           Contact(
-                    //             nom: formation.formateur!.user!.nom,
-                    //             prenom: formation.formateur!.prenom,
-                    //             email: formation.formateur!.user!.email,
-                    //             telephone: formation.formateur!.telephone,
-                    //           ),
-                    //         ],
-                    //       ),
-                    //     ),
-                    //   );
-                    // },
-                    child: _buildInfoRow(
-                      Icons.person,
-                      'Formateur: ${formation.formateur!.prenom} ${formation.formateur!.nom.toUpperCase()}',
-                      theme,
-                      color: Colors.blue,
-                    ),
-                  ),
                   const SizedBox(height: 8),
+                  _buildInfoRow(
+                    Icons.person,
+                    'Formateur: ${formation.formateur!.prenom ?? ''} ${formation.formateur!.nom?.toUpperCase() ?? ''}',
+                    theme,
+                    color: Colors.blue,
+                  ),
                 ],
                 const SizedBox(height: 8),
                 Text(
@@ -458,7 +372,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  formation.description.replaceAll(RegExp(r'<[^>]*>'), ''),
+                  formation.description,
                   style: theme.textTheme.bodyMedium,
                 ),
               ],
@@ -466,6 +380,58 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildErrorState(ThemeData theme) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+        const SizedBox(height: 16),
+        Text('Erreur de chargement', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Text(
+          _errorMessage ?? 'Erreur inconnue',
+          style: theme.textTheme.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: _loadFormationsForConnectedStagiaire,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: theme.colorScheme.primary,
+            foregroundColor: theme.colorScheme.onPrimary,
+          ),
+          child: const Text('Réessayer'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState(ThemeData theme) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.school_outlined,
+          size: 48,
+          color: theme.colorScheme.primary.withOpacity(0.5),
+        ),
+        const SizedBox(height: 16),
+        Text('Aucune formation', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Text(
+          'Vous n\'êtes actuellement inscrit à aucune formation.',
+          style: theme.textTheme.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        OutlinedButton(
+          onPressed: () {},
+          child: const Text('Découvrir les formations'),
+        ),
+      ],
     );
   }
 
@@ -490,7 +456,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
   }
 
   String _formatDate(String? date) {
-    if (date == null || date.isEmpty) {
+    if (date == null || date.isEmpty || date.toLowerCase() == 'null') {
       return '-';
     }
     try {
