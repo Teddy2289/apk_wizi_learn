@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/intl.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
@@ -20,11 +21,14 @@ class QuizPage extends StatefulWidget {
   State<QuizPage> createState() => _QuizPageState();
 }
 
+
 class _QuizPageState extends State<QuizPage> {
   late final QuizRepository _quizRepository;
   late final AuthRepository _authRepository;
   late final StatsRepository _statsRepository;
+
   Future<List<quiz_model.Quiz>>? _futureQuizzes;
+  Future<List<QuizHistory>>? _futureQuizHistory;
   final Map<int, bool> _expandedQuizzes = {};
   final ScrollController _scrollController = ScrollController();
   bool _showBackToTopButton = false;
@@ -32,21 +36,19 @@ class _QuizPageState extends State<QuizPage> {
   int? _connectedStagiaireId;
   int _userPoints = 0;
   bool _fromNotification = false;
+  List<String> _playedQuizIds = [];
 
   @override
   void initState() {
     super.initState();
     _initializeRepositories();
-    _loadConnectedUserAndQuizzes();
+    _loadInitialData();
     _scrollController.addListener(_scrollListener);
 
-    // Vérifier si on vient d'une notification
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map<String, dynamic> && args['fromNotification'] == true) {
-        setState(() {
-          _fromNotification = true;
-        });
+        setState(() => _fromNotification = true);
       }
     });
   }
@@ -55,6 +57,89 @@ class _QuizPageState extends State<QuizPage> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _initializeRepositories() {
+    final dio = Dio();
+    final storage = const FlutterSecureStorage();
+    final apiClient = ApiClient(dio: dio, storage: storage);
+
+    _quizRepository = QuizRepository(apiClient: apiClient);
+    _authRepository = AuthRepository(
+      remoteDataSource: AuthRemoteDataSourceImpl(apiClient: apiClient, storage: storage),
+      storage: storage,
+    );
+    _statsRepository = StatsRepository(apiClient: apiClient);
+  }
+
+  Future<void> _loadInitialData() async {
+    setState(() => _isInitialLoad = true);
+    try {
+      final user = await _authRepository.getMe();
+      _connectedStagiaireId = user.stagiaire?.id;
+
+      if (_connectedStagiaireId == null) {
+        setState(() => _isInitialLoad = false);
+        return;
+      }
+
+      await Future.wait([
+        _loadUserPoints(),
+        _loadQuizHistory(),
+        _loadQuizzes(),
+      ]);
+    } catch (e) {
+      debugPrint('Erreur chargement initial: $e');
+    } finally {
+      setState(() => _isInitialLoad = false);
+    }
+  }
+
+  Future<void> _loadUserPoints() async {
+    final rankings = await _statsRepository.getGlobalRanking();
+    final userRanking = rankings.firstWhere(
+          (r) => r.stagiaire.id == _connectedStagiaireId.toString(),
+      orElse: () => GlobalRanking.empty(),
+    );
+    setState(() => _userPoints = userRanking.totalPoints);
+  }
+
+  Future<void> _loadQuizHistory() async {
+    try {
+      final history = await _statsRepository.getQuizHistory();
+      setState(() {
+        _futureQuizHistory = Future.value(history);
+        _playedQuizIds = history.map((h) => h.quiz.id).toList();
+      });
+    } catch (e) {
+      debugPrint('Erreur chargement historique: $e');
+    }
+  }
+
+  Future<void> _loadQuizzes() async {
+    try {
+      final quizzes = await _quizRepository.getQuizzesForStagiaire(
+        stagiaireId: _connectedStagiaireId!,
+      );
+      final filteredQuizzes = _filterQuizzesByPoints(quizzes, _userPoints);
+
+      setState(() {
+        _futureQuizzes = Future.value(filteredQuizzes);
+        _expandedQuizzes.clear();
+        for (var quiz in filteredQuizzes) {
+          _expandedQuizzes.putIfAbsent(quiz.id, () => false);
+        }
+      });
+    } catch (e) {
+      debugPrint('Erreur chargement quiz: $e');
+      setState(() => _futureQuizzes = Future.value([]));
+    }
+  }
+
+  Map<String, List<quiz_model.Quiz>> _separateQuizzes(List<quiz_model.Quiz> allQuizzes) {
+    final played = allQuizzes.where((q) => _playedQuizIds.contains(q.id.toString())).toList();
+    final unplayed = allQuizzes.where((q) => !_playedQuizIds.contains(q.id.toString())).toList();
+    return {'played': played, 'unplayed': unplayed};
   }
 
   void _scrollListener() {
@@ -73,146 +158,8 @@ class _QuizPageState extends State<QuizPage> {
     );
   }
 
-  void _initializeRepositories() {
-    final dio = Dio();
-    final storage = const FlutterSecureStorage();
-    final apiClient = ApiClient(dio: dio, storage: storage);
-
-    _quizRepository = QuizRepository(apiClient: apiClient);
-    _authRepository = AuthRepository(
-      remoteDataSource: AuthRemoteDataSourceImpl(
-        apiClient: apiClient,
-        storage: storage,
-      ),
-      storage: storage,
-    );
-    _statsRepository = StatsRepository(apiClient: apiClient);
-  }
-
-  Future<void> _loadQuizzesForConnectedStagiaire() async {
-    setState(() => _isInitialLoad = true);
-    try {
-      final user = await _authRepository.getMe();
-      final connectedStagiaireId = user.stagiaire?.id;
-
-      if (connectedStagiaireId == null) {
-        setState(() {
-          _futureQuizzes = Future.value([]);
-          _isInitialLoad = false;
-        });
-        return;
-      }
-
-      // Récupérer aussi les points pour le filtrage
-      final rankings = await _statsRepository.getGlobalRanking();
-      final userRanking = rankings.firstWhere(
-            (r) => r.stagiaire.id == connectedStagiaireId.toString(),
-        orElse: () => GlobalRanking.empty(),
-      );
-      final currentPoints = userRanking.totalPoints;
-
-      final quizzes = await _quizRepository.getQuizzesForStagiaire(
-        stagiaireId: connectedStagiaireId,
-      );
-
-      final filteredQuizzes = _filterQuizzesByPoints(quizzes, currentPoints);
-
-      setState(() {
-        _futureQuizzes = Future.value(filteredQuizzes);
-        _isInitialLoad = false;
-        _expandedQuizzes.clear();
-        for (var quiz in filteredQuizzes) {
-          _expandedQuizzes.putIfAbsent(quiz.id, () => false);
-        }
-      });
-    } catch (e) {
-      debugPrint('Erreur chargement quiz: $e');
-      setState(() {
-        _futureQuizzes = Future.value([]);
-        _isInitialLoad = false;
-      });
-    }
-  }
-
-  Future<void> _loadConnectedUserAndQuizzes() async {
-    setState(() => _isInitialLoad = true);
-    try {
-      final user = await _authRepository.getMe();
-      _connectedStagiaireId = user.stagiaire?.id;
-      debugPrint("ID du stagiaire connecté: $_connectedStagiaireId");
-
-      if (_connectedStagiaireId == null) {
-        setState(() {
-          _futureQuizzes = Future.value([]);
-          _isInitialLoad = false;
-        });
-        return;
-      }
-
-      final rankings = await _statsRepository.getGlobalRanking();
-      debugPrint("Classement global reçu: ${rankings.length} éléments");
-
-      // Ajoutez ce log pour voir tous les classements
-      for (var rank in rankings) {
-        debugPrint("${rank.stagiaire.id}: ${rank.totalPoints} points");
-      }
-
-      final userRanking = rankings.firstWhere(
-            (r) => r.stagiaire.id == _connectedStagiaireId.toString(),
-        orElse: () {
-          debugPrint("Utilisateur non trouvé dans le classement");
-          return GlobalRanking.empty();
-        },
-      );
-
-      _userPoints = userRanking.totalPoints;
-      debugPrint("Points de l'utilisateur: $_userPoints"); // Ce log est crucial
-
-      final allQuizzes = await _quizRepository.getQuizzesForStagiaire(
-
-        stagiaireId: _connectedStagiaireId!,
-      );
-
-
-
-      debugPrint("Quiz reçus: ${allQuizzes.length}");
-      debugPrint("Avant filtrage - tous les quiz:");
-      for (var quiz in allQuizzes) {
-        debugPrint("${quiz.titre} - ${quiz.niveau}");
-      }
-
-      final filteredQuizzes = _filterQuizzesByPoints(allQuizzes, _userPoints);
-
-      debugPrint("Après filtrage - quiz filtrés:");
-      for (var quiz in filteredQuizzes) {
-        debugPrint("${quiz.titre} - ${quiz.niveau}");
-      }
-
-      setState(() {
-        _futureQuizzes = Future.value(filteredQuizzes);
-        _isInitialLoad = false;
-        for (var quiz in filteredQuizzes) {
-          _expandedQuizzes.putIfAbsent(quiz.id, () => false);
-        }
-      });
-    } catch (e, stackTrace) {
-      debugPrint('Erreur chargement quiz: $e');
-      debugPrint('Stack trace: $stackTrace');
-      setState(() {
-        _futureQuizzes = Future.value([]);
-        _isInitialLoad = false;
-      });
-    }
-  }
-
-  List<quiz_model.Quiz> _filterQuizzesByPoints(
-      List<quiz_model.Quiz> allQuizzes,
-      int userPoints,
-      ) {
-    if (allQuizzes.isEmpty) {
-      debugPrint("Aucun quiz à filtrer");
-      return [];
-    }
+  List<quiz_model.Quiz> _filterQuizzesByPoints(List<quiz_model.Quiz> allQuizzes, int userPoints) {
+    if (allQuizzes.isEmpty) return [];
 
     String normalizeLevel(String? level) {
       if (level == null) return 'débutant';
@@ -222,48 +169,17 @@ class _QuizPageState extends State<QuizPage> {
       return 'débutant';
     }
 
-    // Séparer les quiz par niveau
     final debutant = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
     final intermediaire = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'intermédiaire').toList();
     final avance = allQuizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
 
-    debugPrint("Débutant: ${debutant.length}");
-    debugPrint("Intermédiaire: ${intermediaire.length}");
-    debugPrint("Avancé: ${avance.length}");
-
-    if (userPoints < 10) {
-      // Moins de 10 points: 2 quiz débutant max
-      return debutant.take(2).toList();
-    } else if (userPoints < 20) {
-      // Entre 10 et 19 points: 4 quiz débutant max
-      return debutant.take(4).toList();
-    } else if (userPoints < 40) {
-      // Entre 20 et 39 points: tous les débutants + 2 intermédiaires max
-      return [...debutant, ...intermediaire.take(2)];
-    } else if (userPoints < 60) {
-      // Entre 40 et 59 points: tous les débutants + tous les intermédiaires
-      return [...debutant, ...intermediaire];
-    } else if (userPoints < 80) {
-      // Entre 60 et 79 points: tous les débutants + tous les intermédiaires + 2 avancés max
-      return [...debutant, ...intermediaire, ...avance.take(2)];
-    } else if (userPoints < 100) {
-      // Entre 80 et 99 points: tous les débutants + tous les intermédiaires + 4 avancés max
-      return [...debutant, ...intermediaire, ...avance.take(4)];
-    } else {
-      // 100 points et plus: tous les quiz
-      return [...debutant, ...intermediaire, ...avance];
-    }
-  }
-
-  int _getLimitedPoints(String level, int points) {
-    if (level == 'débutant') {
-      return points > 10 ? 10 : points;
-    } else if (level == 'intermédiaire') {
-      return points > 20 ? 20 : points;
-    } else if (level == 'avancé') {
-      return points > 20 ? 20 : points;
-    }
-    return points;
+    if (userPoints < 10) return debutant.take(2).toList();
+    if (userPoints < 20) return debutant.take(4).toList();
+    if (userPoints < 40) return [...debutant, ...intermediaire.take(2)];
+    if (userPoints < 60) return [...debutant, ...intermediaire];
+    if (userPoints < 80) return [...debutant, ...intermediaire, ...avance.take(2)];
+    if (userPoints < 100) return [...debutant, ...intermediaire, ...avance.take(4)];
+    return [...debutant, ...intermediaire, ...avance];
   }
 
   @override
@@ -271,72 +187,38 @@ class _QuizPageState extends State<QuizPage> {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
 
-    // Si on vient d'une notification, utiliser CustomScaffold
-    if (_fromNotification) {
-      return CustomScaffold(
-        body:
-            _isInitialLoad
-                ? _buildLoadingScreen(theme)
-                : _buildMainContent(theme),
-        currentIndex: 2, // Index de l'onglet Quiz
-        onTabSelected: (index) {
-          // Navigation vers les autres onglets
-          Navigator.pushReplacementNamed(
-            context,
-            RouteConstants.dashboard,
-            arguments: index,
-          );
-        },
-        showBanner: true,
-      );
-    }
-
-    // Sinon, utiliser le Scaffold normal
-    return Scaffold(
+    return _fromNotification
+        ? CustomScaffold(
+      body: _isInitialLoad ? _buildLoadingScreen(theme) : _buildMainContent(theme),
+      currentIndex: 2,
+      onTabSelected: (index) => Navigator.pushReplacementNamed(
+          context, RouteConstants.dashboard, arguments: index),
+      showBanner: true,
+    )
+        : Scaffold(
       appBar: AppBar(
         title: const Text('Mes Quiz'),
         centerTitle: true,
-        backgroundColor:
-            isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
+        backgroundColor: isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
         foregroundColor: isDarkMode ? Colors.white : Colors.black87,
       ),
-      body:
-          _isInitialLoad
-              ? _buildLoadingScreen(theme)
-              : _buildMainContent(theme),
-      floatingActionButton:
-          _showBackToTopButton
-              ? FloatingActionButton(
-                onPressed: _scrollToTop,
-                mini: true,
-                backgroundColor: theme.colorScheme.primary,
-                child: Icon(
-                  Icons.arrow_upward,
-                  color: theme.colorScheme.onPrimary,
-                ),
-              )
-              : null,
-    );
-  }
-
-  Widget _buildLoadingScreen(ThemeData theme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(color: theme.colorScheme.primary),
-          const SizedBox(height: 20),
-          Text('Chargement de vos quiz...', style: theme.textTheme.bodyLarge),
-        ],
-      ),
+      body: _isInitialLoad ? _buildLoadingScreen(theme) : _buildMainContent(theme),
+      floatingActionButton: _showBackToTopButton
+          ? FloatingActionButton(
+        onPressed: _scrollToTop,
+        mini: true,
+        backgroundColor: theme.colorScheme.primary,
+        child: Icon(Icons.arrow_upward, color: theme.colorScheme.onPrimary),
+      )
+          : null,
     );
   }
 
   Widget _buildMainContent(ThemeData theme) {
     return RefreshIndicator(
-      onRefresh: _loadQuizzesForConnectedStagiaire,
+      onRefresh: _loadInitialData,
       child: CustomScrollView(
         controller: _scrollController,
         slivers: [
@@ -359,7 +241,7 @@ class _QuizPageState extends State<QuizPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Vos quiz disponibles',
+          'Vos quiz',
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
             fontSize: 22,
@@ -385,14 +267,11 @@ class _QuizPageState extends State<QuizPage> {
     return FutureBuilder<List<quiz_model.Quiz>>(
       future: _futureQuizzes,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            !_isInitialLoad) {
-          return SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => _buildQuizShimmer(theme),
-              childCount: 3,
-            ),
-          );
+        if (snapshot.connectionState == ConnectionState.waiting && !_isInitialLoad) {
+          return SliverList(delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildQuizShimmer(theme),
+            childCount: 3,
+          ));
         }
 
         if (snapshot.hasError) {
@@ -400,27 +279,379 @@ class _QuizPageState extends State<QuizPage> {
         }
 
         if (snapshot.hasData) {
-          final quizzes = snapshot.data!;
-          if (quizzes.isNotEmpty) {
-            return SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => Padding(
+          final separated = _separateQuizzes(snapshot.data!);
+          final unplayed = separated['unplayed']!;
+          final played = separated['played']!;
+
+          return SliverList(
+            delegate: SliverChildListDelegate([
+              if (unplayed.isNotEmpty) ...[
+                _buildSectionTitle('Quiz disponibles', theme),
+                ...unplayed.map((quiz) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildQuizCard(
-                    quizzes[index],
-                    _expandedQuizzes[quizzes[index].id] ?? false,
-                    theme,
-                  ),
-                ),
-                childCount: quizzes.length,
-              ),
-            );
-          }
-          return SliverFillRemaining(child: _buildEmptyState(theme));
+                  child: _buildQuizCard(quiz, _expandedQuizzes[quiz.id] ?? false, theme),
+                )).toList(),
+                const SizedBox(height: 16),
+              ],
+
+              if (played.isNotEmpty) ...[
+                _buildSectionTitle('Quiz complétés', theme),
+                ...played.map((quiz) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildPlayedQuizCard(quiz, theme),
+                )).toList(),
+              ],
+
+              if (unplayed.isEmpty && played.isEmpty)
+                _buildEmptyState(theme),
+            ]),
+          );
         }
 
         return SliverFillRemaining(child: _buildLoadingScreen(theme));
       },
+    );
+  }
+
+  Widget _buildSectionTitle(String title, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        title,
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlayedQuizCard(quiz_model.Quiz quiz, ThemeData theme) {
+    return FutureBuilder<List<QuizHistory>>(
+      future: _futureQuizHistory,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox();
+
+        final history = snapshot.data!.firstWhere(
+              (h) => h.quiz.id == quiz.id.toString(),
+          orElse: () => QuizHistory(
+            id: '',
+            quiz: Quiz(id: '', title: '', category: '', level: ''),
+            score: 0,
+            completedAt: '',
+            timeSpent: 0,
+            totalQuestions: 0,
+            correctAnswers: 0,
+          ),
+        );
+
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.secondary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.check_circle, color: theme.colorScheme.secondary),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            quiz.titre,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            quiz.formation.titre,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildHistoryInfoRow(Icons.score,
+                    'Score: ${history.correctAnswers}/${history.totalQuestions}', theme),
+                _buildHistoryInfoRow(Icons.timer,
+                    'Temps: ${history.timeSpent}s', theme),
+                _buildHistoryInfoRow(Icons.calendar_today,
+                    'Date: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(history.completedAt))}', theme),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: theme.colorScheme.primary,
+                      side: BorderSide(color: theme.colorScheme.primary),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () => _startQuiz(quiz),
+                    child: const Text('Rejouer le quiz'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHistoryInfoRow(IconData icon, String text, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: theme.colorScheme.secondary),
+          const SizedBox(width: 8),
+          Text(text, style: theme.textTheme.bodyMedium),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _startQuiz(quiz_model.Quiz quiz) async {
+    try {
+      final questions = await _quizRepository.getQuizQuestions(quiz.id);
+      if (questions.isEmpty) {
+        _showErrorSnackbar('Aucune question disponible pour ce quiz');
+        return;
+      }
+
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => QuizSessionPage(quiz: quiz, questions: questions),
+      ));
+    } catch (e) {
+      _showErrorSnackbar('Erreur de chargement des questions');
+    }
+  }
+
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(20),
+      ),
+    );
+  }
+
+  Widget _buildQuizCard(quiz_model.Quiz quiz, bool isExpanded, ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => setState(() => _expandedQuizzes[quiz.id] = !isExpanded),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.quiz, color: theme.colorScheme.primary),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          quiz.titre,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          quiz.formation.titre,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    isExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: theme.colorScheme.primary,
+                  ),
+                ],
+              ),
+              if (isExpanded) ...[
+                const SizedBox(height: 16),
+                Divider(height: 1, color: theme.dividerColor.withOpacity(0.3)),
+                const SizedBox(height: 12),
+                _buildInfoRow(Icons.school, 'Formation: ${quiz.formation.titre}', theme),
+                _buildInfoRow(Icons.star, 'Points: ${quiz.nbPointsTotal}', theme),
+                _buildInfoRow(Icons.assessment, 'Niveau: ${quiz.niveau}', theme),
+                const SizedBox(height: 12),
+                Text(
+                  'Description',
+                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _removeHtmlTags(quiz.description ?? 'Aucune description disponible'),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.8),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: () => _startQuiz(quiz),
+                    child: const Text('Commencer le quiz'),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String text, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
+        ],
+      ),
+    );
+  }
+
+  String _removeHtmlTags(String htmlText) {
+    return htmlText.replaceAll(RegExp(r'<[^>]*>'), '').trim();
+  }
+
+  Widget _buildLoadingScreen(ThemeData theme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(color: theme.colorScheme.primary),
+          const SizedBox(height: 20),
+          Text('Chargement de vos quiz...', style: theme.textTheme.bodyLarge),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.quiz_outlined,
+            size: 48,
+            color: theme.colorScheme.primary.withOpacity(0.5),
+          ),
+          const SizedBox(height: 16),
+          Text('Aucun quiz disponible', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text(
+            'Vous n\'avez actuellement aucun quiz disponible.',
+            style: theme.textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+          const SizedBox(height: 16),
+          Text(
+            'Erreur de chargement',
+            style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.error),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Nous n\'avons pas pu charger vos quiz. Veuillez réessayer.',
+            style: theme.textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _loadInitialData,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Réessayer'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -482,254 +713,6 @@ class _QuizPageState extends State<QuizPage> {
               ],
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String text, ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: theme.colorScheme.primary),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.quiz_outlined,
-            size: 48,
-            color: theme.colorScheme.primary.withOpacity(0.5),
-          ),
-          const SizedBox(height: 16),
-          Text('Aucun quiz disponible', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Text(
-            'Vous n\'avez actuellement aucun quiz disponible.',
-            style: theme.textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorState(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
-          const SizedBox(height: 16),
-          Text(
-            'Erreur de chargement',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.error,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Nous n\'avons pas pu charger vos quiz. Veuillez réessayer.',
-            style: theme.textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _loadQuizzesForConnectedStagiaire,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('Réessayer'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _removeHtmlTags(String htmlText) {
-    return htmlText.replaceAll(RegExp(r'<[^>]*>'), '').trim();
-  }
-
-  Widget _buildQuizCard(
-    quiz_model.Quiz quiz,
-    bool isExpanded,
-    ThemeData theme,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          setState(() {
-            _expandedQuizzes[quiz.id] = !isExpanded;
-          });
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.quiz, color: theme.colorScheme.primary),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          quiz.titre,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          quiz.formation.titre,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: theme.colorScheme.primary,
-                  ),
-                ],
-              ),
-              if (isExpanded) ...[
-                const SizedBox(height: 16),
-                Divider(height: 1, color: theme.dividerColor.withOpacity(0.3)),
-                const SizedBox(height: 12),
-                _buildInfoRow(
-                  Icons.school,
-                  'Formation: ${quiz.formation.titre}',
-                  theme,
-                ),
-                _buildInfoRow(
-                  Icons.star,
-                  'Points: ${_getLimitedPoints(quiz.niveau, quiz.nbPointsTotal)}',
-                  theme,
-                ),
-                _buildInfoRow(
-                  Icons.assessment,
-                  'Niveau: ${quiz.niveau}',
-                  theme,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Description',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _removeHtmlTags(quiz.description ?? 'Aucune description disponible'),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.8),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      elevation: 0,
-                    ),
-                    onPressed: () async {
-                      try {
-                        final questions = await _quizRepository
-                            .getQuizQuestions(quiz.id);
-
-                        if (questions.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                'Aucune question disponible pour ce quiz',
-                              ),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              margin: const EdgeInsets.all(20),
-                            ),
-                          );
-                          return;
-                        }
-
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (_) => QuizSessionPage(
-                                  quiz: quiz,
-                                  questions: questions,
-                                ),
-                          ),
-                        );
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text(
-                              'Erreur de chargement des questions',
-                            ),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            margin: const EdgeInsets.all(20),
-                          ),
-                        );
-                      }
-                    },
-                    child: const Text('Commencer le quiz'),
-                  ),
-                ),
-              ],
-            ],
-          ),
         ),
       ),
     );
