@@ -466,4 +466,23 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
       return date;
     }
   }
+
+  Color _getCategoryColor(String? category, ThemeData theme) {
+    if (category == null) return theme.colorScheme.primary;
+
+    final cat = category.trim().toLowerCase();
+    switch (cat) {
+      case 'bureautique':
+        return const Color(0xFF3D9BE9);
+      case 'langues':
+        return const Color(0xFFA55E6E);
+      case 'internet':
+        return const Color(0xFFFFC533);
+      case 'création':
+        return const Color(0xFF9392BE);
+      default:
+        return theme.colorScheme.primary;
+    }
+  }
+
 }
