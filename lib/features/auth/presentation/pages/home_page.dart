@@ -65,10 +65,15 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadData() async {
     try {
       final contacts = await _contactRepository.getContacts();
-      // debugPrint("Contacts récupérés: ${contacts.map((c) => '${c.prenom} (${c.role})').toList()}");
+      debugPrint("Contacts récupérés: ${contacts.map((c) => '${c.prenom} (${c.role})').toList()}");
 
-      final formations = await _formationRepository.getRandomFormations(3);
-      // debugPrint("Formations récupérées: ${formations.map((f) => f.titre).toList()}");
+      final formationsRaw = await _formationRepository.getRandomFormations(3);
+      final formations = formationsRaw
+          .where((f) => f != null)
+          .cast<Formation>()
+          .toList();
+
+      debugPrint("Formations récupérées (filtrées): ${formations.map((f) => f.titre).toList()}");
 
       setState(() {
         _contacts = contacts;

@@ -15,7 +15,10 @@ class FormationRepository {
     final data = response.data;
 
     if (data is List) {
-      return data.map((e) => Formation.fromJson(e)).toList();
+      return data
+          .where((e) => e != null)
+          .map((e) => Formation.fromJson(e))
+          .toList();
     } else if (data is Map && data['data'] is List) {
       return (data['data'] as List).map((e) => Formation.fromJson(e)).toList();
     } else {
@@ -40,9 +43,16 @@ class FormationRepository {
 
   Future<List<Formation>> getRandomFormations(int count) async {
     final allFormations = await getFormations();
+
+    if (allFormations.isEmpty) {
+      debugPrint('Aucune formation trouvée dans la base.');
+      return [];
+    }
+
     allFormations.shuffle();
     return allFormations.take(count).toList();
   }
+
 
   Future<List<Formation>> getCatalogueFormations({int? stagiaireId}) async {
     try {
