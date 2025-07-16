@@ -145,17 +145,7 @@ class _HomePageState extends State<HomePage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        centerTitle: false,
-        title: Text(
-          'Bienvenue',
-          style: theme.textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
+
       body: (_isLoading || _isLoadingUser )
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -248,7 +238,7 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-              'Bonjour, ${_prenom ?? 'Utilisateur'} ${_nom ?? ''} !',
+              'Bonjour, ${_prenom ?? 'Utilisateur'} ${_nom ?? ''} !, Bienvenu',
                     style: TextStyle(
                       fontSize: isTablet ? 26 : 20,
                       fontWeight: FontWeight.bold,

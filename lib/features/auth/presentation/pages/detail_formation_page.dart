@@ -155,6 +155,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
             slivers: [
               // Image header avec effet parallax
               SliverAppBar(
+                automaticallyImplyLeading: false,
                 expandedHeight: 280,
                 stretch: true,
                 flexibleSpace: FlexibleSpaceBar(
@@ -163,7 +164,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                     tag: 'formation-${formation.id}',
                     child: CachedNetworkImage(
                       imageUrl: '${AppConstants.baseUrlImg}/${formation.imageUrl}',
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                       placeholder: (context, url) => Container(
                         color: categoryColor.withOpacity(0.1),
                         child: Center(

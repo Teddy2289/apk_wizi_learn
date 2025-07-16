@@ -41,10 +41,19 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
           title: const Text('Contact & FAQ'),
           centerTitle: true,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () =>
-                Navigator.pushReplacementNamed(
-                    context, RouteConstants.dashboard),
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.arrow_back, color: Colors.white),
+            ),
+            onPressed:
+                () => Navigator.pushReplacementNamed(
+              context,
+              RouteConstants.dashboard,
+            ),
           ),
           backgroundColor: isDarkMode
               ? theme.appBarTheme.backgroundColor

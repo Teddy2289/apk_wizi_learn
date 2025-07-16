@@ -8,6 +8,8 @@ import 'package:wizi_learn/features/auth/data/repositories/formation_repository.
 import 'package:wizi_learn/features/auth/presentation/widgets/random_formations_widget.dart';
 import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
 
+import '../../../../core/constants/route_constants.dart';
+
 class ContactPage extends StatefulWidget {
   final List<Contact> contacts;
   const ContactPage({super.key, required this.contacts});
@@ -43,6 +45,21 @@ class _ContactPageState extends State<ContactPage> {
       appBar: AppBar(
         backgroundColor: Color(0xFFFEB823),
         title: const Text('Tous mes contacts'),
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.arrow_back, color: Colors.white),
+          ),
+          onPressed:
+              () => Navigator.pushReplacementNamed(
+            context,
+            RouteConstants.dashboard,
+          ),
+        ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

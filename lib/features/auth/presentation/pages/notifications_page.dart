@@ -219,6 +219,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.arrow_back, color: Colors.white),
+          ),
+          onPressed:
+              () => Navigator.pushReplacementNamed(
+            context,
+            RouteConstants.dashboard,
+          ),
+        ),
         title: Row(
           children: [
             const Text(

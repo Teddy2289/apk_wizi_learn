@@ -14,8 +14,19 @@ class PrivacyPage extends StatelessWidget {
         title: const Text('Politique de Confidentialité'),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pushReplacementNamed(context, RouteConstants.dashboard),
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.arrow_back, color: Colors.white),
+          ),
+          onPressed:
+              () => Navigator.pushReplacementNamed(
+            context,
+            RouteConstants.dashboard,
+          ),
         ),
         backgroundColor: isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
         elevation: 1,

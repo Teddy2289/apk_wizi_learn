@@ -6,6 +6,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/repositories/parrainage_repository.dart';
 
+import '../../../../core/constants/route_constants.dart';
+
 class SponsorshipPage extends StatefulWidget {
   const SponsorshipPage({super.key});
 
@@ -73,6 +75,21 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
         backgroundColor: const Color(0xFFFEB823),
         title: const Text('Programme de Parrainage'),
         centerTitle: true,
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.arrow_back, color: Colors.white),
+          ),
+          onPressed:
+              () => Navigator.pushReplacementNamed(
+            context,
+            RouteConstants.dashboard,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
