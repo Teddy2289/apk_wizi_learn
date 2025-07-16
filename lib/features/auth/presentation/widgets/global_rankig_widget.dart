@@ -75,6 +75,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Votre en-tête
             Row(
               children: [
                 Icon(
@@ -119,23 +120,26 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                 ),
               )
             else
-              Column(
-                children: [
-                  _buildHeader(context, isSmallScreen),
-                  const SizedBox(height: 8),
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: widget.rankings.length,
-                    separatorBuilder: (_, __) => const Divider(height: 8),
-                    itemBuilder:
-                        (_, index) => _buildRankingItem(
+            // Solution corrigée
+              Expanded( // <-- Ajout de Expanded ici
+                child: Column(
+                  children: [
+                    _buildHeader(context, isSmallScreen),
+                    const SizedBox(height: 8),
+                    Expanded( // <-- Et un autre Expanded pour la liste
+                      child: ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(), // <-- Changé pour permettre le scroll
+                        itemCount: widget.rankings.length,
+                        separatorBuilder: (_, __) => const Divider(height: 8),
+                        itemBuilder: (_, index) => _buildRankingItem(
                           context,
                           widget.rankings[index],
                           isSmallScreen,
                         ),
-                  ),
-                ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
           ],
         ),

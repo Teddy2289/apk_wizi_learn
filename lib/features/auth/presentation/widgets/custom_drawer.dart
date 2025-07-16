@@ -20,13 +20,13 @@ class CustomDrawer extends StatelessWidget {
       width: MediaQuery.of(context).size.width * 0.85,
       child: Column(
         children: [
-          // Header avec photo et infos utilisateur
+          // Header avec photo et infos utilisateur - Hauteur réduite
           BlocBuilder<AuthBloc, AuthState>(
             builder: (context, state) {
               if (state is Authenticated) {
                 return Container(
-                  width: double.infinity, // Prend toute la largeur
-                  padding: const EdgeInsets.only(top: 40, bottom: 20),
+                  width: double.infinity,
+                  padding: const EdgeInsets.only(top: 30, bottom: 20), // Hauteur réduite
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -37,10 +37,11 @@ class CustomDrawer extends StatelessWidget {
                       end: Alignment.bottomRight,
                     ),
                   ),
-                  child: SafeArea( // Ajout de SafeArea pour éviter les encochements
+                  child: SafeArea(
                     child: Column(
+                      mainAxisSize: MainAxisSize.min, // Pour éviter l'expansion inutile
                       children: [
-                        // Avatar avec effet de bordure
+                        // Avatar agrandi avec moins de marge
                         Container(
                           padding: const EdgeInsets.all(3),
                           decoration: BoxDecoration(
@@ -55,7 +56,7 @@ class CustomDrawer extends StatelessWidget {
                             ],
                           ),
                           child: CircleAvatar(
-                            radius: 40,
+                            radius: 50, // Taille augmentée (était 40)
                             backgroundColor: Colors.white,
                             backgroundImage: state.user.image != null
                                 ? CachedNetworkImageProvider(
@@ -66,7 +67,7 @@ class CustomDrawer extends StatelessWidget {
                                 ? Text(
                               state.user.name[0].toUpperCase(),
                               style: const TextStyle(
-                                fontSize: 36,
+                                fontSize: 40, // Taille augmentée
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black,
                               ),
@@ -74,8 +75,8 @@ class CustomDrawer extends StatelessWidget {
                                 : null,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        // Nom et email - avec contraste amélioré
+                        const SizedBox(height: 12), // Marge réduite (était 16)
+                        // Nom et email
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Column(
@@ -85,23 +86,23 @@ class CustomDrawer extends StatelessWidget {
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
-                                  fontSize: 20, // Taille augmentée
+                                  fontSize: 20,
                                   shadows: [
-                                  Shadow(
-                                  color: Colors.black45,
-                                  blurRadius: 2,
-                                  offset: Offset(1, 1),
-                                  )],
+                                    Shadow(
+                                      color: Colors.black45,
+                                      blurRadius: 2,
+                                      offset: Offset(1, 1),
+                                    )],
                                 ),
                                 textAlign: TextAlign.center,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 4), // Marge réduite (était 6)
                               Text(
                                 state.user.email,
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.95), // Opacité augmentée
+                                  color: Colors.white.withOpacity(0.95),
                                   fontSize: 14,
                                   shadows: [
                                     Shadow(
@@ -121,8 +122,9 @@ class CustomDrawer extends StatelessWidget {
                     ),
                   ),
                 );
-              }              return Container(
-                padding: const EdgeInsets.only(top: 40, bottom: 20),
+              }
+              return Container(
+                padding: const EdgeInsets.only(top: 30, bottom: 20), // Hauteur réduite
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -147,7 +149,7 @@ class CustomDrawer extends StatelessWidget {
             },
           ),
 
-          // Contenu du menu
+          // Le reste du code reste inchangé...
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -263,6 +265,7 @@ class CustomDrawer extends StatelessWidget {
     );
   }
 
+  // Les méthodes _buildInfoCard, _buildInfoTile, _buildMenuSection et _buildDrawerItem restent inchangées...
   Widget _buildInfoCard(BuildContext context, Authenticated state) {
     final theme = Theme.of(context);
 
@@ -295,7 +298,7 @@ class CustomDrawer extends StatelessWidget {
                 icon: Icons.person,
                 title: 'Identité',
                 value:
-                    '${state.user.stagiaire!.civilite} ${state.user.stagiaire!.prenom}',
+                '${state.user.stagiaire!.civilite} ${state.user.stagiaire!.prenom}',
               ),
               _buildInfoTile(
                 icon: Icons.phone,
@@ -306,7 +309,7 @@ class CustomDrawer extends StatelessWidget {
                 icon: Icons.location_on,
                 title: 'Adresse',
                 value:
-                    '${state.user.stagiaire!.adresse}, ${state.user.stagiaire!.codePostal} ${state.user.stagiaire!.ville}',
+                '${state.user.stagiaire!.adresse}, ${state.user.stagiaire!.codePostal} ${state.user.stagiaire!.ville}',
               ),
               _buildInfoTile(
                 icon: Icons.calendar_today,
@@ -357,10 +360,10 @@ class CustomDrawer extends StatelessWidget {
   }
 
   Widget _buildMenuSection(
-    BuildContext context, {
-    required String title,
-    required List<_MenuItem> items,
-  }) {
+      BuildContext context, {
+        required String title,
+        required List<_MenuItem> items,
+      }) {
     final theme = Theme.of(context);
 
     return Padding(
@@ -380,7 +383,7 @@ class CustomDrawer extends StatelessWidget {
             ),
           ),
           ...items.map(
-            (item) => _buildDrawerItem(
+                (item) => _buildDrawerItem(
               context,
               icon: item.icon,
               label: item.label,
@@ -395,12 +398,12 @@ class CustomDrawer extends StatelessWidget {
   }
 
   Widget _buildDrawerItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    Color? iconColor,
-  }) {
+      BuildContext context, {
+        required IconData icon,
+        required String label,
+        required VoidCallback onTap,
+        Color? iconColor,
+      }) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
 

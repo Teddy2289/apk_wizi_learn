@@ -17,8 +17,8 @@ import 'core/routes/app_router.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialiser Firebase
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Initialisation sécurisée de Firebase
+  await _initializeFirebase();
 
   // Initialiser le gestionnaire de notifications
   await NotificationManager().initialize();
@@ -29,6 +29,20 @@ Future<void> main() async {
 
   runApp(const MyApp());
 }
+
+Future<void> _initializeFirebase() async {
+  if (Firebase.apps.any((app) => app.name == '[DEFAULT]')) {
+    debugPrint("✅ Firebase DEFAULT app already exists");
+  } else {
+    await Firebase.initializeApp(
+      name: 'Wizi-Learn',
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint("✅ Firebase DEFAULT app initialized");
+  }
+}
+
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
