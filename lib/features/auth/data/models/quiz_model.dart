@@ -27,37 +27,41 @@ class Quiz {
 
   factory Quiz.fromJson(Map<String, dynamic> json) {
     // Mini formation intégrée
-    final formationJson = json['formation'] is Map ? json['formation'] : {
-      'id': json['formation_id'] ?? 0,
-      'titre': 'Formation inconnue',
-      'description': '',
-      'duree': '0',
-      'categorie': 'Inconnue',
-    };
+    final formationJson =
+        json['formation'] is Map
+            ? json['formation']
+            : {
+              'id': json['formation_id'] ?? 0,
+              'titre': 'Formation inconnue',
+              'description': '',
+              'duree': '0',
+              'categorie': 'Inconnue',
+            };
 
     List<Question> questionsList = [];
     if (json['questions'] is List) {
-      questionsList = (json['questions'] as List).map((q) {
-        try {
-          // Convertir les réponses si elles sont dans 'reponses' au lieu de 'answers'
-          if (q is Map<String, dynamic>) {
-            if (q['reponses'] != null && q['answers'] == null) {
-              q['answers'] = q['reponses'];
+      questionsList =
+          (json['questions'] as List).map((q) {
+            try {
+              // Convertir les réponses si elles sont dans 'reponses' au lieu de 'answers'
+              if (q is Map<String, dynamic>) {
+                if (q['reponses'] != null && q['answers'] == null) {
+                  q['answers'] = q['reponses'];
+                }
+                return Question.fromJson(q);
+              }
+              throw Exception('Question data is not a Map');
+            } catch (e, stack) {
+              debugPrint('Error parsing question: $e\n$stack');
+              return Question(
+                id: '0', // Utilisez une string comme dans le nouveau modèle
+                text: q['text']?.toString() ?? 'Question non disponible',
+                type: q['type']?.toString() ?? 'choix multiples',
+                points: int.tryParse(q['points']?.toString() ?? '0') ?? 0,
+                answers: [], // Utilisez 'answers' au lieu de 'reponses'
+              );
             }
-            return Question.fromJson(q);
-          }
-          throw Exception('Question data is not a Map');
-        } catch (e, stack) {
-          debugPrint('Error parsing question: $e\n$stack');
-          return Question(
-            id: '0', // Utilisez une string comme dans le nouveau modèle
-            text: q['text']?.toString() ?? 'Question non disponible',
-            type: q['type']?.toString() ?? 'choix multiples',
-            points: int.tryParse(q['points']?.toString() ?? '0') ?? 0,
-            answers: [], // Utilisez 'answers' au lieu de 'reponses'
-          );
-        }
-      }).toList();
+          }).toList();
     }
 
     return Quiz(
@@ -67,7 +71,8 @@ class Quiz {
       duree: json['duree']?.toString(),
       status: json['status']?.toString() ?? 'inactif',
       niveau: json['niveau']?.toString() ?? 'débutant',
-      nbPointsTotal: int.tryParse(json['nb_points_total']?.toString() ?? '0') ?? 0,
+      nbPointsTotal:
+          int.tryParse(json['nb_points_total']?.toString() ?? '0') ?? 0,
       formation: QuizFormation.fromJson(formationJson),
       questions: questionsList,
     );
@@ -86,7 +91,9 @@ class Quiz {
     buffer.writeln('  nbPointsTotal: $nbPointsTotal,');
 
     // Afficher la formation associée
-    buffer.writeln('  formation: ${formation.toString().replaceAll('\n', '\n  ')},');
+    buffer.writeln(
+      '  formation: ${formation.toString().replaceAll('\n', '\n  ')},',
+    );
 
     // Afficher toutes les questions avec leurs réponses
     buffer.writeln('  questions: [');
