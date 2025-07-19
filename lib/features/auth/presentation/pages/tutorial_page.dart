@@ -6,10 +6,21 @@ import 'package:wizi_learn/features/auth/data/models/formation_with_medias.dart'
 import 'package:wizi_learn/features/auth/data/repositories/media_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:wizi_learn/features/auth/data/models/media_model.dart';
 import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/youtube_player_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
+
+String normalizeYoutubeUrl(String url) {
+  final shortsReg = RegExp(r'youtube\.com/shorts/([\w-]+)');
+  final match = shortsReg.firstMatch(url);
+  if (match != null && match.groupCount >= 1) {
+    final id = match.group(1);
+    return 'https://www.youtube.com/watch?v=$id';
+  }
+  return url;
+}
 
 class TutorialPage extends StatefulWidget {
   const TutorialPage({super.key});
@@ -222,8 +233,38 @@ class _TutorialPageState extends State<TutorialPage> {
                                     MaterialPageRoute(
                                       builder:
                                           (_) => YoutubePlayerPage(
-                                            video: media,
-                                            videosInSameCategory: mediasFiltres,
+                                            video: Media(
+                                              id: media.id,
+                                              titre: media.titre,
+                                              description: media.description,
+                                              url: normalizeYoutubeUrl(
+                                                media.url,
+                                              ),
+                                              type: media.type,
+                                              categorie: media.categorie,
+                                              duree: media.duree,
+                                              formationId: media.formationId,
+                                            ),
+                                            videosInSameCategory:
+                                                mediasFiltres
+                                                    .map(
+                                                      (m) => Media(
+                                                        id: m.id,
+                                                        titre: m.titre,
+                                                        description:
+                                                            m.description,
+                                                        url:
+                                                            normalizeYoutubeUrl(
+                                                              m.url,
+                                                            ),
+                                                        type: m.type,
+                                                        categorie: m.categorie,
+                                                        duree: m.duree,
+                                                        formationId:
+                                                            m.formationId,
+                                                      ),
+                                                    )
+                                                    .toList(),
                                           ),
                                     ),
                                   );

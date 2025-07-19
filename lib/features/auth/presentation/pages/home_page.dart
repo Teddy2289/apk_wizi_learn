@@ -16,6 +16,14 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../data/datasources/auth_remote_data_source.dart';
 import '../../data/repositories/auth_repository.dart';
 
+// === Palette de couleurs Wizi Learn ===
+const Color kYellowLight = Color(0xFFFFF9C4); // jaune très clair
+const Color kYellow = Color(0xFFFFEB3B); // jaune
+const Color kOrange = Color(0xFFFF9800); // orange
+const Color kOrangeDark = Color(0xFFF57C00); // orange foncé
+const Color kBrown = Color(0xFF8D6E63); // marron
+const Color kWhite = Colors.white;
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -32,12 +40,10 @@ class _HomePageState extends State<HomePage> {
   List<Formation> _randomFormations = [];
   bool _isLoading = true;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
   String? _prenom;
   String? _nom;
   bool _isLoadingUser = true;
-
-
 
   @override
   void initState() {
@@ -87,7 +93,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-
   void _initFcmListener() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       final notification = message.notification;
@@ -115,7 +120,7 @@ class _HomePageState extends State<HomePage> {
       final contacts = await _contactRepository.getContacts();
       final formationsRaw = await _formationRepository.getRandomFormations(3);
       final formations =
-      formationsRaw.whereType<Formation>().toList(); // Cleaner filtering
+          formationsRaw.whereType<Formation>().toList(); // Cleaner filtering
 
       setState(() {
         _contacts = contacts;
@@ -145,63 +150,64 @@ class _HomePageState extends State<HomePage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-
-      body: (_isLoading || _isLoadingUser )
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-        onRefresh: _loadData,
-        color: theme.primaryColor,
-        child: CustomScrollView(
-          slivers: [
-            // Spacer
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-            // Section de Bienvenue Personnalisée
-            SliverToBoxAdapter(child: _buildWelcomeSection(isTablet)),
-
-            // Spacer
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-            // Section Formations
-            SliverToBoxAdapter(
-              child: _buildSectionTitle(
-                context,
-                title: 'Formations recommandées',
-                icon: LucideIcons.bookOpen,
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: RandomFormationsWidget(
-                formations: _randomFormations,
+      body:
+          (_isLoading || _isLoadingUser)
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
                 onRefresh: _loadData,
-              ),
-            ),
+                color: theme.primaryColor,
+                child: CustomScrollView(
+                  slivers: [
+                    // Spacer
+                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-            // Spacer
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                    // Section de Bienvenue Personnalisée
+                    SliverToBoxAdapter(child: _buildWelcomeSection(isTablet)),
 
-            // Section Contacts
-            SliverToBoxAdapter(
-              child: _buildSectionWithButton(
-                context,
-                title: 'Mes contacts',
-                icon: LucideIcons.user,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ContactPage(contacts: _contacts),
+                    // Spacer
+                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                    // Section Formations
+                    SliverToBoxAdapter(
+                      child: _buildSectionTitle(
+                        context,
+                        title: 'Formations recommandées',
+                        icon: LucideIcons.bookOpen,
+                      ),
                     ),
-                  );
-                },
-              ),
-            ),
+                    SliverToBoxAdapter(
+                      child: RandomFormationsWidget(
+                        formations: _randomFormations,
+                        onRefresh: _loadData,
+                      ),
+                    ),
 
-            // Liste des contacts
-            _buildContactsList(isTablet),
-          ],
-        ),
-      ),
+                    // Spacer
+                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                    // Section Contacts
+                    SliverToBoxAdapter(
+                      child: _buildSectionWithButton(
+                        context,
+                        title: 'Mes contacts',
+                        icon: LucideIcons.user,
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => ContactPage(contacts: _contacts),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    // Liste des contacts
+                    _buildContactsList(isTablet),
+                  ],
+                ),
+              ),
     );
   }
 
@@ -212,25 +218,34 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.blue.shade300, Colors.blue.shade500],
+            colors: [kYellowLight, kWhite, kOrange.withOpacity(0.2)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.blue.shade100,
+              color: kOrange.withOpacity(0.15),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
           ],
+          border: Border.all(color: kYellow, width: 1.5),
         ),
         child: Row(
           children: [
-            Icon(
-              LucideIcons.user,
-              size: isTablet ? 50 : 40,
-              color: Colors.white,
+            Container(
+              width: isTablet ? 60 : 48,
+              height: isTablet ? 60 : 48,
+              decoration: BoxDecoration(
+                color: kYellowLight,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                LucideIcons.megaphone,
+                color: kOrange,
+                size: isTablet ? 36 : 28,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -238,11 +253,11 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-              'Bonjour, ${_prenom ?? 'Utilisateur'} ${_nom ?? ''} !, Bienvenu',
+                    'Bienvenue sur Wizi Learn',
                     style: TextStyle(
                       fontSize: isTablet ? 26 : 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: kBrown,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -250,7 +265,7 @@ class _HomePageState extends State<HomePage> {
                     'Prêt pour une nouvelle journée d\'apprentissage ?',
                     style: TextStyle(
                       fontSize: isTablet ? 16 : 14,
-                      color: Colors.white.withOpacity(0.8),
+                      color: kBrown.withOpacity(0.7),
                     ),
                   ),
                 ],
@@ -262,57 +277,113 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildSectionTitle(BuildContext context, {required String title, required IconData icon}) {
+  Widget _buildSectionTitle(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: Theme.of(context).primaryColor, size: 24),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+      child: Container(
+        decoration: BoxDecoration(
+          color: kYellowLight,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: kYellow, width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: kOrange.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             ),
-          ),
-        ],
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(color: kYellow, shape: BoxShape.circle),
+              child: Icon(icon, color: kOrangeDark, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: kBrown,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSectionWithButton(
-      BuildContext context, {
-        required String title,
-        required IconData icon,
-        required VoidCallback onPressed,
-      }) {
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: Theme.of(context).primaryColor, size: 24),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+      child: Container(
+        decoration: BoxDecoration(
+          color: kYellowLight,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: kYellow, width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: kOrange.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: kYellow,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: kOrangeDark, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: kBrown,
+                  ),
+                ),
+              ],
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kOrange,
+                foregroundColor: kWhite,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 8,
                 ),
               ),
-            ],
-          ),
-          TextButton(
-            onPressed: onPressed,
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).primaryColor,
+              onPressed: onPressed,
+              child: const Text('Voir tous'),
             ),
-            child: const Text('Voir tous'),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -322,21 +393,32 @@ class _HomePageState extends State<HomePage> {
       return SliverFillRemaining(
         hasScrollBody: false,
         child: Center(
-          child: Text(
-            'Aucun contact disponible',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Colors.grey,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: kYellowLight,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: kYellow, width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: kOrange.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Text(
+              'Aucun contact disponible',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: kBrown),
             ),
           ),
         ),
       );
     }
 
-    final wantedRoles = {
-      'commercial',
-      'formateur',
-      'pôle relation client',
-    };
+    final wantedRoles = {'commercial', 'formateur', 'pôle relation client'};
     final filteredContacts = <String, Contact>{};
     for (final c in _contacts) {
       final role = c.role.toLowerCase().replaceAll('_', ' ');
@@ -349,21 +431,36 @@ class _HomePageState extends State<HomePage> {
     return SliverPadding(
       padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
       sliver: SliverGrid(
-        delegate: SliverChildBuilderDelegate(
-              (context, index) {
-            return ContactCard(
+        delegate: SliverChildBuilderDelegate((context, index) {
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [kYellowLight, kWhite, kOrange.withOpacity(0.1)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: kYellow, width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: kOrange.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            margin: const EdgeInsets.all(4),
+            child: ContactCard(
               contact: contactsToShow[index],
               showFormations: false,
-            );
-          },
-          childCount: contactsToShow.length,
-        ),
+            ),
+          );
+        }, childCount: contactsToShow.length),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: isTablet ? 2 : 1,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           childAspectRatio: isTablet ? 2.5 : 2.6,
-
         ),
       ),
     );
