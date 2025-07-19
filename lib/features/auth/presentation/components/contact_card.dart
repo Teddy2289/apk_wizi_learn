@@ -66,6 +66,29 @@ class ContactCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    if (contact.role != null && contact.role.isNotEmpty) ...[
+                      SizedBox(height: 2),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange.shade200),
+                        ),
+                        child: Text(
+                          contact.role[0].toUpperCase() +
+                              contact.role.substring(1),
+                          style: TextStyle(
+                            fontSize: infoFontSize,
+                            color: Colors.orange.shade800,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                     SizedBox(height: isSmallScreen ? 2 : 4),
                     Row(
                       children: [
