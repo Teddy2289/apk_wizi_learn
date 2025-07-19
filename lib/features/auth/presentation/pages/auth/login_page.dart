@@ -112,7 +112,7 @@ class _LoginPageState extends State<LoginPage> {
                               return 'Veuillez entrer votre email';
                             }
                             if (!RegExp(
-                              r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}\$',
+                              r'^[^@]+@[^@]+\.[^@]+$',
                             ).hasMatch(value)) {
                               return 'Email invalide';
                             }

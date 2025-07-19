@@ -11,6 +11,7 @@ import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.
 import 'package:wizi_learn/features/auth/presentation/widgets/youtube_player_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 String normalizeYoutubeUrl(String url) {
   final shortsReg = RegExp(r'youtube\.com/shorts/([\w-]+)');
@@ -38,10 +39,35 @@ class _TutorialPageState extends State<TutorialPage> {
   int? _selectedFormationId;
   String _selectedCategory = 'tutoriel';
   bool _fromNotification = false;
+  bool _showTutorial = false;
+  int _tutorialStep = 0;
+  final List<Map<String, String>> _tutorialSteps = [
+    {
+      'title': 'Bienvenue dans la section Tutoriels !',
+      'desc':
+          'Retrouvez ici des vidéos explicatives et des astuces pour progresser rapidement sur la plateforme.',
+    },
+    {
+      'title': 'Filtrer par catégorie',
+      'desc':
+          'Utilisez les boutons en haut pour basculer entre les tutoriels et les astuces.',
+    },
+    {
+      'title': 'Visionner une vidéo',
+      'desc':
+          'Cliquez sur une vidéo pour l’ouvrir et la regarder en plein écran.',
+    },
+    {
+      'title': 'Astuce',
+      'desc':
+          'Vous pouvez revenir ici à tout moment pour revoir les tutoriels.',
+    },
+  ];
 
   @override
   void initState() {
     super.initState();
+    _checkTutorialSeen();
     final dio = Dio();
     final storage = const FlutterSecureStorage();
 
@@ -65,6 +91,63 @@ class _TutorialPageState extends State<TutorialPage> {
         setState(() {
           _fromNotification = true;
         });
+        final mediaId = args['media_id'] ?? args['mediaId'];
+        if (_formationsFuture != null) {
+          _formationsFuture!.then((formations) {
+            Media mediaToOpen;
+            List<Media> allMedias = [];
+            for (final formation in formations) {
+              allMedias.addAll(formation.medias);
+            }
+            if (allMedias.isEmpty) return;
+            if (mediaId != null) {
+              mediaToOpen = allMedias.firstWhere(
+                (m) => m.id.toString() == mediaId.toString(),
+                orElse: () => allMedias.first,
+              );
+            } else {
+              mediaToOpen = allMedias.first;
+            }
+            // Trouver la formation correspondante pour la playlist
+            final formation = formations.firstWhere(
+              (f) => f.medias.any((m) => m.id == mediaToOpen.id),
+              orElse: () => formations.first,
+            );
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (_) => YoutubePlayerPage(
+                      video: Media(
+                        id: mediaToOpen.id,
+                        titre: mediaToOpen.titre,
+                        description: mediaToOpen.description,
+                        url: normalizeYoutubeUrl(mediaToOpen.url),
+                        type: mediaToOpen.type,
+                        categorie: mediaToOpen.categorie,
+                        duree: mediaToOpen.duree,
+                        formationId: mediaToOpen.formationId,
+                      ),
+                      videosInSameCategory:
+                          formation.medias
+                              .map(
+                                (m) => Media(
+                                  id: m.id,
+                                  titre: m.titre,
+                                  description: m.description,
+                                  url: normalizeYoutubeUrl(m.url),
+                                  type: m.type,
+                                  categorie: m.categorie,
+                                  duree: m.duree,
+                                  formationId: m.formationId,
+                                ),
+                              )
+                              .toList(),
+                    ),
+              ),
+            );
+          });
+        }
       }
     });
   }
@@ -86,6 +169,112 @@ class _TutorialPageState extends State<TutorialPage> {
         _formationsFuture = Future.error(e);
       });
     }
+  }
+
+  Future<void> _checkTutorialSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool('hasSeenTutorial') ?? false;
+    if (!seen) {
+      setState(() {
+        _showTutorial = true;
+      });
+    }
+  }
+
+  Widget _buildTutorialOverlay(BuildContext context) {
+    final step = _tutorialSteps[_tutorialStep];
+    return Positioned.fill(
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        child: Container(
+          key: ValueKey(_tutorialStep),
+          color: Colors.black.withOpacity(0.7),
+          child: Center(
+            child: Card(
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      step['title']!,
+                      style: Theme.of(context).textTheme.titleLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      step['desc']!,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (_tutorialStep > 0)
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _tutorialStep--;
+                              });
+                            },
+                            child: const Text('Précédent'),
+                          )
+                        else
+                          const SizedBox(width: 80),
+                        if (_tutorialStep < _tutorialSteps.length - 1)
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _tutorialStep++;
+                              });
+                            },
+                            child: const Text('Suivant'),
+                          )
+                        else
+                          ElevatedButton(
+                            onPressed: () async {
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              await prefs.setBool('hasSeenTutorial', true);
+                              setState(() {
+                                _showTutorial = false;
+                              });
+                            },
+                            child: const Text('Terminer'),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(_tutorialSteps.length, (i) {
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color:
+                                i == _tutorialStep
+                                    ? Colors.orange
+                                    : Colors.grey[300],
+                            shape: BoxShape.circle,
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -326,61 +515,61 @@ class _TutorialPageState extends State<TutorialPage> {
       },
     );
 
-    // Si on vient d'une notification, utiliser CustomScaffold
-    if (_fromNotification) {
-      return CustomScaffold(
-        body: body,
-        currentIndex: 4, // Index de l'onglet Tutoriel
-        onTabSelected: (index) {
-          // Navigation vers les autres onglets
-          Navigator.pushReplacementNamed(
-            context,
-            RouteConstants.dashboard,
-            arguments: index,
-          );
-        },
-        showBanner: true,
-      );
-    }
-
-    // Sinon, utiliser le Scaffold normal
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        automaticallyImplyLeading: false,
-        title: ToggleButtons(
-          isSelected: [
-            _selectedCategory == 'tutoriel',
-            _selectedCategory == 'astuce',
-          ],
-          onPressed: (index) {
-            setState(() {
-              _selectedCategory = index == 0 ? 'tutoriel' : 'astuce';
-            });
-          },
-          borderRadius: BorderRadius.circular(12),
-          selectedColor: Colors.white,
-          fillColor: const Color(0xFFFEB823),
-          color: const Color(0xFF181818),
-          constraints: BoxConstraints(
-            minHeight: 40,
-            minWidth: screenWidth / 2 - 32,
-          ),
-          children: const [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12.0),
-              child: Text('Tutos'),
+    return Stack(
+      children: [
+        _fromNotification
+            ? CustomScaffold(
+              body: body,
+              currentIndex: 4, // Index de l'onglet Tutoriel
+              onTabSelected: (index) {
+                Navigator.pushReplacementNamed(
+                  context,
+                  RouteConstants.dashboard,
+                  arguments: index,
+                );
+              },
+              showBanner: true,
+            )
+            : Scaffold(
+              appBar: AppBar(
+                backgroundColor: AppColors.background,
+                automaticallyImplyLeading: false,
+                title: ToggleButtons(
+                  isSelected: [
+                    _selectedCategory == 'tutoriel',
+                    _selectedCategory == 'astuce',
+                  ],
+                  onPressed: (index) {
+                    setState(() {
+                      _selectedCategory = index == 0 ? 'tutoriel' : 'astuce';
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  selectedColor: Colors.white,
+                  fillColor: const Color(0xFFFEB823),
+                  color: const Color(0xFF181818),
+                  constraints: BoxConstraints(
+                    minHeight: 40,
+                    minWidth: screenWidth / 2 - 32,
+                  ),
+                  children: const [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12.0),
+                      child: Text('Tutos'),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Text('Astuces'),
+                    ),
+                  ],
+                ),
+                elevation: 1,
+                centerTitle: true,
+              ),
+              body: body,
             ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text('Astuces'),
-            ),
-          ],
-        ),
-        elevation: 1,
-        centerTitle: true,
-      ),
-      body: body,
+        if (_showTutorial) _buildTutorialOverlay(context),
+      ],
     );
   }
 }

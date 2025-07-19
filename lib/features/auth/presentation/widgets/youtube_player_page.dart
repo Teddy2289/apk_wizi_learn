@@ -70,6 +70,10 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
     return url;
   }
 
+  bool isYoutubeShort(String url) {
+    return url.contains('youtube.com/shorts/');
+  }
+
   void _initYoutubeController(String url) {
     final normalizedUrl = normalizeYoutubeUrl(url);
     final videoId = YoutubePlayer.convertUrlToId(normalizedUrl) ?? '';
@@ -148,6 +152,9 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
             .where((v) => v.id != currentVideo.id)
             .toList();
 
+    final isShort = isYoutubeShort(currentVideo.url);
+    final screenHeight = MediaQuery.of(context).size.height;
+
     // ✅ En plein écran : on affiche uniquement le lecteur
     if (_isFullScreen) {
       return Scaffold(
@@ -199,35 +206,65 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
       ),
       body: Column(
         children: [
-          AspectRatio(
-            aspectRatio: 16 / 9,
-            child: GestureDetector(
-              key: _playerKey,
-              onDoubleTap: _toggleFullScreen,
-              child: YoutubePlayer(
-                controller: _controller,
-                showVideoProgressIndicator: true,
-                progressIndicatorColor: colorScheme.primary,
-                progressColors: ProgressBarColors(
-                  playedColor: colorScheme.primary,
-                  handleColor: colorScheme.primary,
-                  bufferedColor: colorScheme.surfaceContainerHighest,
-                  backgroundColor: colorScheme.onSurface.withOpacity(0.2),
-                ),
-                onReady: () => _controller.addListener(_playerListener),
-                onEnded: (_) => _isFullScreen ? _toggleFullScreen() : null,
-                bottomActions: [
-                  CurrentPosition(),
-                  ProgressBar(isExpanded: true),
-                  RemainingDuration(),
-                  FullScreenButton(
+          isShort
+              ? SizedBox(
+                height: screenHeight * 0.5,
+                child: GestureDetector(
+                  key: _playerKey,
+                  onDoubleTap: _toggleFullScreen,
+                  child: YoutubePlayer(
                     controller: _controller,
-                    color: colorScheme.primary,
+                    showVideoProgressIndicator: true,
+                    progressIndicatorColor: colorScheme.primary,
+                    progressColors: ProgressBarColors(
+                      playedColor: colorScheme.primary,
+                      handleColor: colorScheme.primary,
+                      bufferedColor: colorScheme.surfaceContainerHighest,
+                      backgroundColor: colorScheme.onSurface.withOpacity(0.2),
+                    ),
+                    onReady: () => _controller.addListener(_playerListener),
+                    onEnded: (_) => _isFullScreen ? _toggleFullScreen() : null,
+                    bottomActions: [
+                      CurrentPosition(),
+                      ProgressBar(isExpanded: true),
+                      RemainingDuration(),
+                      FullScreenButton(
+                        controller: _controller,
+                        color: colorScheme.primary,
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              )
+              : AspectRatio(
+                aspectRatio: 16 / 9,
+                child: GestureDetector(
+                  key: _playerKey,
+                  onDoubleTap: _toggleFullScreen,
+                  child: YoutubePlayer(
+                    controller: _controller,
+                    showVideoProgressIndicator: true,
+                    progressIndicatorColor: colorScheme.primary,
+                    progressColors: ProgressBarColors(
+                      playedColor: colorScheme.primary,
+                      handleColor: colorScheme.primary,
+                      bufferedColor: colorScheme.surfaceContainerHighest,
+                      backgroundColor: colorScheme.onSurface.withOpacity(0.2),
+                    ),
+                    onReady: () => _controller.addListener(_playerListener),
+                    onEnded: (_) => _isFullScreen ? _toggleFullScreen() : null,
+                    bottomActions: [
+                      CurrentPosition(),
+                      ProgressBar(isExpanded: true),
+                      RemainingDuration(),
+                      FullScreenButton(
+                        controller: _controller,
+                        color: colorScheme.primary,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
 
           // ✅ Titre et bouton Playlist
           Padding(
