@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-
 import 'package:wizi_learn/features/auth/presentation/constants/bar_clipper.dart';
 
-/// A modern and responsive custom bottom navigation bar with a central floating action button.
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
@@ -40,16 +38,11 @@ class CustomBottomNavBar extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.bottomCenter,
         children: [
-          // Background with notch
           _buildBackground(theme, navBarHeight),
-
-          // Central Floating Action Button
           Positioned(
-            top: -fabSize * 0.4, // Adjusted position for a modern look
-            child: _buildFab(theme, fabSize, fabIconSize),
+            top: -fabSize * 0.4,
+            child: _buildFab(fabSize, fabIconSize),
           ),
-
-          // Navigation Items
           _buildNavItems(
             theme,
             navBarHeight,
@@ -59,60 +52,6 @@ class CustomBottomNavBar extends StatelessWidget {
             safeAreaBottom,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildBackground(ThemeData theme, double navBarHeight) {
-    return ClipPath(
-      clipper: BottomNavBarClipper(),
-      child: Container(
-        height: navBarHeight,
-        decoration: BoxDecoration(
-          color: theme.cardColor, // Use theme's card color for better integration
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08), // Softer shadow
-              blurRadius: 15,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFab(ThemeData theme, double size, double iconSize) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: [selectedColor.withOpacity(0.8), selectedColor],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: selectedColor.withOpacity(0.4),
-            blurRadius: 20,
-            spreadRadius: 2,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => onTap(2),
-          customBorder: const CircleBorder(),
-          child: Icon(
-            LucideIcons.brain,
-            size: iconSize,
-            color: Colors.white,
-          ),
-        ),
       ),
     );
   }
@@ -140,7 +79,7 @@ class CustomBottomNavBar extends StatelessWidget {
         iconSize: iconSize,
         labelFontSize: labelFontSize,
       ),
-      SizedBox(width: fabSize * 1.2), // Increased central space
+      SizedBox(width: fabSize * 1.2),
       _buildNavItem(
         icon: LucideIcons.trophy,
         label: "Classement",
@@ -180,9 +119,12 @@ class CustomBottomNavBar extends StatelessWidget {
     final isActive = index == currentIndex;
 
     return Expanded(
-      child: InkResponse(
-        onTap: () => onTap(index),
-        radius: 30, // Ripple effect radius
+      child: InkWell(
+        onTap: () {
+          if (index != currentIndex) {
+            onTap(index); // Appelle le callback de sélection
+          }
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Column(
@@ -205,6 +147,60 @@ class CustomBottomNavBar extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBackground(ThemeData theme, double navBarHeight) {
+    return ClipPath(
+      clipper: BottomNavBarClipper(),
+      child: Container(
+        height: navBarHeight,
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 15,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFab(double size, double iconSize) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [selectedColor.withOpacity(0.8), selectedColor],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: selectedColor.withOpacity(0.4),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => onTap(2),
+          customBorder: const CircleBorder(),
+          child: Icon(
+            LucideIcons.brain,
+            size: iconSize,
+            color: Colors.white,
           ),
         ),
       ),

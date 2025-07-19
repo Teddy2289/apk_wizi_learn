@@ -162,6 +162,7 @@ class QuizSessionManager {
           ...response,
           'questions': answeredQuestions,
           'totalQuestions': answeredQuestions.length,
+          'quizId': quizId,
         };
       }
 

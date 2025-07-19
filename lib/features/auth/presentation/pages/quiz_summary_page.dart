@@ -4,9 +4,11 @@ import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_question_card.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_score_header.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/dashboard_page.dart';
 import 'dart:math';
 
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 
 class QuizSummaryPage extends StatefulWidget {
   final List<Question> questions;
@@ -196,11 +198,19 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
           FloatingActionButton(
             heroTag: 'restart_quiz',
             onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
+              debugPrint('Quiz ID to scroll to: ${widget.quizResult?['quizId']}');
+              Navigator.pushAndRemoveUntil(
+                context,
                 MaterialPageRoute(
-                  builder: (_) => WillPopScope(
-                    onWillPop: () async => false, // Désactive le retour physique
-                    child: QuizPage(), // QuizPage utilisera son CustomScaffold normal
+                  builder: (context) => DashboardPage(
+                    initialIndex: 2,
+                    arguments: {
+                      'selectedTabIndex': 2,
+                      'scrollToQuizId': widget.quizResult?['quizId'].toString(),
+                      'fromNotification': true,
+                      'useCustomScaffold': true,
+                      'scrollToPlayed': true,
+                    },
                   ),
                 ),
                     (route) => false,

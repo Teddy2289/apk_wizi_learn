@@ -6,20 +6,37 @@ import 'package:wizi_learn/features/auth/presentation/pages/training_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/tutorial_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 
+
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  final int? initialIndex;
+  final Map<String, dynamic>? arguments;
+
+
+  const DashboardPage({
+    super.key,
+    this.initialIndex,
+    this.arguments,
+  });
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  int _currentIndex = 0;
+  late int _currentIndex;
+  bool _initialized = false;
+  Map<String, dynamic>? _pageArguments;
 
-  final List<Widget> _pages = [
+  // Remplacez la liste constante par une méthode qui crée les pages dynamiquement
+  List<Widget> get _pages => [
     const HomePage(),
     const TrainingPage(),
-    const QuizPage(),
+    QuizPage(
+      selectedTabIndex: _currentIndex,
+      useCustomScaffold: _pageArguments?['useCustomScaffold'] ?? false,
+      scrollToPlayed: _pageArguments?['scrollToPlayed'] ?? false,
+      key: ValueKey(_pageArguments), // Important pour forcer le rebuild
+    ),
     const RankingPage(),
     const TutorialPage(),
   ];
@@ -27,15 +44,31 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    // Vérifier s'il y a des arguments de navigation
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    _currentIndex = widget.initialIndex ?? 0;
+    _pageArguments = widget.arguments;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
       final args = ModalRoute.of(context)?.settings.arguments;
-      if (args is int && args >= 0 && args < _pages.length) {
-        setState(() {
-          _currentIndex = args;
-        });
+      if (args is int) {
+        _currentIndex = args;
+      } else if (args is Map<String, dynamic>) {
+        _pageArguments = args;
+        _currentIndex = args['selectedTabIndex'] ?? _currentIndex;
       }
-    });
+      _initialized = true;
+    }
+  }
+
+  void _onTabSelected(int index) {
+    if (index != _currentIndex) {
+      setState(() {
+        _currentIndex = index;
+      });
+    }
   }
 
   @override
@@ -43,17 +76,9 @@ class _DashboardPageState extends State<DashboardPage> {
     return CustomScaffold(
       body: _pages[_currentIndex],
       currentIndex: _currentIndex,
-      onTabSelected: (index) {
-        setState(() {
-          _currentIndex = index;
-        });
-      },
-      // Vous pouvez ajouter des actions personnalisées si nécessaire
-      actions: [
-        // Ajoutez d'autres actions ici si besoin
-      ],
-      // Contrôler l'affichage du bandeau (true par défaut dans l'implémentation)
+      onTabSelected: _onTabSelected,
       showBanner: true,
+      actions: [],
     );
   }
 }

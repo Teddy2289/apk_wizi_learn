@@ -15,7 +15,16 @@ import 'package:wizi_learn/features/auth/presentation/pages/quiz_session_page.da
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 
 class QuizPage extends StatefulWidget {
-  const QuizPage({super.key});
+  final int? selectedTabIndex;
+  final bool useCustomScaffold;
+  final bool scrollToPlayed;
+
+  const QuizPage({
+    super.key,
+    this.selectedTabIndex = 2,
+    this.useCustomScaffold = false,
+    this.scrollToPlayed = false,
+  });
 
   @override
   State<QuizPage> createState() => _QuizPageState();
@@ -36,22 +45,58 @@ class _QuizPageState extends State<QuizPage> {
   int _userPoints = 0;
   bool _fromNotification = false;
   List<String> _playedQuizIds = [];
+  String? _scrollToQuizId;
 
   @override
   void initState() {
     super.initState();
+    debugPrint('QuizPage params - useCustomScaffold: ${widget.useCustomScaffold}');
+    debugPrint('QuizPage params - scrollToPlayed: ${widget.scrollToPlayed}');
     _initializeRepositories();
     _loadInitialData();
     _scrollController.addListener(_scrollListener);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = ModalRoute.of(context)?.settings.arguments;
-      if (args is Map<String, dynamic> && args['fromNotification'] == true) {
-        setState(() => _fromNotification = true);
+      if (args is Map<String, dynamic>) {
+        setState(() {
+          _fromNotification = args['fromNotification'] ?? false;
+          _scrollToQuizId = args['scrollToQuizId'];
+        });
       }
     });
   }
 
+
+
+  Future<void> _scrollToQuiz(String quizId) async {
+    debugPrint('Srolling to quiz with ID: $quizId');
+    if (_scrollController.hasClients && _futureQuizzes != null) {
+      try {
+        final quizzes = await _futureQuizzes!;
+        final quizIndex = quizzes.indexWhere((q) => q.id.toString() == quizId);
+
+        if (quizIndex != -1) {
+          // Calcul plus précis de la position
+          final RenderBox renderBox = context.findRenderObject() as RenderBox;
+          final double itemHeight = renderBox.size.height / 5; // Estimation de la hauteur d'un item
+          final double position = quizIndex * itemHeight;
+
+          await Future.delayed(const Duration(milliseconds: 500)); // Délai supplémentaire
+
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              position,
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeInOut,
+            );
+          }
+        }
+      } catch (e) {
+        debugPrint('Erreur lors du scroll vers le quiz: $e');
+      }
+    }
+  }
   @override
   void dispose() {
     _scrollController.dispose();
@@ -72,6 +117,20 @@ class _QuizPageState extends State<QuizPage> {
       storage: storage,
     );
     _statsRepository = StatsRepository(apiClient: apiClient);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+
+    if (args is Map<String, dynamic>) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (args['scrollToQuizId'] != null && mounted) {
+          _scrollToQuiz(args['scrollToQuizId']);
+        }
+      });
+    }
   }
 
   Future<void> _loadInitialData() async {
@@ -237,63 +296,70 @@ class _QuizPageState extends State<QuizPage> {
 
     final bool useCustomScaffold = args?['useCustomScaffold'] ?? _fromNotification;
     final bool scrollToPlayed = args?['scrollToPlayed'] ?? false;
-    final int selectedTabIndex = args?['selectedTabIndex'] ?? 2; // Valeur par défaut
+    final int selectedTabIndex;
 
-    return useCustomScaffold
-        ? CustomScaffold(
-      body: _isInitialLoad
-          ? _buildLoadingScreen(theme)
-          : _buildMainContent(theme, scrollToPlayed: scrollToPlayed),
-      currentIndex: selectedTabIndex,
-      onTabSelected: (index) {
-        // Gestion de la navigation entre onglets
-        if (index != selectedTabIndex) {
-          Navigator.pushReplacementNamed(
-            context,
-            RouteConstants.dashboard,
-            arguments: index,
-          );
-        }
-      },
-      showBanner: true,
-    )
-        : Scaffold(
-      appBar: AppBar(
-        title: const Text('Mes Quiz'),
-        centerTitle: true,
-        backgroundColor: isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-      ),
-      body: _isInitialLoad
-          ? _buildLoadingScreen(theme)
-          : _buildMainContent(theme, scrollToPlayed: scrollToPlayed),
-      floatingActionButton: _showBackToTopButton
-          ? FloatingActionButton(
-        onPressed: _scrollToTop,
-        mini: true,
-        backgroundColor: theme.colorScheme.primary,
-        child: Icon(Icons.arrow_upward, color: theme.colorScheme.onPrimary),
-      )
-          : null,
-    );
+    if (args is int) {
+      selectedTabIndex = args as int;
+    } else if (args is Map<String, dynamic>) {
+      selectedTabIndex = args['selectedTabIndex'] ?? 2;
+    } else {
+      selectedTabIndex = 2;
+    }
+
+    Widget content = _isInitialLoad
+        ? _buildLoadingScreen(theme)
+        : _buildMainContent(theme, scrollToPlayed: scrollToPlayed);
+
+    if (useCustomScaffold) {
+      return CustomScaffold(
+        body: content,
+        currentIndex: selectedTabIndex,
+        onTabSelected: (index) {
+          if (index != selectedTabIndex) {
+            Navigator.pushReplacementNamed(
+              context,
+              RouteConstants.dashboard,
+              arguments: index,
+            );
+          }
+        },
+        showBanner: true,
+      );
+    } else {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Mes Quiz'),
+          centerTitle: true,
+          backgroundColor: isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.help_outline),
+              onPressed: _showHowToPlayDialog,
+              tooltip: 'Comment jouer',
+            ),
+          ],
+        ),
+        body: content,
+        floatingActionButton: _showBackToTopButton
+            ? FloatingActionButton(
+          onPressed: _scrollToTop,
+          mini: true,
+          backgroundColor: theme.colorScheme.primary,
+          child: Icon(Icons.arrow_upward, color: theme.colorScheme.onPrimary),
+        )
+            : null,
+      );
+    }
   }
 
   Widget _buildMainContent(ThemeData theme, {bool scrollToPlayed = false}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (scrollToPlayed) {
-        WidgetsBinding.instance.addPostFrameCallback((_) async {
-          if (_scrollController.hasClients) {
-            final position = await _calculatePlayedQuizzesPosition();
-            if (position > 0) {
-              _scrollController.animateTo(
-                position,
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.easeInOut,
-              );
-            }
-          }
-        });
+      if (_scrollToQuizId != null) {
+        _scrollToQuiz(_scrollToQuizId!);
+      } else if (scrollToPlayed) {
+        _scrollToPlayedQuizzes();
       }
     });
     return RefreshIndicator(
@@ -335,13 +401,6 @@ class _QuizPageState extends State<QuizPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Vos quiz',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
-        ),
         const SizedBox(height: 4),
         Text(
           'Testez vos connaissances avec ces quiz',
@@ -666,30 +725,21 @@ class _QuizPageState extends State<QuizPage> {
         _playedQuizIds.add(quiz.id.toString());
       });
 
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => QuizSessionPage(quiz: quiz, questions: questions),
+        ),
+      );
 
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => CustomScaffold(
-              body: QuizSessionPage(
-                quiz: quiz,
-                questions: questions,
-              ),
-              currentIndex: 2,
-              onTabSelected: (index) => Navigator.pushReplacementNamed(
-                  context,
-                  RouteConstants.dashboard,
-                  arguments: index
-              ),
-              showBanner: true,
-            ),
-          ),
-      );// Rafraîchir les données après retour
+      // Rafraîchir les données si le quiz a été complété
+      if (result == true) {
+        await _loadInitialData();
+      }
     } catch (e) {
       _showErrorSnackbar('Erreur de chargement des questions');
     }
   }
-
   void _showErrorSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1081,6 +1131,79 @@ class _QuizPageState extends State<QuizPage> {
           ],
         ),
       ),
+    );
+  }
+
+  void _scrollToPlayedQuizzes() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (_scrollController.hasClients) {
+        final position = await _calculatePlayedQuizzesPosition();
+        if (position > 0) {
+          _scrollController.animateTo(
+            position,
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeInOut,
+          );
+        }
+      }
+    });
+  }
+  void _showHowToPlayDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.help, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 10),
+            const Text('Comment jouer ?'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildStep('1. Choisissez un quiz dans la liste'),
+            const SizedBox(height: 10),
+            _buildStep('2. Répondez aux questions qui s\'affichent'),
+            const SizedBox(height: 10),
+            _buildStep('3. Validez vos réponses'),
+            const SizedBox(height: 10),
+            _buildStep('4. Découvrez votre score à la fin !'),
+            const SizedBox(height: 20),
+            Text(
+              'Vous gagnez des points pour chaque bonne réponse !',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Compris !'),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+        ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStep(String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.play_arrow, size: 16),
+        const SizedBox(width: 8),
+        Expanded(child: Text(text)),
+      ],
     );
   }
 }
