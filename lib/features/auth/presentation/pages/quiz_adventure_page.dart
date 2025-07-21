@@ -15,6 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/avatar_selector_dialog.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/mission_card.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/avatar_shop_page.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 class QuizAdventurePage extends StatefulWidget {
   const QuizAdventurePage({Key? key}) : super(key: key);
@@ -51,6 +52,17 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
   ];
   int _loginStreak = 1; // Valeur simulée pour la démo, à remplacer par la vraie valeur API si dispo
 
+  // GlobalKeys pour le tutoriel interactif
+  final GlobalKey _keyShop = GlobalKey();
+  final GlobalKey _keyAvatar = GlobalKey();
+  final GlobalKey _keyBadges = GlobalKey();
+  final GlobalKey _keyProgress = GlobalKey();
+  final GlobalKey _keyMission = GlobalKey();
+  final GlobalKey _keyQuiz = GlobalKey();
+  final GlobalKey _keyAvatarAnim = GlobalKey();
+  TutorialCoachMark? _tutorialCoachMark;
+  bool _tutorialShown = false;
+
   @override
   void initState() {
     super.initState();
@@ -67,6 +79,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
     _loadLoginStreak();
     _loadAvatarChoice();
     _loadData();
+    _checkAndShowTutorial();
   }
 
   @override
@@ -201,6 +214,89 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
     }
   }
 
+  Future<void> _checkAndShowTutorial() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool('adventure_tutorial_seen') ?? false;
+    if (!seen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showTutorial());
+      await prefs.setBool('adventure_tutorial_seen', true);
+    }
+  }
+
+  void _showTutorial() {
+    _tutorialCoachMark = TutorialCoachMark(
+      context,
+      targets: _buildTargets(),
+      colorShadow: Colors.black,
+      textSkip: 'Passer',
+      paddingFocus: 8,
+      opacityShadow: 0.8,
+      onFinish: () {},
+      onSkip: () {},
+    )..show();
+  }
+
+  List<TargetFocus> _buildTargets() {
+    return [
+      TargetFocus(
+        identify: 'shop',
+        keyTarget: _keyShop,
+        contents: [TargetContent(
+          align: ContentAlign.bottom,
+          child: const Text('Découvre la boutique pour personnaliser ton avatar !', style: TextStyle(color: Colors.white, fontSize: 18)),
+        )],
+      ),
+      TargetFocus(
+        identify: 'avatar',
+        keyTarget: _keyAvatar,
+        contents: [TargetContent(
+          align: ContentAlign.bottom,
+          child: const Text('Change ton avatar à tout moment.', style: TextStyle(color: Colors.white, fontSize: 18)),
+        )],
+      ),
+      TargetFocus(
+        identify: 'badges',
+        keyTarget: _keyBadges,
+        contents: [TargetContent(
+          align: ContentAlign.bottom,
+          child: const Text('Ici, retrouve tous tes badges débloqués !', style: TextStyle(color: Colors.white, fontSize: 18)),
+        )],
+      ),
+      TargetFocus(
+        identify: 'progress',
+        keyTarget: _keyProgress,
+        contents: [TargetContent(
+          align: ContentAlign.bottom,
+          child: const Text('Suis ta progression dans l’aventure quiz.', style: TextStyle(color: Colors.white, fontSize: 18)),
+        )],
+      ),
+      TargetFocus(
+        identify: 'mission',
+        keyTarget: _keyMission,
+        contents: [TargetContent(
+          align: ContentAlign.bottom,
+          child: const Text('Accomplis des missions pour gagner des récompenses !', style: TextStyle(color: Colors.white, fontSize: 18)),
+        )],
+      ),
+      TargetFocus(
+        identify: 'quiz',
+        keyTarget: _keyQuiz,
+        contents: [TargetContent(
+          align: ContentAlign.top,
+          child: const Text('Clique sur un quiz débloqué pour commencer à jouer.', style: TextStyle(color: Colors.white, fontSize: 18)),
+        )],
+      ),
+      TargetFocus(
+        identify: 'avatarAnim',
+        keyTarget: _keyAvatarAnim,
+        contents: [TargetContent(
+          align: ContentAlign.top,
+          child: const Text('Ton avatar progresse avec toi dans l’aventure !', style: TextStyle(color: Colors.white, fontSize: 18)),
+        )],
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -210,6 +306,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
         centerTitle: true,
         actions: [
           IconButton(
+            key: _keyShop,
             icon: const Icon(Icons.shopping_bag),
             tooltip: 'Boutique d\'avatars',
             onPressed: () {
@@ -220,11 +317,13 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
             },
           ),
           IconButton(
+            key: _keyAvatar,
             icon: const Icon(Icons.person),
             tooltip: 'Changer d\'avatar',
             onPressed: _selectAvatar,
           ),
           IconButton(
+            key: _keyBadges,
             icon: const Icon(Icons.emoji_events),
             tooltip: 'Mes Badges',
             onPressed: () {
@@ -234,6 +333,11 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
                 MaterialPageRoute(builder: (_) => const AchievementPage()),
               );
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Voir le tutoriel',
+            onPressed: _showTutorial,
           ),
         ],
       ),
@@ -246,7 +350,10 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
                   : Column(
                       children: [
                         const SizedBox(height: 16),
-                        _buildProgressBar(theme),
+                        Container(
+                          key: _keyProgress,
+                          child: _buildProgressBar(theme),
+                        ),
                         // Section Missions du jour
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -257,12 +364,15 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
                                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                 child: Text('Missions du jour', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                               ),
-                              MissionCard(
-                                title: 'Série de connexion',
-                                description: 'Connecte-toi plusieurs jours d\'affilée pour gagner un badge.',
-                                progress: _loginStreak,
-                                goal: 5,
-                                reward: 'Badge',
+                              Container(
+                                key: _keyMission,
+                                child: MissionCard(
+                                  title: 'Série de connexion',
+                                  description: 'Connecte-toi plusieurs jours d\'affilée pour gagner un badge.',
+                                  progress: _loginStreak,
+                                  goal: 5,
+                                  reward: 'Badge',
+                                ),
                               ),
                               MissionCard(
                                 title: 'Réussir 2 quiz',
@@ -328,6 +438,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
                                           child: Padding(
                                             padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                             child: GestureDetector(
+                                              key: index == 0 ? _keyQuiz : null,
                                               onTap: isUnlocked
                                                   ? () async {
                                                       await _playSound('audio/click.mp3');
@@ -397,6 +508,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
                                           width: itemWidth,
                                           child: Center(
                                             child: Container(
+                                              key: _keyAvatarAnim,
                                               decoration: BoxDecoration(
                                                 boxShadow: [
                                                   BoxShadow(
