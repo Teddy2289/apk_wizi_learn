@@ -14,6 +14,7 @@ import 'package:flutter/animation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/avatar_selector_dialog.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/mission_card.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/avatar_shop_page.dart';
 
 class QuizAdventurePage extends StatefulWidget {
   const QuizAdventurePage({Key? key}) : super(key: key);
@@ -208,6 +209,16 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
         title: const Text('Aventure Quiz'),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.shopping_bag),
+            tooltip: 'Boutique d\'avatars',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AvatarShopPage()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.person),
             tooltip: 'Changer d\'avatar',

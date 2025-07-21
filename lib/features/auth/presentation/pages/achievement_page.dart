@@ -3,6 +3,7 @@ import 'package:wizi_learn/features/auth/data/models/achievement_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/achievement_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_grid.dart';
 import 'package:dio/dio.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/all_achievements_page.dart';
 
 class AchievementPage extends StatefulWidget {
   const AchievementPage({Key? key}) : super(key: key);
@@ -39,6 +40,18 @@ class _AchievementPageState extends State<AchievementPage> {
       appBar: AppBar(
         title: const Text('Mes Badges'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.grid_view),
+            tooltip: 'Tous les badges',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AllAchievementsPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))

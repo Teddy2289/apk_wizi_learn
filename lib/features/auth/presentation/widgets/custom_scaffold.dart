@@ -12,6 +12,8 @@ import 'package:wizi_learn/features/auth/presentation/widgets/custom_app_bar.dar
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_bottom_navbar.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_drawer.dart';
 import 'dart:async';
+import 'package:provider/provider.dart';
+import '../providers/notification_provider.dart';
 
 class CustomScaffold extends StatefulWidget {
   final Widget body;
@@ -146,10 +148,9 @@ class _CustomScaffoldState extends State<CustomScaffold> {
           _buildPointsBadge(_currentPoints, context),
           const SizedBox(width: 8),
           // Notifications
-          FutureBuilder<int>(
-            future: _unreadCountFuture,
-            builder: (context, snapshot) {
-              final unreadCount = snapshot.data ?? 0;
+          Consumer<NotificationProvider>(
+            builder: (context, notifProvider, _) {
+              final unreadCount = notifProvider.unreadCount;
               return IconButton(
                 icon: Badge(
                   label: unreadCount > 0 ? Text('$unreadCount') : null,

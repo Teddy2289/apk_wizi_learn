@@ -8,6 +8,7 @@ import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.
 import 'package:wizi_learn/features/auth/presentation/widgets/global_rankig_widget.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/quiz_history_widget.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/quiz_stats_widget.dart';
+import 'package:share_plus/share_plus.dart';
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});
@@ -97,6 +98,27 @@ class _RankingPageState extends State<RankingPage>
           unselectedLabelColor: Colors.grey,
           indicatorColor: AppColors.accent,
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: 'Partager mon classement',
+            onPressed: () async {
+              // Récupère le rang et les points de l'utilisateur
+              final rankings = await _rankingFuture;
+              final stats = await _statsFuture;
+              if (rankings != null && stats != null) {
+                final myRanking = rankings.firstWhere(
+                  (r) => r.stagiaire.id == stats.levelProgress.debutant.completed.toString(),
+                  orElse: () => rankings.first,
+                );
+                final rang = myRanking.rang;
+                final points = myRanking.totalPoints;
+                final msg = "Je suis classé $rang${rang == 1 ? 'er' : 'e'} avec $points points sur Wizi Learn ! 🏆\nRejoins-moi pour progresser !";
+                await Share.share(msg);
+              }
+            },
+          ),
+        ],
       ),
       body:
           _isLoading
