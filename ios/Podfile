@@ -1,6 +1,9 @@
-# Ajoutez ce hook pour générer les fichiers si manquants
-system('mkdir -p ios/Flutter')
-system('flutter precache') unless File.exist?('ios/Flutter/Generated.xcconfig')
+# Vérifie et crée les fichiers Flutter si nécessaire
+unless File.exist?('ios/Flutter/Generated.xcconfig')
+  system('mkdir -p ios/Flutter')
+  system('flutter precache')
+  system('flutter pub get')
+end
 
 # Uncomment this line to define a global platform for your project
 platform :ios, '13.0'

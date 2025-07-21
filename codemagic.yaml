@@ -22,11 +22,14 @@ workflows:
       - name: Get Flutter dependencies
         script: flutter pub get
 
-      # Ajoutez cette étape CRITIQUE
       - name: Generate Flutter files
         script: |
-          flutter pub run build_runner build --delete-conflicting-outputs
+          mkdir -p lib/l10n
+          touch lib/l10n/app_en.arb || true
           flutter gen-l10n
+          if grep -q "build_runner" pubspec.yaml; then
+            flutter pub run build_runner build --delete-conflicting-outputs
+          fi
 
       - name: Install CocoaPods dependencies
         script: |
