@@ -1,0 +1,7 @@
+{
+  "@@locale": "en",
+  "appTitle": "Wizi Learn",
+  "@appTitle": {
+    "description": "The title of the application"
+  }
+}

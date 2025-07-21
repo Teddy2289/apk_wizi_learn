@@ -19,13 +19,17 @@ workflows:
           flutter clean
           rm -rf ios/Pods ios/Podfile.lock
 
+      - name: Prepare localization files
+        script: |
+          mkdir -p lib/l10n
+          touch lib/l10n/app_en.arb || true
+          echo '{}' > lib/l10n/app_en.arb
+
       - name: Get Flutter dependencies
         script: flutter pub get
 
       - name: Generate Flutter files
         script: |
-          mkdir -p lib/l10n
-          touch lib/l10n/app_en.arb || true
           flutter gen-l10n
           if grep -q "build_runner" pubspec.yaml; then
             flutter pub run build_runner build --delete-conflicting-outputs
