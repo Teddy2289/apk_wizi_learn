@@ -1,0 +1,45 @@
+workflows:
+  build-ios-no-sign:
+    name: Build iOS without code signing
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Get Flutter dependencies
+        script: flutter pub get
+
+      - name: Clean Flutter project
+        script: flutter clean
+
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios
+          pod deintegrate || true
+          pod install
+          cd ..
+
+      - name: Build iOS release (no code signing)
+        script: flutter build ios --release --no-codesign
+
+      - name: Archive IPA (no code signing)
+        script: |
+          mkdir -p build/ios/ipa
+          cd ios
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            -archivePath ../build/ios/ipa/Runner.xcarchive \
+            archive CODE_SIGNING_ALLOWED=NO
+          xcodebuild -exportArchive \
+            -archivePath build/ios/ipa/Runner.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/ios/ipa \
+            CODE_SIGNING_ALLOWED=NO
+          cd ..
+
+    artifacts:
+      - build/ios/ipa/*.ipa
