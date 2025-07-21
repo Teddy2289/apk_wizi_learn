@@ -12,6 +12,7 @@ import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart'
 import 'package:wizi_learn/features/auth/data/repositories/quiz_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/stats_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_session_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/quiz_adventure_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 
 class QuizPage extends StatefulWidget {
@@ -298,60 +299,93 @@ class _QuizPageState extends State<QuizPage> {
     final bool scrollToPlayed = args?['scrollToPlayed'] ?? false;
     final int selectedTabIndex;
 
-    if (args is int) {
-      selectedTabIndex = args as int;
-    } else if (args is Map<String, dynamic>) {
-      selectedTabIndex = args['selectedTabIndex'] ?? 2;
-    } else {
-      selectedTabIndex = 2;
-    }
+    // Ajout du toggle pour le mode interactif
+    bool _isAdventureMode = false;
 
-    Widget content = _isInitialLoad
-        ? _buildLoadingScreen(theme)
-        : _buildMainContent(theme, scrollToPlayed: scrollToPlayed);
-
-    if (useCustomScaffold) {
-      return CustomScaffold(
-        body: content,
-        currentIndex: selectedTabIndex,
-        onTabSelected: (index) {
-          if (index != selectedTabIndex) {
-            Navigator.pushReplacementNamed(
-              context,
-              RouteConstants.dashboard,
-              arguments: index,
-            );
-          }
-        },
-        showBanner: true,
-      );
-    } else {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Mes Quiz'),
-          centerTitle: true,
-          backgroundColor: isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.help_outline),
-              onPressed: _showHowToPlayDialog,
-              tooltip: 'Comment jouer',
+    return useCustomScaffold
+        ? CustomScaffold(
+      body: _isInitialLoad
+          ? _buildLoadingScreen(theme)
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text('Mode interactif', style: theme.textTheme.bodyMedium),
+                      Switch(
+                        value: _isAdventureMode,
+                        onChanged: (val) {
+                          if (val) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const QuizAdventurePage(),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(child: _buildMainContent(theme, scrollToPlayed: scrollToPlayed)),
+              ],
             ),
-          ],
-        ),
-        body: content,
-        floatingActionButton: _showBackToTopButton
-            ? FloatingActionButton(
-          onPressed: _scrollToTop,
-          mini: true,
-          backgroundColor: theme.colorScheme.primary,
-          child: Icon(Icons.arrow_upward, color: theme.colorScheme.onPrimary),
-        )
-            : null,
-      );
-    }
+      currentIndex: selectedTabIndex,
+      onTabSelected: (index) {
+        // Gestion de la navigation entre onglets
+        if (index != selectedTabIndex) {
+          Navigator.pushReplacementNamed(
+            context,
+            RouteConstants.dashboard,
+            arguments: index,
+          );
+        }
+      },
+      showBanner: true,
+    )
+        : Scaffold(
+      appBar: AppBar(
+        title: const Text('Mes Quiz'),
+        centerTitle: true,
+        backgroundColor: isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        actions: [
+          Row(
+            children: [
+              Text('Mode interactif', style: theme.textTheme.bodyMedium),
+              Switch(
+                value: _isAdventureMode,
+                onChanged: (val) {
+                  if (val) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const QuizAdventurePage(),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+      body: _isInitialLoad
+          ? _buildLoadingScreen(theme)
+          : _buildMainContent(theme, scrollToPlayed: scrollToPlayed),
+      floatingActionButton: _showBackToTopButton
+          ? FloatingActionButton(
+        onPressed: _scrollToTop,
+        mini: true,
+        backgroundColor: theme.colorScheme.primary,
+        child: Icon(Icons.arrow_upward, color: theme.colorScheme.onPrimary),
+      )
+          : null,
+    );
   }
 
   Widget _buildMainContent(ThemeData theme, {bool scrollToPlayed = false}) {
