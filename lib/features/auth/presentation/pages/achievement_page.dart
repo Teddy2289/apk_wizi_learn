@@ -4,6 +4,8 @@ import 'package:wizi_learn/features/auth/data/repositories/achievement_repositor
 import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_grid.dart';
 import 'package:dio/dio.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/all_achievements_page.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AchievementPage extends StatefulWidget {
   const AchievementPage({Key? key}) : super(key: key);
@@ -17,11 +19,18 @@ class _AchievementPageState extends State<AchievementPage> {
   List<Achievement> _achievements = [];
   bool _isLoading = true;
 
+  // GlobalKeys pour le tutoriel interactif
+  final GlobalKey _keyAllBadges = GlobalKey();
+  final GlobalKey _keyBadgeGrid = GlobalKey();
+  final GlobalKey _keyFirstBadge = GlobalKey();
+  TutorialCoachMark? _tutorialCoachMark;
+
   @override
   void initState() {
     super.initState();
     _repository = AchievementRepository(dio: Dio());
     _loadAchievements();
+    _checkAndShowTutorial();
   }
 
   Future<void> _loadAchievements() async {
@@ -33,6 +42,57 @@ class _AchievementPageState extends State<AchievementPage> {
     });
   }
 
+  Future<void> _checkAndShowTutorial() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool('badges_tutorial_seen') ?? false;
+    if (!seen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showTutorial());
+      await prefs.setBool('badges_tutorial_seen', true);
+    }
+  }
+
+  void _showTutorial() {
+    _tutorialCoachMark = TutorialCoachMark(
+      context,
+      targets: _buildTargets(),
+      colorShadow: Colors.black,
+      textSkip: 'Passer',
+      paddingFocus: 8,
+      opacityShadow: 0.8,
+      onFinish: () {},
+      onSkip: () {},
+    )..show();
+  }
+
+  List<TargetFocus> _buildTargets() {
+    return [
+      TargetFocus(
+        identify: 'allbadges',
+        keyTarget: _keyAllBadges,
+        contents: [TargetContent(
+          align: ContentAlign.bottom,
+          child: const Text('Découvre tous les badges à débloquer ici.', style: TextStyle(color: Colors.white, fontSize: 18)),
+        )],
+      ),
+      TargetFocus(
+        identify: 'badgegrid',
+        keyTarget: _keyBadgeGrid,
+        contents: [TargetContent(
+          align: ContentAlign.top,
+          child: const Text('Voici ta collection de badges débloqués.', style: TextStyle(color: Colors.white, fontSize: 18)),
+        )],
+      ),
+      TargetFocus(
+        identify: 'firstbadge',
+        keyTarget: _keyFirstBadge,
+        contents: [TargetContent(
+          align: ContentAlign.top,
+          child: const Text('Chaque badge a une condition d’obtention. Tente de tous les débloquer !', style: TextStyle(color: Colors.white, fontSize: 18)),
+        )],
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -42,6 +102,7 @@ class _AchievementPageState extends State<AchievementPage> {
         centerTitle: true,
         actions: [
           IconButton(
+            key: _keyAllBadges,
             icon: const Icon(Icons.grid_view),
             tooltip: 'Tous les badges',
             onPressed: () {
@@ -50,6 +111,11 @@ class _AchievementPageState extends State<AchievementPage> {
                 MaterialPageRoute(builder: (_) => const AllAchievementsPage()),
               );
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Voir le tutoriel',
+            onPressed: _showTutorial,
           ),
         ],
       ),
@@ -68,7 +134,13 @@ class _AchievementPageState extends State<AchievementPage> {
                           style: theme.textTheme.bodyLarge,
                         ),
                       ),
-                      AchievementBadgeGrid(achievements: _achievements),
+                      Container(
+                        key: _keyBadgeGrid,
+                        child: AchievementBadgeGrid(
+                          achievements: _achievements,
+                          keyFirstBadge: _keyFirstBadge,
+                        ),
+                      ),
                     ],
                   ),
                 ),
