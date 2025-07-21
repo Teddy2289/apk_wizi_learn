@@ -14,4 +14,10 @@ class RouteConstants {
   static const String quiz = '/quiz';
   static const String tutorialPage = '/tutorial_page';
   static const String formations = '/formations';
+  static const String faq = '/faq';
+  static const String contact = '/contact';
+  static const String terms = '/terms';
+  static const String userManual = '/userManual';
+  static const String thanks = '/thanks';
+  static const String privacy = '/privacy';
 }

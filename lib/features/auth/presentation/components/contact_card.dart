@@ -57,7 +57,10 @@ class ContactCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      contact.prenom,
+                      contact.prenom.isNotEmpty
+                          ? contact.prenom[0].toUpperCase() +
+                              contact.prenom.substring(1)
+                          : 'Inconnu',
                       style: TextStyle(
                         fontSize: nameFontSize,
                         fontWeight: FontWeight.bold,
@@ -94,7 +97,9 @@ class ContactCard extends StatelessWidget {
                         SizedBox(width: isSmallScreen ? 3 : 6),
                         Flexible(
                           child: Text(
-                            contact.telephone,
+                            contact.telephone.isNotEmpty
+                                ? contact.telephone
+                                : 'Non renseigné',
                             style: TextStyle(fontSize: infoFontSize),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

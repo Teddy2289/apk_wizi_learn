@@ -63,12 +63,12 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAAAaZVClNlMXgTktyjUg8lhLG5zSue4YY',
-    appId: '1:69521612278:web:94878d39de047f667c7bd7',
+    appId: '1:69521612278:ios:1e673fc1c6cfe51f7c7bd7',
     messagingSenderId: '69521612278',
-    projectId: 'wizi-learn',
+    projectId: 'Wizi',
     storageBucket: 'wizi-learn.firebasestorage.app',
     iosClientId: '116888930892940117576',
-    iosBundleId: 'com.wizi.learn',
+    iosBundleId: 'com.example.wiziLearn',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(

@@ -35,31 +35,39 @@ class RandomFormationsWidget extends StatelessWidget {
         _buildHeader(context, isSmallScreen),
 
         // Liste horizontale des formations
-        SizedBox(
-          height:
-              screenWidth < 768
-                  ? cardWidth * 1.3
-                  : (screenWidth < 1024
-                      ? cardWidth * 1
-                      : cardWidth * 0.95), // Hauteur ajustée pour petits écrans
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            itemCount: formations.length,
-            itemBuilder:
-                (context, index) => ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minWidth: cardWidth,
-                    maxWidth: cardWidth,
-                  ),
-                  child: _FormationCard(
-                    formation: formations[index],
-                    cardWidth: cardWidth,
-                    isSmallScreen: isSmallScreen, // Pass down
-                  ),
+        formations.isEmpty
+            ? Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Center(
+                child: Text(
+                  "Aucune formation disponible pour le moment.",
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
-          ),
-        ),
+              ),
+            )
+            : SizedBox(
+              height:
+                  screenWidth < 768
+                      ? cardWidth * 1.3
+                      : (screenWidth < 1024 ? cardWidth * 1 : cardWidth * 0.95),
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                itemCount: formations.length,
+                itemBuilder:
+                    (context, index) => ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: cardWidth,
+                        maxWidth: cardWidth,
+                      ),
+                      child: _FormationCard(
+                        formation: formations[index],
+                        cardWidth: cardWidth,
+                        isSmallScreen: isSmallScreen,
+                      ),
+                    ),
+              ),
+            ),
       ],
     );
   }

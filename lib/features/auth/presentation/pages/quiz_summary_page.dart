@@ -1,9 +1,14 @@
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_question_card.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_score_header.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/dashboard_page.dart';
 import 'dart:math';
+
+import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 
 class QuizSummaryPage extends StatefulWidget {
   final List<Question> questions;
@@ -193,24 +198,35 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
           FloatingActionButton(
             heroTag: 'restart_quiz',
             onPressed: () {
-              // Retour au début du quiz
-              if (widget.onRestartQuiz != null) {
-                widget.onRestartQuiz!();
-              } else {
-                Navigator.of(context).pop(); // Retour à l'écran précédent
-              }
+              debugPrint('Quiz ID to scroll to: ${widget.quizResult?['quizId']}');
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DashboardPage(
+                    initialIndex: 2,
+                    arguments: {
+                      'selectedTabIndex': 2,
+                      'scrollToQuizId': widget.quizResult?['quizId'].toString(),
+                      'fromNotification': true,
+                      'useCustomScaffold': true,
+                      'scrollToPlayed': true,
+                    },
+                  ),
+                ),
+                    (route) => false,
+              );
             },
-            tooltip: 'Recommencer le quiz',
+            tooltip: 'Retour aux quiz',
             child: const Icon(Icons.refresh),
           ),
           const SizedBox(width: 16),
-          // FloatingActionButton(
-          //   heroTag: 'quiz_list',
-          //   onPressed:
-          //       () => Navigator.of(context).popUntil((route) => route.isFirst),
-          //   tooltip: 'Retour à la liste des quiz',
-          //   child: const Icon(Icons.assignment),
-          // ),
+          if (widget.onRestartQuiz != null)
+            FloatingActionButton(
+              heroTag: 'replay_quiz',
+              onPressed: widget.onRestartQuiz,
+              tooltip: 'Rejouer ce quiz',
+              child: const Icon(Icons.replay),
+            ),
         ],
       ),
     );

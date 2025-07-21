@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_event.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_state.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/auth/forgot_password.dart';
 import '../../bloc/auth_bloc.dart';
 import '../../components/auth_text_field.dart';
 import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
@@ -181,7 +182,12 @@ class _LoginPageState extends State<LoginPage> {
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {
-                              // Navigation vers la page de réinitialisation
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ForgotPasswordScreen(),
+                                ),
+                              );
                             },
                             child: Text(
                               'Mot de passe oublié ?',

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wizi_learn/core/widgets/notification_badge.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/notification_badge.dart';
 
 class NotificationIconButton extends StatelessWidget {
   final VoidCallback? onPressed;

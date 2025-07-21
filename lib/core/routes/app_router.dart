@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/contact_faq_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/dashboard_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/faq_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/formation_stagiaire_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/my_progression.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/notifications_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/privacy_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/ranking_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/sponsor_ship_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/terms_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/thanks_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/user_manual_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/user_point_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/tutorial_page.dart';
@@ -56,7 +62,23 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => const FormationStagiairePage(),
         );
+      case RouteConstants.faq:
+        return MaterialPageRoute(builder: (_) => const FAQPage());
 
+      case RouteConstants.contact:
+        return MaterialPageRoute(builder: (_) => const ContactFaqPage());
+
+      case RouteConstants.terms:
+        return MaterialPageRoute(builder: (_) => const TermsPage());
+
+      case RouteConstants.userManual:
+        return MaterialPageRoute(builder: (_) => const UserManualPage());
+
+      case RouteConstants.thanks:
+        return MaterialPageRoute(builder: (_) => const ThanksPage());
+
+      case RouteConstants.privacy:
+        return MaterialPageRoute(builder: (_) => const PrivacyPage());
       default:
         return MaterialPageRoute(
           builder:

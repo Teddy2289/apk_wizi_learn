@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:wizi_learn/features/auth/data/models/media_model.dart';
+import 'package:flutter/services.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:intl/intl.dart';
+import 'package:wizi_learn/features/auth/data/models/media_model.dart';
 import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/random_formations_widget.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
@@ -28,10 +28,12 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
   late YoutubePlayerController _controller;
   late Media currentVideo;
   bool showPlaylist = true;
+  bool _isFullScreen = false;
+  final GlobalKey _playerKey = GlobalKey();
 
-  // Ajout état pour les formations recommandées
   List<Formation> _formations = [];
   bool _isLoadingFormations = true;
+  bool _isExpanded = false;
 
   @override
   void initState() {
@@ -42,9 +44,7 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
   }
 
   Future<void> _loadFormations() async {
-    setState(() {
-      _isLoadingFormations = true;
-    });
+    setState(() => _isLoadingFormations = true);
     try {
       final apiClient = ApiClient(
         dio: Dio(),
@@ -52,14 +52,11 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
       );
       final repository = FormationRepository(apiClient: apiClient);
       final formations = await repository.getRandomFormations(3);
-      setState(() {
-        _formations = formations;
-        _isLoadingFormations = false;
-      });
+      setState(() => _formations = formations);
     } catch (e) {
-      setState(() {
-        _isLoadingFormations = false;
-      });
+      debugPrint('Error loading formations: $e');
+    } finally {
+      setState(() => _isLoadingFormations = false);
     }
   }
 
@@ -71,6 +68,8 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
         autoPlay: true,
         mute: false,
         enableCaption: true,
+        useHybridComposition: true,
+        forceHD: true,
       ),
     );
   }
@@ -83,6 +82,26 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
     });
   }
 
+  void _toggleFullScreen() {
+    if (_isFullScreen) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
+      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    } else {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    }
+    setState(() => _isFullScreen = !_isFullScreen);
+  }
+
+  void _playerListener() {
+    if (_controller.value.isFullScreen != _isFullScreen) {
+      setState(() => _isFullScreen = _controller.value.isFullScreen);
+    }
+  }
+
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final minutes = twoDigits(duration.inMinutes.remainder(60));
@@ -92,6 +111,9 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
 
   @override
   void dispose() {
+    _controller.removeListener(_playerListener);
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
     _controller.dispose();
     super.dispose();
   }
@@ -101,17 +123,55 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final screenWidth = MediaQuery.of(context).size.width;
 
-    final relatedVideos =
-        widget.videosInSameCategory
-            .where((v) => v.id != currentVideo.id)
-            .toList();
+    final relatedVideos = widget.videosInSameCategory
+        .where((v) => v.id != currentVideo.id)
+        .toList();
 
+    // ✅ En plein écran : on affiche uniquement le lecteur
+    if (_isFullScreen) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: YoutubePlayerBuilder(
+            player: YoutubePlayer(
+              controller: _controller,
+              showVideoProgressIndicator: true,
+              progressIndicatorColor: colorScheme.primary,
+              progressColors: ProgressBarColors(
+                playedColor: colorScheme.primary,
+                handleColor: colorScheme.primary,
+                bufferedColor: colorScheme.surfaceContainerHighest,
+                backgroundColor: colorScheme.onSurface.withOpacity(0.2),
+              ),
+              onReady: () => _controller.addListener(_playerListener),
+              onEnded: (_) => _toggleFullScreen(),
+              bottomActions: [
+                CurrentPosition(),
+                ProgressBar(isExpanded: true),
+                RemainingDuration(),
+                FullScreenButton(
+                  controller: _controller,
+                  color: colorScheme.primary,
+                ),
+              ],
+            ),
+            builder: (context, player) => SafeArea(child: player),
+          ),
+        ),
+      );
+    }
+
+    // ✅ Mode portrait : on affiche le lecteur + contenu
     return Scaffold(
       appBar: AppBar(
         title: Text(
           currentVideo.titre,
-          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+          style: textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            fontSize: screenWidth * 0.045,
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -120,21 +180,11 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
       ),
       body: Column(
         children: [
-          // Player YouTube
-          Container(
-            decoration: BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(12),
-              ),
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: GestureDetector(
+              key: _playerKey,
+              onDoubleTap: _toggleFullScreen,
               child: YoutubePlayer(
                 controller: _controller,
                 showVideoProgressIndicator: true,
@@ -145,183 +195,183 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
                   bufferedColor: colorScheme.surfaceContainerHighest,
                   backgroundColor: colorScheme.onSurface.withOpacity(0.2),
                 ),
-                onReady: () {},
+                onReady: () => _controller.addListener(_playerListener),
+                onEnded: (_) => _isFullScreen ? _toggleFullScreen() : null,
+                bottomActions: [
+                  CurrentPosition(),
+                  ProgressBar(isExpanded: true),
+                  RemainingDuration(),
+                  FullScreenButton(
+                    controller: _controller,
+                    color: colorScheme.primary,
+                  ),
+                ],
               ),
             ),
           ),
-          // Titre de la vidéo + bouton à droite
+
+          // ✅ Titre et bouton Playlist
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.04,
+              vertical: screenWidth * 0.03,
+            ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
                   child: Text(
                     currentVideo.titre,
                     style: textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w600,
-                      fontSize: (textTheme.titleLarge?.fontSize ?? 20) * 0.7,
+                      fontSize: screenWidth * 0.04,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
                   ),
                 ),
                 IconButton(
-                  icon: Icon(
-                    showPlaylist ? Icons.expand_less : Icons.expand_more,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      showPlaylist = !showPlaylist;
-                    });
-                  },
+                  icon: Icon(showPlaylist ? Icons.expand_less : Icons.expand_more),
+                  onPressed: () => setState(() => showPlaylist = !showPlaylist),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
               ],
             ),
           ),
-          // Affichage principal : playlist OU description
-          if (showPlaylist)
-            Expanded(
-              child: ListView.separated(
-                physics: const BouncingScrollPhysics(),
-                itemCount: 1 + relatedVideos.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final media =
-                      index == 0 ? currentVideo : relatedVideos[index - 1];
-                  final isSelected = media.id == currentVideo.id;
-                  return Card(
-                    elevation: isSelected ? 4 : 1,
-                    color:
-                        isSelected
-                            ? colorScheme.primary.withOpacity(0.08)
-                            : null,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      side:
-                          isSelected
-                              ? BorderSide(color: colorScheme.primary, width: 2)
-                              : BorderSide.none,
+
+          // ✅ Playlist ou description
+          Expanded(
+            child: showPlaylist
+                ? _buildPlaylist(relatedVideos, colorScheme, textTheme, screenWidth)
+                : _buildDescription(context, colorScheme, textTheme),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlaylist(
+      List<Media> relatedVideos,
+      ColorScheme colorScheme,
+      TextTheme textTheme,
+      double screenWidth,
+      ) {
+    return ListView.separated(
+      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
+      physics: const BouncingScrollPhysics(),
+      itemCount: 1 + relatedVideos.length,
+      separatorBuilder: (_, __) => SizedBox(height: screenWidth * 0.02),
+      itemBuilder: (context, index) {
+        final media = index == 0 ? currentVideo : relatedVideos[index - 1];
+        final isSelected = media.id == currentVideo.id;
+        return Card(
+          elevation: isSelected ? 4 : 1,
+          color: isSelected ? colorScheme.primary.withOpacity(0.08) : null,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: isSelected
+                ? BorderSide(color: colorScheme.primary, width: 2)
+                : BorderSide.none,
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: isSelected ? null : () => _switchVideo(media),
+            child: Padding(
+              padding: EdgeInsets.all(screenWidth * 0.03),
+              child: Row(
+                children: [
+                  Container(
+                    width: screenWidth * 0.2,
+                    height: screenWidth * 0.15,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                      image: DecorationImage(
+                        image: NetworkImage(
+                          YoutubePlayer.getThumbnail(
+                            videoId: YoutubePlayer.convertUrlToId(media.url) ?? '',
+                            quality: ThumbnailQuality.medium,
+                          ),
+                        ),
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(10),
-                      onTap: isSelected ? null : () => _switchVideo(media),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 80,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: colorScheme.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
-                                image: DecorationImage(
-                                  image: NetworkImage(
-                                    YoutubePlayer.getThumbnail(
-                                      videoId:
-                                          YoutubePlayer.convertUrlToId(
-                                            media.url,
-                                          ) ??
-                                          '',
-                                      quality: ThumbnailQuality.medium,
-                                    ),
-                                  ),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              child: Center(
-                                child: Icon(
-                                  Icons.play_circle_fill,
-                                  size: 28,
-                                  color: Colors.white.withOpacity(0.9),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    media.titre,
-                                    style: textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                      color:
-                                          isSelected
-                                              ? colorScheme.primary
-                                              : null,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (isSelected)
-                              Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.7),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    _formatDuration(
-                                      _controller.metadata.duration,
-                                    ),
-                                    style: textTheme.bodySmall?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
+                    child: Center(
+                      child: Icon(
+                        Icons.play_circle_fill,
+                        size: screenWidth * 0.07,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: screenWidth * 0.03),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          media.titre,
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: isSelected ? colorScheme.primary : null,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (isSelected)
+                    Padding(
+                      padding: EdgeInsets.only(left: screenWidth * 0.02),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: screenWidth * 0.015,
+                          vertical: screenWidth * 0.005,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          _formatDuration(_controller.metadata.duration),
+                          style: textTheme.bodySmall?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
-                  );
-                },
+                ],
               ),
-            )
-          else ...[
-            if (currentVideo.description != null)
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 12,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _ExpandableDescription(
-                        htmlDescription: currentVideo.description!,
-                        textStyle: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.8),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      // Section formations recommandées
-                      if (_isLoadingFormations)
-                        const Center(child: CircularProgressIndicator())
-                      else if (_formations.isNotEmpty)
-                        RandomFormationsWidget(
-                          formations: _formations,
-                          onRefresh: _loadFormations,
-                        ),
-                    ],
-                  ),
-                ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDescription(BuildContext context, ColorScheme colorScheme, TextTheme textTheme) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (currentVideo.description != null)
+            _ExpandableDescription(
+              htmlDescription: currentVideo.description!,
+              textStyle: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.8),
               ),
-          ],
+            ),
+          const SizedBox(height: 24),
+          if (_isLoadingFormations)
+            const Center(child: CircularProgressIndicator())
+          else if (_formations.isNotEmpty)
+            RandomFormationsWidget(
+              formations: _formations,
+              onRefresh: _loadFormations,
+            ),
         ],
       ),
     );
@@ -332,18 +382,21 @@ class _ExpandableDescription extends StatefulWidget {
   final String htmlDescription;
   final TextStyle? textStyle;
   final Color? linkColor;
+
   const _ExpandableDescription({
     required this.htmlDescription,
     this.textStyle,
     this.linkColor,
     super.key,
   });
+
   @override
   State<_ExpandableDescription> createState() => _ExpandableDescriptionState();
 }
 
 class _ExpandableDescriptionState extends State<_ExpandableDescription> {
   bool expanded = false;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -372,8 +425,9 @@ class _ExpandableDescriptionState extends State<_ExpandableDescription> {
               ),
             },
           ),
-          crossFadeState:
-              expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          crossFadeState: expanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 200),
         ),
         Align(
