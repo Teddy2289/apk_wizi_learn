@@ -14,13 +14,19 @@ workflows:
           /usr/libexec/PlistBuddy -c "Set MinimumOSVersion 13.0" ios/Runner/Info.plist
           sed -i '' "s/platform :ios, '.*'/platform :ios, '13.0'/" ios/Podfile
 
-      - name: Get Flutter dependencies
-        script: flutter pub get
-
       - name: Clean project
         script: |
           flutter clean
           rm -rf ios/Pods ios/Podfile.lock
+
+      - name: Get Flutter dependencies
+        script: flutter pub get
+
+      # Ajoutez cette étape CRITIQUE
+      - name: Generate Flutter files
+        script: |
+          flutter pub run build_runner build --delete-conflicting-outputs
+          flutter gen-l10n
 
       - name: Install CocoaPods dependencies
         script: |
