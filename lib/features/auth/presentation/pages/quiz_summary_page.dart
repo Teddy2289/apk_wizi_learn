@@ -7,6 +7,10 @@ import 'package:wizi_learn/features/auth/presentation/components/quiz_score_head
 import 'dart:math';
 
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
+import 'package:wizi_learn/features/auth/data/repositories/achievement_repository.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_widget.dart';
+import 'package:dio/dio.dart';
 
 class QuizSummaryPage extends StatefulWidget {
   final List<Question> questions;
@@ -36,6 +40,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
   late ConfettiController _confettiController;
   bool _showConfetti = false;
   bool _showSuccessDialog = false;
+  List<Achievement>? _newAchievements;
 
   @override
   void initState() {
@@ -53,6 +58,66 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
         _showCongratulationDialog();
       });
     }
+    // Récupérer les nouveaux badges débloqués après le quiz
+    _fetchNewAchievements();
+  }
+
+  Future<void> _fetchNewAchievements() async {
+    final repo = AchievementRepository(dio: Dio());
+    final achievements = await repo.getUserAchievements();
+    // Filtrer les badges débloqués récemment (ex: aujourd'hui)
+    final today = DateTime.now();
+    final newOnes = achievements.where((a) => a.unlockedAt != null &&
+      a.unlockedAt!.year == today.year &&
+      a.unlockedAt!.month == today.month &&
+      a.unlockedAt!.day == today.day).toList();
+    if (newOnes.isNotEmpty) {
+      setState(() {
+        _newAchievements = newOnes;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showBadgePopup(newOnes);
+      });
+    }
+  }
+
+  void _showBadgePopup(List<Achievement> badges) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.emoji_events, color: Colors.amber, size: 48),
+                const SizedBox(height: 16),
+                Text('Nouveau badge débloqué !', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 16),
+                ...badges.map((badge) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: AchievementBadgeWidget(achievement: badge, unlocked: true),
+                )),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.emoji_events),
+                  label: const Text('Voir mes badges'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AchievementPage()),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _showCongratulationDialog() {

@@ -12,6 +12,7 @@ import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart'
 import 'package:wizi_learn/features/auth/data/repositories/quiz_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/stats_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_session_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/quiz_adventure_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 
 class QuizPage extends StatefulWidget {
@@ -239,11 +240,40 @@ class _QuizPageState extends State<QuizPage> {
     final bool scrollToPlayed = args?['scrollToPlayed'] ?? false;
     final int selectedTabIndex = args?['selectedTabIndex'] ?? 2; // Valeur par défaut
 
+    // Ajout du toggle pour le mode interactif
+    bool _isAdventureMode = false;
+
     return useCustomScaffold
         ? CustomScaffold(
       body: _isInitialLoad
           ? _buildLoadingScreen(theme)
-          : _buildMainContent(theme, scrollToPlayed: scrollToPlayed),
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text('Mode interactif', style: theme.textTheme.bodyMedium),
+                      Switch(
+                        value: _isAdventureMode,
+                        onChanged: (val) {
+                          if (val) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const QuizAdventurePage(),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(child: _buildMainContent(theme, scrollToPlayed: scrollToPlayed)),
+              ],
+            ),
       currentIndex: selectedTabIndex,
       onTabSelected: (index) {
         // Gestion de la navigation entre onglets
@@ -264,6 +294,26 @@ class _QuizPageState extends State<QuizPage> {
         backgroundColor: isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
+        actions: [
+          Row(
+            children: [
+              Text('Mode interactif', style: theme.textTheme.bodyMedium),
+              Switch(
+                value: _isAdventureMode,
+                onChanged: (val) {
+                  if (val) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const QuizAdventurePage(),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+        ],
       ),
       body: _isInitialLoad
           ? _buildLoadingScreen(theme)
