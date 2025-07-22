@@ -412,21 +412,21 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kOrange,
-                foregroundColor: kWhite,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 8,
-                ),
-              ),
-              onPressed: onPressed,
-              child: const Text('Voir tous'),
-            ),
+  style: ElevatedButton.styleFrom(
+    backgroundColor: Colors.transparent,
+    elevation: 0,
+    foregroundColor: kOrange,
+    shadowColor: Colors.transparent, // enlever l'ombre
+    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: BorderSide.none, // pas de bordure
+    ),
+  ),
+  onPressed: onPressed,
+  child: const Text('Voir tous->'),
+),
+
           ],
         ),
       ),
