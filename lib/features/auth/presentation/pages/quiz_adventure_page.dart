@@ -26,9 +26,7 @@ class QuizAdventurePage extends StatefulWidget {
   State<QuizAdventurePage> createState() => _QuizAdventurePageState();
 }
 
-class _QuizAdventurePageState extends State<QuizAdventurePage>
-    with SingleTickerProviderStateMixin {
-    with TickerProviderStateMixin {
+class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProviderStateMixin {
   late final QuizRepository _quizRepository;
   late final StatsRepository _statsRepository;
   int? _connectedStagiaireId;
@@ -789,6 +787,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
   }
 }
 
+
 // Widget animé pour rebond sur l'icône du quiz complété
 class _AnimatedQuizStep extends StatefulWidget {
   final IconData icon;
@@ -809,8 +808,7 @@ class _AnimatedQuizStep extends StatefulWidget {
   State<_AnimatedQuizStep> createState() => _AnimatedQuizStepState();
 }
 
-class _AnimatedQuizStepState extends State<_AnimatedQuizStep>
-    with SingleTickerProviderStateMixin {
+class _AnimatedQuizStepState extends State<_AnimatedQuizStep> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnim;
 
@@ -857,10 +855,7 @@ class _AnimatedQuizStepState extends State<_AnimatedQuizStep>
           widget.label,
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color:
-                widget.isUnlocked
-                    ? Theme.of(context).colorScheme.onSurface
-                    : Colors.grey,
+            color: widget.isUnlocked ? Theme.of(context).colorScheme.onSurface : Colors.grey,
           ),
         ),
       ],

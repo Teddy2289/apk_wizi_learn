@@ -112,7 +112,7 @@ class _OnSplashPage extends State<SplashPage> {
                   child: Text(
                     'Passer',
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.white,
+                      color: Colors.orange,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -168,7 +168,7 @@ class _OnSplashPage extends State<SplashPage> {
                             Icon(
                               _getIconData(item['icon']),
                               size: 40,
-                              color: Colors.white,
+                              color: Colors.orange.shade600,
                             ),
                             const SizedBox(height: 20),
 
@@ -176,7 +176,7 @@ class _OnSplashPage extends State<SplashPage> {
                             Text(
                               item['title']!,
                               style: theme.textTheme.headlineSmall?.copyWith(
-                                color: Colors.white,
+                                color: Colors.orange.shade600,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 28,
                               ),
@@ -188,7 +188,7 @@ class _OnSplashPage extends State<SplashPage> {
                             Text(
                               item['description']!,
                               style: theme.textTheme.bodyLarge?.copyWith(
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.black,
                                 height: 1.5,
                                 fontSize: 16,
                               ),
@@ -225,7 +225,7 @@ class _OnSplashPage extends State<SplashPage> {
                 child: ElevatedButton(
                   onPressed: _goToNextPage,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: kBrown,
+                    backgroundColor: Colors.orange.shade600,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -242,6 +242,7 @@ class _OnSplashPage extends State<SplashPage> {
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
                 ),

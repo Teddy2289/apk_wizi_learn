@@ -14,6 +14,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../data/datasources/auth_remote_data_source.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../data/repositories/auth_repository.dart';
 
 // === Palette de couleurs Wizi Learn ===
@@ -32,6 +34,21 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  bool _showHomeTutorial = false;
+  final List<Map<String, String>> _homeTutorialSteps = [
+    {
+      'title': 'Bienvenue sur l’accueil !',
+      'desc': 'Retrouvez ici vos contacts, formations et notifications importantes.',
+    },
+    {
+      'title': 'Vos contacts',
+      'desc': 'Accédez rapidement aux personnes clés pour votre formation.',
+    },
+    {
+      'title': 'Formations recommandées',
+      'desc': 'Découvrez les formations sélectionnées pour vous chaque jour.',
+    },
+  ];
   late final ContactRepository _contactRepository;
   late final FormationRepository _formationRepository;
   late final AuthRepository _authRepository;
@@ -45,8 +62,19 @@ class _HomePageState extends State<HomePage> {
   String? _nom;
   bool _isLoadingUser = true;
 
+  Future<void> _checkHomeTutorialSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool('hasSeenHomeTutorial') ?? false;
+    if (!seen) {
+      setState(() {
+        _showHomeTutorial = true;
+      });
+    }
+  }
+
   @override
   void initState() {
+    _checkHomeTutorialSeen();
     super.initState();
     _initializeRepositories();
     _loadData();
@@ -149,65 +177,80 @@ class _HomePageState extends State<HomePage> {
     final isTablet = screenWidth > 600;
     final theme = Theme.of(context);
 
-    return Scaffold(
-      body:
-          (_isLoading || _isLoadingUser)
+    return Stack(
+      children: [
+        Scaffold(
+          body: (_isLoading || _isLoadingUser)
               ? const Center(child: CircularProgressIndicator())
               : RefreshIndicator(
-                onRefresh: _loadData,
-                color: theme.primaryColor,
-                child: CustomScrollView(
-                  slivers: [
-                    // Spacer
-                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  onRefresh: _loadData,
+                  color: theme.primaryColor,
+                  child: CustomScrollView(
+                    slivers: [
+                      // Spacer
+                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-                    // Section de Bienvenue Personnalisée
-                    SliverToBoxAdapter(child: _buildWelcomeSection(isTablet)),
+                      // Section de Bienvenue Personnalisée
+                      SliverToBoxAdapter(child: _buildWelcomeSection(isTablet)),
 
-                    // Spacer
-                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                      // Spacer
+                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-                    // Section Formations
-                    SliverToBoxAdapter(
-                      child: _buildSectionTitle(
-                        context,
-                        title: 'Formations recommandées',
-                        icon: LucideIcons.bookOpen,
+                      // Section Formations
+                      SliverToBoxAdapter(
+                        child: _buildSectionTitle(
+                          context,
+                          title: 'Formations recommandées',
+                          icon: LucideIcons.bookOpen,
+                        ),
                       ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: RandomFormationsWidget(
-                        formations: _randomFormations,
-                        onRefresh: _loadData,
+                      SliverToBoxAdapter(
+                        child: RandomFormationsWidget(
+                          formations: _randomFormations,
+                          onRefresh: _loadData,
+                        ),
                       ),
-                    ),
 
-                    // Spacer
-                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                      // Spacer
+                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-                    // Section Contacts
-                    SliverToBoxAdapter(
-                      child: _buildSectionWithButton(
-                        context,
-                        title: 'Mes contacts',
-                        icon: LucideIcons.user,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (context) => ContactPage(contacts: _contacts),
-                            ),
-                          );
-                        },
+                      // Section Contacts
+                      SliverToBoxAdapter(
+                        child: _buildSectionWithButton(
+                          context,
+                          title: 'Mes contacts',
+                          icon: LucideIcons.user,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => ContactPage(contacts: _contacts),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ),
 
-                    // Liste des contacts
-                    _buildContactsList(isTablet),
-                  ],
+                      // Liste des contacts
+                      _buildContactsList(isTablet),
+                    ],
+                  ),
                 ),
-              ),
+        ),
+        // if (_showHomeTutorial)
+        //   TutorialOverlay(
+        //     steps: _homeTutorialSteps,
+        //     storageKey: 'hasSeenHomeTutorial',
+        //     onFinish: () async {
+        //       final prefs = await SharedPreferences.getInstance();
+        //       await prefs.setBool('hasSeenHomeTutorial', true);
+        //       setState(() {
+        //         _showHomeTutorial = false;
+        //       });
+        //     },
+        //   ),
+      ],
     );
   }
 
