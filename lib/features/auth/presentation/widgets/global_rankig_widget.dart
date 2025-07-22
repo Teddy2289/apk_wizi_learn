@@ -229,7 +229,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                 ranking.stagiaire.prenom,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: isCurrentUser ? Theme.of(context).primaryColor : colors[i].shade800,
+                  color: isCurrentUser ? Theme.of(context).primaryColor : (colors[i] is MaterialColor ? (colors[i] as MaterialColor).shade800 : colors[i]),
                   fontSize: 14,
                 ),
                 textAlign: TextAlign.center,
@@ -237,7 +237,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
               Text(
                 '${ranking.totalPoints} pts',
                 style: TextStyle(
-                  color: colors[i].shade800,
+                  color: (colors[i] is MaterialColor ? (colors[i] as MaterialColor).shade800 : colors[i]),
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
                 ),
@@ -252,7 +252,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                 child: Text(
                   '${idx + 1}${idx == 0 ? 'er' : 'e'}',
                   style: TextStyle(
-                    color: colors[i].shade800,
+                    color: (colors[i] is MaterialColor ? (colors[i] as MaterialColor).shade800 : colors[i]),
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),

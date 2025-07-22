@@ -10,15 +10,15 @@ import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:confetti/confetti.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/animation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/avatar_selector_dialog.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/mission_card.dart';
+import 'package:wizi_learn/features/auth/data/models/mission_model.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/avatar_shop_page.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 class QuizAdventurePage extends StatefulWidget {
-  const QuizAdventurePage({Key? key}) : super(key: key);
+  const QuizAdventurePage({super.key});
 
   @override
   State<QuizAdventurePage> createState() => _QuizAdventurePageState();
@@ -31,7 +31,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
   List<quiz_model.Quiz> _quizzes = [];
   List<String> _playedQuizIds = [];
   bool _isLoading = true;
-  int _userPoints = 0;
+  // int _userPoints = 0; // Unused field removed
   ConfettiController? _confettiController;
   int _lastCompletedCount = 0;
   List<stats_model.QuizHistory> _quizHistory = [];
@@ -60,8 +60,8 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
   final GlobalKey _keyMission = GlobalKey();
   final GlobalKey _keyQuiz = GlobalKey();
   final GlobalKey _keyAvatarAnim = GlobalKey();
-  TutorialCoachMark? _tutorialCoachMark;
-  bool _tutorialShown = false;
+  // TutorialCoachMark? _tutorialCoachMark; // Unused field removed
+  // bool _tutorialShown = false; // Unused field removed
 
   @override
   void initState() {
@@ -103,6 +103,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
     setState(() => _isLoading = true);
     try {
       // Récupérer l'utilisateur connecté
+      final storage = const FlutterSecureStorage();
       final user = await storage.read(key: 'user');
       if (user == null) {
         setState(() => _isLoading = false);
@@ -123,13 +124,13 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
       final rankings = await _statsRepository.getGlobalRanking();
       final userRanking = rankings.firstWhere(
         (r) => r.stagiaire.id == _connectedStagiaireId.toString(),
-        orElse: () => GlobalRanking.empty(),
+        orElse: () => stats_model.GlobalRanking.empty(),
       );
       setState(() {
         _quizzes = quizzes;
         _playedQuizIds = history.map((h) => h.quiz.id).toList();
         _quizHistory = history;
-        _userPoints = userRanking.totalPoints;
+        // _userPoints removed as unused
         _isLoading = false;
       });
       // Animation confettis si progression
@@ -224,16 +225,16 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
   }
 
   void _showTutorial() {
-    _tutorialCoachMark = TutorialCoachMark(
-      context,
+    TutorialCoachMark(
+      context: context,
       targets: _buildTargets(),
       colorShadow: Colors.black,
       textSkip: 'Passer',
       paddingFocus: 8,
       opacityShadow: 0.8,
-      onFinish: () {},
-      onSkip: () {},
-    )..show();
+      onFinish: () { return true; },
+      onSkip: () { return true; },
+    ).show();
   }
 
   List<TargetFocus> _buildTargets() {
@@ -367,39 +368,69 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
                               Container(
                                 key: _keyMission,
                                 child: MissionCard(
-                                  title: 'Série de connexion',
-                                  description: 'Connecte-toi plusieurs jours d\'affilée pour gagner un badge.',
-                                  progress: _loginStreak,
-                                  goal: 5,
-                                  reward: 'Badge',
+                                  mission: Mission(
+                                    id: 1,
+                                    title: 'Série de connexion',
+                                    description: 'Connecte-toi plusieurs jours d\'affilée pour gagner un badge.',
+                                    type: 'daily',
+                                    goal: 5,
+                                    reward: 'Badge',
+                                    progress: _loginStreak,
+                                    completed: _loginStreak >= 5,
+                                    completedAt: null,
+                                  ),
                                 ),
                               ),
                               MissionCard(
-                                title: 'Réussir 2 quiz',
-                                description: 'Complète 2 quiz aujourd\'hui pour gagner un badge.',
-                                progress: _quizHistory.length >= 2 ? 2 : _quizHistory.length,
-                                goal: 2,
-                                reward: 'Badge',
+                                mission: Mission(
+                                  id: 2,
+                                  title: 'Réussir 2 quiz',
+                                  description: 'Complète 2 quiz aujourd\'hui pour gagner un badge.',
+                                  type: 'daily',
+                                  goal: 2,
+                                  reward: 'Badge',
+                                  progress: _quizHistory.length >= 2 ? 2 : _quizHistory.length,
+                                  completed: _quizHistory.length >= 2,
+                                  completedAt: null,
+                                ),
                               ),
                               MissionCard(
-                                title: 'Obtenir 5 étoiles',
-                                description: 'Cumule 5 étoiles sur tes quiz.',
-                                progress: _quizHistory.fold(0, (sum, h) {
-                                  final percent = h.totalQuestions > 0 ? (h.correctAnswers / h.totalQuestions) * 100 : 0;
-                                  if (percent >= 100) return sum + 3;
-                                  if (percent >= 70) return sum + 2;
-                                  if (percent >= 40) return sum + 1;
-                                  return sum;
-                                }),
-                                goal: 5,
-                                reward: 'Badge',
+                                mission: Mission(
+                                  id: 3,
+                                  title: 'Obtenir 5 étoiles',
+                                  description: 'Cumule 5 étoiles sur tes quiz.',
+                                  type: 'daily',
+                                  goal: 5,
+                                  reward: 'Badge',
+                                  progress: _quizHistory.fold(0, (sum, h) {
+                                    final percent = h.totalQuestions > 0 ? (h.correctAnswers / h.totalQuestions) * 100 : 0;
+                                    if (percent >= 100) return sum + 3;
+                                    if (percent >= 70) return sum + 2;
+                                    if (percent >= 40) return sum + 1;
+                                    return sum;
+                                  }),
+                                  completed: _quizHistory.fold(0, (sum, h) {
+                                    final percent = h.totalQuestions > 0 ? (h.correctAnswers / h.totalQuestions) * 100 : 0;
+                                    if (percent >= 100) return sum + 3;
+                                    if (percent >= 70) return sum + 2;
+                                    if (percent >= 40) return sum + 1;
+                                    return sum;
+                                  }) >= 5,
+                                  completedAt: null,
+                                ),
                               ),
                               MissionCard(
-                                title: 'Jouer un quiz difficile',
-                                description: 'Termine un quiz de niveau avancé.',
-                                progress: _quizHistory.any((h) => h.quiz.level.toLowerCase().contains('avanc')) ? 1 : 0,
-                                goal: 1,
-                                reward: 'Points',
+                                mission: Mission(
+                                  id: 4,
+                                  title: 'Jouer un quiz difficile',
+                                  description: 'Termine un quiz de niveau avancé.',
+                                  type: 'daily',
+                                  goal: 1,
+                                  reward: 'Points',
+                                  progress: _quizHistory.any((h) => h.quiz.level.toLowerCase().contains('avanc')) ? 1 : 0,
+                                  completed: _quizHistory.any((h) => h.quiz.level.toLowerCase().contains('avanc')),
+                                  completedAt: null,
+                                ),
                               ),
                             ],
                           ),
@@ -420,7 +451,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with SingleTicker
                                         final isUnlocked = _isQuizUnlocked(index);
                                         final history = _quizHistory.firstWhere(
                                           (h) => h.quiz.id == quiz.id.toString(),
-                                          orElse: () => null,
+                                          orElse: () => _quizHistory.isNotEmpty ? _quizHistory.first : null,
                                         );
                                         int stars = 0;
                                         if (history != null && history.totalQuestions > 0) {

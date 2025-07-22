@@ -1,6 +1,9 @@
 import 'package:wizi_learn/core/utils/quiz_utils.dart';
+import 'package:wizi_learn/features/auth/data/models/question_model.dart';
+import 'package:wizi_learn/features/auth/data/models/quiz_model.dart';
 
 class QuizHistory {
+  List<Question> get questions => quiz.questions;
   final String id;
   final Quiz quiz;
   final int score;
