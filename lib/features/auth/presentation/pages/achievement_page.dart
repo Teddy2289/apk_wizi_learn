@@ -53,7 +53,6 @@ class _AchievementPageState extends State<AchievementPage> {
 
   void _showTutorial() {
     _tutorialCoachMark = TutorialCoachMark(
-      context,
       targets: _buildTargets(),
       colorShadow: Colors.black,
       textSkip: 'Passer',

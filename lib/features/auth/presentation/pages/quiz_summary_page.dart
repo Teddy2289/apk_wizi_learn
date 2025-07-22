@@ -1,6 +1,5 @@
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
-import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_question_card.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_score_header.dart';
@@ -11,6 +10,8 @@ import 'package:wizi_learn/features/auth/data/repositories/achievement_repositor
 import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_widget.dart';
 import 'package:dio/dio.dart';
+
+import 'package:wizi_learn/features/auth/data/models/achievement_model.dart';
 
 class QuizSummaryPage extends StatefulWidget {
   final List<Question> questions;
@@ -39,8 +40,6 @@ class QuizSummaryPage extends StatefulWidget {
 class _QuizSummaryPageState extends State<QuizSummaryPage> {
   late ConfettiController _confettiController;
   bool _showConfetti = false;
-  bool _showSuccessDialog = false;
-  List<Achievement>? _newAchievements;
 
   @override
   void initState() {
@@ -52,7 +51,6 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
     final allCorrect = widget.questions.every((q) => q.isCorrect == true);
     if (allCorrect) {
       _showConfetti = true;
-      _showSuccessDialog = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _confettiController.play();
         _showCongratulationDialog();
@@ -72,9 +70,6 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
       a.unlockedAt!.month == today.month &&
       a.unlockedAt!.day == today.day).toList();
     if (newOnes.isNotEmpty) {
-      setState(() {
-        _newAchievements = newOnes;
-      });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showBadgePopup(newOnes);
       });
@@ -161,9 +156,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
                 ),
                 onPressed: () {
                   Navigator.of(context).pop();
-                  setState(() {
-                    _showSuccessDialog = false;
-                  });
+                  // _showSuccessDialog removed as unused
                 },
                 child: const Text('Continuer'),
               ),
@@ -189,7 +182,6 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
         widget.questions.where((q) => q.isCorrect == true).length * 2;
     final calculatedCorrectAnswers =
         widget.questions.where((q) => q.isCorrect == true).length;
-    final allCorrect = calculatedCorrectAnswers == widget.totalQuestions;
 
     return Scaffold(
       appBar: AppBar(

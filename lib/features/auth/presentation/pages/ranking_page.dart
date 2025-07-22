@@ -93,7 +93,6 @@ class _RankingPageState extends State<RankingPage>
 
   void _showTutorial() {
     _tutorialCoachMark = TutorialCoachMark(
-      context,
       targets: _buildTargets(),
       colorShadow: Colors.black,
       textSkip: 'Passer',
