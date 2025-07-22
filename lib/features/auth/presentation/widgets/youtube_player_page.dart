@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:dio/dio.dart';
+import 'package:wizi_learn/core/network/api_client.dart';
+import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
+import 'package:wizi_learn/features/auth/data/models/media_model.dart';
+import 'package:wizi_learn/features/auth/data/repositories/formation_repository.dart';
+import 'package:wizi_learn/features/auth/data/repositories/media_repository.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/random_formations_widget.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:wizi_learn/features/auth/data/models/media_model.dart';
-import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
-import 'package:wizi_learn/features/auth/presentation/widgets/random_formations_widget.dart';
-import 'package:wizi_learn/core/network/api_client.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:wizi_learn/features/auth/data/repositories/formation_repository.dart';
 
 class YoutubePlayerPage extends StatefulWidget {
   final Media video;
@@ -33,14 +34,70 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
 
   List<Formation> _formations = [];
   bool _isLoadingFormations = true;
-  bool _isExpanded = false;
+  Set<int> _watchedMediaIds = {};
+  late MediaRepository _mediaRepository;
 
   @override
   void initState() {
     super.initState();
     currentVideo = widget.video;
     _initYoutubeController(currentVideo.url);
-    _loadFormations();
+
+    // Initialiser le repository
+    final dio = Dio();
+    final storage = const FlutterSecureStorage();
+    final apiClient = ApiClient(dio: dio, storage: storage);
+    _mediaRepository = MediaRepository(apiClient: apiClient);
+
+    // Charger les données
+    _loadInitialData();
+
+    // Marquer la vidéo comme vue lorsqu'elle commence à jouer
+    _controller.addListener(_onPlayerStateChange);
+  }
+
+  Future<void> _loadInitialData() async {
+    await Future.wait([
+      _loadFormations(),
+      _loadWatchedMediaIds(),
+    ]);
+  }
+
+  Future<void> _loadWatchedMediaIds() async {
+    try {
+      final watchedIds = await _mediaRepository.getWatchedMediaIds();
+      setState(() {
+        _watchedMediaIds = watchedIds;
+      });
+    } catch (e) {
+      debugPrint('Erreur chargement médias vus: $e');
+    }
+  }
+
+  void _onPlayerStateChange() {
+    if (_controller.value.hasPlayed && !_controller.value.isPlaying) {
+      // Marquer comme vu après 5 secondes de visionnage
+      if (_controller.value.position.inSeconds >= 5) {
+        _markVideoAsWatched();
+        _controller.removeListener(_onPlayerStateChange);
+      }
+    }
+  }
+
+  Future<void> _markVideoAsWatched() async {
+    try {
+      final success = await _mediaRepository.markMediaAsWatched(currentVideo.id);
+      if (success) {
+        setState(() {
+          _watchedMediaIds.add(currentVideo.id);
+        });
+        debugPrint('Vidéo marquée comme vue avec succès');
+      } else {
+        debugPrint('Échec du marquage de la vidéo comme vue');
+      }
+    } catch (e) {
+      debugPrint('Erreur lors du marquage: $e');
+    }
   }
 
   Future<void> _loadFormations() async {
@@ -112,6 +169,7 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
   @override
   void dispose() {
     _controller.removeListener(_playerListener);
+    _controller.removeListener(_onPlayerStateChange);
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
     _controller.dispose();
@@ -129,41 +187,43 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
         .where((v) => v.id != currentVideo.id)
         .toList();
 
-    // ✅ En plein écran : on affiche uniquement le lecteur
+    // En plein écran
     if (_isFullScreen) {
       return Scaffold(
         backgroundColor: Colors.black,
-        body: Center(
-          child: YoutubePlayerBuilder(
-            player: YoutubePlayer(
-              controller: _controller,
-              showVideoProgressIndicator: true,
-              progressIndicatorColor: colorScheme.primary,
-              progressColors: ProgressBarColors(
-                playedColor: colorScheme.primary,
-                handleColor: colorScheme.primary,
-                bufferedColor: colorScheme.surfaceContainerHighest,
-                backgroundColor: colorScheme.onSurface.withOpacity(0.2),
-              ),
-              onReady: () => _controller.addListener(_playerListener),
-              onEnded: (_) => _toggleFullScreen(),
-              bottomActions: [
-                CurrentPosition(),
-                ProgressBar(isExpanded: true),
-                RemainingDuration(),
-                FullScreenButton(
-                  controller: _controller,
-                  color: colorScheme.primary,
-                ),
-              ],
+        body: YoutubePlayerBuilder(
+          player: YoutubePlayer(
+            controller: _controller,
+            showVideoProgressIndicator: true,
+            progressIndicatorColor: colorScheme.primary,
+            progressColors: ProgressBarColors(
+              playedColor: colorScheme.primary,
+              handleColor: colorScheme.primary,
+              bufferedColor: colorScheme.surfaceContainerHighest,
+              backgroundColor: colorScheme.onSurface.withOpacity(0.2),
             ),
-            builder: (context, player) => SafeArea(child: player),
+            onReady: () => _controller.addListener(_playerListener),
+            onEnded: (_) => _toggleFullScreen(),
+            bottomActions: [
+              CurrentPosition(),
+              ProgressBar(isExpanded: true),
+              RemainingDuration(),
+              FullScreenButton(
+                controller: _controller,
+                color: colorScheme.primary,
+              ),
+            ],
+          ),
+          builder: (context, player) => SafeArea(
+            child: SizedBox.expand(
+              child: player,
+            ),
           ),
         ),
       );
     }
 
-    // ✅ Mode portrait : on affiche le lecteur + contenu
+    // Mode portrait
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -185,32 +245,33 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
             child: GestureDetector(
               key: _playerKey,
               onDoubleTap: _toggleFullScreen,
-              child: YoutubePlayer(
-                controller: _controller,
-                showVideoProgressIndicator: true,
-                progressIndicatorColor: colorScheme.primary,
-                progressColors: ProgressBarColors(
-                  playedColor: colorScheme.primary,
-                  handleColor: colorScheme.primary,
-                  bufferedColor: colorScheme.surfaceContainerHighest,
-                  backgroundColor: colorScheme.onSurface.withOpacity(0.2),
-                ),
-                onReady: () => _controller.addListener(_playerListener),
-                onEnded: (_) => _isFullScreen ? _toggleFullScreen() : null,
-                bottomActions: [
-                  CurrentPosition(),
-                  ProgressBar(isExpanded: true),
-                  RemainingDuration(),
-                  FullScreenButton(
-                    controller: _controller,
-                    color: colorScheme.primary,
+              child: YoutubePlayerBuilder(
+                player: YoutubePlayer(
+                  controller: _controller,
+                  showVideoProgressIndicator: true,
+                  progressIndicatorColor: colorScheme.primary,
+                  progressColors: ProgressBarColors(
+                    playedColor: colorScheme.primary,
+                    handleColor: colorScheme.primary,
+                    bufferedColor: colorScheme.surfaceContainerHighest,
+                    backgroundColor: colorScheme.onSurface.withOpacity(0.2),
                   ),
-                ],
+                  onReady: () => _controller.addListener(_playerListener),
+                  onEnded: (_) => _isFullScreen ? _toggleFullScreen() : null,
+                  bottomActions: [
+                    CurrentPosition(),
+                    ProgressBar(isExpanded: true),
+                    RemainingDuration(),
+                    FullScreenButton(
+                      controller: _controller,
+                      color: colorScheme.primary,
+                    ),
+                  ],
+                ),
+                builder: (context, player) => player,
               ),
             ),
           ),
-
-          // ✅ Titre et bouton Playlist
           Padding(
             padding: EdgeInsets.symmetric(
               horizontal: screenWidth * 0.04,
@@ -238,8 +299,6 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
               ],
             ),
           ),
-
-          // ✅ Playlist ou description
           Expanded(
             child: showPlaylist
                 ? _buildPlaylist(relatedVideos, colorScheme, textTheme, screenWidth)
@@ -264,9 +323,15 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
       itemBuilder: (context, index) {
         final media = index == 0 ? currentVideo : relatedVideos[index - 1];
         final isSelected = media.id == currentVideo.id;
+        final isWatched = _watchedMediaIds.contains(media.id);
+
         return Card(
           elevation: isSelected ? 4 : 1,
-          color: isSelected ? colorScheme.primary.withOpacity(0.08) : null,
+          color: isSelected
+              ? colorScheme.primary.withOpacity(0.08)
+              : isWatched
+              ? colorScheme.surfaceVariant.withOpacity(0.5)
+              : null,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
             side: isSelected
@@ -275,34 +340,57 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(10),
-            onTap: isSelected ? null : () => _switchVideo(media),
+            onTap: () => _switchVideo(media),
             child: Padding(
               padding: EdgeInsets.all(screenWidth * 0.03),
               child: Row(
                 children: [
-                  Container(
-                    width: screenWidth * 0.2,
-                    height: screenWidth * 0.15,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                      image: DecorationImage(
-                        image: NetworkImage(
-                          YoutubePlayer.getThumbnail(
-                            videoId: YoutubePlayer.convertUrlToId(media.url) ?? '',
-                            quality: ThumbnailQuality.medium,
+                  Stack(
+                    children: [
+                      Container(
+                        width: screenWidth * 0.2,
+                        height: screenWidth * 0.15,
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                          image: DecorationImage(
+                            image: NetworkImage(
+                              YoutubePlayer.getThumbnail(
+                                videoId: YoutubePlayer.convertUrlToId(media.url) ?? '',
+                                quality: ThumbnailQuality.medium,
+                              ),
+                            ),
+                            fit: BoxFit.cover,
                           ),
                         ),
-                        fit: BoxFit.cover,
+                        child: Center(
+                          child: Icon(
+                            Icons.play_circle_fill,
+                            size: screenWidth * 0.07,
+                            color: isWatched
+                                ? colorScheme.primary
+                                : Colors.white.withOpacity(0.9),
+                          ),
+                        ),
                       ),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.play_circle_fill,
-                        size: screenWidth * 0.07,
-                        color: Colors.white.withOpacity(0.9),
-                      ),
-                    ),
+                      if (isWatched)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            padding: EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.check,
+                              size: 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   SizedBox(width: screenWidth * 0.03),
                   Expanded(
@@ -313,7 +401,14 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
                           media.titre,
                           style: textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w500,
-                            color: isSelected ? colorScheme.primary : null,
+                            color: isSelected
+                                ? colorScheme.primary
+                                : isWatched
+                                ? colorScheme.onSurface.withOpacity(0.7)
+                                : null,
+                            decoration: isWatched && !isSelected
+                                ? TextDecoration.underline
+                                : null,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
