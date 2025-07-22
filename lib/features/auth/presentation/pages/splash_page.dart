@@ -225,7 +225,7 @@ class _OnSplashPage extends State<SplashPage> {
                 child: ElevatedButton(
                   onPressed: _goToNextPage,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange.shade600,
+                    backgroundColor: Colors.black,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
