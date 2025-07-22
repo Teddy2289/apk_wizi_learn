@@ -39,9 +39,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
     return Card(
       margin: EdgeInsets.all(isSmallScreen ? 12 : 16),
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -84,7 +82,9 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                        color: theme.colorScheme.surfaceVariant.withOpacity(
+                          0.3,
+                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -102,27 +102,31 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
 
           // Liste des quiz
           Flexible(
-            child: _currentPageItems.isEmpty
-                ? _buildEmptyState()
-                : ListView.separated(
-              shrinkWrap: true,
-              physics: const ClampingScrollPhysics(),
-              padding: EdgeInsets.only(
-                left: isSmallScreen ? 16 : 20,
-                right: isSmallScreen ? 16 : 20,
-                bottom: 16,
-              ),
-              itemCount: _currentPageItems.length,
-              separatorBuilder: (_, __) => SizedBox(height: isSmallScreen ? 12 : 16),
-              itemBuilder: (_, index) => _buildHistoryItem(
-                context,
-                _currentPageItems[index],
-              ),
-            ),
+            child:
+                _currentPageItems.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.separated(
+                      shrinkWrap: true,
+                      physics: const ClampingScrollPhysics(),
+                      padding: EdgeInsets.only(
+                        left: isSmallScreen ? 16 : 20,
+                        right: isSmallScreen ? 16 : 20,
+                        bottom: 16,
+                      ),
+                      itemCount: _currentPageItems.length,
+                      separatorBuilder:
+                          (_, __) => SizedBox(height: isSmallScreen ? 12 : 16),
+                      itemBuilder:
+                          (_, index) => _buildHistoryItem(
+                            context,
+                            _currentPageItems[index],
+                          ),
+                    ),
           ),
 
           // Pagination
-          if (widget.history.isNotEmpty) _buildPaginationControls(isSmallScreen),
+          if (widget.history.isNotEmpty)
+            _buildPaginationControls(isSmallScreen),
         ],
       ),
     );
@@ -142,10 +146,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
           const SizedBox(height: 16),
           Text(
             'Aucun quiz complété',
-            style: TextStyle(
-              color: Colors.grey.withOpacity(0.6),
-              fontSize: 16,
-            ),
+            style: TextStyle(color: Colors.grey.withOpacity(0.6), fontSize: 16),
           ),
         ],
       ),
@@ -157,22 +158,29 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
         leading: Icon(Icons.quiz, color: Theme.of(context).primaryColor),
-        title: Text(history.quiz.title),
-        subtitle: Text('Score : ${history.score} | ${history.correctAnswers}/${history.totalQuestions} bonnes réponses'),
+        title: Text(history.quiz.titre),
+        subtitle: Text(
+          'Score : ${history.score} | ${history.correctAnswers}/${history.totalQuestions} bonnes réponses',
+        ),
         trailing: Icon(Icons.chevron_right),
         onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => QuizDetailPage(
-                quizTitle: history.quiz.title,
-                score: history.score,
-                totalQuestions: history.totalQuestions,
-                correctAnswers: history.correctAnswers,
-                timeSpent: history.timeSpent,
-                completedAt: DateTime.tryParse(history.completedAt) ?? DateTime.now(),
-                questions: history.questions ?? [], // Assure-toi que questions est bien rempli
-              ),
+              builder:
+                  (_) => QuizDetailPage(
+                    quizTitle: history.quiz.titre,
+                    score: history.score,
+                    totalQuestions: history.totalQuestions,
+                    correctAnswers: history.correctAnswers,
+                    timeSpent: history.timeSpent,
+                    completedAt:
+                        DateTime.tryParse(history.completedAt) ??
+                        DateTime.now(),
+                    questions:
+                        history.questions ??
+                        [], // Assure-toi que questions est bien rempli
+                  ),
             ),
           );
         },
@@ -188,10 +196,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: color.withOpacity(0.1),
-        border: Border.all(
-          color: color,
-          width: 2,
-        ),
+        border: Border.all(color: color, width: 2),
       ),
       child: Center(
         child: Text(
@@ -217,10 +222,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
       avatar: Icon(icon, size: isSmallScreen ? 16 : 18, color: color),
       label: Text(
         label,
-        style: TextStyle(
-          color: color,
-          fontSize: isSmallScreen ? 12 : 13,
-        ),
+        style: TextStyle(color: color, fontSize: isSmallScreen ? 12 : 13),
       ),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: VisualDensity.compact,
@@ -271,7 +273,8 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
             children: [
               IconButton(
                 icon: Icon(Icons.chevron_left),
-                onPressed: _currentPage > 1 ? () => _goToPage(_currentPage - 1) : null,
+                onPressed:
+                    _currentPage > 1 ? () => _goToPage(_currentPage - 1) : null,
                 color: Theme.of(context).primaryColor,
               ),
               SizedBox(width: 8),
@@ -285,7 +288,10 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
               SizedBox(width: 8),
               IconButton(
                 icon: Icon(Icons.chevron_right),
-                onPressed: _currentPage < _totalPages ? () => _goToPage(_currentPage + 1) : null,
+                onPressed:
+                    _currentPage < _totalPages
+                        ? () => _goToPage(_currentPage + 1)
+                        : null,
                 color: Theme.of(context).primaryColor,
               ),
             ],

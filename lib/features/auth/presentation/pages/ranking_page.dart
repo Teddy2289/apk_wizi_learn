@@ -99,8 +99,10 @@ class _RankingPageState extends State<RankingPage>
       paddingFocus: 8,
       opacityShadow: 0.8,
       onFinish: () {},
-      onSkip: () {},
-    )..show();
+      onSkip: () {
+        return true;
+      },
+    )..show(context: context);
   }
 
   List<TargetFocus> _buildTargets() {
@@ -108,42 +110,67 @@ class _RankingPageState extends State<RankingPage>
       TargetFocus(
         identify: 'tabbar',
         keyTarget: _keyTabBar,
-        contents: [TargetContent(
-          align: ContentAlign.bottom,
-          child: const Text('Navigue entre Statistiques, Classement et Historique.', style: TextStyle(color: Colors.white, fontSize: 18)),
-        )],
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: const Text(
+              'Navigue entre Statistiques, Classement et Historique.',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          ),
+        ],
       ),
       TargetFocus(
         identify: 'title',
         keyTarget: _keyTitle,
-        contents: [TargetContent(
-          align: ContentAlign.bottom,
-          child: const Text('Voici le classement global de tous les joueurs.', style: TextStyle(color: Colors.white, fontSize: 18)),
-        )],
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: const Text(
+              'Voici le classement global de tous les joueurs.',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          ),
+        ],
       ),
       TargetFocus(
         identify: 'podium',
         keyTarget: _keyPodium,
-        contents: [TargetContent(
-          align: ContentAlign.top,
-          child: const Text('Le podium : les 3 meilleurs joueurs du moment !', style: TextStyle(color: Colors.white, fontSize: 18)),
-        )],
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            child: const Text(
+              'Le podium : les 3 meilleurs joueurs du moment !',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          ),
+        ],
       ),
       TargetFocus(
         identify: 'myrank',
         keyTarget: _keyMyRank,
-        contents: [TargetContent(
-          align: ContentAlign.top,
-          child: const Text('Voici ta position dans le classement.', style: TextStyle(color: Colors.white, fontSize: 18)),
-        )],
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            child: const Text(
+              'Voici ta position dans le classement.',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          ),
+        ],
       ),
       TargetFocus(
         identify: 'share',
         keyTarget: _keyShare,
-        contents: [TargetContent(
-          align: ContentAlign.bottom,
-          child: const Text('Partage ton score et défie tes amis !', style: TextStyle(color: Colors.white, fontSize: 18)),
-        )],
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: const Text(
+              'Partage ton score et défie tes amis !',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          ),
+        ],
       ),
     ];
   }
@@ -152,10 +179,10 @@ class _RankingPageState extends State<RankingPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Classement et Statistiques',
           key: _keyTitle,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
             color: Colors.black87,
@@ -188,12 +215,15 @@ class _RankingPageState extends State<RankingPage>
               final stats = await _statsFuture;
               if (rankings != null && stats != null) {
                 final myRanking = rankings.firstWhere(
-                  (r) => r.stagiaire.id == stats.levelProgress.debutant.completed.toString(),
+                  (r) =>
+                      r.stagiaire.id ==
+                      stats.levelProgress.debutant.completed.toString(),
                   orElse: () => rankings.first,
                 );
                 final rang = myRanking.rang;
                 final points = myRanking.totalPoints;
-                final msg = "Je suis classé $rang${rang == 1 ? 'er' : 'e'} avec $points points sur Wizi Learn ! 🏆\nRejoins-moi pour progresser !";
+                final msg =
+                    "Je suis classé $rang${rang == 1 ? 'er' : 'e'} avec $points points sur Wizi Learn ! 🏆\nRejoins-moi pour progresser !";
                 await Share.share(msg);
               }
             },

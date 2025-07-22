@@ -59,8 +59,10 @@ class _AchievementPageState extends State<AchievementPage> {
       paddingFocus: 8,
       opacityShadow: 0.8,
       onFinish: () {},
-      onSkip: () {},
-    )..show();
+      onSkip: () {
+        return true;
+      },
+    )..show(context: context);
   }
 
   List<TargetFocus> _buildTargets() {
@@ -68,26 +70,41 @@ class _AchievementPageState extends State<AchievementPage> {
       TargetFocus(
         identify: 'allbadges',
         keyTarget: _keyAllBadges,
-        contents: [TargetContent(
-          align: ContentAlign.bottom,
-          child: const Text('Découvre tous les badges à débloquer ici.', style: TextStyle(color: Colors.white, fontSize: 18)),
-        )],
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: const Text(
+              'Découvre tous les badges à débloquer ici.',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          ),
+        ],
       ),
       TargetFocus(
         identify: 'badgegrid',
         keyTarget: _keyBadgeGrid,
-        contents: [TargetContent(
-          align: ContentAlign.top,
-          child: const Text('Voici ta collection de badges débloqués.', style: TextStyle(color: Colors.white, fontSize: 18)),
-        )],
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            child: const Text(
+              'Voici ta collection de badges débloqués.',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          ),
+        ],
       ),
       TargetFocus(
         identify: 'firstbadge',
         keyTarget: _keyFirstBadge,
-        contents: [TargetContent(
-          align: ContentAlign.top,
-          child: const Text('Chaque badge a une condition d’obtention. Tente de tous les débloquer !', style: TextStyle(color: Colors.white, fontSize: 18)),
-        )],
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            child: const Text(
+              'Chaque badge a une condition d’obtention. Tente de tous les débloquer !',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          ),
+        ],
       ),
     ];
   }
@@ -118,31 +135,36 @@ class _AchievementPageState extends State<AchievementPage> {
           ),
         ],
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
-          : _achievements.isEmpty
+      body:
+          _isLoading
+              ? Center(
+                child: CircularProgressIndicator(
+                  color: theme.colorScheme.primary,
+                ),
+              )
+              : _achievements.isEmpty
               ? Center(child: Text('Aucun badge débloqué pour le moment.'))
               : SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Text(
-                          'Débloque des badges en progressant dans tes quiz !',
-                          style: theme.textTheme.bodyLarge,
-                        ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'Débloque des badges en progressant dans tes quiz !',
+                        style: theme.textTheme.bodyLarge,
                       ),
-                      Container(
-                        key: _keyBadgeGrid,
-                        child: AchievementBadgeGrid(
-                          achievements: _achievements,
-                          keyFirstBadge: _keyFirstBadge,
-                        ),
+                    ),
+                    Container(
+                      key: _keyBadgeGrid,
+                      child: AchievementBadgeGrid(
+                        achievements: _achievements,
+                        keyFirstBadge: _keyFirstBadge,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
     );
   }
-} 
+}
