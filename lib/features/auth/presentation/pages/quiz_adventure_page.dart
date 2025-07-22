@@ -72,18 +72,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
   @override
   void initState() {
     super.initState();
-    final dio = Dio();
-    final storage = const FlutterSecureStorage();
-    final apiClient = ApiClient(dio: dio, storage: storage);
-    _quizRepository = QuizRepository(apiClient: apiClient);
-    _statsRepository = StatsRepository(apiClient: apiClient);
-    _authRepository = AuthRepository(
-      remoteDataSource: AuthRemoteDataSourceImpl(
-        apiClient: apiClient,
-        storage: storage,
-      ),
-      storage: storage,
-    );
+    _initializeRepositories();
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 2),
     );
@@ -105,8 +94,91 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
     );
     _loadLoginStreak();
     _loadAvatarChoice();
-    _loadData();
+    _loadInitialData();
     _checkAndShowTutorial();
+  }
+
+  void _initializeRepositories() {
+    final dio = Dio();
+    final storage = const FlutterSecureStorage();
+    final apiClient = ApiClient(dio: dio, storage: storage);
+    _quizRepository = QuizRepository(apiClient: apiClient);
+    _statsRepository = StatsRepository(apiClient: apiClient);
+    _authRepository = AuthRepository(
+      remoteDataSource: AuthRemoteDataSourceImpl(
+        apiClient: apiClient,
+        storage: storage,
+      ),
+      storage: storage,
+    );
+  }
+
+  Future<void> _loadInitialData() async {
+    setState(() => _isLoading = true);
+    try {
+      final user = await _authRepository.getMe();
+      _connectedStagiaireId = user.stagiaire?.id;
+      if (_connectedStagiaireId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+      final quizzes = await _quizRepository.getQuizzesForStagiaire(
+        stagiaireId: _connectedStagiaireId,
+      );
+      print('--- QUIZZES RECUS ---');
+      for (var q in quizzes) {
+        print('id= [32m${q.id} [0m, titre=${q.titre}, niveau=${q.niveau}, status=${q.status}');
+      }
+      print('---------------------');
+      final history = await _statsRepository.getQuizHistory(
+        page: 1,
+        limit: 100,
+      );
+      final rankings = await _statsRepository.getGlobalRanking();
+      final userRanking = rankings.firstWhere(
+        (r) => r.stagiaire.id == _connectedStagiaireId.toString(),
+        orElse: () => stats_model.GlobalRanking.empty(),
+      );
+      _userPoints = userRanking.totalPoints;
+      final filteredQuizzes = _filterQuizzesByPoints(quizzes, _userPoints);
+      setState(() {
+        _quizzes = filteredQuizzes;
+        _playedQuizIds = history.map((h) => h.quiz.id.toString()).toList();
+        _quizHistory = history;
+        _isLoading = false;
+      });
+      // Animation confettis si progression
+      final completed =
+          filteredQuizzes.where((q) => _playedQuizIds.contains(q.id.toString())).length;
+      if (completed > _lastCompletedCount && _lastCompletedCount != 0) {
+        _confettiController?.play();
+        await _playSound('audio/success.mp3');
+      }
+      _lastCompletedCount = completed;
+      // Calcul de la position de l'avatar
+      int lastPlayed = 0;
+      for (int i = 0; i < filteredQuizzes.length; i++) {
+        if (_playedQuizIds.contains(filteredQuizzes[i].id.toString())) {
+          lastPlayed = i;
+        } else {
+          break;
+        }
+      }
+      int newAvatarIndex = lastPlayed;
+      if (lastPlayed < filteredQuizzes.length - 1 &&
+          !_playedQuizIds.contains(filteredQuizzes[lastPlayed + 1].id.toString())) {
+        newAvatarIndex = lastPlayed + 1;
+      }
+      if (mounted && newAvatarIndex != _avatarIndex) {
+        _avatarAnimController.forward(from: 0);
+        _avatarBounceController.forward(from: 0);
+      }
+      setState(() {
+        _avatarIndex = newAvatarIndex;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -163,80 +235,6 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
       filtered = [allQuizzes.first];
     }
     return filtered;
-  }
-
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    try {
-      // Récupérer l'utilisateur connecté via AuthRepository (comme quiz_page.dart)
-      final user = await _authRepository.getMe();
-      _connectedStagiaireId = user.stagiaire?.id;
-      if (_connectedStagiaireId == null) {
-        setState(() => _isLoading = false);
-        return;
-      }
-      // Récupérer les quiz
-      final quizzes = await _quizRepository.getQuizzesForStagiaire(
-        stagiaireId: _connectedStagiaireId,
-      );
-      // DEBUG LOG: Affiche les quiz reçus
-      print('--- QUIZZES RECUS ---');
-      for (var q in quizzes) {
-        print('id=${q.id}, titre=${q.titre}, niveau=${q.niveau}, status=${q.status}');
-      }
-      print('---------------------');
-      // Récupérer l'historique
-      final history = await _statsRepository.getQuizHistory(
-        page: 1,
-        limit: 100,
-      );
-      // Récupérer les points
-      final rankings = await _statsRepository.getGlobalRanking();
-      final userRanking = rankings.firstWhere(
-        (r) => r.stagiaire.id == _connectedStagiaireId.toString(),
-        orElse: () => stats_model.GlobalRanking.empty(),
-      );
-      _userPoints = userRanking.totalPoints;
-      final filteredQuizzes = _filterQuizzesByPoints(quizzes, _userPoints);
-      setState(() {
-        _quizzes = filteredQuizzes;
-        _playedQuizIds = history.map((h) => h.quiz.id.toString()).toList();
-        _quizHistory = history;
-        _isLoading = false;
-      });
-      // Animation confettis si progression
-      final completed =
-          filteredQuizzes.where((q) => _playedQuizIds.contains(q.id.toString())).length;
-      if (completed > _lastCompletedCount && _lastCompletedCount != 0) {
-        _confettiController?.play();
-        await _playSound('audio/success.mp3');
-      }
-      _lastCompletedCount = completed;
-
-      // Calcul de la position de l'avatar
-      int lastPlayed = 0;
-      for (int i = 0; i < filteredQuizzes.length; i++) {
-        if (_playedQuizIds.contains(filteredQuizzes[i].id.toString())) {
-          lastPlayed = i;
-        } else {
-          break;
-        }
-      }
-      int newAvatarIndex = lastPlayed;
-      if (lastPlayed < filteredQuizzes.length - 1 &&
-          !_playedQuizIds.contains(filteredQuizzes[lastPlayed + 1].id.toString())) {
-        newAvatarIndex = lastPlayed + 1;
-      }
-      if (mounted && newAvatarIndex != _avatarIndex) {
-        _avatarAnimController.forward(from: 0);
-        _avatarBounceController.forward(from: 0);
-      }
-      setState(() {
-        _avatarIndex = newAvatarIndex;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-    }
   }
 
   Future<void> _loadLoginStreak() async {
@@ -669,7 +667,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
                                                       'audio/fail.mp3',
                                                     );
                                                   }
-                                                  _loadData();
+                                                  _loadInitialData();
                                                 }
                                                 : null,
                                         child: Column(
