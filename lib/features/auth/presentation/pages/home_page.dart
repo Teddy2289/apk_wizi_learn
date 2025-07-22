@@ -38,7 +38,8 @@ class _HomePageState extends State<HomePage> {
   final List<Map<String, String>> _homeTutorialSteps = [
     {
       'title': 'Bienvenue sur l’accueil !',
-      'desc': 'Retrouvez ici vos contacts, formations et notifications importantes.',
+      'desc':
+          'Retrouvez ici vos contacts, formations et notifications importantes.',
     },
     {
       'title': 'Vos contacts',
@@ -180,63 +181,67 @@ class _HomePageState extends State<HomePage> {
     return Stack(
       children: [
         Scaffold(
-          body: (_isLoading || _isLoadingUser)
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                  onRefresh: _loadData,
-                  color: theme.primaryColor,
-                  child: CustomScrollView(
-                    slivers: [
-                      // Spacer
-                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          body:
+              (_isLoading || _isLoadingUser)
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
+                    onRefresh: _loadData,
+                    color: theme.primaryColor,
+                    child: CustomScrollView(
+                      slivers: [
+                        // Spacer
+                        const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-                      // Section de Bienvenue Personnalisée
-                      SliverToBoxAdapter(child: _buildWelcomeSection(isTablet)),
-
-                      // Spacer
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-                      // Section Formations
-                      SliverToBoxAdapter(
-                        child: _buildSectionTitle(
-                          context,
-                          title: 'Formations recommandées',
-                          icon: LucideIcons.bookOpen,
+                        // Section de Bienvenue Personnalisée
+                        SliverToBoxAdapter(
+                          child: _buildWelcomeSection(isTablet),
                         ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: RandomFormationsWidget(
-                          formations: _randomFormations,
-                          onRefresh: _loadData,
+
+                        // Spacer
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                        // Section Formations
+                        SliverToBoxAdapter(
+                          child: _buildSectionTitle(
+                            context,
+                            title: 'Formations recommandées',
+                            icon: LucideIcons.bookOpen,
+                          ),
                         ),
-                      ),
-
-                      // Spacer
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-                      // Section Contacts
-                      SliverToBoxAdapter(
-                        child: _buildSectionWithButton(
-                          context,
-                          title: 'Mes contacts',
-                          icon: LucideIcons.user,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => ContactPage(contacts: _contacts),
-                              ),
-                            );
-                          },
+                        SliverToBoxAdapter(
+                          child: RandomFormationsWidget(
+                            formations: _randomFormations,
+                            onRefresh: _loadData,
+                          ),
                         ),
-                      ),
 
-                      // Liste des contacts
-                      _buildContactsList(isTablet),
-                    ],
+                        // Spacer
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                        // Section Contacts
+                        SliverToBoxAdapter(
+                          child: _buildSectionWithButton(
+                            context,
+                            title: 'Mes contacts',
+                            icon: LucideIcons.user,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) =>
+                                          ContactPage(contacts: _contacts),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+
+                        // Liste des contacts
+                        _buildContactsList(isTablet),
+                      ],
+                    ),
                   ),
-                ),
         ),
         // if (_showHomeTutorial)
         //   TutorialOverlay(
@@ -328,18 +333,6 @@ class _HomePageState extends State<HomePage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
-        decoration: BoxDecoration(
-          color: kYellowLight,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: kYellow, width: 1.2),
-          boxShadow: [
-            BoxShadow(
-              color: kOrange.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           children: [
@@ -350,11 +343,20 @@ class _HomePageState extends State<HomePage> {
               child: Icon(icon, color: kOrangeDark, size: 22),
             ),
             const SizedBox(width: 12),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: kBrown,
+            // Utilise FittedBox pour éviter l'overflow du texte
+            Expanded(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: kBrown,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
           ],
@@ -372,18 +374,18 @@ class _HomePageState extends State<HomePage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
-        decoration: BoxDecoration(
-          color: kYellowLight,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: kYellow, width: 1.2),
-          boxShadow: [
-            BoxShadow(
-              color: kOrange.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
+        // decoration: BoxDecoration(
+        //   color: kYellowLight,
+        //   borderRadius: BorderRadius.circular(16),
+        //   border: Border.all(color: kYellow, width: 1.2),
+        //   boxShadow: [
+        //     BoxShadow(
+        //       color: kOrange.withOpacity(0.08),
+        //       blurRadius: 8,
+        //       offset: const Offset(0, 3),
+        //     ),
+        //   ],
+        // ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -433,11 +435,10 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildContactsList(bool isTablet) {
     if (_contacts.isEmpty) {
-      return SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
           child: Container(
-            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: kYellowLight,
               borderRadius: BorderRadius.circular(16),
@@ -450,11 +451,11 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-            child: Text(
-              'Aucun contact disponible',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: kBrown),
+            child: Center(
+              child: Text(
+                'Aucun contact disponible',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: kBrown),
+              ),
             ),
           ),
         ),
@@ -471,41 +472,33 @@ class _HomePageState extends State<HomePage> {
     }
     final contactsToShow = filteredContacts.values.toList();
 
-    return SliverPadding(
-      padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
-      sliver: SliverGrid(
-        delegate: SliverChildBuilderDelegate((context, index) {
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [kYellowLight, kWhite, kOrange.withOpacity(0.1)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: kYellow, width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: kOrange.withOpacity(0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
+    return SliverList(
+      delegate: SliverChildListDelegate([
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: isTablet ? 2 : 1,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: isTablet ? 2.5 : 2.6,
+            ),
+            itemCount: contactsToShow.length,
+            itemBuilder: (context, index) {
+              return Container(
+                margin: const EdgeInsets.all(4),
+                child: ContactCard(
+                  contact: contactsToShow[index],
+                  showFormations: false,
                 ),
-              ],
-            ),
-            margin: const EdgeInsets.all(4),
-            child: ContactCard(
-              contact: contactsToShow[index],
-              showFormations: false,
-            ),
-          );
-        }, childCount: contactsToShow.length),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: isTablet ? 2 : 1,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: isTablet ? 2.5 : 2.6,
+              );
+            },
+          ),
         ),
-      ),
+        const SizedBox(height: 32), // Espace en bas pour éviter overflow
+      ]),
     );
   }
 }
