@@ -7,7 +7,8 @@ class AchievementRepository {
 
   Future<List<Achievement>> getUserAchievements() async {
     final response = await dio.get('/api/stagiaire/achievements');
-    if (response.data == null || response.data['achievements'] == null) {
+    print('Achievements API response: ${response.data}');
+    if (response.data == null || response.data['achievements'] == null || response.data['achievements'] is! List) {
       return [];
     }
     final List<dynamic> raw = response.data['achievements'];
