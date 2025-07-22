@@ -171,7 +171,7 @@ class _QuizPageState extends State<QuizPage> {
       final history = await _statsRepository.getQuizHistory();
       setState(() {
         _futureQuizHistory = Future.value(history);
-        _playedQuizIds = history.map((h) => h.quiz.id).toList();
+        _playedQuizIds = history.map((h) => h.quiz.id.toString()).toList();
       });
     } catch (e) {
       debugPrint('Erreur chargement historique: $e');
@@ -293,99 +293,121 @@ class _QuizPageState extends State<QuizPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
-    final bool useCustomScaffold = args?['useCustomScaffold'] ?? _fromNotification;
+    final bool useCustomScaffold =
+        args?['useCustomScaffold'] ?? _fromNotification;
     final bool scrollToPlayed = args?['scrollToPlayed'] ?? false;
-    final int selectedTabIndex;
+    final int selectedTabIndex =
+        args?['selectedTabIndex'] ?? 2; // Valeur par défaut
 
     // Ajout du toggle pour le mode interactif
     bool _isAdventureMode = false;
 
     return useCustomScaffold
         ? CustomScaffold(
-      body: _isInitialLoad
-          ? _buildLoadingScreen(theme)
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 8, left: 16, right: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+          body:
+              _isInitialLoad
+                  ? _buildLoadingScreen(theme)
+                  : Column(
                     children: [
-                      Text('Mode interactif', style: theme.textTheme.bodyMedium),
-                      Switch(
-                        value: _isAdventureMode,
-                        onChanged: (val) {
-                          if (val) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const QuizAdventurePage(),
-                              ),
-                            );
-                          }
-                        },
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          top: 8,
+                          left: 16,
+                          right: 16,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Mode interactif',
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                            Switch(
+                              value: _isAdventureMode,
+                              onChanged: (val) {
+                                if (val) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const QuizAdventurePage(),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: _buildMainContent(
+                          theme,
+                          scrollToPlayed: scrollToPlayed,
+                        ),
                       ),
                     ],
                   ),
-                ),
-                Expanded(child: _buildMainContent(theme, scrollToPlayed: scrollToPlayed)),
-              ],
-            ),
-      currentIndex: selectedTabIndex,
-      onTabSelected: (index) {
-        // Gestion de la navigation entre onglets
-        if (index != selectedTabIndex) {
-          Navigator.pushReplacementNamed(
-            context,
-            RouteConstants.dashboard,
-            arguments: index,
-          );
-        }
-      },
-      showBanner: true,
-    )
+          currentIndex: selectedTabIndex,
+          onTabSelected: (index) {
+            // Gestion de la navigation entre onglets
+            if (index != selectedTabIndex) {
+              Navigator.pushReplacementNamed(
+                context,
+                RouteConstants.dashboard,
+                arguments: index,
+              );
+            }
+          },
+          showBanner: true,
+        )
         : Scaffold(
-      appBar: AppBar(
-        title: const Text('Mes Quiz'),
-        centerTitle: true,
-        backgroundColor: isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        actions: [
-          Row(
-            children: [
-              Text('Mode interactif', style: theme.textTheme.bodyMedium),
-              Switch(
-                value: _isAdventureMode,
-                onChanged: (val) {
-                  if (val) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const QuizAdventurePage(),
-                      ),
-                    );
-                  }
-                },
+          appBar: AppBar(
+            title: const Text('Mes Quiz'),
+            centerTitle: true,
+            backgroundColor:
+                isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            actions: [
+              Row(
+                children: [
+                  Text('Mode interactif', style: theme.textTheme.bodyMedium),
+                  Switch(
+                    value: _isAdventureMode,
+                    onChanged: (val) {
+                      if (val) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const QuizAdventurePage(),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
-      body: _isInitialLoad
-          ? _buildLoadingScreen(theme)
-          : _buildMainContent(theme, scrollToPlayed: scrollToPlayed),
-      floatingActionButton: _showBackToTopButton
-          ? FloatingActionButton(
-        onPressed: _scrollToTop,
-        mini: true,
-        backgroundColor: theme.colorScheme.primary,
-        child: Icon(Icons.arrow_upward, color: theme.colorScheme.onPrimary),
-      )
-          : null,
-    );
+          body:
+              _isInitialLoad
+                  ? _buildLoadingScreen(theme)
+                  : _buildMainContent(theme, scrollToPlayed: scrollToPlayed),
+          floatingActionButton:
+              _showBackToTopButton
+                  ? FloatingActionButton(
+                    onPressed: _scrollToTop,
+                    mini: true,
+                    backgroundColor: theme.colorScheme.primary,
+                    child: Icon(
+                      Icons.arrow_upward,
+                      color: theme.colorScheme.onPrimary,
+                    ),
+                  )
+                  : null,
+        );
   }
 
   Widget _buildMainContent(ThemeData theme, {bool scrollToPlayed = false}) {
@@ -542,7 +564,17 @@ class _QuizPageState extends State<QuizPage> {
           orElse:
               () => QuizHistory(
                 id: '',
-                quiz: Quiz(id: '', title: '', category: '', level: ''),
+                quiz: quiz_model.Quiz(
+                  id: 0,
+                  titre: '',
+                  description: '',
+                  duree: '',
+                  niveau: '',
+                  status: '',
+                  nbPointsTotal: 0,
+                  formation: quiz.formation,
+                  questions: const [],
+                ),
                 score: 0,
                 completedAt: '',
                 timeSpent: 0,

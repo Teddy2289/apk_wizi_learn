@@ -8,7 +8,7 @@ import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.
 import 'features/auth/auth_injection_container.dart' as auth_injection;
 import 'features/auth/data/repositories/auth_repository.dart';
 import 'core/services/fcm_service_mobile.dart'
-if (dart.library.html) 'core/services/fcm_service_web.dart';
+    if (dart.library.html) 'core/services/fcm_service_web.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:wizi_learn/core/services/notification_manager.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/splash_page.dart';
@@ -31,11 +31,13 @@ Future<void> main() async {
 
   // Initialiser les dépendances
   await auth_injection.initAuthDependencies();
-  const String.fromEnvironment('BASE_URL', defaultValue: 'https://wizi-learn.com');
+  const String.fromEnvironment(
+    'BASE_URL',
+    defaultValue: 'https://wizi-learn.com',
+  );
 
   runApp(const MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -67,10 +69,11 @@ class MyApp extends StatelessWidget {
           ),
         ],
         child: BlocProvider<AuthBloc>(
-          create: (context) =>
-          AuthBloc(authRepository: context.read<AuthRepository>())
-            ..add(CheckAuthEvent()),
-          child: MaterialApp.router(
+          create:
+              (context) =>
+                  AuthBloc(authRepository: context.read<AuthRepository>())
+                    ..add(CheckAuthEvent()),
+          child: MaterialApp(
             title: 'Wizi Learn',
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
@@ -152,7 +155,7 @@ class MyApp extends StatelessWidget {
             ),
             scrollBehavior: CustomScrollBehavior(),
             onGenerateRoute: AppRouter.generateRoute,
-            // home: const SplashPage(),
+            home: SplashPage(),
           ),
         ),
       ),
@@ -163,10 +166,10 @@ class MyApp extends StatelessWidget {
 class CustomScrollBehavior extends MaterialScrollBehavior {
   @override
   Widget buildOverscrollIndicator(
-      BuildContext context,
-      Widget child,
-      ScrollableDetails details,
-      ) {
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
     return GlowingOverscrollIndicator(
       axisDirection: details.direction,
       color: Colors.orange.shade200,

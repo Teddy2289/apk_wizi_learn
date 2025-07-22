@@ -33,30 +33,6 @@ class QuizHistory {
       correctAnswers: QuizUtils.cleanInt(json['correctAnswers']),
     );
   }
-
-}
-
-class Quiz {
-  final String id;
-  final String title;
-  final String category;
-  final String level;
-
-  Quiz({
-    required this.id,
-    required this.title,
-    required this.category,
-    required this.level,
-  });
-  factory Quiz.fromJson(Map<String, dynamic> json) {
-    return Quiz(
-      id: QuizUtils.cleanString(json['id'], fallback: '0'),
-      title: QuizUtils.cleanString(json['title'], fallback: 'Titre inconnu'),
-      category: QuizUtils.cleanString(json['category'], fallback: 'Autre'),
-      level: QuizUtils.cleanString(json['level'], fallback: 'N/A'),
-    );
-  }
-
 }
 
 class GlobalRanking {
@@ -94,16 +70,13 @@ class GlobalRanking {
     );
   }
 }
+
 class Stagiaire {
   final String id;
   final String prenom;
   final String image;
 
-  Stagiaire({
-    required this.id,
-    required this.prenom,
-    required this.image,
-  });
+  Stagiaire({required this.id, required this.prenom, required this.image});
 
   factory Stagiaire.fromJson(Map<String, dynamic> json) {
     return Stagiaire(
@@ -112,8 +85,8 @@ class Stagiaire {
       image: QuizUtils.cleanString(json['image']),
     );
   }
-
 }
+
 class QuizStats {
   final int totalQuizzes;
   final double averageScore;
@@ -134,14 +107,14 @@ class QuizStats {
       totalQuizzes: QuizUtils.cleanInt(json['totalQuizzes']),
       averageScore: QuizUtils.cleanDouble(json['averageScore']),
       totalPoints: QuizUtils.cleanInt(json['totalPoints']),
-      categoryStats: (json['categoryStats'] as List? ?? [])
-          .where((e) => e != null)
-          .map((e) => CategoryStat.fromJson(e))
-          .toList(),
+      categoryStats:
+          (json['categoryStats'] as List? ?? [])
+              .where((e) => e != null)
+              .map((e) => CategoryStat.fromJson(e))
+              .toList(),
       levelProgress: LevelProgress.fromJson(json['levelProgress'] ?? {}),
     );
   }
-
 }
 
 class CategoryStat {
@@ -193,9 +166,10 @@ class LevelData {
   factory LevelData.fromJson(Map<String, dynamic> json) {
     return LevelData(
       completed: QuizUtils.cleanInt(json['completed']),
-      averageScore: json['averageScore'] != null
-          ? QuizUtils.cleanDouble(json['averageScore'])
-          : null,
+      averageScore:
+          json['averageScore'] != null
+              ? QuizUtils.cleanDouble(json['averageScore'])
+              : null,
     );
   }
 }
