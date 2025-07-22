@@ -898,7 +898,7 @@ class _QuizPageState extends State<QuizPage> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${quiz.nbPointsTotal} points',
+                              '${quiz.nbPointsTotal > 10 ? 10 : quiz.nbPointsTotal} points',
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w500,
                                 color: categoryColor,

@@ -9,7 +9,10 @@ class QuizStatsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
-
+    // Sécurisation des valeurs
+    final totalQuizzes = (stats.totalQuizzes is int && stats.totalQuizzes > 0) ? stats.totalQuizzes : 0;
+    final totalPoints = (stats.totalPoints is int && stats.totalPoints >= 0) ? stats.totalPoints : 0;
+    final averageScore = (stats.averageScore is double && stats.averageScore >= 0) ? stats.averageScore : 0.0;
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
@@ -44,7 +47,7 @@ class QuizStatsWidget extends StatelessWidget {
                             context,
                             Icons.assignment_turned_in,
                             'Quiz complétés',
-                            stats.totalQuizzes.toString(),
+                            totalQuizzes > 0 ? totalQuizzes.toString() : '0',
                             Colors.blueAccent,
                           ),
                           const SizedBox(width: 12),
@@ -52,7 +55,7 @@ class QuizStatsWidget extends StatelessWidget {
                             context,
                             Icons.star_rate_rounded,
                             'Score moyen',
-                            '${stats.averageScore.toStringAsFixed(1)}%',
+                            totalQuizzes > 0 ? '${averageScore.toStringAsFixed(1)}%' : '-',
                             Colors.amber,
                           ),
                           const SizedBox(width: 12),
@@ -60,7 +63,7 @@ class QuizStatsWidget extends StatelessWidget {
                             context,
                             Icons.bolt_rounded,
                             'Points totaux',
-                            stats.totalPoints.toString(),
+                            totalPoints > 0 ? totalPoints.toString() : '0',
                             Colors.greenAccent,
                           ),
                         ],
@@ -188,9 +191,10 @@ class QuizStatsWidget extends StatelessWidget {
   }
 
   Widget _buildCategoryItem(BuildContext context, CategoryStat category) {
-    final percentage = (category.quizCount / stats.totalQuizzes * 100)
-        .toStringAsFixed(1);
-
+    final total = (stats.totalQuizzes is int && stats.totalQuizzes > 0) ? stats.totalQuizzes : 0;
+    final quizCount = (category.quizCount is int && category.quizCount >= 0) ? category.quizCount : 0;
+    final avg = (category.averageScore is double && category.averageScore >= 0) ? category.averageScore : 0.0;
+    final percentage = total > 0 ? (quizCount / total * 100).toStringAsFixed(1) : '0.0';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
@@ -215,7 +219,7 @@ class QuizStatsWidget extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           LinearProgressIndicator(
-            value: category.quizCount / stats.totalQuizzes,
+            value: total > 0 ? quizCount / total : 0.0,
             backgroundColor: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(4),
             minHeight: 8,
@@ -228,7 +232,7 @@ class QuizStatsWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${category.quizCount} quiz',
+                '$quizCount quiz',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(
                     context,
@@ -236,7 +240,7 @@ class QuizStatsWidget extends StatelessWidget {
                 ),
               ),
               Text(
-                'Moyenne: ${category.averageScore.toStringAsFixed(1)}',
+                'Moyenne: ${avg.toStringAsFixed(1)}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(
                     context,
@@ -329,9 +333,10 @@ class QuizStatsWidget extends StatelessWidget {
     LevelData data,
     Color color,
   ) {
-    final total = stats.totalQuizzes;
-    final percentage = total == 0 ? 0.0 : (data.completed / total * 100);
-
+    final total = (stats.totalQuizzes is int && stats.totalQuizzes > 0) ? stats.totalQuizzes : 0;
+    final completed = (data.completed is int && data.completed >= 0) ? data.completed : 0;
+    final avg = (data.averageScore is double && data.averageScore != null && data.averageScore! >= 0) ? data.averageScore! : 0.0;
+    final percentage = total == 0 ? 0.0 : (completed / total * 100);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -367,7 +372,7 @@ class QuizStatsWidget extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         LinearProgressIndicator(
-          value: total == 0 ? 0.0 : data.completed / total,
+          value: total == 0 ? 0.0 : completed / total,
           backgroundColor: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(4),
           minHeight: 8,
@@ -378,13 +383,13 @@ class QuizStatsWidget extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${data.completed} quiz complétés',
+              '$completed quiz complétés',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               ),
             ),
             Text(
-              'Moyenne: ${data.averageScore?.toStringAsFixed(1) ?? '0.0'}',
+              'Moyenne: ${avg.toStringAsFixed(1)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               ),

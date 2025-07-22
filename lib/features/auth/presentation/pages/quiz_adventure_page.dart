@@ -18,6 +18,8 @@ import 'package:wizi_learn/features/auth/presentation/widgets/mission_card.dart'
 import 'package:wizi_learn/features/auth/data/models/mission_model.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/avatar_shop_page.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
+import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
 
 class QuizAdventurePage extends StatefulWidget {
   const QuizAdventurePage({super.key});
@@ -29,11 +31,12 @@ class QuizAdventurePage extends StatefulWidget {
 class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProviderStateMixin {
   late final QuizRepository _quizRepository;
   late final StatsRepository _statsRepository;
+  late final AuthRepository _authRepository;
   int? _connectedStagiaireId;
   List<quiz_model.Quiz> _quizzes = [];
   List<String> _playedQuizIds = [];
   bool _isLoading = true;
-  // int _userPoints = 0; // Unused field removed
+  int _userPoints = 0;
   ConfettiController? _confettiController;
   int _lastCompletedCount = 0;
   List<stats_model.QuizHistory> _quizHistory = [];
@@ -74,6 +77,13 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
     final apiClient = ApiClient(dio: dio, storage: storage);
     _quizRepository = QuizRepository(apiClient: apiClient);
     _statsRepository = StatsRepository(apiClient: apiClient);
+    _authRepository = AuthRepository(
+      remoteDataSource: AuthRemoteDataSourceImpl(
+        apiClient: apiClient,
+        storage: storage,
+      ),
+      storage: storage,
+    );
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 2),
     );
@@ -116,19 +126,51 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
     }
   }
 
+  // Ajout de la méthode de filtrage des quiz par points utilisateur
+  List<quiz_model.Quiz> _filterQuizzesByPoints(
+    List<quiz_model.Quiz> allQuizzes,
+    int userPoints,
+  ) {
+    if (allQuizzes.isEmpty) return [];
+
+    String normalizeLevel(String? level) {
+      if (level == null) return 'débutant';
+      final lvl = level.toLowerCase().trim();
+      if (lvl.contains('inter') || lvl.contains('moyen'))
+        return 'intermédiaire';
+      if (lvl.contains('avancé') || lvl.contains('expert')) return 'avancé';
+      return 'débutant';
+    }
+
+    final debutant =
+        allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
+    final intermediaire =
+        allQuizzes.where((q) => normalizeLevel(q.niveau) == 'intermédiaire').toList();
+    final avance =
+        allQuizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
+
+    List<quiz_model.Quiz> filtered = [];
+    if (userPoints < 10) filtered = debutant.take(2).toList();
+    else if (userPoints < 20) filtered = debutant.take(4).toList();
+    else if (userPoints < 40) filtered = [...debutant, ...intermediaire.take(2)];
+    else if (userPoints < 60) filtered = [...debutant, ...intermediaire];
+    else if (userPoints < 80) filtered = [...debutant, ...intermediaire, ...avance.take(2)];
+    else if (userPoints < 100) filtered = [...debutant, ...intermediaire, ...avance.take(4)];
+    else filtered = [...debutant, ...intermediaire, ...avance];
+
+    // Fallback: si aucun quiz filtré mais la liste d'origine n'est pas vide, retourne au moins le premier quiz
+    if (filtered.isEmpty && allQuizzes.isNotEmpty) {
+      filtered = [allQuizzes.first];
+    }
+    return filtered;
+  }
+
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      // Récupérer l'utilisateur connecté
-      final storage = const FlutterSecureStorage();
-      final user = await storage.read(key: 'user');
-      if (user == null) {
-        setState(() => _isLoading = false);
-        return;
-      }
-      // On suppose que l'id stagiaire est stocké dans le user JSON
-      final id = RegExp(r'"id":\s*(\d+)').firstMatch(user)?.group(1);
-      _connectedStagiaireId = id != null ? int.tryParse(id) : null;
+      // Récupérer l'utilisateur connecté via AuthRepository (comme quiz_page.dart)
+      final user = await _authRepository.getMe();
+      _connectedStagiaireId = user.stagiaire?.id;
       if (_connectedStagiaireId == null) {
         setState(() => _isLoading = false);
         return;
@@ -137,6 +179,12 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
       final quizzes = await _quizRepository.getQuizzesForStagiaire(
         stagiaireId: _connectedStagiaireId,
       );
+      // DEBUG LOG: Affiche les quiz reçus
+      print('--- QUIZZES RECUS ---');
+      for (var q in quizzes) {
+        print('id=${q.id}, titre=${q.titre}, niveau=${q.niveau}, status=${q.status}');
+      }
+      print('---------------------');
       // Récupérer l'historique
       final history = await _statsRepository.getQuizHistory(
         page: 1,
@@ -148,16 +196,17 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
         (r) => r.stagiaire.id == _connectedStagiaireId.toString(),
         orElse: () => stats_model.GlobalRanking.empty(),
       );
+      _userPoints = userRanking.totalPoints;
+      final filteredQuizzes = _filterQuizzesByPoints(quizzes, _userPoints);
       setState(() {
-        _quizzes = quizzes;
+        _quizzes = filteredQuizzes;
         _playedQuizIds = history.map((h) => h.quiz.id.toString()).toList();
         _quizHistory = history;
-        // _userPoints removed as unused
         _isLoading = false;
       });
       // Animation confettis si progression
       final completed =
-          quizzes.where((q) => _playedQuizIds.contains(q.id.toString())).length;
+          filteredQuizzes.where((q) => _playedQuizIds.contains(q.id.toString())).length;
       if (completed > _lastCompletedCount && _lastCompletedCount != 0) {
         _confettiController?.play();
         await _playSound('audio/success.mp3');
@@ -166,16 +215,16 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
 
       // Calcul de la position de l'avatar
       int lastPlayed = 0;
-      for (int i = 0; i < quizzes.length; i++) {
-        if (_playedQuizIds.contains(quizzes[i].id.toString())) {
+      for (int i = 0; i < filteredQuizzes.length; i++) {
+        if (_playedQuizIds.contains(filteredQuizzes[i].id.toString())) {
           lastPlayed = i;
         } else {
           break;
         }
       }
       int newAvatarIndex = lastPlayed;
-      if (lastPlayed < quizzes.length - 1 &&
-          !_playedQuizIds.contains(quizzes[lastPlayed + 1].id.toString())) {
+      if (lastPlayed < filteredQuizzes.length - 1 &&
+          !_playedQuizIds.contains(filteredQuizzes[lastPlayed + 1].id.toString())) {
         newAvatarIndex = lastPlayed + 1;
       }
       if (mounted && newAvatarIndex != _avatarIndex) {
@@ -591,7 +640,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
                                       child: GestureDetector(
                                         key: index == 0 ? _keyQuiz : null,
                                         onTap:
-                                            isUnlocked
+                                            isUnlocked && quiz.questions.isNotEmpty
                                                 ? () async {
                                                   await _playSound(
                                                     'audio/click.mp3',
@@ -646,6 +695,15 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
                                               isCompleted: isPlayed,
                                               isUnlocked: isUnlocked,
                                             ),
+                                            if (quiz.questions.isEmpty)
+                                              Padding(
+                                                padding: const EdgeInsets.only(top: 4.0),
+                                                child: Text(
+                                                  'Aucune question disponible',
+                                                  style: TextStyle(color: Colors.red, fontSize: 12),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ),
                                             if (isPlayed)
                                               Padding(
                                                 padding: const EdgeInsets.only(
