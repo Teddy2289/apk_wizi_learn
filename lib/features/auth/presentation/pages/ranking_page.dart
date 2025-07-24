@@ -64,16 +64,33 @@ class _RankingPageState extends State<RankingPage>
       _errorMessage = null;
     });
 
+    String? errorSource;
     try {
-      _historyFuture = _repository.getQuizHistory();
-      _rankingFuture = _repository.getGlobalRanking();
-      _statsFuture = _repository.getQuizStats();
-
-      await Future.wait([_historyFuture!, _rankingFuture!, _statsFuture!]);
+      try {
+        _historyFuture = _repository.getQuizHistory();
+        await _historyFuture;
+      } catch (e) {
+        errorSource = 'getQuizHistory: ' + e.toString();
+        rethrow;
+      }
+      try {
+        _rankingFuture = _repository.getGlobalRanking();
+        await _rankingFuture;
+      } catch (e) {
+        errorSource = 'getGlobalRanking: ' + e.toString();
+        rethrow;
+      }
+      try {
+        _statsFuture = _repository.getQuizStats();
+        await _statsFuture;
+      } catch (e) {
+        errorSource = 'getQuizStats: ' + e.toString();
+        rethrow;
+      }
     } catch (e) {
       setState(() {
         _hasError = true;
-        _errorMessage = e.toString();
+        _errorMessage = errorSource ?? e.toString();
       });
     } finally {
       setState(() {

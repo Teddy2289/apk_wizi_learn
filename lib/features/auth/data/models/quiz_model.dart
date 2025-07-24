@@ -66,7 +66,9 @@ class Quiz {
 
     return Quiz(
       id: json['id'] as int? ?? 0,
-      titre: json['titre']?.toString() ?? 'Titre inconnu',
+      titre: json['titre']?.toString() 
+          ?? json['title']?.toString() 
+          ?? 'Titre inconnu',
       description: json['description']?.toString(),
       duree: json['duree']?.toString(),
       status: json['status']?.toString() ?? 'inactif',

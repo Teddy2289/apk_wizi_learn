@@ -160,7 +160,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
         leading: Icon(Icons.quiz, color: Theme.of(context).primaryColor),
         title: Text(history.quiz.titre),
         subtitle: Text(
-          'Score : ${history.score} | ${history.correctAnswers}/${history.totalQuestions} bonnes réponses',
+          'Score : ${history.score} pts ( ${history.correctAnswers}/${history.totalQuestions})',
         ),
         trailing: Icon(Icons.chevron_right),
         onTap: () {

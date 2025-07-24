@@ -76,13 +76,6 @@ class _LoginPageState extends State<LoginPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Logo
-                        Image.asset(
-                          'assets/images/logo1.png',
-                          height: 80,
-                          fit: BoxFit.contain,
-                        ),
-                        const SizedBox(height: 24),
                         // Titre
                         Text(
                           'Bienvenue',
@@ -93,7 +86,14 @@ class _LoginPageState extends State<LoginPage> {
                             color: kBrown,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 16),
+                        // Logo
+                        Image.asset(
+                          'assets/images/logo1.png',
+                          height: 80,
+                          fit: BoxFit.contain,
+                        ),
+                        const SizedBox(height: 16),
                         Text(
                           'Connectez-vous à votre compte',
                           style: Theme.of(context).textTheme.bodyMedium
