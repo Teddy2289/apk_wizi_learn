@@ -154,93 +154,240 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
         _confettiController?.play();
         await _playSound('audio/success.mp3');
       }
-      _lastCompletedCount = completed;
-      // Calcul de la position de l'avatar
-      int lastPlayed = 0;
-      for (int i = 0; i < filteredQuizzes.length; i++) {
-        if (_playedQuizIds.contains(filteredQuizzes[i].id.toString())) {
-          lastPlayed = i;
-        } else {
-          break;
-        }
-      }
-      int newAvatarIndex = lastPlayed;
-      if (lastPlayed < filteredQuizzes.length - 1 &&
-          !_playedQuizIds.contains(filteredQuizzes[lastPlayed + 1].id.toString())) {
-        newAvatarIndex = lastPlayed + 1;
-      }
-      if (mounted && newAvatarIndex != _avatarIndex) {
-        _avatarAnimController.forward(from: 0);
-        _avatarBounceController.forward(from: 0);
-      }
-      setState(() {
-        _avatarIndex = newAvatarIndex;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-    }
-  }
-
   @override
-  void dispose() {
-    _confettiController?.dispose();
-    _audioPlayer.dispose();
-    _avatarBounceController.dispose();
-    _avatarAnimController.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final boardRows = 2;
+    final boardCols = (_quizzes.length / boardRows).ceil();
+    final tileSize = 80.0;
+    final avatarSize = 56.0;
+    final avatarPos = _avatarIndex;
+
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      body: Stack(
+        children: [
+          _isLoading
+              ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
+              : _quizzes.isEmpty
+                  ? Center(child: Text('Aucun quiz disponible'))
+                  : Column(
+                      children: [
+                        const SizedBox(height: 16),
+                        Container(key: _keyProgress, child: _buildProgressBar(theme)),
+                        const SizedBox(height: 24),
+                        // Mario Party-like board
+                        Center(
+                          child: SizedBox(
+                            width: boardCols * tileSize + 32,
+                            height: boardRows * tileSize + 32,
+                            child: Stack(
+                              children: [
+                                // Board grid
+                                for (int row = 0; row < boardRows; row++)
+                                  for (int col = 0; col < boardCols; col++)
+                                    if (row * boardCols + col < _quizzes.length)
+                                      Positioned(
+                                        left: col * tileSize + 16,
+                                        top: row * tileSize + 16,
+                                        child: _buildBoardTile(
+                                          context,
+                                          _quizzes[row * boardCols + col],
+                                          row * boardCols + col,
+                                          tileSize,
+                                        ),
+                                      ),
+                                // Path arrows
+                                for (int i = 0; i < _quizzes.length - 1; i++)
+                                  _buildArrow(
+                                    from: i,
+                                    to: i + 1,
+                                    boardCols: boardCols,
+                                    tileSize: tileSize,
+                                  ),
+                                // Animated avatar
+                                AnimatedBuilder(
+                                  animation: Listenable.merge([
+                                    _avatarAnim,
+                                    _avatarBounceAnim,
+                                  ]),
+                                  builder: (context, child) {
+                                    final row = (avatarPos / boardCols).floor();
+                                    final col = avatarPos % boardCols;
+                                    final dx = col * tileSize + 16;
+                                    final dy = row * tileSize + 16;
+                                    final scale = 1.0 + 0.15 * _avatarBounceAnim.value;
+                                    return Positioned(
+                                      left: dx + tileSize / 2 - avatarSize / 2,
+                                      top: dy + tileSize / 2 - avatarSize / 2,
+                                      child: Transform.scale(
+                                        scale: scale,
+                                        child: Image.asset(
+                                          _avatarPath,
+                                          width: avatarSize,
+                                          height: avatarSize,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        // Missions section (unchanged)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              MissionCard(),
+                              MissionCard(),
+                              MissionCard(),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+          // Confetti animation
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController!,
+              blastDirectionality: BlastDirectionality.explosive,
+              shouldLoop: false,
+              colors: const [
+                Colors.green,
+                Colors.blue,
+                Colors.pink,
+                Colors.orange,
+                Colors.purple,
+              ],
+              emissionFrequency: 0.08,
+              numberOfParticles: 20,
+              maxBlastForce: 20,
+              minBlastForce: 8,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  Future<void> _playSound(String asset) async {
-    try {
-      await _audioPlayer.play(AssetSource(asset));
-    } catch (e) {
-      // ignore errors silently
-    }
+  // Board tile widget
+  Widget _buildBoardTile(BuildContext context, quiz_model.Quiz quiz, int index, double size) {
+    final isPlayed = _playedQuizIds.contains(quiz.id.toString());
+    final isUnlocked = _isQuizUnlocked(index);
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: isUnlocked && quiz.questions.isNotEmpty
+          ? () async {
+              await _playSound('audio/click.mp3');
+              final questions = quiz.questions;
+              if (questions.isEmpty) return;
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => QuizSessionPage(quiz: quiz, questions: questions),
+                ),
+              );
+              _loadInitialData();
+            }
+          : null,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: isPlayed
+              ? Colors.greenAccent.withOpacity(0.7)
+              : isUnlocked
+                  ? Colors.blueAccent.withOpacity(0.7)
+                  : Colors.grey.withOpacity(0.5),
+          border: Border.all(
+            color: isUnlocked ? theme.colorScheme.primary : Colors.grey,
+            width: 3,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Icon(
+              isPlayed
+                  ? Icons.check_circle
+                  : isUnlocked
+                      ? Icons.casino
+                      : Icons.lock,
+              color: isPlayed
+                  ? Colors.green
+                  : isUnlocked
+                      ? Colors.white
+                      : Colors.grey[700],
+              size: 32,
+            ),
+            Positioned(
+              bottom: 8,
+              left: 8,
+              right: 8,
+              child: Text(
+                quiz.titre,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isUnlocked ? theme.colorScheme.onPrimary : Colors.grey[800],
+                  fontSize: 13,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  // Ajout de la méthode de filtrage des quiz par points utilisateur
-  List<quiz_model.Quiz> _filterQuizzesByPoints(
-    List<quiz_model.Quiz> allQuizzes,
-    int userPoints,
-  ) {
-    if (allQuizzes.isEmpty) return [];
-
-    String normalizeLevel(String? level) {
-      if (level == null) return 'débutant';
-      final lvl = level.toLowerCase().trim();
-      if (lvl.contains('inter') || lvl.contains('moyen'))
-        return 'intermédiaire';
-      if (lvl.contains('avancé') || lvl.contains('expert')) return 'avancé';
-      return 'débutant';
+  // Arrow widget between tiles
+  Widget _buildArrow({required int from, required int to, required int boardCols, required double tileSize}) {
+    final fromRow = (from / boardCols).floor();
+    final fromCol = from % boardCols;
+    final toRow = (to / boardCols).floor();
+    final toCol = to % boardCols;
+    final arrowColor = Colors.orangeAccent;
+    final arrowSize = 32.0;
+    double left, top, angle;
+    if (fromRow == toRow) {
+      // Horizontal arrow
+      left = fromCol * tileSize + tileSize + 16 - arrowSize / 2;
+      top = fromRow * tileSize + tileSize / 2 + 16 - arrowSize / 2;
+      angle = 0;
+    } else {
+      // Vertical arrow
+      left = fromCol * tileSize + tileSize / 2 + 16 - arrowSize / 2;
+      top = fromRow * tileSize + tileSize + 16 - arrowSize / 2;
+      angle = 1.5708; // 90 deg
     }
-
-    final debutant =
-        allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
-    final intermediaire =
-        allQuizzes.where((q) => normalizeLevel(q.niveau) == 'intermédiaire').toList();
-    final avance =
-        allQuizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
-
-    List<quiz_model.Quiz> filtered = [];
-    if (userPoints < 10) filtered = debutant.take(2).toList();
-    else if (userPoints < 20) filtered = debutant.take(4).toList();
-    else if (userPoints < 40) filtered = [...debutant, ...intermediaire.take(2)];
-    else if (userPoints < 60) filtered = [...debutant, ...intermediaire];
-    else if (userPoints < 80) filtered = [...debutant, ...intermediaire, ...avance.take(2)];
-    else if (userPoints < 100) filtered = [...debutant, ...intermediaire, ...avance.take(4)];
-    else filtered = [...debutant, ...intermediaire, ...avance];
-
-    // Fallback: si aucun quiz filtré mais la liste d'origine n'est pas vide, retourne au moins le premier quiz
-    if (filtered.isEmpty && allQuizzes.isNotEmpty) {
-      filtered = [allQuizzes.first];
-    }
-    return filtered;
+    return Positioned(
+      left: left,
+      top: top,
+      child: Transform.rotate(
+        angle: angle,
+        child: Icon(
+          Icons.arrow_forward,
+          color: arrowColor,
+          size: arrowSize,
+        ),
+      ),
+    );
   }
-
-  Future<void> _loadLoginStreak() async {
-    // À remplacer par un appel API réel si disponible
-    // Pour la démo, on stocke la date du dernier lancement dans SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
     final lastDateStr = prefs.getString('last_login_date');
     final today = DateTime.now();
     if (lastDateStr != null) {
@@ -469,115 +616,30 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
                 children: [
                   const SizedBox(height: 16),
                   Container(key: _keyProgress, child: _buildProgressBar(theme)),
-                  // Section Missions du jour
+                  // Bouton pour accéder à la page Missions
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Text(
-                            'Missions du jour',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                    child: Center(
+                      child: ElevatedButton.icon(
+                        key: _keyMission,
+                        icon: const Icon(Icons.flag),
+                        label: const Text('Voir les missions'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => MissionsPage(
+                                loginStreak: _loginStreak,
+                                quizHistory: _quizHistory,
+                              ),
                             ),
-                          ),
-                        ),
-                        Container(
-                          key: _keyMission,
-                          child: MissionCard(
-                            mission: Mission(
-                              id: 1,
-                              title: 'Série de connexion',
-                              description:
-                                  'Connecte-toi plusieurs jours d\'affilée pour gagner un badge.',
-                              type: 'daily',
-                              goal: 5,
-                              reward: 'Badge',
-                              progress: _loginStreak,
-                              completed: _loginStreak >= 5,
-                              completedAt: null,
-                            ),
-                          ),
-                        ),
-                        MissionCard(
-                          mission: Mission(
-                            id: 2,
-                            title: 'Réussir 2 quiz',
-                            description:
-                                'Complète 2 quiz aujourd\'hui pour gagner un badge.',
-                            type: 'daily',
-                            goal: 2,
-                            reward: 'Badge',
-                            progress:
-                                _quizHistory.length >= 2
-                                    ? 2
-                                    : _quizHistory.length,
-                            completed: _quizHistory.length >= 2,
-                            completedAt: null,
-                          ),
-                        ),
-                        MissionCard(
-                          mission: Mission(
-                            id: 3,
-                            title: 'Obtenir 5 étoiles',
-                            description: 'Cumule 5 étoiles sur tes quiz.',
-                            type: 'daily',
-                            goal: 5,
-                            reward: 'Badge',
-                            progress: _quizHistory.fold(0, (sum, h) {
-                              final percent =
-                                  h.totalQuestions > 0
-                                      ? (h.correctAnswers / h.totalQuestions) *
-                                          100
-                                      : 0;
-                              if (percent >= 100) return sum + 3;
-                              if (percent >= 70) return sum + 2;
-                              if (percent >= 40) return sum + 1;
-                              return sum;
-                            }),
-                            completed:
-                                _quizHistory.fold(0, (sum, h) {
-                                  final percent =
-                                      h.totalQuestions > 0
-                                          ? (h.correctAnswers /
-                                                  h.totalQuestions) *
-                                              100
-                                          : 0;
-                                  if (percent >= 100) return sum + 3;
-                                  if (percent >= 70) return sum + 2;
-                                  if (percent >= 40) return sum + 1;
-                                  return sum;
-                                }) >=
-                                5,
-                            completedAt: null,
-                          ),
-                        ),
-                        MissionCard(
-                          mission: Mission(
-                            id: 4,
-                            title: 'Jouer un quiz difficile',
-                            description: 'Termine un quiz de niveau avancé.',
-                            type: 'daily',
-                            goal: 1,
-                            reward: 'Points',
-                            progress:
-                                _quizHistory.any(
-                                      (h) => h.quiz.niveau
-                                          .toLowerCase()
-                                          .contains('avanc'),
-                                    )
-                                    ? 1
-                                    : 0,
-                            completed: _quizHistory.any(
-                              (h) =>
-                                  h.quiz.niveau.toLowerCase().contains('avanc'),
-                            ),
-                            completedAt: null,
-                          ),
-                        ),
-                      ],
+                          );
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
