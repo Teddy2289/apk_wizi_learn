@@ -33,6 +33,10 @@ class QuizHistory {
       correctAnswers: QuizUtils.cleanInt(json['correctAnswers']),
     );
   }
+  @override
+  String toString() {
+    return 'QuizHistory(id: $id, score: $score, completedAt: $completedAt, timeSpent: $timeSpent, totalQuestions: $totalQuestions, correctAnswers: $correctAnswers, quiz: ${quiz.toString()})';
+  }
 }
 
 class GlobalRanking {

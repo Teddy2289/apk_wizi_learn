@@ -558,9 +558,9 @@ class _QuizPageState extends State<QuizPage> {
       future: _futureQuizHistory,
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox();
-
+  
         final history = snapshot.data!.firstWhere(
-          (h) => h.quiz.id == quiz.id.toString(),
+          (h) => h.quiz.id.toString() == quiz.id.toString(),
           orElse:
               () => QuizHistory(
                 id: '',
@@ -709,7 +709,7 @@ class _QuizPageState extends State<QuizPage> {
                           _buildStatItem(
                             Icons.star,
                             'Points',
-                            '${quiz.nbPointsTotal}',
+                            '${history.correctAnswers *2}',
                             categoryColor,
                             theme,
                           ),
