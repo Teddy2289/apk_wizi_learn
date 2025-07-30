@@ -1,24 +1,74 @@
 workflows:
-  ios-build:
-    name: iOS Build (Unsigned)
+  ios-unsigned-build:
+    name: Build Unsigned IPA
     max_build_duration: 60
     environment:
-      flutter: stable
+      flutter: "3.32.4"
       xcode: latest
       cocoapods: default
-      vars:
-        APP_ID: "com.example.wizi_learn"
+
     scripts:
-      - name: Install dependencies
+      - name: Setup iOS Deployment Target
         script: |
-          flutter pub get
-      - name: Build iOS (unsigned)
+          echo "Setting minimum iOS version to 13.0"
+          /usr/libexec/PlistBuddy -c "Set MinimumOSVersion 13.0" ios/Runner/Info.plist
+          sed -i '' "s/platform :ios, '.*'/platform :ios, '13.0'/" ios/Podfile
+
+      - name: Clean project
         script: |
-          flutter build ipa --no-codesign --export-options-plist=ios/ExportOptions.plist
+          flutter clean
+          rm -rf ios/Pods ios/Podfile.lock
+
+      - name: Prepare localization files
+        script: |
+          mkdir -p lib/l10n
+          touch lib/l10n/app_en.arb || true
+          echo '{}' > lib/l10n/app_en.arb
+
+      - name: Get Flutter dependencies
+        script: flutter pub get
+
+      - name: Generate Flutter files
+        script: |
+          flutter gen-l10n
+          if grep -q "build_runner" pubspec.yaml; then
+            flutter pub run build_runner build --delete-conflicting-outputs
+          fi
+
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios
+          pod install --repo-update
+          cd ..
+
+      - name: Build iOS (no codesign)
+        script: |
+          flutter build ios --release --no-codesign --dart-define=CI_BUILD=true
+
+      - name: Create unsigned IPA
+        script: |
+          mkdir -p build/artifacts/ios
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          cp -R Runner.app Payload/
+          zip -r app_unsigned.ipa Payload
+          mv app_unsigned.ipa ../../artifacts/ios/
+          cd ../../..
+
+      - name: Generate download link
+        script: |
+          echo "unsigned_ipa_path=artifacts/ios/app_unsigned.ipa" >> $CM_ENV
+          echo "IPA_URL=https://$CM_BUILD_ID.codemagic.app/artifacts/ios/app_unsigned.ipa" >> $CM_ENV
+
     artifacts:
-      - build/ios/ipa/*.ipa
-      - build/ios/ipa/*.xcarchive
+      - build/artifacts/**/*.ipa
+
     publishing:
       email:
         recipients:
-          - contact@wizi-learn.com
+          - mblitmanager@gmail.com
+      scripts:
+        - name: Notify success
+          script: |
+            echo "Build successful! Download unsigned IPA:"
+            echo $IPA_URL
