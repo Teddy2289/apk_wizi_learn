@@ -16,8 +16,8 @@ workflows:
         script: |
           flutter build ipa --no-codesign
     artifacts:
-      - build/ios/iphoneos/*.app
       - build/ios/ipa/*.ipa
+      - build/ios/ipa/*.xcarchive
     publishing:
       email:
         recipients:
