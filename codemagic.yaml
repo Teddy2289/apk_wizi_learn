@@ -1,0 +1,26 @@
+workflows:
+  ios-build:
+    name: iOS Build (Unsigned)
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      vars:
+        APP_ID: "com.example.wizi_learn"
+    scripts:
+      - name: Install dependencies
+        script: |
+          flutter pub get
+      - name: Build iOS (unsigned)
+        script: |
+          flutter build ios --no-codesign
+    artifacts:
+      - build/ios/iphoneos/*.app
+      - build/ios/ipa/*.ipa
+    publishing:
+      email:
+        recipients:
+          - contact@wizi-learn.com
+        notify_on_build_success: true
+        notify_on_build_failure: true
