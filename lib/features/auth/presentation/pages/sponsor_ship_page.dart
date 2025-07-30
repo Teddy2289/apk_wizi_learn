@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,11 +22,39 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
   bool _isGenerating = false;
   Map<String, dynamic>? _stats;
   bool _isLoadingStats = false;
+  late ParrainageRepository _parrainageRepo;
+  StreamSubscription<Map<String, dynamic>>? _statsSubscription;
 
   @override
   void initState() {
     super.initState();
-    _loadStats();
+    _parrainageRepo = ParrainageRepository(
+      apiClient: ApiClient(dio: Dio(), storage: const FlutterSecureStorage()),
+    );
+    _initStats();
+  }
+
+  void _initStats() async {
+    // Charge les stats initiales
+    setState(() => _isLoadingStats = true);
+    _stats = await _parrainageRepo.getStatsParrainage();
+    if (mounted) setState(() => _isLoadingStats = false);
+
+    // Écoute les mises à jour en temps réel
+    _statsSubscription = _parrainageRepo.getLiveStats().listen((newStats) {
+      if (mounted) {
+        setState(() {
+          _stats = newStats;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _statsSubscription?.cancel();
+    _parrainageRepo.dispose();
+    super.dispose();
   }
 
   Future<void> _loadStats() async {
