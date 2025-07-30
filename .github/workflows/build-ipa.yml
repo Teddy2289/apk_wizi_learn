@@ -13,30 +13,24 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Ruby (for fastlane, optional)
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.1'
-
     - name: Install dependencies
-      run: |
-        gem install bundler
-        bundle install || true
-        gem install fastlane
+      run: gem install xcpretty
 
-    - name: Build IPA
+    - name: Build Xcode archive
       run: |
         xcodebuild \
           -scheme "TonNomDeScheme" \
-          -workspace "TonProjet.xcworkspace" \ # ou -project si pas workspace
+          -workspace "TonProjet.xcworkspace" \
           -sdk iphoneos \
           -configuration Release \
           clean archive \
           -archivePath $PWD/build/TonApp.xcarchive \
           CODE_SIGN_IDENTITY="" \
           CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGNING_ALLOWED=NO
+          CODE_SIGNING_ALLOWED=NO | xcpretty
 
+    - name: Export IPA
+      run: |
         xcodebuild -exportArchive \
           -archivePath $PWD/build/TonApp.xcarchive \
           -exportPath $PWD/build/ipa \
