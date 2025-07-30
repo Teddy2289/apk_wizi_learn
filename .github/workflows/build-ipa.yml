@@ -1,0 +1,50 @@
+name: Build Unsigned IPA
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Ruby (for fastlane, optional)
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.1'
+
+    - name: Install dependencies
+      run: |
+        gem install bundler
+        bundle install || true
+        gem install fastlane
+
+    - name: Build IPA
+      run: |
+        xcodebuild \
+          -scheme "TonNomDeScheme" \
+          -workspace "TonProjet.xcworkspace" \ # ou -project si pas workspace
+          -sdk iphoneos \
+          -configuration Release \
+          clean archive \
+          -archivePath $PWD/build/TonApp.xcarchive \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO
+
+        xcodebuild -exportArchive \
+          -archivePath $PWD/build/TonApp.xcarchive \
+          -exportPath $PWD/build/ipa \
+          -exportOptionsPlist ExportOptions.plist \
+          -allowProvisioningUpdates
+
+    - name: Upload IPA artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: TonApp.ipa
+        path: build/ipa/*.ipa
