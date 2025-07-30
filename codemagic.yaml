@@ -12,9 +12,10 @@ workflows:
       - name: Install dependencies
         script: |
           flutter pub get
-      - name: Build iOS (unsigned)
+      - name: Build iOS (no codesign)
         script: |
-          flutter build ipa --no-codesign --export-options-plist=ios/ExportOptions.plist
+          flutter build ios --release --no-codesign --dart-define=CI_BUILD=true
+
       - name: Create unsigned IPA
         script: |
           mkdir -p build/artifacts/ios
