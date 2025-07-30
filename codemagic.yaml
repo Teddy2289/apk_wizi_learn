@@ -14,7 +14,7 @@ workflows:
           flutter pub get
       - name: Build iOS (unsigned)
         script: |
-          flutter build ipa --no-codesign
+          flutter build ipa --no-codesign --export-options-plist=ios/ExportOptions.plist
     artifacts:
       - build/ios/ipa/*.ipa
       - build/ios/ipa/*.xcarchive
