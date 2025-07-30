@@ -22,5 +22,3 @@ workflows:
       email:
         recipients:
           - contact@wizi-learn.com
-        notify_on_build_success: true
-        notify_on_build_failure: true
