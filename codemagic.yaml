@@ -14,7 +14,7 @@ workflows:
           flutter pub get
       - name: Build iOS (unsigned)
         script: |
-          flutter build ios --no-codesign
+          flutter build ipa --no-codesign
     artifacts:
       - build/ios/iphoneos/*.app
       - build/ios/ipa/*.ipa
