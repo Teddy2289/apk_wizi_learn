@@ -12,6 +12,7 @@ import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart'
 import 'package:wizi_learn/features/auth/data/repositories/quiz_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/stats_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_session_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/quiz_adventure_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 
 class QuizPage extends StatefulWidget {
@@ -170,7 +171,7 @@ class _QuizPageState extends State<QuizPage> {
       final history = await _statsRepository.getQuizHistory();
       setState(() {
         _futureQuizHistory = Future.value(history);
-        _playedQuizIds = history.map((h) => h.quiz.id).toList();
+        _playedQuizIds = history.map((h) => h.quiz.id.toString()).toList();
       });
     } catch (e) {
       debugPrint('Erreur chargement historique: $e');
@@ -292,9 +293,11 @@ class _QuizPageState extends State<QuizPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
-    final bool useCustomScaffold = args?['useCustomScaffold'] ?? _fromNotification;
+    final bool useCustomScaffold =
+        args?['useCustomScaffold'] ?? _fromNotification;
     final bool scrollToPlayed = args?['scrollToPlayed'] ?? false;
     final int selectedTabIndex;
 
@@ -508,7 +511,17 @@ class _QuizPageState extends State<QuizPage> {
           orElse:
               () => QuizHistory(
                 id: '',
-                quiz: Quiz(id: '', title: '', category: '', level: ''),
+                quiz: quiz_model.Quiz(
+                  id: 0,
+                  titre: '',
+                  description: '',
+                  duree: '',
+                  niveau: '',
+                  status: '',
+                  nbPointsTotal: 0,
+                  formation: quiz.formation,
+                  questions: const [],
+                ),
                 score: 0,
                 completedAt: '',
                 timeSpent: 0,
@@ -868,7 +881,7 @@ class _QuizPageState extends State<QuizPage> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${quiz.nbPointsTotal} points',
+                              '${quiz.nbPointsTotal > 10 ? 10 : quiz.nbPointsTotal} points',
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w500,
                                 color: categoryColor,

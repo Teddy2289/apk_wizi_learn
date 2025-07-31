@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../../../core/constants/route_constants.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+
+const Color kYellowLight = Color(0xFFFFF9C4); // jaune très clair
+const Color kYellow = Color(0xFFFFEB3B); // jaune
+const Color kOrange = Color(0xFFFF9800); // orange
+const Color kBrown = Color(0xFF8D6E63); // marron
+const Color kWhite = Colors.white;
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -52,8 +60,31 @@ class _OnSplashPage extends State<SplashPage> {
     _navigateToAuth();
   }
 
-  void _navigateToAuth() {
+  void _navigateToAuth() async {
+    // Enregistre localement que l'onboarding a été vu
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenOnboarding', true);
+
+    // Appel API pour mettre à jour onboarding_seen côté serveur
+    final token = await _getToken();
+    if (token != null) {
+      await http.post(
+        Uri.parse(
+          'https://ton-api.com/api/stagiaire/onboarding-seen',
+        ), // Remplace par ton URL
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+    }
     Navigator.pushReplacementNamed(context, RouteConstants.login);
+  }
+
+  // Fonction pour récupérer le token (à adapter selon ton stockage)
+  Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
   }
 
   @override
@@ -65,7 +96,7 @@ class _OnSplashPage extends State<SplashPage> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFFFEB823), Colors.deepOrange],
+            colors: [kYellowLight, kWhite, kOrange],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -81,7 +112,7 @@ class _OnSplashPage extends State<SplashPage> {
                   child: Text(
                     'Passer',
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.white,
+                      color: Colors.orange,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -137,7 +168,7 @@ class _OnSplashPage extends State<SplashPage> {
                             Icon(
                               _getIconData(item['icon']),
                               size: 40,
-                              color: Colors.white,
+                              color: Colors.orange.shade600,
                             ),
                             const SizedBox(height: 20),
 
@@ -145,7 +176,7 @@ class _OnSplashPage extends State<SplashPage> {
                             Text(
                               item['title']!,
                               style: theme.textTheme.headlineSmall?.copyWith(
-                                color: Colors.white,
+                                color: Colors.orange.shade600,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 28,
                               ),
@@ -157,7 +188,7 @@ class _OnSplashPage extends State<SplashPage> {
                             Text(
                               item['description']!,
                               style: theme.textTheme.bodyLarge?.copyWith(
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.black,
                                 height: 1.5,
                                 fontSize: 16,
                               ),
@@ -194,8 +225,8 @@ class _OnSplashPage extends State<SplashPage> {
                 child: ElevatedButton(
                   onPressed: _goToNextPage,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.deepOrange,
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -211,6 +242,7 @@ class _OnSplashPage extends State<SplashPage> {
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
                 ),

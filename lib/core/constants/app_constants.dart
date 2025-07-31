@@ -38,7 +38,8 @@ class AppConstants {
   static const String quizProgress = '/quiz/stats/progress';
 
   static String getAudioStreamUrl(String relativePath) {
-    relativePath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
+    relativePath =
+        relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
     return '$baseUrlImg/media/stream/$relativePath';
   }
 
