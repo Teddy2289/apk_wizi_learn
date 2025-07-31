@@ -23,11 +23,11 @@ class QuizNavigationControls extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              ElevatedButton(
-                onPressed:
-                    index > 0 ? sessionManager.goToPreviousQuestion : null,
-                child: const Text('Précédent'),
-              ),
+              // ElevatedButton(
+              //   onPressed:
+              //       index > 0 ? sessionManager.goToPreviousQuestion : null,
+              //   child: const Text('Précédent'),
+              // ),
               ElevatedButton(
                 onPressed: () => _handleNextOrComplete(context, index),
                 child: Text(

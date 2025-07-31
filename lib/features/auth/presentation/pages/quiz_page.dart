@@ -168,7 +168,14 @@ class _QuizPageState extends State<QuizPage> {
 
   Future<void> _loadQuizHistory() async {
     try {
+      debugPrint('Chargement historique des quiz...');
+      debugPrint('Stagiaire ID: $_connectedStagiaireId');
+
       final history = await _statsRepository.getQuizHistory();
+      debugPrint('QuizHistory (raw):');
+      for (var h in history) {
+        debugPrint('id: ${h.id}, quizId: ${h.quiz.id}, completedAt: ${h.completedAt}, score: ${h.score}, totalQuestions: ${h.totalQuestions}, correctAnswers: ${h.correctAnswers}');
+      }
       setState(() {
         _futureQuizHistory = Future.value(history);
         _playedQuizIds = history.map((h) => h.quiz.id.toString()).toList();
@@ -497,6 +504,37 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   Widget _buildPlayedQuizCard(quiz_model.Quiz quiz, ThemeData theme) {
+    // debugPrint('[Affichage carte historique] quizId: ${quiz.id}, completedAt: ${_futureQuizHistory == null ? 'future null' : 'voir ci-dessous'}');
+    // Si la future est déjà résolue, on affiche la valeur brute pour ce quiz
+    _futureQuizHistory?.then((historyList) {
+      final h = historyList?.firstWhere(
+        (h) => h.quiz.id.toString() == quiz.id.toString(),
+        orElse: () => QuizHistory(
+          id: '',
+          quiz: quiz_model.Quiz(
+            id: 0,
+            titre: '',
+            description: '',
+            duree: '',
+            niveau: '',
+            status: '',
+            nbPointsTotal: 0,
+            formation: quiz.formation,
+            questions: const [],
+          ),
+          score: 0,
+          completedAt: '',
+          timeSpent: 0,
+          totalQuestions: 0,
+          correctAnswers: 0,
+        ),
+      );
+      if (h?.completedAt.isNotEmpty == true) {
+        // debugPrint('[Affichage carte historique] quizId: ${quiz.id}, completedAt (history): ${h?.completedAt}');
+        debugPrint('correctAnswers: ${h?.correctAnswers}, totalQuestions: ${h?.totalQuestions}');
+        debugPrint('score: ${h?.score}, timeSpent: ${h?.timeSpent}');
+      }
+    });
     final categoryColor = _getCategoryColor(quiz.formation.categorie, theme);
     final isExpanded = _expandedQuizzes[quiz.id] ?? false;
     final textColor = theme.colorScheme.onSurface;
@@ -506,32 +544,43 @@ class _QuizPageState extends State<QuizPage> {
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox();
 
-        final history = snapshot.data!.firstWhere(
-          (h) => h.quiz.id == quiz.id.toString(),
-          orElse:
-              () => QuizHistory(
-                id: '',
-                quiz: quiz_model.Quiz(
-                  id: 0,
-                  titre: '',
-                  description: '',
-                  duree: '',
-                  niveau: '',
-                  status: '',
-                  nbPointsTotal: 0,
-                  formation: quiz.formation,
-                  questions: const [],
-                ),
-                score: 0,
-                completedAt: '',
-                timeSpent: 0,
-                totalQuestions: 0,
-                correctAnswers: 0,
-              ),
-        );
+    final history = snapshot.data!.firstWhere(
+      (h) => h.quiz.id.toString() == quiz.id.toString(),
+      orElse: () => QuizHistory(
+        id: '',
+        quiz: quiz_model.Quiz(
+          id: 0,
+          titre: '',
+          description: '',
+          duree: '',
+          niveau: '',
+          status: '',
+          nbPointsTotal: 0,
+          formation: quiz.formation,
+          questions: const [],
+        ),
+        score: 0,
+        completedAt: '',
+        timeSpent: 0,
+        totalQuestions: 0,
+        correctAnswers: 0,
+      ),
+    );
 
-        final scorePercentage =
-            (history.correctAnswers / history.totalQuestions * 100).round();
+        // Correction NaN : si totalQuestions == 0, afficher 0%
+        final scorePercentage = (history.totalQuestions == 0)
+            ? 0
+            : (history.correctAnswers / history.totalQuestions * 100).round();
+
+        // Gestion du format de date invalide + debug valeur brute
+        String formattedDate;
+        String debugDate = history.completedAt;
+        try {
+          formattedDate = 'Terminé le '
+              + DateFormat('dd/MM/yyyy').format(DateTime.parse(history.completedAt));
+        } catch (e) {
+          formattedDate = 'Date inconnue (raw: $debugDate)';
+        }
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
@@ -599,9 +648,24 @@ class _QuizPageState extends State<QuizPage> {
                                 color: textColor,
                               ),
                             ),
+                            const SizedBox(height: 2),
+                            Text(
+                              quiz.formation.titre,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: categoryColor,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              quiz.niveau,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                              ),
+                            ),
                             const SizedBox(height: 4),
                             Text(
-                              'Terminé le ${DateFormat('dd/MM/yyyy').format(DateTime.parse(history.completedAt))}',
+                              formattedDate,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurface.withOpacity(
                                   0.6,
@@ -656,7 +720,7 @@ class _QuizPageState extends State<QuizPage> {
                           _buildStatItem(
                             Icons.star,
                             'Points',
-                            '${quiz.nbPointsTotal}',
+                            '${history.correctAnswers*2}',
                             categoryColor,
                             theme,
                           ),
@@ -881,7 +945,11 @@ class _QuizPageState extends State<QuizPage> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${quiz.nbPointsTotal > 10 ? 10 : quiz.nbPointsTotal} points',
+                              (() {
+                                final nbQuestions = quiz.questions.length;
+                                final points = nbQuestions > 5 ? 10 : nbQuestions * 2;
+                                return '$points points';
+                              })(),
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w500,
                                 color: categoryColor,
