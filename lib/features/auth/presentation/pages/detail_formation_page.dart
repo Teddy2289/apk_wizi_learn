@@ -156,7 +156,8 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
               // Image header avec effet parallax
               SliverAppBar(
                 automaticallyImplyLeading: false,
-                expandedHeight: 280,
+                backgroundColor: Colors.transparent,
+                expandedHeight: 130,
                 stretch: true,
                 flexibleSpace: FlexibleSpaceBar(
                   stretchModes: const [StretchMode.zoomBackground],
@@ -164,9 +165,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                     tag: 'formation-${formation.id}',
                     child: CachedNetworkImage(
                       imageUrl: '${AppConstants.baseUrlImg}/${formation.imageUrl}',
-                      fit: BoxFit.contain,
+                      fit: BoxFit.fitHeight,
                       placeholder: (context, url) => Container(
-                        color: categoryColor.withOpacity(0.1),
+                        color: categoryColor,
                         child: Center(
                           child: Icon(
                             Icons.school,
@@ -488,13 +489,10 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
   Color _getCategoryColor(String category) {
     // Palette de couleurs harmonieuses
     final colors = {
-      'Bureautique': const Color(0xFF4E79A7),
-      'Langues': const Color(0xFFE15759),
-      'Internet': const Color(0xFFF28E2B),
-      'Création': const Color(0xFF76B7B2),
-      'Développement': const Color(0xFF59A14F),
-      'Design': const Color(0xFFEDC948),
-      'Marketing': const Color(0xFFB07AA1),
+      'Bureautique': const Color(0xFF3D9BE9),
+      'Langues': const Color(0xFFA55E6E),
+      'Internet': const Color(0xFFFFC533),
+      'Création': const Color(0xFF9392BE),
     };
     return colors[category] ?? const Color(0xFF79706E);
   }
