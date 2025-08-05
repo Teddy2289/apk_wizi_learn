@@ -32,12 +32,10 @@ class _HomePageState extends State<HomePage> {
   List<Formation> _randomFormations = [];
   bool _isLoading = true;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
   String? _prenom;
   String? _nom;
   bool _isLoadingUser = true;
-
-
 
   @override
   void initState() {
@@ -87,7 +85,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-
   void _initFcmListener() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       final notification = message.notification;
@@ -115,7 +112,7 @@ class _HomePageState extends State<HomePage> {
       final contacts = await _contactRepository.getContacts();
       final formationsRaw = await _formationRepository.getRandomFormations(3);
       final formations =
-      formationsRaw.whereType<Formation>().toList(); // Cleaner filtering
+          formationsRaw.whereType<Formation>().toList(); // Cleaner filtering
 
       setState(() {
         _contacts = contacts;
@@ -145,63 +142,64 @@ class _HomePageState extends State<HomePage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-
-      body: (_isLoading || _isLoadingUser )
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-        onRefresh: _loadData,
-        color: theme.primaryColor,
-        child: CustomScrollView(
-          slivers: [
-            // Spacer
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-            // Section de Bienvenue Personnalisée
-            SliverToBoxAdapter(child: _buildWelcomeSection(isTablet)),
-
-            // Spacer
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-            // Section Formations
-            SliverToBoxAdapter(
-              child: _buildSectionTitle(
-                context,
-                title: 'Formations recommandées',
-                icon: LucideIcons.bookOpen,
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: RandomFormationsWidget(
-                formations: _randomFormations,
+      body:
+          (_isLoading || _isLoadingUser)
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
                 onRefresh: _loadData,
-              ),
-            ),
+                color: theme.primaryColor,
+                child: CustomScrollView(
+                  slivers: [
+                    // Spacer
+                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-            // Spacer
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                    // Section de Bienvenue Personnalisée
+                    SliverToBoxAdapter(child: _buildWelcomeSection(isTablet)),
 
-            // Section Contacts
-            SliverToBoxAdapter(
-              child: _buildSectionWithButton(
-                context,
-                title: 'Mes contacts',
-                icon: LucideIcons.user,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ContactPage(contacts: _contacts),
+                    // Spacer
+                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                    // Section Formations
+                    SliverToBoxAdapter(
+                      child: _buildSectionTitle(
+                        context,
+                        title: 'Formations recommandées',
+                        icon: LucideIcons.bookOpen,
+                      ),
                     ),
-                  );
-                },
-              ),
-            ),
+                    SliverToBoxAdapter(
+                      child: RandomFormationsWidget(
+                        formations: _randomFormations,
+                        onRefresh: _loadData,
+                      ),
+                    ),
 
-            // Liste des contacts
-            _buildContactsList(isTablet),
-          ],
-        ),
-      ),
+                    // Spacer
+                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                    // Section Contacts
+                    SliverToBoxAdapter(
+                      child: _buildSectionWithButton(
+                        context,
+                        title: 'Mes contacts',
+                        icon: LucideIcons.user,
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => ContactPage(contacts: _contacts),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    // Liste des contacts
+                    _buildContactsList(isTablet),
+                  ],
+                ),
+              ),
     );
   }
 
@@ -238,7 +236,7 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-              'Bonjour, ${_prenom ?? 'Utilisateur'} ${_nom ?? ''} !, Bienvenu',
+                    'Bonjour, ${_prenom ?? 'Utilisateur'} ${_nom ?? ''} !, Bienvenu',
                     style: TextStyle(
                       fontSize: isTablet ? 26 : 20,
                       fontWeight: FontWeight.bold,
@@ -262,7 +260,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildSectionTitle(BuildContext context, {required String title, required IconData icon}) {
+  Widget _buildSectionTitle(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -282,11 +284,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSectionWithButton(
-      BuildContext context, {
-        required String title,
-        required IconData icon,
-        required VoidCallback onPressed,
-      }) {
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -324,46 +326,62 @@ class _HomePageState extends State<HomePage> {
         child: Center(
           child: Text(
             'Aucun contact disponible',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Colors.grey,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
           ),
         ),
       );
     }
 
-    final wantedRoles = {
-      'commercial',
-      'formateur',
-      'pôle relation client',
+    // 1. Définir les types recherchés AVEC leur format exact de l'API
+    final wantedTypes = {
+      'Commercial', // Exactement comme dans l'API
+      'Formateur', // Exactement comme dans l'API
+      'pole_relation_client', // Exactement comme dans l'API
     };
+
+    // 2. Filtrer les contacts
     final filteredContacts = <String, Contact>{};
-    for (final c in _contacts) {
-      final role = c.role.toLowerCase().replaceAll('_', ' ');
-      if (wantedRoles.contains(role) && !filteredContacts.containsKey(role)) {
-        filteredContacts[role] = c;
+
+    for (final contact in _contacts) {
+      if (wantedTypes.contains(contact.type)) {
+        // 3. Utiliser une clé simple pour éviter les doublons
+        final roleKey =
+            contact.type.toLowerCase().contains('relation')
+                ? 'relation'
+                : contact.type.toLowerCase();
+
+        if (!filteredContacts.containsKey(roleKey)) {
+          filteredContacts[roleKey] = contact;
+        }
       }
     }
-    final contactsToShow = filteredContacts.values.toList();
+
+    // 4. Ordonner comme souhaité (Commercial → Formateur → Relation)
+    final orderedContacts = [
+      if (filteredContacts.containsKey('commercial'))
+        filteredContacts['commercial']!,
+      if (filteredContacts.containsKey('formateur'))
+        filteredContacts['formateur']!,
+      if (filteredContacts.containsKey('relation'))
+        filteredContacts['relation']!,
+    ];
 
     return SliverPadding(
       padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
       sliver: SliverGrid(
-        delegate: SliverChildBuilderDelegate(
-              (context, index) {
-            return ContactCard(
-              contact: contactsToShow[index],
-              showFormations: false,
-            );
-          },
-          childCount: contactsToShow.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          return ContactCard(
+            contact: orderedContacts[index],
+            showFormations: false,
+          );
+        }, childCount: orderedContacts.length),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: isTablet ? 2 : 1,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           childAspectRatio: isTablet ? 2.5 : 2.6,
-
         ),
       ),
     );

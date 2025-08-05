@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/contact_model.dart';
@@ -32,6 +33,7 @@ class ContactRepository {
 
     if (poleRelation is List) {
       contacts.addAll(poleRelation.map((e) => Contact.fromJson(e)).toList());
+      debugPrint('Contacts du pôle relation : ${poleRelation}');
     } else {
       print('⚠ pole_relation n’est pas une liste : $poleRelation');
     }
