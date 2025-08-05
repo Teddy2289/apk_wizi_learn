@@ -46,14 +46,24 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     _sessionManager = QuizSessionManager(
       questions: widget.questions,
       quizId: widget.quiz.id.toString(),
+      onTimerEnd: _goToNextQuestionOnTimerEnd,
     );
     _sessionManager.startSession();
     _sessionManager.currentQuestionIndex.addListener(_syncPageController);
   }
 
+  void _goToNextQuestionOnTimerEnd() {
+    final current = _sessionManager.currentQuestionIndex.value;
+    if (current < widget.questions.length - 1) {
+      _sessionManager.goToQuestion(current + 1);
+    }
+    // Si besoin, gérer la fin du quiz ici
+  }
+
   void _syncPageController() {
     if (_pageController.hasClients &&
-        _pageController.page?.round() != _sessionManager.currentQuestionIndex.value) {
+        _pageController.page?.round() !=
+            _sessionManager.currentQuestionIndex.value) {
       _pageController.animateToPage(
         _sessionManager.currentQuestionIndex.value,
         duration: const Duration(milliseconds: 300),
@@ -80,8 +90,12 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
 
   void _handleHorizontalDragEnd(DragEndDetails details) {
     if (_dragOffset.abs() > 20) {
-      final newIndex = _sessionManager.currentQuestionIndex.value + (_dragOffset < 0 ? 1 : -1);
-      _sessionManager.goToQuestion(newIndex.clamp(0, widget.questions.length - 1));
+      final newIndex =
+          _sessionManager.currentQuestionIndex.value +
+          (_dragOffset < 0 ? 1 : -1);
+      _sessionManager.goToQuestion(
+        newIndex.clamp(0, widget.questions.length - 1),
+      );
     }
     setState(() => _dragOffset = 0);
   }
@@ -128,7 +142,10 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                     valueListenable: _sessionManager.currentQuestionIndex,
                     builder: (_, index, __) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: colorScheme.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),

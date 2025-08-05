@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/data/models/stats_model.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/quiz_detail_page.dart';
 
 class QuizHistoryWidget extends StatefulWidget {
   final List<QuizHistory> history;
@@ -38,9 +39,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
     return Card(
       margin: EdgeInsets.all(isSmallScreen ? 12 : 16),
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -83,7 +82,9 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                        color: theme.colorScheme.surfaceVariant.withOpacity(
+                          0.3,
+                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -101,27 +102,31 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
 
           // Liste des quiz
           Flexible(
-            child: _currentPageItems.isEmpty
-                ? _buildEmptyState()
-                : ListView.separated(
-              shrinkWrap: true,
-              physics: const ClampingScrollPhysics(),
-              padding: EdgeInsets.only(
-                left: isSmallScreen ? 16 : 20,
-                right: isSmallScreen ? 16 : 20,
-                bottom: 16,
-              ),
-              itemCount: _currentPageItems.length,
-              separatorBuilder: (_, __) => SizedBox(height: isSmallScreen ? 12 : 16),
-              itemBuilder: (_, index) => _buildHistoryItem(
-                _currentPageItems[index],
-                isSmallScreen,
-              ),
-            ),
+            child:
+                _currentPageItems.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.separated(
+                      shrinkWrap: true,
+                      physics: const ClampingScrollPhysics(),
+                      padding: EdgeInsets.only(
+                        left: isSmallScreen ? 16 : 20,
+                        right: isSmallScreen ? 16 : 20,
+                        bottom: 16,
+                      ),
+                      itemCount: _currentPageItems.length,
+                      separatorBuilder:
+                          (_, __) => SizedBox(height: isSmallScreen ? 12 : 16),
+                      itemBuilder:
+                          (_, index) => _buildHistoryItem(
+                            context,
+                            _currentPageItems[index],
+                          ),
+                    ),
           ),
 
           // Pagination
-          if (widget.history.isNotEmpty) _buildPaginationControls(isSmallScreen),
+          if (widget.history.isNotEmpty)
+            _buildPaginationControls(isSmallScreen),
         ],
       ),
     );
@@ -141,100 +146,44 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
           const SizedBox(height: 16),
           Text(
             'Aucun quiz complété',
-            style: TextStyle(
-              color: Colors.grey.withOpacity(0.6),
-              fontSize: 16,
-            ),
+            style: TextStyle(color: Colors.grey.withOpacity(0.6), fontSize: 16),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHistoryItem(QuizHistory item, bool isSmallScreen) {
-    final theme = Theme.of(context);
-    final scorePercentage = (item.correctAnswers / item.totalQuestions) * 100;
-    final dateTime = item.completedAt.split('T');
-    final completedDate = dateTime[0];
-    final completedTime = dateTime[1].substring(0, 5);
-
-    return Material(
-      borderRadius: BorderRadius.circular(12),
-      color: theme.colorScheme.surface,
-      elevation: 1,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {},
-        child: Padding(
-          padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Titre et score
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      item.quiz.title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  SizedBox(width: isSmallScreen ? 8 : 12),
-                  _buildScoreIndicator(scorePercentage, isSmallScreen),
-                ],
-              ),
-              SizedBox(height: isSmallScreen ? 8 : 12),
-
-              // Catégories
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  _buildCategoryTag(
-                    icon: Icons.category_outlined,
-                    label: item.quiz.category,
-                    color: Colors.blue,
-                    isSmallScreen: isSmallScreen,
-                  ),
-                  _buildCategoryTag(
-                    icon: Icons.star_outline,
-                    label: item.quiz.level,
-                    color: Colors.amber,
-                    isSmallScreen: isSmallScreen,
-                  ),
-                ],
-              ),
-              SizedBox(height: isSmallScreen ? 8 : 12),
-
-              // Détails
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildDetailItem(
-                    icon: Icons.score_outlined,
-                    value: '${item.correctAnswers}/${item.totalQuestions}',
-                    isSmallScreen: isSmallScreen,
-                  ),
-                  _buildDetailItem(
-                    icon: Icons.timer_outlined,
-                    value: '${item.timeSpent ~/ 60}m ${item.timeSpent % 60}s',
-                    isSmallScreen: isSmallScreen,
-                  ),
-                  _buildDetailItem(
-                    icon: Icons.calendar_today_outlined,
-                    value: '$completedDate à $completedTime',
-                    isSmallScreen: isSmallScreen,
-                  ),
-                ],
-              ),
-            ],
-          ),
+  Widget _buildHistoryItem(BuildContext context, QuizHistory history) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: ListTile(
+        leading: Icon(Icons.quiz, color: Theme.of(context).primaryColor),
+        title: Text(history.quiz.titre),
+        subtitle: Text(
+          'Score : ${history.score} | ${history.correctAnswers}/${history.totalQuestions} bonnes réponses',
         ),
+        trailing: Icon(Icons.chevron_right),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (_) => QuizDetailPage(
+                    quizTitle: history.quiz.titre,
+                    score: history.score,
+                    totalQuestions: history.totalQuestions,
+                    correctAnswers: history.correctAnswers,
+                    timeSpent: history.timeSpent,
+                    completedAt:
+                        DateTime.tryParse(history.completedAt) ??
+                        DateTime.now(),
+                    questions:
+                        history.questions ??
+                        [], // Assure-toi que questions est bien rempli
+                  ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -247,10 +196,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: color.withOpacity(0.1),
-        border: Border.all(
-          color: color,
-          width: 2,
-        ),
+        border: Border.all(color: color, width: 2),
       ),
       child: Center(
         child: Text(
@@ -276,10 +222,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
       avatar: Icon(icon, size: isSmallScreen ? 16 : 18, color: color),
       label: Text(
         label,
-        style: TextStyle(
-          color: color,
-          fontSize: isSmallScreen ? 12 : 13,
-        ),
+        style: TextStyle(color: color, fontSize: isSmallScreen ? 12 : 13),
       ),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: VisualDensity.compact,
@@ -330,7 +273,8 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
             children: [
               IconButton(
                 icon: Icon(Icons.chevron_left),
-                onPressed: _currentPage > 1 ? () => _goToPage(_currentPage - 1) : null,
+                onPressed:
+                    _currentPage > 1 ? () => _goToPage(_currentPage - 1) : null,
                 color: Theme.of(context).primaryColor,
               ),
               SizedBox(width: 8),
@@ -344,7 +288,10 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
               SizedBox(width: 8),
               IconButton(
                 icon: Icon(Icons.chevron_right),
-                onPressed: _currentPage < _totalPages ? () => _goToPage(_currentPage + 1) : null,
+                onPressed:
+                    _currentPage < _totalPages
+                        ? () => _goToPage(_currentPage + 1)
+                        : null,
                 color: Theme.of(context).primaryColor,
               ),
             ],

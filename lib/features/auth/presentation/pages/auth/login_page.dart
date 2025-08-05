@@ -8,7 +8,6 @@ import '../../bloc/auth_bloc.dart';
 import '../../components/auth_text_field.dart';
 import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
 
-
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -34,47 +33,24 @@ class _LoginPageState extends State<LoginPage> {
     final size = MediaQuery.of(context).size;
     final isSmallScreen = size.width < 600;
 
+    // Palette de couleurs harmonisée avec splash_page.dart
+    const Color kYellowLight = Color(0xFFFFF9C4); // jaune très clair
+    const Color kYellow = Color(0xFFFFEB3B); // jaune
+    const Color kOrange = Color(0xFFFF9800); // orange
+    const Color kBrown = Color(0xFF8D6E63); // marron
+    const Color kWhite = Colors.white;
+
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.primaryAccent,
-              Colors.orange,
-            ],
+            colors: [kYellowLight, kWhite, kOrange],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
         ),
         child: Stack(
           children: [
-            // Décoration de fond
-            Positioned(
-              top: -50,
-              right: -50,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.primary.withOpacity(0.8),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -80,
-              left: -80,
-              child: Container(
-                width: 250,
-                height: 250,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.primary,
-                ),
-              ),
-            ),
-
-            // Contenu principal
             Center(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(
@@ -84,11 +60,11 @@ class _LoginPageState extends State<LoginPage> {
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 500),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: kWhite,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: kOrange.withOpacity(0.08),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -107,24 +83,23 @@ class _LoginPageState extends State<LoginPage> {
                           fit: BoxFit.contain,
                         ),
                         const SizedBox(height: 24),
-
                         // Titre
                         Text(
                           'Bienvenue',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          style: Theme.of(
+                            context,
+                          ).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                            color: kBrown,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Connectez-vous à votre compte',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey.shade600,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: Colors.grey.shade600),
                         ),
                         const SizedBox(height: 32),
-
                         // Champ email
                         AuthTextField(
                           controller: _emailController,
@@ -136,15 +111,15 @@ class _LoginPageState extends State<LoginPage> {
                             if (value == null || value.isEmpty) {
                               return 'Veuillez entrer votre email';
                             }
-                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                .hasMatch(value)) {
+                            if (!RegExp(
+                              r'^[^@]+@[^@]+\.[^@]+$',
+                            ).hasMatch(value)) {
                               return 'Email invalide';
                             }
                             return null;
                           },
                         ),
                         const SizedBox(height: 20),
-
                         // Champ mot de passe
                         AuthTextField(
                           controller: _passwordController,
@@ -176,7 +151,6 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
                         const SizedBox(height: 16),
-
                         // Lien mot de passe oublié
                         Align(
                           alignment: Alignment.centerRight,
@@ -185,20 +159,18 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const ForgotPasswordScreen(),
+                                  builder:
+                                      (context) => const ForgotPasswordScreen(),
                                 ),
                               );
                             },
                             child: Text(
                               'Mot de passe oublié ?',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                              ),
+                              style: TextStyle(color: kOrange),
                             ),
                           ),
                         ),
                         const SizedBox(height: 20),
-
                         // Bouton de connexion
                         BlocBuilder<AuthBloc, AuthState>(
                           builder: (context, state) {
@@ -209,7 +181,8 @@ class _LoginPageState extends State<LoginPage> {
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                        AppColors.primary),
+                                      kOrange,
+                                    ),
                                   ),
                                 ),
                               );
@@ -219,19 +192,22 @@ class _LoginPageState extends State<LoginPage> {
                               height: 50,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
+                                  backgroundColor: Colors.black,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
                                 ),
                                 onPressed: () {
                                   if (_formKey.currentState!.validate()) {
                                     context.read<AuthBloc>().add(
                                       LoginEvent(
                                         email: _emailController.text.trim(),
-                                        password: _passwordController.text.trim(),
+                                        password:
+                                            _passwordController.text.trim(),
                                       ),
                                     );
                                   }
@@ -255,7 +231,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
-
             // Gestion des états (erreur ou succès)
             BlocListener<AuthBloc, AuthState>(
               listener: (context, state) {
@@ -288,7 +263,9 @@ class _LoginPageState extends State<LoginPage> {
                   );
                   Future.microtask(() {
                     Navigator.pushReplacementNamed(
-                        context, RouteConstants.dashboard);
+                      context,
+                      RouteConstants.dashboard,
+                    );
                   });
                 }
               },

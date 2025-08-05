@@ -117,8 +117,23 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
     }
   }
 
+  String normalizeYoutubeUrl(String url) {
+    final shortsReg = RegExp(r'youtube\.com/shorts/([\w-]+)');
+    final match = shortsReg.firstMatch(url);
+    if (match != null && match.groupCount >= 1) {
+      final id = match.group(1);
+      return 'https://www.youtube.com/watch?v=$id';
+    }
+    return url;
+  }
+
+  bool isYoutubeShort(String url) {
+    return url.contains('youtube.com/shorts/');
+  }
+
   void _initYoutubeController(String url) {
-    final videoId = YoutubePlayer.convertUrlToId(url) ?? '';
+    final normalizedUrl = normalizeYoutubeUrl(url);
+    final videoId = YoutubePlayer.convertUrlToId(normalizedUrl) ?? '';
     _controller = YoutubePlayerController(
       initialVideoId: videoId,
       flags: const YoutubePlayerFlags(
@@ -134,14 +149,18 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
   void _switchVideo(Media media) {
     setState(() {
       currentVideo = media;
-      _controller.load(YoutubePlayer.convertUrlToId(media.url)!);
+      final normalizedUrl = normalizeYoutubeUrl(media.url);
+      _controller.load(YoutubePlayer.convertUrlToId(normalizedUrl)!);
       _controller.play();
     });
   }
 
   void _toggleFullScreen() {
     if (_isFullScreen) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: SystemUiOverlay.values,
+      );
       SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     } else {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -171,7 +190,10 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
     _controller.removeListener(_playerListener);
     _controller.removeListener(_onPlayerStateChange);
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: SystemUiOverlay.values,
+    );
     _controller.dispose();
     super.dispose();
   }
@@ -183,9 +205,13 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
     final textTheme = theme.textTheme;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    final relatedVideos = widget.videosInSameCategory
-        .where((v) => v.id != currentVideo.id)
-        .toList();
+    final relatedVideos =
+        widget.videosInSameCategory
+            .where((v) => v.id != currentVideo.id)
+            .toList();
+
+    final isShort = isYoutubeShort(currentVideo.url);
+    final screenHeight = MediaQuery.of(context).size.height;
 
     // En plein écran
     if (_isFullScreen) {
@@ -291,7 +317,9 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(showPlaylist ? Icons.expand_less : Icons.expand_more),
+                  icon: Icon(
+                    showPlaylist ? Icons.expand_less : Icons.expand_more,
+                  ),
                   onPressed: () => setState(() => showPlaylist = !showPlaylist),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -300,9 +328,15 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
             ),
           ),
           Expanded(
-            child: showPlaylist
-                ? _buildPlaylist(relatedVideos, colorScheme, textTheme, screenWidth)
-                : _buildDescription(context, colorScheme, textTheme),
+            child:
+                showPlaylist
+                    ? _buildPlaylist(
+                      relatedVideos,
+                      colorScheme,
+                      textTheme,
+                      screenWidth,
+                    )
+                    : _buildDescription(context, colorScheme, textTheme),
           ),
         ],
       ),
@@ -310,11 +344,11 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
   }
 
   Widget _buildPlaylist(
-      List<Media> relatedVideos,
-      ColorScheme colorScheme,
-      TextTheme textTheme,
-      double screenWidth,
-      ) {
+    List<Media> relatedVideos,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+    double screenWidth,
+  ) {
     return ListView.separated(
       padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
       physics: const BouncingScrollPhysics(),
@@ -334,9 +368,10 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
               : null,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: isSelected
-                ? BorderSide(color: colorScheme.primary, width: 2)
-                : BorderSide.none,
+            side:
+                isSelected
+                    ? BorderSide(color: colorScheme.primary, width: 2)
+                    : BorderSide.none,
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(10),
@@ -446,7 +481,11 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
     );
   }
 
-  Widget _buildDescription(BuildContext context, ColorScheme colorScheme, TextTheme textTheme) {
+  Widget _buildDescription(
+    BuildContext context,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+  ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
       child: Column(
@@ -520,9 +559,8 @@ class _ExpandableDescriptionState extends State<_ExpandableDescription> {
               ),
             },
           ),
-          crossFadeState: expanded
-              ? CrossFadeState.showSecond
-              : CrossFadeState.showFirst,
+          crossFadeState:
+              expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 200),
         ),
         Align(
