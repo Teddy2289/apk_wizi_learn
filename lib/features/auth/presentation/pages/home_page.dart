@@ -12,18 +12,16 @@ import 'package:wizi_learn/features/auth/presentation/widgets/random_formations_
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-
-import '../../data/datasources/auth_remote_data_source.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../data/datasources/auth_remote_data_source.dart';
 import '../../data/repositories/auth_repository.dart';
 
-// === Palette de couleurs Wizi Learn ===
-const Color kYellowLight = Color(0xFFFFF9C4); // jaune très clair
-const Color kYellow = Color(0xFFFFEB3B); // jaune
-const Color kOrange = Color(0xFFFF9800); // orange
-const Color kOrangeDark = Color(0xFFF57C00); // orange foncé
-const Color kBrown = Color(0xFF8D6E63); // marron
+const Color kYellowLight = Color(0xFFFFF9C4);
+const Color kYellow = Color(0xFFFFEB3B);
+const Color kOrange = Color(0xFFFF9800);
+const Color kOrangeDark = Color(0xFFF57C00);
+const Color kBrown = Color(0xFF8D6E63);
 const Color kWhite = Colors.white;
 
 class HomePage extends StatefulWidget {
@@ -37,9 +35,8 @@ class _HomePageState extends State<HomePage> {
   bool _showHomeTutorial = false;
   final List<Map<String, String>> _homeTutorialSteps = [
     {
-      'title': 'Bienvenue sur l’accueil !',
-      'desc':
-          'Retrouvez ici vos contacts, formations et notifications importantes.',
+      'title': 'Bienvenue sur l\'accueil !',
+      'desc': 'Retrouvez ici vos contacts, formations et notifications importantes.',
     },
     {
       'title': 'Vos contacts',
@@ -50,33 +47,30 @@ class _HomePageState extends State<HomePage> {
       'desc': 'Découvrez les formations sélectionnées pour vous chaque jour.',
     },
   ];
+
   late final ContactRepository _contactRepository;
   late final FormationRepository _formationRepository;
   late final AuthRepository _authRepository;
-  int? _connectedStagiaireId;
   List<Contact> _contacts = [];
   List<Formation> _randomFormations = [];
   bool _isLoading = true;
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
   String? _prenom;
   String? _nom;
   bool _isLoadingUser = true;
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   Future<void> _checkHomeTutorialSeen() async {
     final prefs = await SharedPreferences.getInstance();
     final seen = prefs.getBool('hasSeenHomeTutorial') ?? false;
     if (!seen) {
-      setState(() {
-        _showHomeTutorial = true;
-      });
+      setState(() => _showHomeTutorial = true);
     }
   }
 
   @override
   void initState() {
-    _checkHomeTutorialSeen();
     super.initState();
+    _checkHomeTutorialSeen();
     _initializeRepositories();
     _loadData();
     _loadConnectedUser();
@@ -91,7 +85,6 @@ class _HomePageState extends State<HomePage> {
 
     _contactRepository = ContactRepository(apiClient: apiClient);
     _formationRepository = FormationRepository(apiClient: apiClient);
-
     _authRepository = AuthRepository(
       remoteDataSource: AuthRemoteDataSourceImpl(
         apiClient: apiClient,
@@ -106,7 +99,6 @@ class _HomePageState extends State<HomePage> {
       final user = await _authRepository.getMe();
       if (mounted) {
         setState(() {
-          _connectedStagiaireId = user?.stagiaire?.id;
           _prenom = user?.stagiaire?.prenom;
           _nom = user?.name;
           _isLoadingUser = false;
@@ -114,11 +106,7 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       debugPrint('Erreur en chargeant l\'utilisateur connecté: $e');
-      if (mounted) {
-        setState(() {
-          _isLoadingUser = false;
-        });
-      }
+      if (mounted) setState(() => _isLoadingUser = false);
     }
   }
 
@@ -148,8 +136,7 @@ class _HomePageState extends State<HomePage> {
     try {
       final contacts = await _contactRepository.getContacts();
       final formationsRaw = await _formationRepository.getRandomFormations(3);
-      final formations =
-          formationsRaw.whereType<Formation>().toList(); // Cleaner filtering
+      final formations = formationsRaw.whereType<Formation>().toList();
 
       setState(() {
         _contacts = contacts;
@@ -166,9 +153,7 @@ class _HomePageState extends State<HomePage> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -181,80 +166,50 @@ class _HomePageState extends State<HomePage> {
     return Stack(
       children: [
         Scaffold(
-          body:
-              (_isLoading || _isLoadingUser)
-                  ? const Center(child: CircularProgressIndicator())
-                  : RefreshIndicator(
+          body: (_isLoading || _isLoadingUser)
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+            onRefresh: _loadData,
+            color: theme.primaryColor,
+            child: CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                SliverToBoxAdapter(child: _buildWelcomeSection(isTablet)),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(
+                  child: _buildSectionTitle(
+                    context,
+                    title: 'Formations recommandées',
+                    icon: LucideIcons.bookOpen,
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: RandomFormationsWidget(
+                    formations: _randomFormations,
                     onRefresh: _loadData,
-                    color: theme.primaryColor,
-                    child: CustomScrollView(
-                      slivers: [
-                        // Spacer
-                        const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                        // Section de Bienvenue Personnalisée
-                        SliverToBoxAdapter(
-                          child: _buildWelcomeSection(isTablet),
-                        ),
-
-                        // Spacer
-                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-                        // Section Formations
-                        SliverToBoxAdapter(
-                          child: _buildSectionTitle(
-                            context,
-                            title: 'Formations recommandées',
-                            icon: LucideIcons.bookOpen,
-                          ),
-                        ),
-                        SliverToBoxAdapter(
-                          child: RandomFormationsWidget(
-                            formations: _randomFormations,
-                            onRefresh: _loadData,
-                          ),
-                        ),
-
-                        // Spacer
-                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-                        // Section Contacts
-                        SliverToBoxAdapter(
-                          child: _buildSectionWithButton(
-                            context,
-                            title: 'Mes contacts',
-                            icon: LucideIcons.user,
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) =>
-                                          ContactPage(contacts: _contacts),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-
-                        // Liste des contacts
-                        _buildContactsList(isTablet),
-                      ],
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(
+                  child: _buildSectionWithButton(
+                    context,
+                    title: 'Mes contacts',
+                    icon: LucideIcons.user,
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ContactPage(contacts: _contacts),
+                      ),
                     ),
                   ),
+                ),
+                _buildContactsList(isTablet),
+              ],
+            ),
+          ),
         ),
         // if (_showHomeTutorial)
-        //   TutorialOverlay(
-        //     steps: _homeTutorialSteps,
-        //     storageKey: 'hasSeenHomeTutorial',
-        //     onFinish: () async {
-        //       final prefs = await SharedPreferences.getInstance();
-        //       await prefs.setBool('hasSeenHomeTutorial', true);
-        //       setState(() {
-        //         _showHomeTutorial = false;
-        //       });
-        //     },
-        //   ),
+        //   TutorialOverlay(...),
       ],
     );
   }
@@ -301,7 +256,7 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Bienvenue sur Wizi Learn',
+                    'Bonjour, ${_prenom ?? 'Utilisateur'} ${_nom ?? ''} !',
                     style: TextStyle(
                       fontSize: isTablet ? 26 : 20,
                       fontWeight: FontWeight.bold,
@@ -326,10 +281,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSectionTitle(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-  }) {
+      BuildContext context, {
+        required String title,
+        required IconData icon,
+      }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
@@ -343,7 +298,6 @@ class _HomePageState extends State<HomePage> {
               child: Icon(icon, color: kOrangeDark, size: 22),
             ),
             const SizedBox(width: 12),
-            // Utilise FittedBox pour éviter l'overflow du texte
             Expanded(
               child: FittedBox(
                 fit: BoxFit.scaleDown,
@@ -366,26 +320,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSectionWithButton(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
+      BuildContext context, {
+        required String title,
+        required IconData icon,
+        required VoidCallback onPressed,
+      }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
-        // decoration: BoxDecoration(
-        //   color: kYellowLight,
-        //   borderRadius: BorderRadius.circular(16),
-        //   border: Border.all(color: kYellow, width: 1.2),
-        //   boxShadow: [
-        //     BoxShadow(
-        //       color: kOrange.withOpacity(0.08),
-        //       blurRadius: 8,
-        //       offset: const Offset(0, 3),
-        //     ),
-        //   ],
-        // ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -412,21 +354,19 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             ElevatedButton(
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Colors.transparent,
-    elevation: 0,
-    foregroundColor: kOrange,
-    shadowColor: Colors.transparent, // enlever l'ombre
-    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-      side: BorderSide.none, // pas de bordure
-    ),
-  ),
-  onPressed: onPressed,
-  child: const Text('Voir tous->'),
-),
-
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                foregroundColor: kOrange,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: onPressed,
+              child: const Text('Voir tous->'),
+            ),
           ],
         ),
       ),
@@ -462,43 +402,46 @@ class _HomePageState extends State<HomePage> {
       );
     }
 
-    final wantedRoles = {'commercial', 'formateur', 'pôle relation client'};
+    // Filtrage des contacts par type
+    final wantedTypes = {'Commercial', 'Formateur', 'pole_relation_client'};
     final filteredContacts = <String, Contact>{};
-    for (final c in _contacts) {
-      final role = c.role.toLowerCase().replaceAll('_', ' ');
-      if (wantedRoles.contains(role) && !filteredContacts.containsKey(role)) {
-        filteredContacts[role] = c;
+
+    for (final contact in _contacts) {
+      if (wantedTypes.contains(contact.type)) {
+        final roleKey = contact.type.toLowerCase().contains('relation')
+            ? 'relation'
+            : contact.type.toLowerCase();
+
+        if (!filteredContacts.containsKey(roleKey)) {
+          filteredContacts[roleKey] = contact;
+        }
       }
     }
-    final contactsToShow = filteredContacts.values.toList();
 
-    return SliverList(
-      delegate: SliverChildListDelegate([
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isTablet ? 2 : 1,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: isTablet ? 2.5 : 2.6,
-            ),
-            itemCount: contactsToShow.length,
-            itemBuilder: (context, index) {
-              return Container(
-                margin: const EdgeInsets.all(4),
-                child: ContactCard(
-                  contact: contactsToShow[index],
-                  showFormations: false,
-                ),
-              );
-            },
+    // Ordonnancement des contacts
+    final orderedContacts = [
+      if (filteredContacts.containsKey('commercial')) filteredContacts['commercial']!,
+      if (filteredContacts.containsKey('formateur')) filteredContacts['formateur']!,
+      if (filteredContacts.containsKey('relation')) filteredContacts['relation']!,
+    ];
+
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
+      sliver: SliverGrid(
+        delegate: SliverChildBuilderDelegate(
+              (context, index) => ContactCard(
+            contact: orderedContacts[index],
+            showFormations: false,
           ),
+          childCount: orderedContacts.length,
         ),
-        const SizedBox(height: 32), // Espace en bas pour éviter overflow
-      ]),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: isTablet ? 2 : 1,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: isTablet ? 2.5 : 2.6,
+        ),
+      ),
     );
   }
 }

@@ -22,73 +22,39 @@ class RandomFormationsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 350;
-    final cardWidth =
-        isSmallScreen
-            ? 180.0
-            : (screenWidth < 450 ? 200.0 : screenWidth / 2.75);
+    final cardWidth = screenWidth < 350
+        ? 160.0
+        : (screenWidth < 450 ? 180.0 : screenWidth / 2.5);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header avec bouton refresh
-        _buildHeader(context, isSmallScreen),
-
-        // Liste horizontale des formations
         formations.isEmpty
             ? Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: Text(
-                  "Aucune formation disponible pour le moment.",
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-            )
+          padding: const EdgeInsets.all(16.0),
+          child: Center(
+            child: Text(
+              "Aucune formation disponible pour le moment.",
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        )
             : SizedBox(
-              height:
-                  screenWidth < 768
-                      ? cardWidth * 1.3
-                      : (screenWidth < 1024 ? cardWidth * 1 : cardWidth * 0.95),
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                itemCount: formations.length,
-                itemBuilder:
-                    (context, index) => ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minWidth: cardWidth,
-                        maxWidth: cardWidth,
-                      ),
-                      child: _FormationCard(
-                        formation: formations[index],
-                        cardWidth: cardWidth,
-                        isSmallScreen: isSmallScreen,
-                      ),
-                    ),
+          height: 260, // Hauteur fixe pour toutes les cartes
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: formations.length,
+            itemBuilder: (context, index) => SizedBox(
+              width: cardWidth,
+              child: _FormationCard(
+                formation: formations[index],
+                cardWidth: cardWidth,
               ),
             ),
+          ),
+        ),
       ],
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, bool isSmallScreen) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        // children: [
-        //   Text(
-        //     'Formations recommandées',
-        //     style: TextStyle(
-        //       fontSize: isSmallScreen ? 16 : 18,
-        //       fontWeight: FontWeight.bold,
-        //       color: Theme.of(context).primaryColor,
-        //     ),
-        //   ),
-        // ],
-      ),
     );
   }
 }
@@ -96,12 +62,10 @@ class RandomFormationsWidget extends StatelessWidget {
 class _FormationCard extends StatefulWidget {
   final Formation formation;
   final double cardWidth;
-  final bool isSmallScreen;
 
   const _FormationCard({
     required this.formation,
     required this.cardWidth,
-    this.isSmallScreen = false,
   });
 
   @override
@@ -126,213 +90,234 @@ class _FormationCardState extends State<_FormationCard> {
 
   @override
   Widget build(BuildContext context) {
-    final categoryColor = _getCategoryColor(
-      widget.formation.category.categorie,
-    );
-    final textTheme = Theme.of(context).textTheme;
-    final imageHeight = widget.cardWidth * 0.55;
+    final categoryColor = _getCategoryColor(widget.formation.category.categorie);
+    final theme = Theme.of(context);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 8),
       child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           onTap: () => _navigateToDetail(context),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildImageSection(imageHeight, categoryColor),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-                      child: SizedBox(
-                        width: widget.cardWidth - 20,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildCategoryBadge(categoryColor, textTheme),
-                            const SizedBox(height: 4),
-                            SizedBox(
-                              height: 30,
-                              child: Text(
-                                widget.formation.titre.toUpperCase(),
-                                style: textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  height: 1.2,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            _buildDurationAndPrice(textTheme),
-                            const SizedBox(height: 6),
-                            _buildActionButtons(
-                              context,
-                              categoryColor,
-                              textTheme,
-                            ),
-                          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Header avec image circulaire
+              Container(
+                height: 100,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: categoryColor.withOpacity(0.1),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                child: Center(
+                  child: Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 3,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: ClipOval(
+                      child: widget.formation.imageUrl != null
+                          ? CachedNetworkImage(
+                        imageUrl:
+                        '${AppConstants.baseUrlImg}/${widget.formation.imageUrl}',
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Center(
+                          child: Icon(
+                            Icons.school,
+                            color: categoryColor,
+                            size: 30,
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Center(
+                          child: Icon(
+                            Icons.school,
+                            color: categoryColor,
+                            size: 30,
+                          ),
+                        ),
+                      )
+                          : Center(
+                        child: Icon(
+                          Icons.school,
+                          color: categoryColor,
+                          size: 30,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImageSection(double height, Color categoryColor) {
-    return Container(
-      height: height,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-        color: categoryColor.withOpacity(0.1),
-        image:
-            widget.formation.imageUrl != null
-                ? DecorationImage(
-                  image: CachedNetworkImageProvider(
-                    '${AppConstants.baseUrlImg}/${widget.formation.imageUrl}',
                   ),
-                  fit: BoxFit.cover,
-                )
-                : null,
-      ),
-      child:
-          widget.formation.imageUrl == null
-              ? Center(
-                child: Icon(Icons.school, color: categoryColor, size: 36),
-              )
-              : null,
-    );
-  }
-
-  Widget _buildCategoryBadge(Color color, TextTheme textTheme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        widget.formation.category.categorie,
-        style: textTheme.labelSmall?.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-
-  Widget _buildDurationAndPrice(TextTheme textTheme) {
-    return Row(
-      children: [
-        Icon(Icons.schedule, size: 14, color: Colors.grey.shade600),
-        const SizedBox(width: 4),
-        Text(
-          '${widget.formation.duree} H',
-          style: textTheme.bodySmall?.copyWith(color: Colors.grey.shade700),
-        ),
-        const Spacer(),
-        Text(
-          '${widget.formation.tarif.toInt()} €',
-          style: textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Colors.amber.shade800,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButtons(
-    BuildContext context,
-    Color color,
-    TextTheme textTheme,
-  ) {
-    return Row(
-      children: [
-        if (widget.formation.cursusPdf != null)
-          Expanded(child: _buildPdfButton(context, color, textTheme)),
-        if (widget.formation.cursusPdf != null) const SizedBox(width: 8),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : () => _registerToFormation(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: color,
-              foregroundColor: Colors.white,
-              padding:
-                  widget.isSmallScreen
-                      ? const EdgeInsets.symmetric(vertical: 2, horizontal: 0)
-                      : const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
-              minimumSize:
-                  widget.isSmallScreen ? const Size(0, 28) : const Size(0, 36),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+                ),
               ),
-              elevation: 0,
-            ),
-            child:
-                _isLoading
-                    ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
+
+              // Contenu de la carte
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Titre et catégorie
+                      Column(
+                        children: [
+                          Text(
+                            widget.formation.titre,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              height: 1.2,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: categoryColor.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              widget.formation.category.categorie,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: categoryColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    )
-                    : Text(
-                      _success
-                          ? "Inscription réussie !"
-                          : _error
-                          ? "Erreur, réessayer"
-                          : "S'inscrire",
-                      style: textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontSize: widget.isSmallScreen ? 10 : null,
+
+                      // Durée et prix
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.schedule,
+                                  size: 14, color: theme.hintColor),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${widget.formation.duree} H',
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            '${widget.formation.tarif.toInt()} €',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.amber.shade800,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+
+                      // Boutons d'action
+                      Row(
+                        children: [
+                          if (widget.formation.cursusPdf != null)
+                            Expanded(
+                              child: _buildPdfButton(context, categoryColor),
+                            ),
+                          if (widget.formation.cursusPdf != null)
+                            const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildRegisterButton(
+                                context, categoryColor),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildPdfButton(
-    BuildContext context,
-    Color color,
-    TextTheme textTheme,
-  ) {
+  Widget _buildRegisterButton(BuildContext context, Color color) {
     return SizedBox(
-      height: 32,
+      height: 36,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : () => _registerToFormation(context),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          elevation: 0,
+        ),
+        child: _isLoading
+            ? const SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(
+            color: Colors.white,
+            strokeWidth: 2,
+          ),
+        )
+            : Text(
+          _success
+              ? "Inscrit"
+              : _error
+              ? "Erreur"
+              : "S'inscrire",
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPdfButton(BuildContext context, Color color) {
+    return SizedBox(
+      height: 36,
       child: OutlinedButton(
         onPressed: () => _openPdf(context),
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: color),
           padding: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.picture_as_pdf, size: 14, color: color),
+            Icon(Icons.picture_as_pdf, size: 16, color: color),
             const SizedBox(width: 4),
             Text(
               'PDF',
-              style: textTheme.labelSmall?.copyWith(
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: color,
                 fontWeight: FontWeight.bold,
               ),
@@ -347,8 +332,8 @@ class _FormationCardState extends State<_FormationCard> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) => FormationDetailPage(formationId: widget.formation.id),
+        builder: (context) =>
+            FormationDetailPage(formationId: widget.formation.id),
       ),
     );
   }
@@ -364,9 +349,8 @@ class _FormationCardState extends State<_FormationCard> {
       setState(() {
         _success = true;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Inscription réussie !')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Inscription réussie !')));
     } catch (e) {
       setState(() {
         _error = true;
@@ -392,9 +376,8 @@ class _FormationCardState extends State<_FormationCard> {
         throw 'Impossible d\'ouvrir le PDF';
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 

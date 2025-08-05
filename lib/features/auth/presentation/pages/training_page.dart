@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -343,6 +344,8 @@ class _TrainingPageState extends State<TrainingPage> {
                         final categoryColor =
                         _getCategoryColor(formation.category.categorie);
 
+                        // ... (garder tout le code précédent jusqu'à la partie Card dans le ListView.builder)
+
                         return Card(
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -368,42 +371,40 @@ class _TrainingPageState extends State<TrainingPage> {
                               padding: const EdgeInsets.all(12),
                               child: Row(
                                 children: [
-                                  // Image/Icon
+                                  // Image arrondie
                                   Container(
                                     width: 72,
                                     height: 72,
                                     decoration: BoxDecoration(
-                                      color: categoryColor.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
+                                      shape: BoxShape.circle,
                                       border: Border.all(
                                         color: categoryColor.withOpacity(0.3),
+                                        width: 2,
                                       ),
                                     ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
+                                    child: ClipOval(
                                       child: formation.imageUrl != null
-                                          ? Image.network(
-                                        '${AppConstants.baseUrlImg}/${formation.imageUrl}',
+                                          ? CachedNetworkImage(
+                                        imageUrl: '${AppConstants.baseUrlImg}/${formation.imageUrl}',
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error,
-                                            stackTrace) =>
-                                            Center(
-                                              child: Icon(
-                                                _categoryIcons[formation
-                                                    .category
-                                                    .categorie] ??
-                                                    Icons.school,
-                                                color: categoryColor,
-                                                size: 32,
-                                              ),
-                                            ),
+                                        placeholder: (context, url) => Center(
+                                          child: Icon(
+                                            _categoryIcons[formation.category.categorie] ?? Icons.school,
+                                            color: categoryColor,
+                                            size: 32,
+                                          ),
+                                        ),
+                                        errorWidget: (context, url, error) => Center(
+                                          child: Icon(
+                                            _categoryIcons[formation.category.categorie] ?? Icons.school,
+                                            color: categoryColor,
+                                            size: 32,
+                                          ),
+                                        ),
                                       )
                                           : Center(
                                         child: Icon(
-                                          _categoryIcons[formation
-                                              .category
-                                              .categorie] ??
-                                              Icons.school,
+                                          _categoryIcons[formation.category.categorie] ?? Icons.school,
                                           color: categoryColor,
                                           size: 32,
                                         ),
@@ -412,11 +413,10 @@ class _TrainingPageState extends State<TrainingPage> {
                                   ),
                                   const SizedBox(width: 12),
 
-                                  // Détails
+                                  // Détails (garder le même contenu que précédemment)
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         // Titre
                                         Text(
@@ -432,8 +432,7 @@ class _TrainingPageState extends State<TrainingPage> {
 
                                         // Description
                                         Text(
-                                          formation.description
-                                              .replaceAll(RegExp(r'<[^>]*>'), ''),
+                                          formation.description.replaceAll(RegExp(r'<[^>]*>'), ''),
                                           style: TextStyle(
                                             fontSize: 13,
                                             color: Colors.grey.shade700,
@@ -448,29 +447,25 @@ class _TrainingPageState extends State<TrainingPage> {
                                           children: [
                                             // Durée
                                             Container(
-                                              padding:
-                                              const EdgeInsets.symmetric(
+                                              padding: const EdgeInsets.symmetric(
                                                   horizontal: 8, vertical: 4),
                                               decoration: BoxDecoration(
                                                 color: Colors.grey.shade100,
-                                                borderRadius:
-                                                BorderRadius.circular(4),
+                                                borderRadius: BorderRadius.circular(4),
                                               ),
                                               child: Row(
                                                 children: [
                                                   Icon(
                                                     Icons.schedule,
                                                     size: 14,
-                                                    color:
-                                                    Colors.grey.shade600,
+                                                    color: Colors.grey.shade600,
                                                   ),
                                                   const SizedBox(width: 4),
                                                   Text(
                                                     '${formation.duree}h',
                                                     style: TextStyle(
                                                       fontSize: 12,
-                                                      color:
-                                                      Colors.grey.shade800,
+                                                      color: Colors.grey.shade800,
                                                     ),
                                                   ),
                                                 ],
@@ -483,8 +478,7 @@ class _TrainingPageState extends State<TrainingPage> {
                                               style: TextStyle(
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.bold,
-                                                color:
-                                                Colors.orange.shade700,
+                                                color: Colors.orange.shade700,
                                               ),
                                             ),
                                           ],
@@ -497,6 +491,8 @@ class _TrainingPageState extends State<TrainingPage> {
                             ),
                           ),
                         );
+
+// ... (garder le reste du code inchangé)
                       },
                     );
                   },
