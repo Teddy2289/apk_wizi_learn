@@ -17,7 +17,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/datasources/auth_remote_data_source.dart';
 import '../../data/repositories/auth_repository.dart';
 
-// === Palette de couleurs Wizi Learn ===
 const Color kYellowLight = Color(0xFFFFF9C4);
 const Color kYellow = Color(0xFFFFEB3B);
 const Color kOrange = Color(0xFFFF9800);
