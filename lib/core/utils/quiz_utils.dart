@@ -167,4 +167,21 @@ class QuizUtils {
         );
     }
   }
+
+  static String cleanString(dynamic value, {String fallback = ''}) {
+    if (value == null) return fallback;
+    final s = value.toString().trim();
+    return s.isEmpty ? fallback : s;
+  }
+
+  static double cleanDouble(dynamic value, {double fallback = 0}) {
+    if (value == null) return fallback;
+    return double.tryParse(value.toString()) ?? fallback;
+  }
+
+  static int cleanInt(dynamic value, {int fallback = 0}) {
+    if (value == null) return fallback;
+    return int.tryParse(value.toString()) ?? fallback;
+  }
+
 }

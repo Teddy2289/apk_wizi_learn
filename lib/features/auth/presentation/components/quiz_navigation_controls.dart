@@ -23,11 +23,11 @@ class QuizNavigationControls extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              ElevatedButton(
-                onPressed:
-                    index > 0 ? sessionManager.goToPreviousQuestion : null,
-                child: const Text('Précédent'),
-              ),
+              // ElevatedButton(
+              //   onPressed:
+              //       index > 0 ? sessionManager.goToPreviousQuestion : null,
+              //   child: const Text('Précédent'),
+              // ),
               ElevatedButton(
                 onPressed: () => _handleNextOrComplete(context, index),
                 child: Text(
@@ -50,29 +50,25 @@ class QuizNavigationControls extends StatelessWidget {
         final results = await sessionManager.completeQuiz();
         if (!context.mounted) return;
 
-        Navigator.pushReplacement(
+        await Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => QuizSummaryPage(
-                  questions:
-                      (results['questions'] as List)
-                          .map((q) => Question.fromJson(q))
-                          .toList(),
-                  score: results['score'] ?? 0,
-                  correctAnswers: results['correctAnswers'] ?? 0,
-                  totalQuestions: results['totalQuestions'] ?? questions.length,
-                  timeSpent: results['timeSpent'] ?? 0,
-                  quizResult: results,
-                ),
+            builder: (context) => QuizSummaryPage(
+              questions: (results['questions'] as List)
+                  .map((q) => Question.fromJson(q))
+                  .toList(),
+              score: results['score'] ?? 0,
+              correctAnswers: results['correctAnswers'] ?? 0,
+              totalQuestions: results['totalQuestions'] ?? questions.length,
+              timeSpent: results['timeSpent'] ?? 0,
+              quizResult: results,
+            ),
           ),
         );
       }
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 }

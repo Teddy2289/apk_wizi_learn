@@ -26,7 +26,7 @@ class ContactCard extends StatelessWidget {
       elevation: 4,
       color: Colors.yellow.shade50,
       margin: EdgeInsets.symmetric(
-        vertical: isSmallScreen ? 6 : 10,
+        vertical: isSmallScreen ? 7 : 10,
         horizontal: isSmallScreen ? 8 : 16,
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -57,12 +57,38 @@ class ContactCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      contact.prenom,
+                      contact.prenom.isNotEmpty
+                          ? contact.prenom[0].toUpperCase() +
+                              contact.prenom.substring(1)
+                          : 'Inconnu',
                       style: TextStyle(
                         fontSize: nameFontSize,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    if (contact.role != null && contact.role.isNotEmpty) ...[
+                      SizedBox(height: 2),
+                      // Container(
+                      //   padding: const EdgeInsets.symmetric(
+                      //     horizontal: 8,
+                      //     vertical: 2,
+                      //   ),
+                      //   decoration: BoxDecoration(
+                      //     color: Colors.orange.shade50,
+                      //     borderRadius: BorderRadius.circular(8),
+                      //     border: Border.all(color: Colors.orange.shade200),
+                      //   ),
+                      //   child: Text(
+                      //     contact.role[0].toUpperCase() +
+                      //         contact.role.substring(1),
+                      //     style: TextStyle(
+                      //       fontSize: infoFontSize,
+                      //       color: Colors.orange.shade800,
+                      //       fontWeight: FontWeight.w600,
+                      //     ),
+                      //   ),
+                      // ),
+                    ],
                     SizedBox(height: isSmallScreen ? 2 : 4),
                     Row(
                       children: [
@@ -94,7 +120,9 @@ class ContactCard extends StatelessWidget {
                         SizedBox(width: isSmallScreen ? 3 : 6),
                         Flexible(
                           child: Text(
-                            contact.telephone,
+                            contact.telephone.isNotEmpty
+                                ? contact.telephone
+                                : 'Non renseigné',
                             style: TextStyle(fontSize: infoFontSize),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

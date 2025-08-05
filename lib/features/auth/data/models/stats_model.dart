@@ -1,4 +1,9 @@
+import 'package:wizi_learn/core/utils/quiz_utils.dart';
+import 'package:wizi_learn/features/auth/data/models/question_model.dart';
+import 'package:wizi_learn/features/auth/data/models/quiz_model.dart';
+
 class QuizHistory {
+  List<Question> get questions => quiz.questions;
   final String id;
   final Quiz quiz;
   final int score;
@@ -19,36 +24,13 @@ class QuizHistory {
 
   factory QuizHistory.fromJson(Map<String, dynamic> json) {
     return QuizHistory(
-      id: json['id'].toString(),
-      quiz: Quiz.fromJson(json['quiz']),
-      score: json['score'],
-      completedAt: json['completedAt'],
-      timeSpent: json['timeSpent'],
-      totalQuestions: json['totalQuestions'],
-      correctAnswers: json['correctAnswers'],
-    );
-  }
-}
-
-class Quiz {
-  final String id;
-  final String title;
-  final String category;
-  final String level;
-
-  Quiz({
-    required this.id,
-    required this.title,
-    required this.category,
-    required this.level,
-  });
-
-  factory Quiz.fromJson(Map<String, dynamic> json) {
-    return Quiz(
-      id: json['id'].toString(),
-      title: json['title'],
-      category: json['category'],
-      level: json['level'],
+      id: QuizUtils.cleanString(json['id'], fallback: '0'),
+      quiz: Quiz.fromJson(json['quiz'] ?? {}),
+      score: QuizUtils.cleanInt(json['score']),
+      completedAt: QuizUtils.cleanString(json['completedAt']),
+      timeSpent: QuizUtils.cleanInt(json['timeSpent']),
+      totalQuestions: QuizUtils.cleanInt(json['totalQuestions']),
+      correctAnswers: QuizUtils.cleanInt(json['correctAnswers']),
     );
   }
 }
@@ -69,14 +51,31 @@ class GlobalRanking {
   });
 
   factory GlobalRanking.fromJson(Map<String, dynamic> json) {
+    int safeInt(dynamic value, {int fallback = 0, String field = ''}) {
+      if (value == null) return fallback;
+      final parsed = int.tryParse(value.toString());
+      if (parsed == null) {
+        // Log pour debug
+        print('GlobalRanking: champ "$field" non convertible en int: $value');
+        return fallback;
+      }
+      return parsed;
+    }
+    double safeDouble(dynamic value, {double fallback = 0, String field = ''}) {
+      if (value == null) return fallback;
+      final parsed = double.tryParse(value.toString());
+      if (parsed == null) {
+        print('GlobalRanking: champ "$field" non convertible en double: $value');
+        return fallback;
+      }
+      return parsed;
+    }
     return GlobalRanking(
-      stagiaire: Stagiaire.fromJson(json['stagiaire'] ?? {}), // Gestion du null
-      totalPoints: json['totalPoints'] as int? ?? 0,
-      quizCount: json['quizCount'] as int? ?? 0,
-      averageScore: (json['averageScore'] is int)
-          ? (json['averageScore'] as int).toDouble()
-          : json['averageScore'] as double? ?? 0.0,
-      rang: json['rang'] as int? ?? 0,
+      stagiaire: Stagiaire.fromJson(json['stagiaire'] ?? {}),
+      totalPoints: safeInt(json['totalPoints'], field: 'totalPoints'),
+      quizCount: safeInt(json['quizCount'], field: 'quizCount'),
+      averageScore: safeDouble(json['averageScore'], field: 'averageScore'),
+      rang: safeInt(json['rang'], field: 'rang'),
     );
   }
 
@@ -90,25 +89,23 @@ class GlobalRanking {
     );
   }
 }
+
 class Stagiaire {
   final String id;
   final String prenom;
   final String image;
 
-  Stagiaire({
-    required this.id,
-    required this.prenom,
-    required this.image,
-  });
+  Stagiaire({required this.id, required this.prenom, required this.image});
 
   factory Stagiaire.fromJson(Map<String, dynamic> json) {
     return Stagiaire(
-      id: json['id']?.toString() ?? '0', // Gestion du null
-      prenom: json['prenom']?.toString() ?? 'Inconnu', // Gestion du null
-      image: json['image']?.toString() ?? '', // Gestion du null
+      id: QuizUtils.cleanString(json['id'], fallback: '0'),
+      prenom: QuizUtils.cleanString(json['prenom'], fallback: 'Inconnu'),
+      image: QuizUtils.cleanString(json['image']),
     );
   }
 }
+
 class QuizStats {
   final int totalQuizzes;
   final double averageScore;
@@ -125,15 +122,34 @@ class QuizStats {
   });
 
   factory QuizStats.fromJson(Map<String, dynamic> json) {
+    int safeInt(dynamic value, {int fallback = 0, String field = ''}) {
+      if (value == null) return fallback;
+      final parsed = int.tryParse(value.toString());
+      if (parsed == null) {
+        print('QuizStats: champ "$field" non convertible en int: $value');
+        return fallback;
+      }
+      return parsed;
+    }
+    double safeDouble(dynamic value, {double fallback = 0, String field = ''}) {
+      if (value == null) return fallback;
+      final parsed = double.tryParse(value.toString());
+      if (parsed == null) {
+        print('QuizStats: champ "$field" non convertible en double: $value');
+        return fallback;
+      }
+      return parsed;
+    }
     return QuizStats(
-      totalQuizzes: json['totalQuizzes'],
-      averageScore: double.parse(json['averageScore'].toString()),
-      totalPoints: int.parse(json['totalPoints'].toString()),
+      totalQuizzes: safeInt(json['totalQuizzes'], field: 'totalQuizzes'),
+      averageScore: safeDouble(json['averageScore'], field: 'averageScore'),
+      totalPoints: safeInt(json['totalPoints'], field: 'totalPoints'),
       categoryStats:
-          (json['categoryStats'] as List)
+          (json['categoryStats'] as List? ?? [])
+              .where((e) => e != null)
               .map((e) => CategoryStat.fromJson(e))
               .toList(),
-      levelProgress: LevelProgress.fromJson(json['levelProgress']),
+      levelProgress: LevelProgress.fromJson(json['levelProgress'] ?? {}),
     );
   }
 }
@@ -150,13 +166,28 @@ class CategoryStat {
   });
 
   factory CategoryStat.fromJson(Map<String, dynamic> json) {
+    int safeInt(dynamic value, {int fallback = 0, String field = ''}) {
+      if (value == null) return fallback;
+      final parsed = int.tryParse(value.toString());
+      if (parsed == null) {
+        print('CategoryStat: champ "$field" non convertible en int: $value');
+        return fallback;
+      }
+      return parsed;
+    }
+    double safeDouble(dynamic value, {double fallback = 0, String field = ''}) {
+      if (value == null) return fallback;
+      final parsed = double.tryParse(value.toString());
+      if (parsed == null) {
+        print('CategoryStat: champ "$field" non convertible en double: $value');
+        return fallback;
+      }
+      return parsed;
+    }
     return CategoryStat(
-      category: json['category'],
-      quizCount: json['quizCount'],
-      averageScore:
-          (json['averageScore'] is int)
-              ? (json['averageScore'] as int).toDouble()
-              : json['averageScore'],
+      category: QuizUtils.cleanString(json['category'], fallback: 'Autre'),
+      quizCount: safeInt(json['quizCount'], field: 'quizCount'),
+      averageScore: safeDouble(json['averageScore'], field: 'averageScore'),
     );
   }
 }
@@ -188,12 +219,30 @@ class LevelData {
   LevelData({required this.completed, required this.averageScore});
 
   factory LevelData.fromJson(Map<String, dynamic> json) {
+    int safeInt(dynamic value, {int fallback = 0, String field = ''}) {
+      if (value == null) return fallback;
+      final parsed = int.tryParse(value.toString());
+      if (parsed == null) {
+        print('LevelData: champ "$field" non convertible en int: $value');
+        return fallback;
+      }
+      return parsed;
+    }
+    double? safeDouble(dynamic value, {double? fallback = 0, String field = ''}) {
+      if (value == null) return fallback;
+      final parsed = double.tryParse(value.toString());
+      if (parsed == null) {
+        print('LevelData: champ "$field" non convertible en double: $value');
+        return fallback;
+      }
+      return parsed;
+    }
     return LevelData(
-      completed: json['completed'],
+      completed: safeInt(json['completed'], field: 'completed'),
       averageScore:
-          (json['averageScore'] is int)
-              ? (json['averageScore'] as int).toDouble()
-              : json['averageScore'],
+          json['averageScore'] != null
+              ? safeDouble(json['averageScore'], field: 'averageScore')
+              : null,
     );
   }
 }

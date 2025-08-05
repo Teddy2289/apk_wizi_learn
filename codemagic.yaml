@@ -1,0 +1,44 @@
+workflows:
+  ios-build:
+    name: iOS Build (Unsigned)
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      vars:
+        APP_ID: "com.example.wizi_learn"
+    scripts:
+      - name: Install dependencies
+        script: |
+          flutter pub get
+      - name: Build iOS (no codesign)
+        script: |
+          flutter build ios --release --no-codesign --dart-define=CI_BUILD=true
+
+      - name: Create unsigned IPA
+        script: |
+          mkdir -p build/artifacts/ios
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          cp -R Runner.app Payload/
+          zip -r app_unsigned.ipa Payload
+          mv app_unsigned.ipa ../../artifacts/ios/
+          cd ../../..
+      - name: Generate download link
+        script: |
+          echo "unsigned_ipa_path=artifacts/ios/app_unsigned.ipa" >> $CM_ENV
+          echo "IPA_URL=https://$CM_BUILD_ID.codemagic.app/artifacts/ios/app_unsigned.ipa" >> $CM_ENV
+
+    artifacts:
+      - build/artifacts/**/*.ipa
+
+    publishing:
+      email:
+        recipients:
+          - mblitmanager@gmail.com
+      scripts:
+        - name: Notify success
+          script: |
+            echo "Build successful! Download unsigned IPA:"
+            echo $IPA_URL

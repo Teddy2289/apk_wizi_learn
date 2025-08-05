@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -20,8 +21,6 @@ class FormationDetailPage extends StatefulWidget {
 class _FormationDetailPageState extends State<FormationDetailPage> {
   late Future<Formation> _futureFormation;
   late FormationRepository _repository;
-
-  // Ajout des états pour l'inscription
   bool _isLoading = false;
   bool _success = false;
   bool _error = false;
@@ -49,14 +48,20 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
         _success = true;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Inscription réussie !')),
+        const SnackBar(
+          content: Text('Inscription réussie !'),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     } catch (e) {
       setState(() {
         _error = true;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erreur lors de l\'inscription. Veuillez réessayer.')),
+        const SnackBar(
+          content: Text('Erreur lors de l\'inscription. Veuillez réessayer.'),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     } finally {
       setState(() {
@@ -67,371 +72,428 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Color(0xFFFEB823),
-        title: const Text('Détails de la formation'),
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.arrow_back, color: Colors.white),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: FutureBuilder<Formation>(
         future: _futureFormation,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Erreur: ${snapshot.error}'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Une erreur est survenue',
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Veuillez réessayer plus tard',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _futureFormation = _repository.getFormationDetail(widget.formationId);
+                      });
+                    },
+                    child: const Text('Réessayer'),
+                  ),
+                ],
+              ),
+            );
           }
 
           if (!snapshot.hasData) {
-            return const Center(child: Text('Aucune donnée disponible'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.info_outline, size: 48, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Aucune donnée disponible',
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                ],
+              ),
+            );
           }
 
           final formation = snapshot.data!;
           final categoryColor = _getCategoryColor(formation.category.categorie);
-          final theme = Theme.of(context);
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Carte principale avec image et titre
-                Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: [
-                      // Image de la formation
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(16),
-                        ),
-                        child: Container(
-                          height: 200,
-                          width: double.infinity,
-                          color: categoryColor.withOpacity(0.1),
-                          child: formation.imageUrl != null
-                              ? Image.network(
-                            '${AppConstants.baseUrlImg}/${formation.imageUrl}',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Icon(
-                              Icons.school,
-                              size: 60,
-                              color: categoryColor,
-                            ),
-                          )
-                              : Center(
-                            child: Icon(
-                              Icons.school,
-                              size: 60,
-                              color: categoryColor,
-                            ),
+          return CustomScrollView(
+            slivers: [
+              // Image header avec effet parallax
+              SliverAppBar(
+                automaticallyImplyLeading: false,
+                backgroundColor: Colors.transparent,
+                expandedHeight: 130,
+                stretch: true,
+                flexibleSpace: FlexibleSpaceBar(
+                  stretchModes: const [StretchMode.zoomBackground],
+                  background: Hero(
+                    tag: 'formation-${formation.id}',
+                    child: CachedNetworkImage(
+                      imageUrl: '${AppConstants.baseUrlImg}/${formation.imageUrl}',
+                      fit: BoxFit.fitHeight,
+                      placeholder: (context, url) => Container(
+                        color: categoryColor,
+                        child: Center(
+                          child: Icon(
+                            Icons.school,
+                            size: 80,
+                            color: categoryColor,
                           ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Titre et catégorie
-                            Row(
+                      errorWidget: (context, url, error) => Container(
+                        color: categoryColor.withOpacity(0.1),
+                        child: Center(
+                          child: Icon(
+                            Icons.school,
+                            size: 80,
+                            color: categoryColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Contenu principal
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Titre et catégorie
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        formation.titre.toUpperCase(),
-                                        style: theme.textTheme.headlineSmall?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Row(
-                                        children: [
-                                          const Text(
-                                            'Catégorie : ',
-                                            style: TextStyle(fontWeight: FontWeight.bold),
-                                          ),
-                                          Chip(
-                                            backgroundColor: categoryColor.withOpacity(0.2),
-                                            label: Text(
-                                              formation.category.categorie,
-                                              style: TextStyle(
-                                                color: categoryColor,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Row(
-                                        children: [
-                                          const Text(
-                                            'Certificat : ',
-                                            style: TextStyle(fontWeight: FontWeight.bold),
-                                          ),
-                                          if (formation.certification != null && formation.certification!.isNotEmpty)
-                                            Row(
-                                              children: [
-                                                Icon(Icons.verified, color: categoryColor, size: 18),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  formation.certification!,
-                                                  style: TextStyle(
-                                                    color: categoryColor,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ],
-                                            )
-                                          else
-                                            const Text('Aucun'),
-                                        ],
-                                      ),
-                                    ],
+                                Text(
+                                  formation.titre,
+                                  style: theme.textTheme.headlineSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: isDarkMode ? Colors.white : Colors.black,
                                   ),
                                 ),
-                                // Prix en badge mis en valeur
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    // const Text(
-                                    //   'Tarif :',
-                                    //   style: TextStyle(fontWeight: FontWeight.bold),
-                                    // ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: categoryColor,
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Text(
-                                        '${formation.tarif.toInt()} €',
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ),
+                                const SizedBox(height: 8),
+                                Chip(
+                                  backgroundColor: categoryColor.withOpacity(0.2),
+                                  label: Text(
+                                    formation.category.categorie,
+                                    style: TextStyle(
+                                      color: categoryColor,
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                    const SizedBox(height: 8),
-                                    // Row(
-                                    //   mainAxisSize: MainAxisSize.min,
-                                    //   children: [
-                                    //     const Text(
-                                    //       'Durée : ',
-                                    //       style: TextStyle(fontWeight: FontWeight.bold),
-                                    //     ),
-                                    //     Text(
-                                    //       '${formation.duree}h',
-                                    //       style: const TextStyle(fontWeight: FontWeight.bold),
-                                    //     ),
-                                    //   ],
-                                    // ),
-                                  ],
+                                  ),
                                 ),
                               ],
+                            ),
+                          ),
+                          // Prix
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: categoryColor,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${formation.tarif.toInt()} €',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Infos rapides
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          _buildInfoTile(
+                            icon: Icons.timer_outlined,
+                            label: 'Durée',
+                            value: '${formation.duree} heures',
+                            color: categoryColor,
+                          ),
+                          if (formation.certification != null &&
+                              formation.certification!.isNotEmpty)
+                            _buildInfoTile(
+                              icon: Icons.verified_outlined,
+                              label: 'Certification',
+                              value: formation.certification!,
+                              color: categoryColor,
+                            ),
+                          _buildInfoTile(
+                            icon: Icons.calendar_today_outlined,
+                            label: 'Début',
+                            value: 'À tout moment',
+                            color: categoryColor,
+                          ),
+                          _buildInfoTile(
+                            icon: Icons.people_outline,
+                            label: 'Format',
+                            value: 'En ligne',
+                            color: categoryColor,
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Section Description
+                      _buildSection(
+                        title: 'Description',
+                        child: Text(
+                          formation.description.replaceAll(RegExp(r'<[^>]*>'), ''),
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            height: 1.6,
+                            color: isDarkMode
+                                ? Colors.grey[300]
+                                : Colors.grey[800],
+                          ),
+                        ),
+                      ),
+
+                      // Section Prérequis
+                      if (formation.prerequis != null &&
+                          formation.prerequis!.isNotEmpty)
+                        _buildSection(
+                          title: 'Prérequis',
+                          child: Text(
+                            formation.prerequis!,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              height: 1.6,
+                              color: isDarkMode
+                                  ? Colors.grey[300]
+                                  : Colors.grey[800],
+                            ),
+                          ),
+                        ),
+
+                      // Section Programme
+                      _buildSection(
+                        title: 'Programme détaillé',
+                        child: Column(
+                          children: [
+                            Text(
+                              'Cette formation couvre tous les aspects essentiels pour maîtriser le sujet. Le programme complet est disponible au format PDF.',
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                height: 1.6,
+                                color: isDarkMode
+                                    ? Colors.grey[300]
+                                    : Colors.grey[800],
+                              ),
                             ),
                             const SizedBox(height: 16),
-                            // Durée et certification
-                            Wrap(
-                              spacing: 16,
-                              runSpacing: 8,
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Text(
-                                      'Durée : ',
-                                      style: TextStyle(fontWeight: FontWeight.bold),
-                                    ),
-                                    _buildFeatureChip(
-                                      color: const Color(0xFFB07661),
-                                      icon: Icons.timer,
-                                      value: 'à partir de ${formation.duree} h',
-                                    ),
-                                  ],
+                            if (formation.cursusPdf != null &&
+                                formation.cursusPdf!.isNotEmpty)
+                              OutlinedButton.icon(
+                                icon: const Icon(Icons.picture_as_pdf),
+                                label: const Text('Télécharger le programme'),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24, vertical: 16),
+                                  side: BorderSide(color: categoryColor),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
-                                // if (formation.certification != null)
-                                //   _buildFeatureChip(
-                                //     icon: Icons.verified,
-                                //     value: formation.certification!,
-                                //     color: categoryColor,
-                                //   ),
-                              ],
-                            ),
+                                onPressed: () async {
+                                  final pdfUrl =
+                                      '${AppConstants.baseUrlImg}/${formation.cursusPdf}';
+                                  if (await canLaunchUrl(Uri.parse(pdfUrl))) {
+                                    await launchUrl(Uri.parse(pdfUrl));
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Impossible d\'ouvrir le PDF.'),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
                           ],
                         ),
                       ),
+
+                      const SizedBox(height: 40),
+
+                      // Bouton d'inscription
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: categoryColor,
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 4,
+                            shadowColor: categoryColor.withOpacity(0.3),
+                          ),
+                          onPressed: _isLoading ? null : _inscrireAFormation,
+                          child: _isLoading
+                              ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                              : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (_success)
+                                const Icon(Icons.check_circle, size: 20),
+                              if (_error)
+                                const Icon(Icons.error_outline, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                _success
+                                    ? "Inscription confirmée"
+                                    : _error
+                                    ? "Erreur, réessayer"
+                                    : "S'inscrire maintenant",
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 24),
-
-                // Section Description
-                _buildSectionTitle('Description'),
-                const SizedBox(height: 8),
-                Text(
-                  formation.description.replaceAll(RegExp(r'<[^>]*>'), ''),
-                  style: theme.textTheme.bodyLarge,
-                ),
-
-                const SizedBox(height: 24),
-
-                // Section Prérequis
-                if (formation.prerequis != null) ...[
-                  _buildSectionTitle('Prérequis'),
-                  const SizedBox(height: 8),
-                  Text(
-                    formation.prerequis!,
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                // Section Programme
-                _buildSectionTitle('Programme de la formation'),
-                const SizedBox(height: 8),
-                Text(
-                  'Découvrez toutes les compétences que vous allez acquérir lors de cette formation.',
-                  style: theme.textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 16),
-                if (formation.cursusPdf != null) ...[
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      icon: Icon(Icons.picture_as_pdf, color: Color(0xFFFEB823)),
-                      label: Text(
-                        'Voir le programme complet (PDF)',
-                        style: TextStyle(color: Color(0xFFFEB823)),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: Color(0xFFFEB823)),
-                        ),
-                      ),
-                      onPressed: () async {
-                        final pdfUrl = '${AppConstants.baseUrlImg}/${formation.cursusPdf}';
-                        if (await canLaunch(pdfUrl)) {
-                          await launch(pdfUrl);
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Impossible d\'ouvrir le PDF.')),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                // Bouton d'inscription
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFB07661),
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
-                      shadowColor: const Color(0xFFB07661).withOpacity(0.3),
-                    ),
-                    onPressed: _isLoading ? null : _inscrireAFormation,
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(
-                            _success
-                                ? "Inscription réussie !"
-                                : _error
-                                    ? "Erreur, réessayer"
-                                    : "S'inscrire à cette formation",
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           );
         },
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-        color: Colors.black87,
+  Widget _buildSection({required String title, required Widget child}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
       ),
     );
   }
 
-  Widget _buildFeatureChip({
+  Widget _buildInfoTile({
     required IconData icon,
+    required String label,
     required String value,
     required Color color,
   }) {
-    return Chip(
-      avatar: Icon(icon, size: 18, color: color),
-      label: Text(
-        value,
-        style: TextStyle(
-          fontWeight: FontWeight.w500,
-          color: Colors.grey.shade800,
-        ),
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
       ),
-      backgroundColor: color.withOpacity(0.1),
-      side: BorderSide(color: color.withOpacity(0.3)),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
   Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'Bureautique':
-        return const Color(0xFF3D9BE9);
-      case 'Langues':
-        return const Color(0xFFA55E6E);
-      case 'Internet':
-        return const Color(0xFFFFC533);
-      case 'Création':
-        return const Color(0xFF9392BE);
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String formatPrice(num price) {
-    final formatter = NumberFormat("#,##0", "fr_FR");
-    final formatterWithDecimals = NumberFormat("#,##0.00", "fr_FR");
-
-    if (price % 1 == 0) {
-      return formatter.format(price);
-    } else {
-      return formatterWithDecimals.format(price);
-    }
+    // Palette de couleurs harmonieuses
+    final colors = {
+      'Bureautique': const Color(0xFF3D9BE9),
+      'Langues': const Color(0xFFA55E6E),
+      'Internet': const Color(0xFFFFC533),
+      'Création': const Color(0xFF9392BE),
+    };
+    return colors[category] ?? const Color(0xFF79706E);
   }
 }

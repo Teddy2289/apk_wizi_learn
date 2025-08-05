@@ -11,6 +11,20 @@ import 'package:wizi_learn/features/auth/presentation/components/contact_card.da
 import 'package:wizi_learn/features/auth/presentation/widgets/random_formations_widget.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+
+import '../../data/datasources/auth_remote_data_source.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../data/repositories/auth_repository.dart';
+
+// === Palette de couleurs Wizi Learn ===
+const Color kYellowLight = Color(0xFFFFF9C4); // jaune très clair
+const Color kYellow = Color(0xFFFFEB3B); // jaune
+const Color kOrange = Color(0xFFFF9800); // orange
+const Color kOrangeDark = Color(0xFFF57C00); // orange foncé
+const Color kBrown = Color(0xFF8D6E63); // marron
+const Color kWhite = Colors.white;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,25 +34,92 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  bool _showHomeTutorial = false;
+  final List<Map<String, String>> _homeTutorialSteps = [
+    {
+      'title': 'Bienvenue sur l’accueil !',
+      'desc':
+          'Retrouvez ici vos contacts, formations et notifications importantes.',
+    },
+    {
+      'title': 'Vos contacts',
+      'desc': 'Accédez rapidement aux personnes clés pour votre formation.',
+    },
+    {
+      'title': 'Formations recommandées',
+      'desc': 'Découvrez les formations sélectionnées pour vous chaque jour.',
+    },
+  ];
   late final ContactRepository _contactRepository;
   late final FormationRepository _formationRepository;
+  late final AuthRepository _authRepository;
+  int? _connectedStagiaireId;
   List<Contact> _contacts = [];
   List<Formation> _randomFormations = [];
   bool _isLoading = true;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  String? _prenom;
+  String? _nom;
+  bool _isLoadingUser = true;
+
+  Future<void> _checkHomeTutorialSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool('hasSeenHomeTutorial') ?? false;
+    if (!seen) {
+      setState(() {
+        _showHomeTutorial = true;
+      });
+    }
+  }
 
   @override
   void initState() {
+    _checkHomeTutorialSeen();
     super.initState();
+    _initializeRepositories();
+    _loadData();
+    _loadConnectedUser();
+    _initFcmListener();
+  }
+
+  void _initializeRepositories() {
     final apiClient = ApiClient(
       dio: Dio(),
       storage: const FlutterSecureStorage(),
     );
+
     _contactRepository = ContactRepository(apiClient: apiClient);
     _formationRepository = FormationRepository(apiClient: apiClient);
-    _loadData();
-    _initFcmListener();
+
+    _authRepository = AuthRepository(
+      remoteDataSource: AuthRemoteDataSourceImpl(
+        apiClient: apiClient,
+        storage: const FlutterSecureStorage(),
+      ),
+      storage: const FlutterSecureStorage(),
+    );
+  }
+
+  Future<void> _loadConnectedUser() async {
+    try {
+      final user = await _authRepository.getMe();
+      if (mounted) {
+        setState(() {
+          _connectedStagiaireId = user?.stagiaire?.id;
+          _prenom = user?.stagiaire?.prenom;
+          _nom = user?.name;
+          _isLoadingUser = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erreur en chargeant l\'utilisateur connecté: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingUser = false;
+        });
+      }
+    }
   }
 
   void _initFcmListener() {
@@ -63,215 +144,361 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadData() async {
+    setState(() => _isLoading = true);
     try {
       final contacts = await _contactRepository.getContacts();
-      // debugPrint("Contacts récupérés: ${contacts.map((c) => '${c.prenom} (${c.role})').toList()}");
-
-      final formations = await _formationRepository.getRandomFormations(3);
-      // debugPrint("Formations récupérées: ${formations.map((f) => f.titre).toList()}");
+      final formationsRaw = await _formationRepository.getRandomFormations(3);
+      final formations =
+          formationsRaw.whereType<Formation>().toList(); // Cleaner filtering
 
       setState(() {
         _contacts = contacts;
         _randomFormations = formations;
-        _isLoading = false;
       });
     } catch (e) {
       debugPrint("Erreur pendant _loadData: $e");
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Erreur lors du chargement: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors du chargement : $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-  }
-
-  Future<void> _refreshData() async {
-    setState(() {
-      _isLoading = true;
-    });
-    await _loadData();
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 600; // Seuil pour les petits écrans
+    final isTablet = screenWidth > 600;
+    final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
-        elevation: 1, // Légère ombre pour la profondeur
-        centerTitle: true,
-        title: Text(
-          'Bienvenue sur Wizi Learn',
-          style: TextStyle(
-            color: Colors.brown,
-            fontSize: isSmallScreen ? 20 : 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                onRefresh: _refreshData,
-                child: CustomScrollView(
-                  slivers: [
-                    // Section Formations
-                    SliverPadding(
-                      padding: EdgeInsets.fromLTRB(
-                        isSmallScreen ? 16 : 24,
-                        16,
-                        isSmallScreen ? 16 : 24,
-                        8,
-                      ),
-                      sliver: SliverToBoxAdapter(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Text(
-                                'Formations recommandées',
-                                style: TextStyle(
-                                  fontSize: isSmallScreen ? 18 : 20,
-                                  color: const Color(0xFFB07661),
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            RandomFormationsWidget(
-                              formations: _randomFormations,
-                              onRefresh: _refreshData,
-                            ),
-                          ],
+    return Stack(
+      children: [
+        Scaffold(
+          body:
+              (_isLoading || _isLoadingUser)
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
+                    onRefresh: _loadData,
+                    color: theme.primaryColor,
+                    child: CustomScrollView(
+                      slivers: [
+                        // Spacer
+                        const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+                        // Section de Bienvenue Personnalisée
+                        SliverToBoxAdapter(
+                          child: _buildWelcomeSection(isTablet),
                         ),
-                      ),
-                    ),
 
-                    // Divider entre les sections
-                    SliverPadding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isSmallScreen ? 16 : 24,
-                        vertical: 8,
-                      ),
-                      sliver: SliverToBoxAdapter(
-                        child: Divider(color: Colors.grey[300], thickness: 1),
-                      ),
-                    ),
+                        // Spacer
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-                    // Section Contacts
-                    SliverPadding(
-                      padding: EdgeInsets.fromLTRB(
-                        isSmallScreen ? 16 : 24,
-                        8,
-                        isSmallScreen ? 16 : 24,
-                        16,
-                      ),
-                      sliver: SliverToBoxAdapter(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Mes contacts',
-                              style: TextStyle(
-                                fontSize: isSmallScreen ? 18 : 20,
-                                color: const Color(0xFFB07661),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            TextButton(
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (context) =>
-                                            ContactPage(contacts: _contacts),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                'Voir tous',
-                                style: TextStyle(
-                                  color: Colors.blue[700],
-                                  fontSize: isSmallScreen ? 14 : 16,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // Liste des contacts ou message si vide
-                    if (_contacts.isEmpty)
-                      SliverFillRemaining(
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Text(
-                              'Aucun contact disponible',
-                              style: TextStyle(
-                                fontSize: isSmallScreen ? 16 : 18,
-                                color: Colors.grey,
-                              ),
-                            ),
+                        // Section Formations
+                        SliverToBoxAdapter(
+                          child: _buildSectionTitle(
+                            context,
+                            title: 'Formations recommandées',
+                            icon: LucideIcons.bookOpen,
                           ),
                         ),
-                      )
-                    else
-                      SliverPadding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isSmallScreen ? 16 : 24,
+                        SliverToBoxAdapter(
+                          child: RandomFormationsWidget(
+                            formations: _randomFormations,
+                            onRefresh: _loadData,
+                          ),
                         ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate((
+
+                        // Spacer
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                        // Section Contacts
+                        SliverToBoxAdapter(
+                          child: _buildSectionWithButton(
                             context,
-                            index,
-                          ) {
-                            final wantedRoles = [
-                              'commercial',
-                              'formateur',
-                              'pôle relation client',
-                              'pôle_relation_client',
-                            ];
-                            final filteredContacts = <String, Contact>{};
-                            for (final c in _contacts) {
-                              final role = c.role.toLowerCase().replaceAll(
-                                '_',
-                                ' ',
+                            title: 'Mes contacts',
+                            icon: LucideIcons.user,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) =>
+                                          ContactPage(contacts: _contacts),
+                                ),
                               );
-                              if (wantedRoles.contains(role) &&
-                                  !filteredContacts.containsKey(role)) {
-                                filteredContacts[role] = c;
-                              }
-                            }
-                            final contactsToShow =
-                                filteredContacts.values.toList();
-
-                            if (index >= contactsToShow.length) return null;
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: ContactCard(
-                                contact: contactsToShow[index],
-                                showFormations: false,
-                              ),
-                            );
-                          }),
+                            },
+                          ),
                         ),
-                      ),
-                  ],
+
+                        // Liste des contacts
+                        _buildContactsList(isTablet),
+                      ],
+                    ),
+                  ),
+        ),
+        // if (_showHomeTutorial)
+        //   TutorialOverlay(
+        //     steps: _homeTutorialSteps,
+        //     storageKey: 'hasSeenHomeTutorial',
+        //     onFinish: () async {
+        //       final prefs = await SharedPreferences.getInstance();
+        //       await prefs.setBool('hasSeenHomeTutorial', true);
+        //       setState(() {
+        //         _showHomeTutorial = false;
+        //       });
+        //     },
+        //   ),
+      ],
+    );
+  }
+
+  Widget _buildWelcomeSection(bool isTablet) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [kYellowLight, kWhite, kOrange.withOpacity(0.2)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: kOrange.withOpacity(0.15),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+          border: Border.all(color: kYellow, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: isTablet ? 60 : 48,
+              height: isTablet ? 60 : 48,
+              decoration: BoxDecoration(
+                color: kYellowLight,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                LucideIcons.megaphone,
+                color: kOrange,
+                size: isTablet ? 36 : 28,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Bienvenue sur Wizi Learn',
+                    style: TextStyle(
+                      fontSize: isTablet ? 26 : 20,
+                      fontWeight: FontWeight.bold,
+                      color: kBrown,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Prêt pour une nouvelle journée d\'apprentissage ?',
+                    style: TextStyle(
+                      fontSize: isTablet ? 16 : 14,
+                      color: kBrown.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(color: kYellow, shape: BoxShape.circle),
+              child: Icon(icon, color: kOrangeDark, size: 22),
+            ),
+            const SizedBox(width: 12),
+            // Utilise FittedBox pour éviter l'overflow du texte
+            Expanded(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: kBrown,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionWithButton(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        // decoration: BoxDecoration(
+        //   color: kYellowLight,
+        //   borderRadius: BorderRadius.circular(16),
+        //   border: Border.all(color: kYellow, width: 1.2),
+        //   boxShadow: [
+        //     BoxShadow(
+        //       color: kOrange.withOpacity(0.08),
+        //       blurRadius: 8,
+        //       offset: const Offset(0, 3),
+        //     ),
+        //   ],
+        // ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: kYellow,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: kOrangeDark, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: kBrown,
+                  ),
+                ),
+              ],
+            ),
+            ElevatedButton(
+  style: ElevatedButton.styleFrom(
+    backgroundColor: Colors.transparent,
+    elevation: 0,
+    foregroundColor: kOrange,
+    shadowColor: Colors.transparent, // enlever l'ombre
+    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: BorderSide.none, // pas de bordure
+    ),
+  ),
+  onPressed: onPressed,
+  child: const Text('Voir tous->'),
+),
+
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContactsList(bool isTablet) {
+    if (_contacts.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Container(
+            decoration: BoxDecoration(
+              color: kYellowLight,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: kYellow, width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: kOrange.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                'Aucun contact disponible',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: kBrown),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final wantedRoles = {'commercial', 'formateur', 'pôle relation client'};
+    final filteredContacts = <String, Contact>{};
+    for (final c in _contacts) {
+      final role = c.role.toLowerCase().replaceAll('_', ' ');
+      if (wantedRoles.contains(role) && !filteredContacts.containsKey(role)) {
+        filteredContacts[role] = c;
+      }
+    }
+    final contactsToShow = filteredContacts.values.toList();
+
+    return SliverList(
+      delegate: SliverChildListDelegate([
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: isTablet ? 2 : 1,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: isTablet ? 2.5 : 2.6,
+            ),
+            itemCount: contactsToShow.length,
+            itemBuilder: (context, index) {
+              return Container(
+                margin: const EdgeInsets.all(4),
+                child: ContactCard(
+                  contact: contactsToShow[index],
+                  showFormations: false,
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 32), // Espace en bas pour éviter overflow
+      ]),
     );
   }
 }

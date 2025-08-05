@@ -13,7 +13,7 @@ class QuizRepository {
   Future<List<Quiz>> getQuizzesForStagiaire({int? stagiaireId}) async {
     try {
       final response = await apiClient.get('/stagiaire/quizzes');
-
+      debugPrint('Response from /stagiaire/quizzes: ${jsonEncode(response.data)}');
       if (response.data == null || response.data['data'] == null) {
         return [];
       }

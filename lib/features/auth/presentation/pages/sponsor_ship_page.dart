@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +7,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/repositories/parrainage_repository.dart';
+
+import '../../../../core/constants/route_constants.dart';
 
 class SponsorshipPage extends StatefulWidget {
   const SponsorshipPage({super.key});
@@ -18,11 +22,39 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
   bool _isGenerating = false;
   Map<String, dynamic>? _stats;
   bool _isLoadingStats = false;
+  late ParrainageRepository _parrainageRepo;
+  StreamSubscription<Map<String, dynamic>>? _statsSubscription;
 
   @override
   void initState() {
     super.initState();
-    _loadStats();
+    _parrainageRepo = ParrainageRepository(
+      apiClient: ApiClient(dio: Dio(), storage: const FlutterSecureStorage()),
+    );
+    _initStats();
+  }
+
+  void _initStats() async {
+    // Charge les stats initiales
+    setState(() => _isLoadingStats = true);
+    _stats = await _parrainageRepo.getStatsParrainage();
+    if (mounted) setState(() => _isLoadingStats = false);
+
+    // Écoute les mises à jour en temps réel
+    _statsSubscription = _parrainageRepo.getLiveStats().listen((newStats) {
+      if (mounted) {
+        setState(() {
+          _stats = newStats;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _statsSubscription?.cancel();
+    _parrainageRepo.dispose();
+    super.dispose();
   }
 
   Future<void> _loadStats() async {
@@ -73,6 +105,21 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
         backgroundColor: const Color(0xFFFEB823),
         title: const Text('Programme de Parrainage'),
         centerTitle: true,
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.arrow_back, color: Colors.white),
+          ),
+          onPressed:
+              () => Navigator.pushReplacementNamed(
+            context,
+            RouteConstants.dashboard,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

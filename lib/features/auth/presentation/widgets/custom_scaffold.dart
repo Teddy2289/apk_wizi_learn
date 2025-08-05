@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:wizi_learn/features/auth/data/models/stats_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/notification_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/stats_repository.dart';
@@ -12,12 +11,14 @@ import 'package:wizi_learn/features/auth/presentation/widgets/custom_app_bar.dar
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_bottom_navbar.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_drawer.dart';
 import 'dart:async';
+import 'package:provider/provider.dart';
+import '../providers/notification_provider.dart';
 
 class CustomScaffold extends StatefulWidget {
   final Widget body;
   final List<Widget>? actions;
   final int currentIndex;
-  final Function(int) onTabSelected;
+  final ValueChanged<int> onTabSelected;
   final bool showBanner;
 
   const CustomScaffold({
@@ -69,7 +70,9 @@ class _CustomScaffoldState extends State<CustomScaffold> {
       final user = await _authRepository.getMe();
       if (user.stagiaire?.id != null) {
         _userId = user.stagiaire!.id.toString();
-        _pointsSubscription = _statsRepository.getLivePoints(_userId!).listen((points) {
+        _pointsSubscription = _statsRepository.getLivePoints(_userId!).listen((
+          points,
+        ) {
           if (mounted) {
             setState(() {
               _currentPoints = points;
@@ -86,7 +89,9 @@ class _CustomScaffoldState extends State<CustomScaffold> {
 
   void _loadUnreadCount() {
     setState(() {
-      _unreadCountFuture = _notificationRepository.getUnreadCount().catchError((e) {
+      _unreadCountFuture = _notificationRepository.getUnreadCount().catchError((
+        e,
+      ) {
         debugPrint('Error loading unread count: $e');
         return 0;
       });
@@ -127,7 +132,7 @@ class _CustomScaffoldState extends State<CustomScaffold> {
           Expanded(child: widget.body),
         ],
       ),
-      bottomNavigationBar: CustomBottomNavBar(
+        bottomNavigationBar: CustomBottomNavBar(
         currentIndex: widget.currentIndex,
         onTap: widget.onTabSelected,
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -146,10 +151,9 @@ class _CustomScaffoldState extends State<CustomScaffold> {
           _buildPointsBadge(_currentPoints, context),
           const SizedBox(width: 8),
           // Notifications
-          FutureBuilder<int>(
-            future: _unreadCountFuture,
-            builder: (context, snapshot) {
-              final unreadCount = snapshot.data ?? 0;
+          Consumer<NotificationProvider>(
+            builder: (context, notifProvider, _) {
+              final unreadCount = notifProvider.unreadCount;
               return IconButton(
                 icon: Badge(
                   label: unreadCount > 0 ? Text('$unreadCount') : null,
@@ -157,7 +161,10 @@ class _CustomScaffoldState extends State<CustomScaffold> {
                   child: const Icon(Icons.notifications),
                 ),
                 onPressed: () async {
-                  await Navigator.pushNamed(context, RouteConstants.notifications);
+                  await Navigator.pushNamed(
+                    context,
+                    RouteConstants.notifications,
+                  );
                   refreshData();
                 },
               );
@@ -173,10 +180,7 @@ class _CustomScaffoldState extends State<CustomScaffold> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.amber.shade100,
-            Colors.amber.shade200,
-          ],
+          colors: [Colors.amber.shade100, Colors.amber.shade200],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -190,11 +194,7 @@ class _CustomScaffoldState extends State<CustomScaffold> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.star_rounded,
-            size: 18,
-            color: Colors.amber.shade800,
-          ),
+          Icon(Icons.star_rounded, size: 18, color: Colors.amber.shade800),
           const SizedBox(width: 6),
           Text(
             '$points pts',

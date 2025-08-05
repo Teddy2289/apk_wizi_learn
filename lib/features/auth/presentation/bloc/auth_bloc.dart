@@ -13,6 +13,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginEvent>(_onLogin);
     on<LogoutEvent>(_onLogout);
     on<CheckAuthEvent>(_onCheckAuth);
+    on<SendResetPasswordLink>(_onSendResetPasswordLink);
+    on<ResetPassword>(_onResetPassword);
   }
 
   @override
@@ -52,23 +54,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  Future<void> _onCheckAuth(CheckAuthEvent event, Emitter<AuthState> emit) async {
+  Future<void> _onCheckAuth(
+    CheckAuthEvent event,
+    Emitter<AuthState> emit,
+  ) async {
     emit(AuthLoading());
     try {
-      final isLoggedIn = await authRepository.isLoggedIn()
-          .timeout(const Duration(seconds: 5));
+      final isLoggedIn = await authRepository.isLoggedIn().timeout(
+        const Duration(seconds: 5),
+      );
 
       if (!isLoggedIn) {
         emit(Unauthenticated());
         return;
       }
 
-      final user = await authRepository.getMe()
-          .timeout(const Duration(seconds: 5));
+      final user = await authRepository.getMe().timeout(
+        const Duration(seconds: 5),
+      );
 
       emit(Authenticated(user));
     } on TimeoutException {
-      emit(AuthError('Timeout: Vérification de l\'authentification trop longue'));
+      emit(
+        AuthError('Timeout: Vérification de l\'authentification trop longue'),
+      );
       emit(Unauthenticated());
     } on AuthException catch (e) {
       // Si getMe échoue avec une AuthException, on déconnecte proprement
@@ -76,8 +85,49 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthError(e.message));
       emit(Unauthenticated());
     } catch (e) {
-      emit(AuthError('Erreur inattendue lors de la vérification: ${e.toString()}'));
+      emit(
+        AuthError('Erreur inattendue lors de la vérification: ${e.toString()}'),
+      );
       emit(Unauthenticated());
+    }
+  }
+
+  Future<void> _onSendResetPasswordLink(
+    SendResetPasswordLink event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await authRepository.sendResetPasswordLink(
+        event.email,
+        event.resetUrl,
+        isMobile: event.isMobile,
+      );
+      emit(ResetLinkSentSuccess());
+    } on AuthException catch (e) {
+      emit(AuthError(e.message));
+    } catch (e) {
+      emit(AuthError('Erreur inattendue: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onResetPassword(
+    ResetPassword event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await authRepository.resetPassword(
+        email: event.email,
+        token: event.token,
+        password: event.password,
+        passwordConfirmation: event.passwordConfirmation,
+      );
+      emit(PasswordResetSuccess());
+    } on AuthException catch (e) {
+      emit(AuthError(e.message));
+    } catch (e) {
+      emit(AuthError('Erreur inattendue: ${e.toString()}'));
     }
   }
 }

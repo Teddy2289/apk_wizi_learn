@@ -10,6 +10,18 @@ abstract class AuthRemoteDataSource {
   Future<void> logout();
   Future<UserModel> getUser();
   Future<UserModel> getMe();
+
+  Future<void> sendResetPasswordLink(
+    String email,
+    String resetUrl,
+      {bool isMobile = false}
+  );
+  Future<void> resetPassword({
+    required String email,
+    required String token,
+    required String password,
+    required String passwordConfirmation,
+  });
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -22,11 +34,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<UserModel> login(String email, String password) async {
     try {
       final response = await apiClient.post(
-          AppConstants.loginEndpoint,
-          data: {
-            'email': email,
-            'password': password,
-          }
+        AppConstants.loginEndpoint,
+        data: {'email': email, 'password': password},
       );
 
       if (response.statusCode != 200) {
@@ -55,7 +64,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     } catch (e) {
-      throw ApiException(message: 'Erreur lors de la connexion: ${e.toString()}');
+      throw ApiException(
+        message: 'Erreur lors de la connexion: ${e.toString()}',
+      );
     }
   }
 
@@ -86,6 +97,55 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       // debugPrint('Réponse getMe : ${response.data}');
 
       return UserModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<void> sendResetPasswordLink(String email, String resetUrl,
+      {bool isMobile = false}) async {
+    try {
+      final response = await apiClient.post(
+        '/forgot-password',
+        data: {'email': email, 'reset_url': resetUrl, 'is_mobile': isMobile},
+      );
+
+      if (response.statusCode != 200) {
+        throw ApiException(
+          message: response.data['error'] ?? 'Failed to send reset link',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String token,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    try {
+      final response = await apiClient.post(
+        '/reset-password',
+        data: {
+          'email': email,
+          'token': token,
+          'password': password,
+          'password_confirmation': passwordConfirmation,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw ApiException(
+          message: response.data['error'] ?? 'Failed to reset password',
+          statusCode: response.statusCode,
+        );
+      }
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

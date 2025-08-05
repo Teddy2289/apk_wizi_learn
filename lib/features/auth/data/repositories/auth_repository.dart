@@ -73,4 +73,43 @@ class AuthRepository implements AuthRepositoryContract {
     final token = await storage.read(key: 'auth_token');
     return token != null;
   }
+
+  @override
+  Future<void> sendResetPasswordLink(String email, String resetUrl, {bool isMobile = false}) async {
+    try {
+      await remoteDataSource.sendResetPasswordLink(email, resetUrl,isMobile: isMobile);
+    } on ApiException catch (e) {
+      throw AuthException(
+        e.message.contains('Email non trouvé')
+            ? 'Aucun compte associé à cet email'
+            : 'Échec de l\'envoi du lien de réinitialisation',
+      );
+    }
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String token,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    try {
+      await remoteDataSource.resetPassword(
+        email: email,
+        token: token,
+        password: password,
+        passwordConfirmation: passwordConfirmation,
+      );
+    } on ApiException catch (e) {
+      final errorMessage = e.message.toLowerCase();
+
+      if (errorMessage.contains('token invalide') ||
+          errorMessage.contains('token expiré')) {
+        throw AuthException('Le lien de réinitialisation est invalide ou a expiré');
+      } else {
+        throw AuthException('Échec de la réinitialisation du mot de passe');
+      }
+    }
+  }
 }

@@ -10,14 +10,19 @@ class QuizSessionManager {
   final ValueNotifier<int> remainingSeconds = ValueNotifier(30);
   final ValueNotifier<bool> quizCompleted = ValueNotifier(false);
 
+  final void Function()? onTimerEnd;
+
   Timer? _timer;
   DateTime? _questionStartTime;
   int _totalTimeSpent = 0;
   Map<String, dynamic> _userAnswers = {};
   final QuizSubmissionHandler _submissionHandler;
 
-  QuizSessionManager({required this.questions, required this.quizId})
-    : _submissionHandler = QuizSubmissionHandler(quizId: quizId);
+  QuizSessionManager({
+    required this.questions,
+    required this.quizId,
+    this.onTimerEnd,
+  }) : _submissionHandler = QuizSubmissionHandler(quizId: quizId);
 
   void startSession() {
     _startQuestionTimer();
@@ -39,7 +44,11 @@ class QuizSessionManager {
         remainingSeconds.value--;
       } else {
         _timer?.cancel();
-        goToNextQuestion();
+        if (onTimerEnd != null) {
+          onTimerEnd!();
+        } else {
+          goToNextQuestion();
+        }
       }
     });
   }
@@ -62,7 +71,8 @@ class QuizSessionManager {
         return {'text': answer.toString()};
 
       case "carte flash":
-        if (answer is Map) return answer['text'] ?? answer.values.first?.toString();
+        if (answer is Map)
+          return answer['text'] ?? answer.values.first?.toString();
         return answer.toString();
 
       case "choix multiples":
@@ -79,7 +89,6 @@ class QuizSessionManager {
         return answer;
     }
   }
-
 
   void handleAnswer(dynamic answer) {
     final question = questions[currentQuestionIndex.value];
@@ -113,6 +122,7 @@ class QuizSessionManager {
       _resetQuestionTimer();
     }
   }
+
   void initialize() {
     debugPrint('Questions chargées dans le manager:');
     for (var q in questions) {
@@ -128,9 +138,10 @@ class QuizSessionManager {
     });
 
     // Vérifiez que toutes les questions répondues existent
-    final invalidIds = _userAnswers.keys.where(
-            (id) => !questions.any((q) => q.id.toString() == id)
-    ).toList();
+    final invalidIds =
+        _userAnswers.keys
+            .where((id) => !questions.any((q) => q.id.toString() == id))
+            .toList();
 
     if (invalidIds.isNotEmpty) {
       debugPrint('ERREUR: IDs de questions invalides: $invalidIds');
@@ -162,6 +173,7 @@ class QuizSessionManager {
           ...response,
           'questions': answeredQuestions,
           'totalQuestions': answeredQuestions.length,
+          'quizId': quizId,
         };
       }
 
