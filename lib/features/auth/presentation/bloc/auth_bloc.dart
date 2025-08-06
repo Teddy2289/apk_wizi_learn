@@ -15,6 +15,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<CheckAuthEvent>(_onCheckAuth);
     on<SendResetPasswordLink>(_onSendResetPasswordLink);
     on<ResetPassword>(_onResetPassword);
+    on<RefreshUserRequested>(_onRefreshUserRequested);
   }
 
   @override
@@ -128,6 +129,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthError(e.message));
     } catch (e) {
       emit(AuthError('Erreur inattendue: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onRefreshUserRequested(
+    RefreshUserRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      final user = await authRepository.getMe();
+      emit(Authenticated(user));
+    } catch (e) {
+      emit(AuthError('Erreur lors du rafraîchissement du profil: \n' + e.toString()));
     }
   }
 }

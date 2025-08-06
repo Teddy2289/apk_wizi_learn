@@ -1,9 +1,9 @@
 class AppConstants {
   static const String appName = "Wizi Learn";
-  static const String baseUrl = "https://wizi-learn.com/api";
-  static const String baseUrlImg = "https://wizi-learn.com/";
-  //  static const String baseUrl = "http://localhost:8000/api";
-  //  static const String baseUrlImg = "http://localhost:8000/";
+  // static const String baseUrl = "https://wizi-learn.com/api";
+  // static const String baseUrlImg = "https://wizi-learn.com/";
+  static const String baseUrl = "http://localhost:8000/api";
+  static const String baseUrlImg = "http://localhost:8000/";
   static const String loginEndpoint = "/login";
   static const String logoutEndpoint = "/logout";
   static const String userEndpoint = "/user";
@@ -45,8 +45,8 @@ class AppConstants {
     return '$baseUrlImg/media/stream/$relativePath';
   }
 
-  static String markMediaAsWatched(int mediaId) => '$baseUrl/medias/$mediaId/watched';
-  static const String formationsWithStatus = '$baseUrl/medias/formations-with-status';
-
-
+  static String markMediaAsWatched(int mediaId) =>
+      '$baseUrl/medias/$mediaId/watched';
+  static const String formationsWithStatus =
+      '$baseUrl/medias/formations-with-status';
 }
