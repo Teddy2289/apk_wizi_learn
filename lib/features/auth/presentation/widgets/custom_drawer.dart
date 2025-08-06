@@ -6,6 +6,8 @@ import 'package:wizi_learn/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_event.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_state.dart';
 import '../../../../core/constants/route_constants.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:dio/dio.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
@@ -26,7 +28,10 @@ class CustomDrawer extends StatelessWidget {
               if (state is Authenticated) {
                 return Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.only(top: 30, bottom: 20), // Hauteur réduite
+                  padding: const EdgeInsets.only(
+                    top: 30,
+                    bottom: 20,
+                  ), // Hauteur réduite
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -39,40 +44,97 @@ class CustomDrawer extends StatelessWidget {
                   ),
                   child: SafeArea(
                     child: Column(
-                      mainAxisSize: MainAxisSize.min, // Pour éviter l'expansion inutile
+                      mainAxisSize:
+                          MainAxisSize.min, // Pour éviter l'expansion inutile
                       children: [
                         // Avatar agrandi avec moins de marge
-                        Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 10,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
+                        GestureDetector(
+                          onTap: () async {
+                            final picker = ImagePicker();
+                            final pickedFile = await picker.pickImage(
+                              source: ImageSource.gallery,
+                            );
+                            if (pickedFile != null) {
+                              try {
+                                final dio = Dio();
+                                // Remplace l'URL par celle de ton API
+                                final url =
+                                    'https://<TON_DOMAINE_API>/api/user/photo';
+                                final token = await _getToken(
+                                  context,
+                                ); // À adapter selon ta gestion auth
+                                final formData = FormData.fromMap({
+                                  'image': await MultipartFile.fromFile(
+                                    pickedFile.path,
+                                    filename: pickedFile.name,
+                                  ),
+                                });
+                                final response = await dio.post(
+                                  url,
+                                  data: formData,
+                                  options: Options(
+                                    headers: {
+                                      'Authorization': 'Bearer ' + token,
+                                      'Accept': 'application/json',
+                                    },
+                                  ),
+                                );
+                                if (response.data['success'] == true) {
+                                  // Rafraîchir l'utilisateur (ex: via AuthBloc ou Provider)
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Photo de profil mise à jour !',
+                                        ),
+                                      ),
+                                    );
+                                    // Ajoute ici le rafraîchissement de l'utilisateur
+                                    // context.read<AuthBloc>().add(RefreshUserRequested());
+                                  }
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Erreur: ' +
+                                            (response.data['error'] ?? ''),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Erreur lors de l\'upload: $e',
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                          },
                           child: CircleAvatar(
                             radius: 50, // Taille augmentée (était 40)
                             backgroundColor: Colors.white,
-                            backgroundImage: state.user.image != null
-                                ? CachedNetworkImageProvider(
-                              AppConstants.getUserImageUrl(state.user.image!),
-                            )
-                                : null,
-                            child: state.user.image == null
-                                ? Text(
-                              state.user.name[0].toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 40, // Taille augmentée
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            )
-                                : null,
+                            backgroundImage:
+                                state.user.image != null
+                                    ? CachedNetworkImageProvider(
+                                      AppConstants.getUserImageUrl(
+                                        state.user.image!,
+                                      ),
+                                    )
+                                    : null,
+                            child:
+                                state.user.image == null
+                                    ? Text(
+                                      state.user.name[0].toUpperCase(),
+                                      style: const TextStyle(
+                                        fontSize: 40, // Taille augmentée
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    )
+                                    : null,
                           ),
                         ),
                         const SizedBox(height: 12), // Marge réduite (était 16)
@@ -92,13 +154,16 @@ class CustomDrawer extends StatelessWidget {
                                       color: Colors.black45,
                                       blurRadius: 2,
                                       offset: Offset(1, 1),
-                                    )],
+                                    ),
+                                  ],
                                 ),
                                 textAlign: TextAlign.center,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 4), // Marge réduite (était 6)
+                              const SizedBox(
+                                height: 4,
+                              ), // Marge réduite (était 6)
                               Text(
                                 state.user.email,
                                 style: TextStyle(
@@ -124,7 +189,10 @@ class CustomDrawer extends StatelessWidget {
                 );
               }
               return Container(
-                padding: const EdgeInsets.only(top: 30, bottom: 20), // Hauteur réduite
+                padding: const EdgeInsets.only(
+                  top: 30,
+                  bottom: 20,
+                ), // Hauteur réduite
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -303,7 +371,7 @@ class CustomDrawer extends StatelessWidget {
                 icon: Icons.person,
                 title: 'Identité',
                 value:
-                '${state.user.stagiaire!.civilite} ${state.user.stagiaire!.prenom}',
+                    '${state.user.stagiaire!.civilite} ${state.user.stagiaire!.prenom}',
               ),
               _buildInfoTile(
                 icon: Icons.phone,
@@ -314,7 +382,7 @@ class CustomDrawer extends StatelessWidget {
                 icon: Icons.location_on,
                 title: 'Adresse',
                 value:
-                '${state.user.stagiaire!.adresse}, ${state.user.stagiaire!.codePostal} ${state.user.stagiaire!.ville}',
+                    '${state.user.stagiaire!.adresse}, ${state.user.stagiaire!.codePostal} ${state.user.stagiaire!.ville}',
               ),
               _buildInfoTile(
                 icon: Icons.calendar_today,
@@ -365,10 +433,10 @@ class CustomDrawer extends StatelessWidget {
   }
 
   Widget _buildMenuSection(
-      BuildContext context, {
-        required String title,
-        required List<_MenuItem> items,
-      }) {
+    BuildContext context, {
+    required String title,
+    required List<_MenuItem> items,
+  }) {
     final theme = Theme.of(context);
 
     return Padding(
@@ -388,7 +456,7 @@ class CustomDrawer extends StatelessWidget {
             ),
           ),
           ...items.map(
-                (item) => _buildDrawerItem(
+            (item) => _buildDrawerItem(
               context,
               icon: item.icon,
               label: item.label,
@@ -403,12 +471,12 @@ class CustomDrawer extends StatelessWidget {
   }
 
   Widget _buildDrawerItem(
-      BuildContext context, {
-        required IconData icon,
-        required String label,
-        required VoidCallback onTap,
-        Color? iconColor,
-      }) {
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color? iconColor,
+  }) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
 
@@ -469,4 +537,13 @@ class _MenuItem {
   final String route;
 
   _MenuItem({required this.icon, required this.label, required this.route});
+}
+
+// Helper pour récupérer le token (à adapter selon ta logique d'authentification)
+Future<String> _getToken(BuildContext context) async {
+  // Exemple avec flutter_secure_storage
+  // final storage = const FlutterSecureStorage();
+  // return await storage.read(key: 'token') ?? '';
+  // À adapter selon ta logique !
+  return '';
 }

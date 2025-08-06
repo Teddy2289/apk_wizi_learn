@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 // Models
 class StagiaireModel extends Equatable {
   final int id;
