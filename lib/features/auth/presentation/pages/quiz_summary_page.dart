@@ -1,19 +1,17 @@
-import 'package:confetti/confetti.dart';
-import 'package:flutter/material.dart';
-import 'package:wizi_learn/features/auth/data/models/question_model.dart';
-import 'package:wizi_learn/features/auth/presentation/components/quiz_question_card.dart';
-import 'package:wizi_learn/features/auth/presentation/components/quiz_score_header.dart';
-import 'package:wizi_learn/features/auth/presentation/pages/dashboard_page.dart';
 import 'dart:math';
-
-import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
-import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
+import 'package:wizi_learn/core/network/api_client.dart';
+import 'package:confetti/confetti.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:wizi_learn/features/auth/data/models/achievement_model.dart';
+import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/achievement_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/dashboard_page.dart';
+import 'package:wizi_learn/features/auth/presentation/components/quiz_question_card.dart';
+import 'package:wizi_learn/features/auth/presentation/components/quiz_score_header.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_widget.dart';
-import 'package:dio/dio.dart';
-
-import 'package:wizi_learn/features/auth/data/models/achievement_model.dart';
 
 class QuizSummaryPage extends StatefulWidget {
   final List<Question> questions;
@@ -46,9 +44,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(
-      duration: const Duration(seconds: 3),
-    );
+    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
 
     final allCorrect = widget.questions.every((q) => q.isCorrect == true);
     if (allCorrect) {
@@ -58,23 +54,33 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
         _showCongratulationDialog();
       });
     }
-    // Récupérer les nouveaux badges débloqués après le quiz
+
     _fetchNewAchievements();
   }
 
   Future<void> _fetchNewAchievements() async {
-    final repo = AchievementRepository(dio: Dio());
-    final achievements = await repo.getUserAchievements();
-    // Filtrer les badges débloqués récemment (ex: aujourd'hui)
-    final today = DateTime.now();
-    final newOnes = achievements.where((a) => a.unlockedAt != null &&
-      a.unlockedAt!.year == today.year &&
-      a.unlockedAt!.month == today.month &&
-      a.unlockedAt!.day == today.day).toList();
-    if (newOnes.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showBadgePopup(newOnes);
-      });
+    final dio = Dio();
+    final storage = const FlutterSecureStorage();
+    final apiClient = ApiClient(dio: dio, storage: storage);
+    final repo = AchievementRepository(apiClient: apiClient);
+
+    try {
+      final achievements = await repo.getUserAchievements();
+
+      final today = DateTime.now();
+      final newOnes = achievements.where((a) =>
+          a.unlockedAt != null &&
+          a.unlockedAt!.year == today.year &&
+          a.unlockedAt!.month == today.month &&
+          a.unlockedAt!.day == today.day).toList();
+
+      if (newOnes.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showBadgePopup(newOnes);
+        });
+      }
+    } catch (e) {
+      debugPrint("Erreur récupération nouveaux badges: $e");
     }
   }
 
@@ -123,9 +129,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -148,17 +152,11 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
                 onPressed: () {
                   Navigator.of(context).pop();
-                  // _showSuccessDialog removed as unused
                 },
                 child: const Text('Continuer'),
               ),
@@ -177,13 +175,10 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final answeredQuestions =
-        widget.questions.where((q) => q.selectedAnswers != null).toList();
+    final answeredQuestions = widget.questions.where((q) => q.selectedAnswers != null).toList();
 
-    final calculatedScore =
-        widget.questions.where((q) => q.isCorrect == true).length * 2;
-    final calculatedCorrectAnswers =
-        widget.questions.where((q) => q.isCorrect == true).length;
+    final calculatedScore = widget.questions.where((q) => q.isCorrect == true).length * 2;
+    final calculatedCorrectAnswers = widget.questions.where((q) => q.isCorrect == true).length;
 
     return Scaffold(
       appBar: AppBar(
@@ -193,8 +188,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
           IconButton(
             icon: const Icon(Icons.list),
             tooltip: 'Retour à la liste des quiz',
-            onPressed:
-                () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
       ),
@@ -205,8 +199,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
               QuizScoreHeader(
                 score: calculatedScore,
                 correctAnswers: calculatedCorrectAnswers,
-                totalQuestions:
-                    answeredQuestions.length, // Utiliser le nouveau total
+                totalQuestions: answeredQuestions.length,
                 timeSpent: widget.timeSpent,
               ),
               Expanded(
@@ -263,14 +256,14 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
                     initialIndex: 2,
                     arguments: {
                       'selectedTabIndex': 2,
-                      'scrollToQuizId': widget.quizResult?['quizId'].toString(),
+                      'scrollToQuizId': widget.quizResult?['quizId']?.toString(),
                       'fromNotification': true,
                       'useCustomScaffold': true,
                       'scrollToPlayed': true,
                     },
                   ),
                 ),
-                    (route) => false,
+                (route) => false,
               );
             },
             tooltip: 'Retour aux quiz',

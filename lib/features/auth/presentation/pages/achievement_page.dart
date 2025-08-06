@@ -1,11 +1,15 @@
+// lib/features/auth/presentation/pages/achievement_page.dart
+
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/achievement_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/achievement_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_grid.dart';
-import 'package:dio/dio.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/all_achievements_page.dart';
-import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AchievementPage extends StatefulWidget {
   const AchievementPage({Key? key}) : super(key: key);
@@ -19,7 +23,6 @@ class _AchievementPageState extends State<AchievementPage> {
   List<Achievement> _achievements = [];
   bool _isLoading = true;
 
-  // GlobalKeys pour le tutoriel interactif
   final GlobalKey _keyAllBadges = GlobalKey();
   final GlobalKey _keyBadgeGrid = GlobalKey();
   final GlobalKey _keyFirstBadge = GlobalKey();
@@ -28,7 +31,10 @@ class _AchievementPageState extends State<AchievementPage> {
   @override
   void initState() {
     super.initState();
-    _repository = AchievementRepository(dio: Dio());
+    final dio = Dio();
+    final storage = const FlutterSecureStorage();
+    final apiClient = ApiClient(dio: dio, storage: storage);
+    _repository = AchievementRepository(apiClient: apiClient);
     _loadAchievements();
     _checkAndShowTutorial();
   }
@@ -114,6 +120,13 @@ class _AchievementPageState extends State<AchievementPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Retour',
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         title: const Text('Mes Badges'),
         centerTitle: true,
         actions: [
@@ -135,36 +148,35 @@ class _AchievementPageState extends State<AchievementPage> {
           ),
         ],
       ),
-      body:
-          _isLoading
-              ? Center(
-                child: CircularProgressIndicator(
-                  color: theme.colorScheme.primary,
-                ),
-              )
-              : _achievements.isEmpty
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                color: theme.colorScheme.primary,
+              ),
+            )
+          : _achievements.isEmpty
               ? Center(child: Text('Aucun badge débloqué pour le moment.'))
               : SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text(
-                        'Débloque des badges en progressant dans tes quiz !',
-                        style: theme.textTheme.bodyLarge,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          'Débloque des badges en progressant dans tes quiz !',
+                          style: theme.textTheme.bodyLarge,
+                        ),
                       ),
-                    ),
-                    Container(
-                      key: _keyBadgeGrid,
-                      child: AchievementBadgeGrid(
-                        achievements: _achievements,
-                        keyFirstBadge: _keyFirstBadge,
+                      Container(
+                        key: _keyBadgeGrid,
+                        child: AchievementBadgeGrid(
+                          achievements: _achievements,
+                          keyFirstBadge: _keyFirstBadge,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
     );
   }
 }

@@ -1,9 +1,14 @@
+// lib/features/auth/presentation/pages/all_achievements_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/achievement_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/all_achievements_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/achievement_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_widget.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 
 class AllAchievementsPage extends StatefulWidget {
   const AllAchievementsPage({Key? key}) : super(key: key);
@@ -19,13 +24,17 @@ class _AllAchievementsPageState extends State<AllAchievementsPage> {
   List<Achievement> _user = [];
   bool _isLoading = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _allRepo = AllAchievementsRepository(dio: Dio());
-    _userRepo = AchievementRepository(dio: Dio());
-    _loadAll();
-  }
+@override
+void initState() {
+  super.initState();
+  final dio = Dio();
+  final storage = FlutterSecureStorage();
+  final apiClient = ApiClient(dio: dio, storage: storage);
+  _allRepo = AllAchievementsRepository(apiClient: apiClient);
+  _userRepo = AchievementRepository(apiClient: apiClient);
+  _loadAll();
+}
+
 
   Future<void> _loadAll() async {
     setState(() => _isLoading = true);
@@ -68,4 +77,4 @@ class _AllAchievementsPageState extends State<AllAchievementsPage> {
             ),
     );
   }
-} 
+}

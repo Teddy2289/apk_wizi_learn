@@ -196,6 +196,11 @@ class CustomDrawer extends StatelessWidget {
                         label: 'Mes Quiz',
                         route: RouteConstants.quiz,
                       ),
+                      _MenuItem(
+                        icon: Icons.emoji_events,
+                        label: 'Mes Badges',
+                        route: RouteConstants.achievement,
+                      ),
                     ],
                   ),
 

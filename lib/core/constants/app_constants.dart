@@ -19,6 +19,8 @@ class AppConstants {
   static const String notifications = '/notifications';
   static const String notificationsUnreadCount = '/notifications/unread-count';
   static const String markAllNotificationsRead = '/notifications/mark-all-read';
+  static const String allAchievements = '/admin/achievements';
+  static const String userAchievements = '/stagiaire/achievements';
 
   static String markNotificationAsRead(int id) => '/notifications/$id/read';
   static String deleteNotification(int id) => '/notifications/$id';
