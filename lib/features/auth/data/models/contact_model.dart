@@ -31,3 +31,29 @@ class Contact extends Equatable {
   @override
   List<Object?> get props => [id, name, type, telephone, email, formations];
 }
+
+
+class ContactFormModel {
+  final String email;
+  final String subject;
+  final String problemType;
+  final String message;
+  final List<String>? attachmentPaths;
+
+  ContactFormModel({
+    required this.email,
+    required this.subject,
+    required this.problemType,
+    required this.message,
+    this.attachmentPaths,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'email': email,
+      'subject': subject,
+      'problem_type': problemType,
+      'message': message,
+    };
+  }
+}
