@@ -14,6 +14,7 @@ import 'package:wizi_learn/features/auth/presentation/pages/user_manual_page.dar
 import 'package:wizi_learn/features/auth/presentation/pages/user_point_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/tutorial_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
 import '../constants/route_constants.dart';
 import '../../features/auth/presentation/pages/auth/login_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
@@ -21,6 +22,8 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case RouteConstants.achievement:
+        return MaterialPageRoute(builder: (_) => const AchievementPage());
       case RouteConstants.splash:
         return MaterialPageRoute(builder: (_) => const SplashPage());
 
