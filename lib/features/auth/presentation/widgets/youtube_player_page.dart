@@ -29,9 +29,6 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
   late YoutubePlayerController _controller;
   late Media currentVideo;
   bool showPlaylist = true;
-  bool _isFullScreen = false;
-  final GlobalKey _playerKey = GlobalKey();
-
   List<Formation> _formations = [];
   bool _isLoadingFormations = true;
   Set<int> _watchedMediaIds = {};
@@ -45,49 +42,58 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
 
     // Initialiser le repository
     final dio = Dio();
-    final storage = const FlutterSecureStorage();
-    final apiClient = ApiClient(dio: dio, storage: storage);
-    _mediaRepository = MediaRepository(apiClient: apiClient);
+    const storage = FlutterSecureStorage();
+    _mediaRepository =
+        MediaRepository(apiClient: ApiClient(dio: dio, storage: storage));
 
-    // Charger les données
-    _loadInitialData();
+    // Délayer les opérations non critiques
+    Future.microtask(() {
+      _loadWatchedMediaIds();
+      if (mounted) _preloadThumbnails(widget.videosInSameCategory);
+    });
+    Future.delayed(const Duration(seconds: 2), _loadFormations);
 
-    // Marquer la vidéo comme vue lorsqu'elle commence à jouer
     _controller.addListener(_onPlayerStateChange);
   }
 
-  Future<void> _loadInitialData() async {
-    await Future.wait([
-      _loadFormations(),
-      _loadWatchedMediaIds(),
-    ]);
+  Future<void> _preloadThumbnails(List<Media> videos) async {
+    for (final video in videos) {
+      final videoId = YoutubePlayer.convertUrlToId(normalizeYoutubeUrl(video.url));
+      if (videoId != null) {
+        final thumbnailUrl = YoutubePlayer.getThumbnail(
+          videoId: videoId,
+          quality: ThumbnailQuality.medium,
+        );
+        precacheImage(NetworkImage(thumbnailUrl), context);
+      }
+    }
   }
 
   Future<void> _loadWatchedMediaIds() async {
     try {
       final watchedIds = await _mediaRepository.getWatchedMediaIds();
-      setState(() {
-        _watchedMediaIds = watchedIds;
-      });
+      if (mounted) {
+        setState(() {
+          _watchedMediaIds = watchedIds;
+        });
+      }
     } catch (e) {
       debugPrint('Erreur chargement médias vus: $e');
     }
   }
 
   void _onPlayerStateChange() {
-    if (_controller.value.hasPlayed && !_controller.value.isPlaying) {
-      // Marquer comme vu après 5 secondes de visionnage
-      if (_controller.value.position.inSeconds >= 5) {
-        _markVideoAsWatched();
-        _controller.removeListener(_onPlayerStateChange);
-      }
+    if (_controller.value.playerState == PlayerState.playing &&
+        _controller.value.position.inSeconds >= 5) {
+      _markVideoAsWatched();
+      _controller.removeListener(_onPlayerStateChange);
     }
   }
 
   Future<void> _markVideoAsWatched() async {
     try {
       final success = await _mediaRepository.markMediaAsWatched(currentVideo.id);
-      if (success) {
+      if (success && mounted) {
         setState(() {
           _watchedMediaIds.add(currentVideo.id);
         });
@@ -101,6 +107,8 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
   }
 
   Future<void> _loadFormations() async {
+    if (!mounted) return;
+
     setState(() => _isLoadingFormations = true);
     try {
       final apiClient = ApiClient(
@@ -109,11 +117,15 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
       );
       final repository = FormationRepository(apiClient: apiClient);
       final formations = await repository.getRandomFormations(3);
-      setState(() => _formations = formations);
+      if (mounted) {
+        setState(() => _formations = formations);
+      }
     } catch (e) {
       debugPrint('Error loading formations: $e');
     } finally {
-      setState(() => _isLoadingFormations = false);
+      if (mounted) {
+        setState(() => _isLoadingFormations = false);
+      }
     }
   }
 
@@ -133,51 +145,62 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
 
   void _initYoutubeController(String url) {
     final normalizedUrl = normalizeYoutubeUrl(url);
-    final videoId = YoutubePlayer.convertUrlToId(normalizedUrl) ?? '';
+    final videoId = YoutubePlayer.convertUrlToId(normalizedUrl);
+
+    if (videoId == null || videoId.isEmpty) {
+      debugPrint('Invalid YouTube URL: $url');
+      return;
+    }
+
     _controller = YoutubePlayerController(
       initialVideoId: videoId,
       flags: const YoutubePlayerFlags(
         autoPlay: true,
         mute: false,
-        enableCaption: true,
+        enableCaption: false,
+        disableDragSeek: true,
+        forceHD: false,
         useHybridComposition: true,
-        forceHD: true,
       ),
     );
-  }
 
-  void _switchVideo(Media media) {
-    setState(() {
-      currentVideo = media;
-      final normalizedUrl = normalizeYoutubeUrl(media.url);
-      _controller.load(YoutubePlayer.convertUrlToId(normalizedUrl)!);
-      _controller.play();
+    // Ajoutez un listener pour les erreurs
+    _controller.addListener(() {
+      if (_controller.value.hasError) {
+        debugPrint('YouTube Player Error: ${_controller.value.errorCode}');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur de lecture: ${_controller.value.errorCode}'),
+            ),
+          );
+        }
+      }
     });
   }
 
-  void _toggleFullScreen() {
-    if (_isFullScreen) {
-      SystemChrome.setEnabledSystemUIMode(
-        SystemUiMode.manual,
-        overlays: SystemUiOverlay.values,
-      );
-      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    } else {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ]);
-    }
-    setState(() => _isFullScreen = !_isFullScreen);
-  }
+  void _switchVideo(Media media) {
+    if (currentVideo.id == media.id) return; // Ne rien faire si c'est la même vidéo
 
-  void _playerListener() {
-    if (_controller.value.isFullScreen != _isFullScreen) {
-      setState(() => _isFullScreen = _controller.value.isFullScreen);
+    final normalizedUrl = normalizeYoutubeUrl(media.url);
+    final videoId = YoutubePlayer.convertUrlToId(normalizedUrl);
+    if (videoId == null) {
+      debugPrint('Invalid YouTube URL: ${media.url}');
+      return;
     }
-  }
 
+    // Marquer l'ancienne vidéo comme vue avant de changer
+    _markVideoAsWatched();
+
+    // Mettre à jour l'état et charger la nouvelle vidéo
+    setState(() {
+      currentVideo = media;
+      // Utiliser `load` pour une transition plus rapide si la vidéo n'est pas déjà
+      // en mémoire tampon, ou `cue` pour la préparer
+      _controller.load(videoId);
+      // Le `load` démarre la lecture automatiquement avec autoPlay:true
+    });
+  }
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final minutes = twoDigits(duration.inMinutes.remainder(60));
@@ -187,13 +210,8 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
 
   @override
   void dispose() {
-    _controller.removeListener(_playerListener);
+    _controller.pause();
     _controller.removeListener(_onPlayerStateChange);
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: SystemUiOverlay.values,
-    );
     _controller.dispose();
     super.dispose();
   }
@@ -205,150 +223,110 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
     final textTheme = theme.textTheme;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    final relatedVideos =
-        widget.videosInSameCategory
-            .where((v) => v.id != currentVideo.id)
-            .toList();
+    final relatedVideos = widget.videosInSameCategory
+        .where((v) => v.id != currentVideo.id)
+        .toList();
 
-    final isShort = isYoutubeShort(currentVideo.url);
-    final screenHeight = MediaQuery.of(context).size.height;
-
-    // En plein écran
-    if (_isFullScreen) {
-      return Scaffold(
-        backgroundColor: Colors.black,
-        body: YoutubePlayerBuilder(
-          player: YoutubePlayer(
+    // Utilisation de YoutubePlayerBuilder pour gérer automatiquement le plein écran
+    return YoutubePlayerBuilder(
+      player: YoutubePlayer(
+        controller: _controller,
+        showVideoProgressIndicator: true,
+        progressIndicatorColor: colorScheme.primary,
+        progressColors: ProgressBarColors(
+          playedColor: colorScheme.primary,
+          handleColor: colorScheme.primary,
+        ),
+        bottomActions: [
+          CurrentPosition(),
+          ProgressBar(isExpanded: true),
+          RemainingDuration(),
+          FullScreenButton(
             controller: _controller,
-            showVideoProgressIndicator: true,
-            progressIndicatorColor: colorScheme.primary,
-            progressColors: ProgressBarColors(
-              playedColor: colorScheme.primary,
-              handleColor: colorScheme.primary,
-              bufferedColor: colorScheme.surfaceContainerHighest,
-              backgroundColor: colorScheme.onSurface.withOpacity(0.2),
-            ),
-            onReady: () => _controller.addListener(_playerListener),
-            onEnded: (_) => _toggleFullScreen(),
-            bottomActions: [
-              CurrentPosition(),
-              ProgressBar(isExpanded: true),
-              RemainingDuration(),
-              FullScreenButton(
-                controller: _controller,
-                color: colorScheme.primary,
-              ),
-            ],
-          ),
-          builder: (context, player) => SafeArea(
-            child: SizedBox.expand(
-              child: player,
-            ),
-          ),
-        ),
-      );
-    }
-
-    // Mode portrait
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          currentVideo.titre,
-          style: textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            fontSize: screenWidth * 0.045,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: Column(
-        children: [
-          AspectRatio(
-            aspectRatio: 16 / 9,
-            child: GestureDetector(
-              key: _playerKey,
-              onDoubleTap: _toggleFullScreen,
-              child: YoutubePlayerBuilder(
-                player: YoutubePlayer(
-                  controller: _controller,
-                  showVideoProgressIndicator: true,
-                  progressIndicatorColor: colorScheme.primary,
-                  progressColors: ProgressBarColors(
-                    playedColor: colorScheme.primary,
-                    handleColor: colorScheme.primary,
-                    bufferedColor: colorScheme.surfaceContainerHighest,
-                    backgroundColor: colorScheme.onSurface.withOpacity(0.2),
-                  ),
-                  onReady: () => _controller.addListener(_playerListener),
-                  onEnded: (_) => _isFullScreen ? _toggleFullScreen() : null,
-                  bottomActions: [
-                    CurrentPosition(),
-                    ProgressBar(isExpanded: true),
-                    RemainingDuration(),
-                    FullScreenButton(
-                      controller: _controller,
-                      color: colorScheme.primary,
-                    ),
-                  ],
-                ),
-                builder: (context, player) => player,
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: screenWidth * 0.04,
-              vertical: screenWidth * 0.03,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    currentVideo.titre,
-                    style: textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: screenWidth * 0.04,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(
-                    showPlaylist ? Icons.expand_less : Icons.expand_more,
-                  ),
-                  onPressed: () => setState(() => showPlaylist = !showPlaylist),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child:
-                showPlaylist
-                    ? _buildPlaylist(
-                      relatedVideos,
-                      colorScheme,
-                      textTheme,
-                      screenWidth,
-                    )
-                    : _buildDescription(context, colorScheme, textTheme),
+            color: colorScheme.primary,
           ),
         ],
       ),
+      builder: (context, player) {
+        // En mode paysage, on ne montre que le lecteur vidéo (plein écran)
+        if (MediaQuery.of(context).orientation == Orientation.landscape) {
+          return Scaffold(
+            body: Center(child: player),
+          );
+        }
+
+        // En mode portrait, on affiche l'interface complète
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              currentVideo.titre,
+              style: textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: screenWidth * 0.045,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            centerTitle: true,
+            elevation: 0,
+          ),
+          body: Column(
+            children: [
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: player, // Utilisation du widget 'player'
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.04,
+                  vertical: screenWidth * 0.03,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        currentVideo.titre,
+                        style: textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: screenWidth * 0.04,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        showPlaylist ? Icons.expand_less : Icons.expand_more,
+                      ),
+                      onPressed: () => setState(() => showPlaylist = !showPlaylist),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: showPlaylist
+                    ? _buildPlaylist(
+                  relatedVideos,
+                  colorScheme,
+                  textTheme,
+                  screenWidth,
+                )
+                    : _buildDescription(context, colorScheme, textTheme),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
-
   Widget _buildPlaylist(
-    List<Media> relatedVideos,
-    ColorScheme colorScheme,
-    TextTheme textTheme,
-    double screenWidth,
-  ) {
+      List<Media> relatedVideos,
+      ColorScheme colorScheme,
+      TextTheme textTheme,
+      double screenWidth,
+      ) {
     return ListView.separated(
       padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
       physics: const BouncingScrollPhysics(),
@@ -368,10 +346,9 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
               : null,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side:
-                isSelected
-                    ? BorderSide(color: colorScheme.primary, width: 2)
-                    : BorderSide.none,
+            side: isSelected
+                ? BorderSide(color: colorScheme.primary, width: 2)
+                : BorderSide.none,
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(10),
@@ -413,12 +390,12 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
                           top: 4,
                           right: 4,
                           child: Container(
-                            padding: EdgeInsets.all(4),
-                            decoration: BoxDecoration(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
                               color: Colors.green,
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(
+                            child: const Icon(
                               Icons.check,
                               size: 12,
                               color: Colors.white,
@@ -482,10 +459,10 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
   }
 
   Widget _buildDescription(
-    BuildContext context,
-    ColorScheme colorScheme,
-    TextTheme textTheme,
-  ) {
+      BuildContext context,
+      ColorScheme colorScheme,
+      TextTheme textTheme,
+      ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
       child: Column(
@@ -560,7 +537,7 @@ class _ExpandableDescriptionState extends State<_ExpandableDescription> {
             },
           ),
           crossFadeState:
-              expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 200),
         ),
         Align(
