@@ -10,6 +10,7 @@ import 'package:wizi_learn/features/auth/data/repositories/achievement_repositor
 import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_grid.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/all_achievements_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/home_page.dart';
 
 class AchievementPage extends StatefulWidget {
   const AchievementPage({Key? key}) : super(key: key);
@@ -124,7 +125,10 @@ class _AchievementPageState extends State<AchievementPage> {
           icon: const Icon(Icons.arrow_back),
           tooltip: 'Retour',
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const HomePage()),
+              (route) => false,
+            );
           },
         ),
         title: const Text('Mes Badges'),
@@ -148,35 +152,36 @@ class _AchievementPageState extends State<AchievementPage> {
           ),
         ],
       ),
-      body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                color: theme.colorScheme.primary,
-              ),
-            )
-          : _achievements.isEmpty
+      body:
+          _isLoading
+              ? Center(
+                child: CircularProgressIndicator(
+                  color: theme.colorScheme.primary,
+                ),
+              )
+              : _achievements.isEmpty
               ? Center(child: Text('Aucun badge débloqué pour le moment.'))
               : SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Text(
-                          'Débloque des badges en progressant dans tes quiz !',
-                          style: theme.textTheme.bodyLarge,
-                        ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'Débloque des badges en progressant dans tes quiz !',
+                        style: theme.textTheme.bodyLarge,
                       ),
-                      Container(
-                        key: _keyBadgeGrid,
-                        child: AchievementBadgeGrid(
-                          achievements: _achievements,
-                          keyFirstBadge: _keyFirstBadge,
-                        ),
+                    ),
+                    Container(
+                      key: _keyBadgeGrid,
+                      child: AchievementBadgeGrid(
+                        achievements: _achievements,
+                        keyFirstBadge: _keyFirstBadge,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
     );
   }
 }
