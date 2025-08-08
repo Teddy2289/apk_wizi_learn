@@ -191,6 +191,15 @@ class QuizSessionManager {
     }
   }
 
+  // Méthodes pour accéder aux données de session
+  Map<String, dynamic> getUserAnswers() {
+    return Map<String, dynamic>.from(_userAnswers);
+  }
+
+  int getTimeSpent() {
+    return _totalTimeSpent;
+  }
+
   void dispose() {
     _timer?.cancel();
     currentQuestionIndex.dispose();

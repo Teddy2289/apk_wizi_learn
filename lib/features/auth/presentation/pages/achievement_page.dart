@@ -10,7 +10,7 @@ import 'package:wizi_learn/features/auth/data/repositories/achievement_repositor
 import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_grid.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/all_achievements_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:wizi_learn/features/auth/presentation/pages/home_page.dart';
+import 'package:wizi_learn/core/constants/route_constants.dart';
 
 class AchievementPage extends StatefulWidget {
   const AchievementPage({Key? key}) : super(key: key);
@@ -125,8 +125,8 @@ class _AchievementPageState extends State<AchievementPage> {
           icon: const Icon(Icons.arrow_back),
           tooltip: 'Retour',
           onPressed: () {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const HomePage()),
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              RouteConstants.dashboard,
               (route) => false,
             );
           },

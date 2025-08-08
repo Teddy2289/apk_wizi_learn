@@ -20,6 +20,7 @@ class CustomScaffold extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onTabSelected;
   final bool showBanner;
+  final bool showBottomNavigationBar;
 
   const CustomScaffold({
     super.key,
@@ -28,6 +29,7 @@ class CustomScaffold extends StatefulWidget {
     required this.onTabSelected,
     this.actions,
     this.showBanner = true,
+    this.showBottomNavigationBar = true,
   });
 
   @override
@@ -132,13 +134,15 @@ class _CustomScaffoldState extends State<CustomScaffold> {
           Expanded(child: widget.body),
         ],
       ),
-        bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: widget.currentIndex,
-        onTap: widget.onTabSelected,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        selectedColor: Theme.of(context).colorScheme.primary,
-        unselectedColor: Colors.grey.shade600,
-      ),
+      bottomNavigationBar: widget.showBottomNavigationBar
+          ? CustomBottomNavBar(
+              currentIndex: widget.currentIndex,
+              onTap: widget.onTabSelected,
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              selectedColor: Theme.of(context).colorScheme.primary,
+              unselectedColor: Colors.grey.shade600,
+            )
+          : null,
     );
   }
 
