@@ -8,6 +8,8 @@ import 'package:wizi_learn/features/auth/presentation/bloc/auth_state.dart';
 import '../../../../core/constants/route_constants.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
+import 'package:wizi_learn/features/auth/data/repositories/avatar_repository.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
@@ -56,60 +58,68 @@ class CustomDrawer extends StatelessWidget {
                             );
                             if (pickedFile != null) {
                               try {
-                                final dio = Dio();
-                                // Remplace l'URL par celle de ton API
-                                final url =
-                                    'https://<TON_DOMAINE_API>/api/user/photo';
-                                final token = await _getToken(
-                                  context,
-                                ); // À adapter selon ta gestion auth
-                                final formData = FormData.fromMap({
-                                  'image': await MultipartFile.fromFile(
-                                    pickedFile.path,
-                                    filename: pickedFile.name,
-                                  ),
-                                });
-                                final response = await dio.post(
-                                  url,
-                                  data: formData,
-                                  options: Options(
-                                    headers: {
-                                      'Authorization': 'Bearer ' + token,
-                                      'Accept': 'application/json',
-                                    },
-                                  ),
-                                );
-                                if (response.data['success'] == true) {
-                                  // Rafraîchir l'utilisateur (ex: via AuthBloc ou Provider)
+                                final token = await _getToken(context);
+                                final avatarRepo = AvatarRepository(dio: Dio());
+                                final success = await avatarRepo
+                                    .uploadUserPhoto(pickedFile.path, token);
+                                if (success) {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text(
                                           'Photo de profil mise à jour !',
                                         ),
+                                        backgroundColor: Colors.green,
                                       ),
                                     );
                                     // Ajoute ici le rafraîchissement de l'utilisateur
-                                    // context.read<AuthBloc>().add(RefreshUserRequested());
+                                    context.read<AuthBloc>().add(
+                                      RefreshUserRequested(),
+                                    );
                                   }
                                 } else {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Erreur lors de la mise à jour de la photo.',
+                                        ),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              } on DioException catch (e) {
+                                String errorMessage =
+                                    'Erreur lors de l\'upload';
+                                if (e.response?.statusCode == 422) {
+                                  errorMessage =
+                                      'Format de fichier non supporté ou fichier trop volumineux';
+                                } else if (e.response?.statusCode == 401) {
+                                  errorMessage =
+                                      'Session expirée, veuillez vous reconnecter';
+                                } else if (e.response?.statusCode == 500) {
+                                  errorMessage =
+                                      'Erreur serveur, veuillez réessayer';
+                                }
+
+                                if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(
-                                        'Erreur: ' +
-                                            (response.data['error'] ?? ''),
-                                      ),
+                                      content: Text(errorMessage),
+                                      backgroundColor: Colors.red,
                                     ),
                                   );
                                 }
                               } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Erreur lors de l\'upload: $e',
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Erreur inattendue: $e'),
+                                      backgroundColor: Colors.red,
                                     ),
-                                  ),
-                                );
+                                  );
+                                }
                               }
                             }
                           },
@@ -541,9 +551,6 @@ class _MenuItem {
 
 // Helper pour récupérer le token (à adapter selon ta logique d'authentification)
 Future<String> _getToken(BuildContext context) async {
-  // Exemple avec flutter_secure_storage
-  // final storage = const FlutterSecureStorage();
-  // return await storage.read(key: 'token') ?? '';
-  // À adapter selon ta logique !
-  return '';
+  final storage = const FlutterSecureStorage();
+  return await storage.read(key: 'auth_token') ?? '';
 }
