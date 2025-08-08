@@ -48,10 +48,18 @@ class _QuizPageState extends State<QuizPage> {
   List<String> _playedQuizIds = [];
   String? _scrollToQuizId;
 
+  // Filtres
+  String? _selectedLevel;
+  String? _selectedFormation;
+  List<String> _availableLevels = [];
+  List<String> _availableFormations = [];
+
   @override
   void initState() {
     super.initState();
-    debugPrint('QuizPage params - useCustomScaffold: ${widget.useCustomScaffold}');
+    debugPrint(
+      'QuizPage params - useCustomScaffold: ${widget.useCustomScaffold}',
+    );
     debugPrint('QuizPage params - scrollToPlayed: ${widget.scrollToPlayed}');
     _initializeRepositories();
     _loadInitialData();
@@ -68,8 +76,6 @@ class _QuizPageState extends State<QuizPage> {
     });
   }
 
-
-
   Future<void> _scrollToQuiz(String quizId) async {
     debugPrint('Srolling to quiz with ID: $quizId');
     if (_scrollController.hasClients && _futureQuizzes != null) {
@@ -80,10 +86,13 @@ class _QuizPageState extends State<QuizPage> {
         if (quizIndex != -1) {
           // Calcul plus précis de la position
           final RenderBox renderBox = context.findRenderObject() as RenderBox;
-          final double itemHeight = renderBox.size.height / 5; // Estimation de la hauteur d'un item
+          final double itemHeight =
+              renderBox.size.height / 5; // Estimation de la hauteur d'un item
           final double position = quizIndex * itemHeight;
 
-          await Future.delayed(const Duration(milliseconds: 500)); // Délai supplémentaire
+          await Future.delayed(
+            const Duration(milliseconds: 500),
+          ); // Délai supplémentaire
 
           if (_scrollController.hasClients) {
             _scrollController.animateTo(
@@ -98,6 +107,7 @@ class _QuizPageState extends State<QuizPage> {
       }
     }
   }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -174,7 +184,9 @@ class _QuizPageState extends State<QuizPage> {
       final history = await _statsRepository.getQuizHistory();
       debugPrint('QuizHistory (raw):');
       for (var h in history) {
-        debugPrint('id: ${h.id}, quizId: ${h.quiz.id}, completedAt: ${h.completedAt}, score: ${h.score}, totalQuestions: ${h.totalQuestions}, correctAnswers: ${h.correctAnswers}');
+        debugPrint(
+          'id: ${h.id}, quizId: ${h.quiz.id}, completedAt: ${h.completedAt}, score: ${h.score}, totalQuestions: ${h.totalQuestions}, correctAnswers: ${h.correctAnswers}',
+        );
       }
       setState(() {
         _futureQuizHistory = Future.value(history);
@@ -192,6 +204,9 @@ class _QuizPageState extends State<QuizPage> {
       );
       final filteredQuizzes = _filterQuizzesByPoints(quizzes, _userPoints);
 
+      // Extraire les niveaux et formations disponibles
+      _extractAvailableFilters(filteredQuizzes);
+
       setState(() {
         _futureQuizzes = Future.value(filteredQuizzes);
         _expandedQuizzes.clear();
@@ -205,15 +220,47 @@ class _QuizPageState extends State<QuizPage> {
     }
   }
 
+  void _extractAvailableFilters(List<quiz_model.Quiz> quizzes) {
+    final levels = <String>{};
+    final formations = <String>{};
+
+    for (final quiz in quizzes) {
+      if (quiz.niveau.isNotEmpty) {
+        levels.add(quiz.niveau);
+      }
+      if (quiz.formation.titre.isNotEmpty) {
+        formations.add(quiz.formation.titre);
+      }
+    }
+
+    _availableLevels = levels.toList()..sort();
+    _availableFormations = formations.toList()..sort();
+  }
+
   Map<String, List<quiz_model.Quiz>> _separateQuizzes(
     List<quiz_model.Quiz> allQuizzes,
   ) {
+    // Appliquer les filtres
+    List<quiz_model.Quiz> filteredQuizzes = allQuizzes;
+
+    if (_selectedLevel != null) {
+      filteredQuizzes =
+          filteredQuizzes.where((q) => q.niveau == _selectedLevel).toList();
+    }
+
+    if (_selectedFormation != null) {
+      filteredQuizzes =
+          filteredQuizzes
+              .where((q) => q.formation.titre == _selectedFormation)
+              .toList();
+    }
+
     final played =
-        allQuizzes
+        filteredQuizzes
             .where((q) => _playedQuizIds.contains(q.id.toString()))
             .toList();
     final unplayed =
-        allQuizzes
+        filteredQuizzes
             .where((q) => !_playedQuizIds.contains(q.id.toString()))
             .toList();
     return {'played': played, 'unplayed': unplayed};
@@ -316,9 +363,10 @@ class _QuizPageState extends State<QuizPage> {
       selectedTabIndex = 2;
     }
 
-    Widget content = _isInitialLoad
-        ? _buildLoadingScreen(theme)
-        : _buildMainContent(theme, scrollToPlayed: scrollToPlayed);
+    Widget content =
+        _isInitialLoad
+            ? _buildLoadingScreen(theme)
+            : _buildMainContent(theme, scrollToPlayed: scrollToPlayed);
 
     if (useCustomScaffold) {
       return CustomScaffold(
@@ -340,10 +388,16 @@ class _QuizPageState extends State<QuizPage> {
         appBar: AppBar(
           title: const Text('Mes Quiz'),
           centerTitle: true,
-          backgroundColor: isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
+          backgroundColor:
+              isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
           elevation: 0,
           automaticallyImplyLeading: false,
           actions: [
+            IconButton(
+              icon: const Icon(Icons.filter_list),
+              onPressed: _showFilterDialog,
+              tooltip: 'Filtrer les quiz',
+            ),
             IconButton(
               icon: const Icon(Icons.help_outline),
               onPressed: _showHowToPlayDialog,
@@ -352,14 +406,18 @@ class _QuizPageState extends State<QuizPage> {
           ],
         ),
         body: content,
-        floatingActionButton: _showBackToTopButton
-            ? FloatingActionButton(
-          onPressed: _scrollToTop,
-          mini: true,
-          backgroundColor: theme.colorScheme.primary,
-          child: Icon(Icons.arrow_upward, color: theme.colorScheme.onPrimary),
-        )
-            : null,
+        floatingActionButton:
+            _showBackToTopButton
+                ? FloatingActionButton(
+                  onPressed: _scrollToTop,
+                  mini: true,
+                  backgroundColor: theme.colorScheme.primary,
+                  child: Icon(
+                    Icons.arrow_upward,
+                    color: theme.colorScheme.onPrimary,
+                  ),
+                )
+                : null,
       );
     }
   }
@@ -418,9 +476,65 @@ class _QuizPageState extends State<QuizPage> {
             color: theme.colorScheme.onSurface.withOpacity(0.6),
           ),
         ),
+        if (_selectedLevel != null || _selectedFormation != null) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: theme.colorScheme.primary.withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.filter_list,
+                  size: 16,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  _buildFilterText(),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedLevel = null;
+                      _selectedFormation = null;
+                    });
+                  },
+                  child: Icon(
+                    Icons.close,
+                    size: 16,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
       ],
     );
+  }
+
+  String _buildFilterText() {
+    final filters = <String>[];
+    if (_selectedLevel != null) {
+      filters.add('Niveau: $_selectedLevel');
+    }
+    if (_selectedFormation != null) {
+      filters.add('Formation: $_selectedFormation');
+    }
+    return filters.join(' • ');
   }
 
   Widget _buildQuizListContent(ThemeData theme) {
@@ -430,8 +544,8 @@ class _QuizPageState extends State<QuizPage> {
 
     return FutureBuilder<List<quiz_model.Quiz>>(
       future: _futureQuizzes,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting &&
+      builder: (context, quizSnapshot) {
+        if (quizSnapshot.connectionState == ConnectionState.waiting &&
             !_isInitialLoad) {
           return SliverList(
             delegate: SliverChildBuilderDelegate(
@@ -441,48 +555,98 @@ class _QuizPageState extends State<QuizPage> {
           );
         }
 
-        if (snapshot.hasError) {
+        if (quizSnapshot.hasError) {
           return SliverFillRemaining(child: _buildErrorState(theme));
         }
 
-        if (snapshot.hasData) {
-          final separated = _separateQuizzes(snapshot.data!);
-          final unplayed = separated['unplayed']!;
-          final played = separated['played']!;
+        if (quizSnapshot.hasData) {
+          return FutureBuilder<List<QuizHistory>>(
+            future: _futureQuizHistory,
+            builder: (context, historySnapshot) {
+              final separated = _separateQuizzes(quizSnapshot.data!);
+              final unplayed = separated['unplayed']!;
+              List<quiz_model.Quiz> played = separated['played']!;
 
-          return SliverList(
-            delegate: SliverChildListDelegate([
-              if (unplayed.isNotEmpty) ...[
-                _buildSectionTitle('Quiz disponibles', theme),
-                ...unplayed
-                    .map(
-                      (quiz) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _buildQuizCard(
-                          quiz,
-                          _expandedQuizzes[quiz.id] ?? false,
-                          theme,
+              // Trier les quiz joués par ordre antéchronologique si l'historique est disponible
+              if (historySnapshot.hasData) {
+                final history = historySnapshot.data!;
+                played.sort((a, b) {
+                  final historyA = history.firstWhere(
+                    (h) => h.quiz.id.toString() == a.id.toString(),
+                    orElse:
+                        () => QuizHistory(
+                          id: '',
+                          quiz: a,
+                          score: 0,
+                          completedAt: '',
+                          timeSpent: 0,
+                          totalQuestions: 0,
+                          correctAnswers: 0,
                         ),
-                      ),
-                    )
-                    .toList(),
-                const SizedBox(height: 16),
-              ],
+                  );
+                  final historyB = history.firstWhere(
+                    (h) => h.quiz.id.toString() == b.id.toString(),
+                    orElse:
+                        () => QuizHistory(
+                          id: '',
+                          quiz: b,
+                          score: 0,
+                          completedAt: '',
+                          timeSpent: 0,
+                          totalQuestions: 0,
+                          correctAnswers: 0,
+                        ),
+                  );
 
-              if (played.isNotEmpty) ...[
-                _buildSectionTitle('Historique de vos quiz déjà jouer', theme),
-                ...played
-                    .map(
-                      (quiz) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _buildPlayedQuizCard(quiz, theme),
-                      ),
-                    )
-                    .toList(),
-              ],
+                  try {
+                    final dateA = DateTime.parse(historyA.completedAt);
+                    final dateB = DateTime.parse(historyB.completedAt);
+                    return dateB.compareTo(dateA); // Ordre antéchronologique
+                  } catch (e) {
+                    return 0; // En cas d'erreur de parsing, garder l'ordre original
+                  }
+                });
+              }
 
-              if (unplayed.isEmpty && played.isEmpty) _buildEmptyState(theme),
-            ]),
+              return SliverList(
+                delegate: SliverChildListDelegate([
+                  if (unplayed.isNotEmpty) ...[
+                    _buildSectionTitle('Quiz disponibles', theme),
+                    ...unplayed
+                        .map(
+                          (quiz) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildQuizCard(
+                              quiz,
+                              _expandedQuizzes[quiz.id] ?? false,
+                              theme,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    const SizedBox(height: 16),
+                  ],
+
+                  if (played.isNotEmpty) ...[
+                    _buildSectionTitle(
+                      'Historique de vos quiz déjà jouer',
+                      theme,
+                    ),
+                    ...played
+                        .map(
+                          (quiz) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildPlayedQuizCard(quiz, theme),
+                          ),
+                        )
+                        .toList(),
+                  ],
+
+                  if (unplayed.isEmpty && played.isEmpty)
+                    _buildEmptyState(theme),
+                ]),
+              );
+            },
           );
         }
 
@@ -509,29 +673,32 @@ class _QuizPageState extends State<QuizPage> {
     _futureQuizHistory?.then((historyList) {
       final h = historyList?.firstWhere(
         (h) => h.quiz.id.toString() == quiz.id.toString(),
-        orElse: () => QuizHistory(
-          id: '',
-          quiz: quiz_model.Quiz(
-            id: 0,
-            titre: '',
-            description: '',
-            duree: '',
-            niveau: '',
-            status: '',
-            nbPointsTotal: 0,
-            formation: quiz.formation,
-            questions: const [],
-          ),
-          score: 0,
-          completedAt: '',
-          timeSpent: 0,
-          totalQuestions: 0,
-          correctAnswers: 0,
-        ),
+        orElse:
+            () => QuizHistory(
+              id: '',
+              quiz: quiz_model.Quiz(
+                id: 0,
+                titre: '',
+                description: '',
+                duree: '',
+                niveau: '',
+                status: '',
+                nbPointsTotal: 0,
+                formation: quiz.formation,
+                questions: const [],
+              ),
+              score: 0,
+              completedAt: '',
+              timeSpent: 0,
+              totalQuestions: 0,
+              correctAnswers: 0,
+            ),
       );
       if (h?.completedAt.isNotEmpty == true) {
         // debugPrint('[Affichage carte historique] quizId: ${quiz.id}, completedAt (history): ${h?.completedAt}');
-        debugPrint('correctAnswers: ${h?.correctAnswers}, totalQuestions: ${h?.totalQuestions}');
+        debugPrint(
+          'correctAnswers: ${h?.correctAnswers}, totalQuestions: ${h?.totalQuestions}',
+        );
         debugPrint('score: ${h?.score}, timeSpent: ${h?.timeSpent}');
       }
     });
@@ -544,40 +711,46 @@ class _QuizPageState extends State<QuizPage> {
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox();
 
-    final history = snapshot.data!.firstWhere(
-      (h) => h.quiz.id.toString() == quiz.id.toString(),
-      orElse: () => QuizHistory(
-        id: '',
-        quiz: quiz_model.Quiz(
-          id: 0,
-          titre: '',
-          description: '',
-          duree: '',
-          niveau: '',
-          status: '',
-          nbPointsTotal: 0,
-          formation: quiz.formation,
-          questions: const [],
-        ),
-        score: 0,
-        completedAt: '',
-        timeSpent: 0,
-        totalQuestions: 0,
-        correctAnswers: 0,
-      ),
-    );
+        final history = snapshot.data!.firstWhere(
+          (h) => h.quiz.id.toString() == quiz.id.toString(),
+          orElse:
+              () => QuizHistory(
+                id: '',
+                quiz: quiz_model.Quiz(
+                  id: 0,
+                  titre: '',
+                  description: '',
+                  duree: '',
+                  niveau: '',
+                  status: '',
+                  nbPointsTotal: 0,
+                  formation: quiz.formation,
+                  questions: const [],
+                ),
+                score: 0,
+                completedAt: '',
+                timeSpent: 0,
+                totalQuestions: 0,
+                correctAnswers: 0,
+              ),
+        );
 
         // Correction NaN : si totalQuestions == 0, afficher 0%
-        final scorePercentage = (history.totalQuestions == 0)
-            ? 0
-            : (history.correctAnswers / history.totalQuestions * 100).round();
+        final scorePercentage =
+            (history.totalQuestions == 0)
+                ? 0
+                : (history.correctAnswers / history.totalQuestions * 100)
+                    .round();
 
         // Gestion du format de date invalide + debug valeur brute
         String formattedDate;
         String debugDate = history.completedAt;
         try {
-          formattedDate = 'Terminé le '
-              + DateFormat('dd/MM/yyyy').format(DateTime.parse(history.completedAt));
+          formattedDate =
+              'Terminé le ' +
+              DateFormat(
+                'dd/MM/yyyy',
+              ).format(DateTime.parse(history.completedAt));
         } catch (e) {
           formattedDate = 'Date inconnue (raw: $debugDate)';
         }
@@ -660,7 +833,9 @@ class _QuizPageState extends State<QuizPage> {
                             Text(
                               quiz.niveau,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                color: theme.colorScheme.onSurface.withOpacity(
+                                  0.6,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -720,7 +895,7 @@ class _QuizPageState extends State<QuizPage> {
                           _buildStatItem(
                             Icons.star,
                             'Points',
-                            '${history.correctAnswers*2}',
+                            '${history.correctAnswers * 2}',
                             categoryColor,
                             theme,
                           ),
@@ -817,6 +992,7 @@ class _QuizPageState extends State<QuizPage> {
       _showErrorSnackbar('Erreur de chargement des questions');
     }
   }
+
   void _showErrorSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -899,6 +1075,13 @@ class _QuizPageState extends State<QuizPage> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
+                        const SizedBox(height: 2),
+                        Text(
+                          quiz.niveau,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -947,7 +1130,8 @@ class _QuizPageState extends State<QuizPage> {
                             Text(
                               (() {
                                 final nbQuestions = quiz.questions.length;
-                                final points = nbQuestions > 5 ? 10 : nbQuestions * 2;
+                                final points =
+                                    nbQuestions > 5 ? 10 : nbQuestions * 2;
                                 return '$points points';
                               })(),
                               style: theme.textTheme.bodyMedium?.copyWith(
@@ -1229,51 +1413,190 @@ class _QuizPageState extends State<QuizPage> {
       }
     });
   }
+
+  void _showFilterDialog() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => StatefulBuilder(
+            builder:
+                (context, setDialogState) => AlertDialog(
+                  title: Row(
+                    children: [
+                      Icon(
+                        Icons.filter_list,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 10),
+                      const Text('Filtrer les quiz'),
+                    ],
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Filtre par niveau
+                      Text(
+                        'Niveau',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: _selectedLevel,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                        ),
+                        hint: const Text('Tous les niveaux'),
+                        items: [
+                          const DropdownMenuItem<String>(
+                            value: null,
+                            child: Text('Tous les niveaux'),
+                          ),
+                          ..._availableLevels.map(
+                            (level) => DropdownMenuItem<String>(
+                              value: level,
+                              child: Text(level),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setDialogState(() {
+                            _selectedLevel = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Filtre par formation
+                      Text(
+                        'Formation',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: _selectedFormation,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                        ),
+                        hint: const Text('Toutes les formations'),
+                        items: [
+                          const DropdownMenuItem<String>(
+                            value: null,
+                            child: Text('Toutes les formations'),
+                          ),
+                          ..._availableFormations.map(
+                            (formation) => DropdownMenuItem<String>(
+                              value: formation,
+                              child: Text(formation),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setDialogState(() {
+                            _selectedFormation = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        setDialogState(() {
+                          _selectedLevel = null;
+                          _selectedFormation = null;
+                        });
+                      },
+                      child: const Text('Réinitialiser'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Annuler'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(
+                          () {},
+                        ); // Rafraîchir l'affichage avec les filtres
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onPrimary,
+                      ),
+                      child: const Text('Appliquer'),
+                    ),
+                  ],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+          ),
+    );
+  }
+
   void _showHowToPlayDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.help, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 10),
-            const Text('Comment jouer ?'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildStep('1. Choisissez un quiz dans la liste'),
-            const SizedBox(height: 10),
-            _buildStep('2. Répondez aux questions qui s\'affichent'),
-            const SizedBox(height: 10),
-            _buildStep('3. Validez vos réponses'),
-            const SizedBox(height: 10),
-            _buildStep('4. Découvrez votre score à la fin !'),
-            const SizedBox(height: 20),
-            Text(
-              'Vous gagnez des points pour chaque bonne réponse !',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
+      builder:
+          (context) => AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.help, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 10),
+                const Text('Comment jouer ?'),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Compris !'),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.primary,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildStep('1. Choisissez un quiz dans la liste'),
+                const SizedBox(height: 10),
+                _buildStep('2. Répondez aux questions qui s\'affichent'),
+                const SizedBox(height: 10),
+                _buildStep('3. Validez vos réponses'),
+                const SizedBox(height: 10),
+                _buildStep('4. Découvrez votre score à la fin !'),
+                const SizedBox(height: 20),
+                Text(
+                  'Vous gagnez des points pour chaque bonne réponse !',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Compris !'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
             ),
           ),
-        ],
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-      ),
     );
   }
 

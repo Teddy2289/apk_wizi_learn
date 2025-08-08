@@ -114,7 +114,7 @@ class _RankingPageState extends State<RankingPage>
           TargetContent(
             align: ContentAlign.bottom,
             child: const Text(
-              'Navigue entre Statistiques, Classement et Historique.',
+              'Navigue entre Classement, Statistiques et Historique.',
               style: TextStyle(color: Colors.white, fontSize: 18),
             ),
           ),
@@ -196,8 +196,8 @@ class _RankingPageState extends State<RankingPage>
           key: _keyTabBar,
           controller: _tabController,
           tabs: const [
-            Tab(icon: Icon(Icons.assessment), text: 'Statistiques'),
             Tab(icon: Icon(Icons.leaderboard), text: 'Classement'),
+            Tab(icon: Icon(Icons.assessment), text: 'Statistiques'),
             Tab(icon: Icon(Icons.history), text: 'Historique'),
           ],
           labelColor: AppColors.accent,
@@ -263,8 +263,8 @@ class _RankingPageState extends State<RankingPage>
               : TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildStatsTab(),
                   _buildRankingTab(),
+                  _buildStatsTab(),
                   _buildHistoryTab(),
                 ],
               ),
