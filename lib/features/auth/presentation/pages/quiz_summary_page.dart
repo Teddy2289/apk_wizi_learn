@@ -57,7 +57,22 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
       });
     }
 
-    _fetchNewAchievements();
+    // If backend returned new achievements in quizResult, show them immediately
+    final serverNew =
+        (widget.quizResult?['newAchievements'] as List?) ??
+        (widget.quizResult?['new_achievements'] as List?) ??
+        [];
+    if (serverNew.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showBadgePopup(
+          serverNew
+              .map((e) => Achievement.fromJson(e as Map<String, dynamic>))
+              .toList(),
+        );
+      });
+    } else {
+      _fetchNewAchievements();
+    }
   }
 
   Future<void> _fetchNewAchievements() async {

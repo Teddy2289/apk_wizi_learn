@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
-import 'package:wizi_learn/features/auth/data/repositories/notification_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/stats_repository.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:dio/dio.dart';
@@ -37,12 +36,9 @@ class CustomScaffold extends StatefulWidget {
 }
 
 class _CustomScaffoldState extends State<CustomScaffold> {
-  late final NotificationRepository _notificationRepository;
   late final StatsRepository _statsRepository;
   late final AuthRepository _authRepository;
   late StreamSubscription<int> _pointsSubscription;
-
-  Future<int>? _unreadCountFuture;
   int _currentPoints = 0;
   String? _userId;
 
@@ -54,7 +50,6 @@ class _CustomScaffoldState extends State<CustomScaffold> {
       storage: const FlutterSecureStorage(),
     );
 
-    _notificationRepository = NotificationRepository(apiClient: apiClient);
     _statsRepository = StatsRepository(apiClient: apiClient);
     _authRepository = AuthRepository(
       remoteDataSource: AuthRemoteDataSourceImpl(
@@ -90,14 +85,7 @@ class _CustomScaffoldState extends State<CustomScaffold> {
   }
 
   void _loadUnreadCount() {
-    setState(() {
-      _unreadCountFuture = _notificationRepository.getUnreadCount().catchError((
-        e,
-      ) {
-        debugPrint('Error loading unread count: $e');
-        return 0;
-      });
-    });
+    // No-op: unread count provided by NotificationProvider
   }
 
   @override
@@ -134,15 +122,16 @@ class _CustomScaffoldState extends State<CustomScaffold> {
           Expanded(child: widget.body),
         ],
       ),
-      bottomNavigationBar: widget.showBottomNavigationBar
-          ? CustomBottomNavBar(
-              currentIndex: widget.currentIndex,
-              onTap: widget.onTabSelected,
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              selectedColor: Theme.of(context).colorScheme.primary,
-              unselectedColor: Colors.grey.shade600,
-            )
-          : null,
+      bottomNavigationBar:
+          widget.showBottomNavigationBar
+              ? CustomBottomNavBar(
+                currentIndex: widget.currentIndex,
+                onTap: widget.onTabSelected,
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                selectedColor: Theme.of(context).colorScheme.primary,
+                unselectedColor: Colors.grey.shade600,
+              )
+              : null,
     );
   }
 
@@ -152,7 +141,11 @@ class _CustomScaffoldState extends State<CustomScaffold> {
       child: Row(
         children: [
           // Points utilisateur (temps réel)
-          _buildPointsBadge(_currentPoints, context),
+          GestureDetector(
+            onTap:
+                () => Navigator.pushNamed(context, RouteConstants.achievement),
+            child: _buildPointsBadge(_currentPoints, context),
+          ),
           const SizedBox(width: 8),
           // Notifications
           Consumer<NotificationProvider>(

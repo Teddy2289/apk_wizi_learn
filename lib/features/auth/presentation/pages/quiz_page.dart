@@ -274,30 +274,6 @@ class _QuizPageState extends State<QuizPage> {
     }
   }
 
-  void _replayQuiz(quiz_model.Quiz quiz) async {
-    try {
-      final questions = await _quizRepository.getQuizQuestions(quiz.id);
-      if (questions.isEmpty) {
-        _showErrorSnackbar('Aucune question disponible pour ce quiz');
-        return;
-      }
-
-      // Mettre à jour l'état pour indiquer que le quiz a été joué
-      setState(() {
-        _playedQuizIds.add(quiz.id.toString());
-      });
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => QuizSessionPage(quiz: quiz, questions: questions),
-        ),
-      ).then((_) => _loadInitialData()); // Rafraîchir les données après retour
-    } catch (e) {
-      _showErrorSnackbar('Erreur de chargement des questions');
-    }
-  }
-
   void _scrollToTop() {
     _scrollController.animateTo(
       0,
@@ -399,6 +375,22 @@ class _QuizPageState extends State<QuizPage> {
               tooltip: 'Filtrer les quiz',
             ),
             IconButton(
+              icon: const Icon(Icons.sports_esports),
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (_, __, ___) => const QuizAdventurePage(),
+                    transitionsBuilder:
+                        (_, animation, __, child) =>
+                            FadeTransition(opacity: animation, child: child),
+                    transitionDuration: const Duration(milliseconds: 250),
+                  ),
+                );
+              },
+              tooltip: 'Mode Aventure',
+            ),
+            IconButton(
               icon: const Icon(Icons.help_outline),
               onPressed: _showHowToPlayDialog,
               tooltip: 'Comment jouer',
@@ -433,6 +425,7 @@ class _QuizPageState extends State<QuizPage> {
     return RefreshIndicator(
       onRefresh: _loadInitialData,
       child: CustomScrollView(
+        key: const PageStorageKey('quiz_scroll'),
         controller: _scrollController,
         slivers: [
           SliverPadding(
@@ -475,6 +468,29 @@ class _QuizPageState extends State<QuizPage> {
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurface.withOpacity(0.6),
           ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            OutlinedButton.icon(
+              onPressed: () async {
+                // Scroll to available section (top)
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
+              },
+              icon: const Icon(Icons.playlist_add_check),
+              label: const Text('Disponibles'),
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: _scrollToPlayedQuizzes,
+              icon: const Icon(Icons.history),
+              label: const Text('Déjà joués'),
+            ),
+          ],
         ),
         if (_selectedLevel != null || _selectedFormation != null) ...[
           const SizedBox(height: 8),
@@ -668,40 +684,6 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   Widget _buildPlayedQuizCard(quiz_model.Quiz quiz, ThemeData theme) {
-    // debugPrint('[Affichage carte historique] quizId: ${quiz.id}, completedAt: ${_futureQuizHistory == null ? 'future null' : 'voir ci-dessous'}');
-    // Si la future est déjà résolue, on affiche la valeur brute pour ce quiz
-    _futureQuizHistory?.then((historyList) {
-      final h = historyList?.firstWhere(
-        (h) => h.quiz.id.toString() == quiz.id.toString(),
-        orElse:
-            () => QuizHistory(
-              id: '',
-              quiz: quiz_model.Quiz(
-                id: 0,
-                titre: '',
-                description: '',
-                duree: '',
-                niveau: '',
-                status: '',
-                nbPointsTotal: 0,
-                formation: quiz.formation,
-                questions: const [],
-              ),
-              score: 0,
-              completedAt: '',
-              timeSpent: 0,
-              totalQuestions: 0,
-              correctAnswers: 0,
-            ),
-      );
-      if (h?.completedAt.isNotEmpty == true) {
-        // debugPrint('[Affichage carte historique] quizId: ${quiz.id}, completedAt (history): ${h?.completedAt}');
-        debugPrint(
-          'correctAnswers: ${h?.correctAnswers}, totalQuestions: ${h?.totalQuestions}',
-        );
-        debugPrint('score: ${h?.score}, timeSpent: ${h?.timeSpent}');
-      }
-    });
     final categoryColor = _getCategoryColor(quiz.formation.categorie, theme);
     final isExpanded = _expandedQuizzes[quiz.id] ?? false;
     final textColor = theme.colorScheme.onSurface;
