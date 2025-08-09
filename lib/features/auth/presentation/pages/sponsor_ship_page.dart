@@ -7,6 +7,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/repositories/parrainage_repository.dart';
+import 'package:wizi_learn/features/auth/data/repositories/achievement_repository.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_widget.dart';
+import 'package:wizi_learn/features/auth/data/models/achievement_model.dart';
 
 import '../../../../core/constants/route_constants.dart';
 
@@ -39,6 +42,28 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
     setState(() => _isLoadingStats = true);
     _stats = await _parrainageRepo.getStatsParrainage();
     if (mounted) setState(() => _isLoadingStats = false);
+
+    // Vérifier si des achievements de parrainage ont été débloqués
+    try {
+      final repo = AchievementRepository(
+        apiClient: ApiClient(dio: Dio(), storage: const FlutterSecureStorage()),
+      );
+      final unlocked = await repo.checkAchievements();
+      final today = DateTime.now();
+      final todays =
+          unlocked
+              .where(
+                (a) =>
+                    a.unlockedAt != null &&
+                    a.unlockedAt!.year == today.year &&
+                    a.unlockedAt!.month == today.month &&
+                    a.unlockedAt!.day == today.day,
+              )
+              .toList();
+      if (todays.isNotEmpty && mounted) {
+        _showBadgeDialog(context, todays);
+      }
+    } catch (_) {}
 
     // Écoute les mises à jour en temps réel
     _statsSubscription = _parrainageRepo.getLiveStats().listen((newStats) {
@@ -116,9 +141,9 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
           ),
           onPressed:
               () => Navigator.pushReplacementNamed(
-            context,
-            RouteConstants.dashboard,
-          ),
+                context,
+                RouteConstants.dashboard,
+              ),
         ),
       ),
       body: SingleChildScrollView(
@@ -153,16 +178,16 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
             _isGenerating
                 ? const Center(child: CircularProgressIndicator())
                 : Center(
-              child: ElevatedButton.icon(
-                onPressed: _genererLien,
-                icon: const Icon(Icons.link),
-                label: const Text("Générer mon lien"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFEB823),
-                  foregroundColor: Colors.black,
+                  child: ElevatedButton.icon(
+                    onPressed: _genererLien,
+                    icon: const Icon(Icons.link),
+                    label: const Text("Générer mon lien"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFEB823),
+                      foregroundColor: Colors.black,
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
             const SizedBox(height: 20),
             if (_referralLink != null) _buildReferralLinkSection(context),
@@ -176,32 +201,37 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
               context,
               number: '1',
               title: 'Copiez votre lien unique',
-              description: 'Utilisez le bouton ci-dessus pour copier ou partager votre lien',
+              description:
+                  'Utilisez le bouton ci-dessus pour copier ou partager votre lien',
             ),
             _buildStep(
               context,
               number: '2',
               title: 'Partagez avec vos amis',
-              description: 'Envoyez-le par message, email ou sur les réseaux sociaux',
+              description:
+                  'Envoyez-le par message, email ou sur les réseaux sociaux',
             ),
             _buildStep(
               context,
               number: '3',
               title: 'Vos amis s\'inscrivent',
-              description: 'Ils doivent utiliser votre lien pour créer leur compte',
+              description:
+                  'Ils doivent utiliser votre lien pour créer leur compte',
             ),
             _buildStep(
               context,
               number: '4',
               title: 'Vous gagnez tous les deux',
-              description: 'Dès qu\'ils suivent leur première formation payante',
+              description:
+                  'Dès qu\'ils suivent leur première formation payante',
             ),
             const SizedBox(height: 30),
             _buildInfoCard(
               context,
               icon: Icons.help_outline,
               title: 'Questions fréquentes',
-              content: 'Consultez notre FAQ pour plus d\'informations sur le programme de parrainage.',
+              content:
+                  'Consultez notre FAQ pour plus d\'informations sur le programme de parrainage.',
               onTap: () {
                 // TODO: Navigation vers FAQ
               },
@@ -213,7 +243,6 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
   }
 
   Widget _buildStatsSection(BuildContext context) {
-
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -225,9 +254,9 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
           children: [
             Text(
               'Vos statistiques de parrainage',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Row(
@@ -251,11 +280,11 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
                   label: 'Gains (€)',
                   icon: Icons.euro_outlined,
                 ),
-
               ],
             ),
             const SizedBox(height: 20),
-            if ((double.tryParse(_stats?['gains']?.toString() ?? '0') ?? 0) > 0.00)
+            if ((double.tryParse(_stats?['gains']?.toString() ?? '0') ?? 0) >
+                0.00)
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -274,6 +303,7 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
       ),
     );
   }
+
   Future<void> _demanderRetrait() async {
     showDialog(
       context: context,
@@ -281,7 +311,8 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
         return AlertDialog(
           title: const Text("Demande de retrait"),
           content: const Text(
-              "Votre demande est en cours de traitement. Merci de patienter un délai de 1 à 2 jours ouvrés."),
+            "Votre demande est en cours de traitement. Merci de patienter un délai de 1 à 2 jours ouvrés.",
+          ),
           actions: [
             TextButton(
               child: const Text("OK"),
@@ -296,16 +327,21 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
       },
     );
   }
-  Widget _buildStatItem(BuildContext context, {
+
+  Widget _buildStatItem(
+    BuildContext context, {
     required String value,
     required String label,
     required IconData icon,
   }) {
     // Conversion de la valeur en double puis formatage
     final numValue = double.tryParse(value) ?? 0;
-    final formattedValue = numValue % 1 == 0
-        ? numValue.toInt().toString()  // Affiche sans décimales si .00
-        : numValue.toStringAsFixed(2); // Affiche avec 2 décimales sinon
+    final formattedValue =
+        numValue % 1 == 0
+            ? numValue
+                .toInt()
+                .toString() // Affiche sans décimales si .00
+            : numValue.toStringAsFixed(2); // Affiche avec 2 décimales sinon
 
     return Column(
       children: [
@@ -319,10 +355,7 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
+        Text(label, style: Theme.of(context).textTheme.bodyMedium),
       ],
     );
   }
@@ -339,9 +372,9 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
           children: [
             Text(
               'Votre lien de parrainage',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             Container(
@@ -363,7 +396,9 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
                   IconButton(
                     icon: const Icon(Icons.copy),
                     onPressed: () async {
-                      await Clipboard.setData(ClipboardData(text: referralLink));
+                      await Clipboard.setData(
+                        ClipboardData(text: referralLink),
+                      );
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Lien copié !')),
                       );
@@ -392,7 +427,9 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
                   child: ElevatedButton(
                     child: const Text('Copier'),
                     onPressed: () async {
-                      await Clipboard.setData(ClipboardData(text: referralLink));
+                      await Clipboard.setData(
+                        ClipboardData(text: referralLink),
+                      );
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Lien copié !')),
                       );
@@ -408,11 +445,11 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
   }
 
   Widget _buildStep(
-      BuildContext context, {
-        required String number,
-        required String title,
-        required String description,
-      }) {
+    BuildContext context, {
+    required String number,
+    required String title,
+    required String description,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -460,12 +497,12 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
   }
 
   Widget _buildInfoCard(
-      BuildContext context, {
-        required IconData icon,
-        required String title,
-        required String content,
-        required VoidCallback onTap,
-      }) {
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String content,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -500,6 +537,44 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showBadgeDialog(BuildContext context, List<Achievement> badges) {
+    showDialog(
+      context: context,
+      builder:
+          (_) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.emoji_events, color: Colors.amber, size: 48),
+                  const SizedBox(height: 8),
+                  const Text('Nouveau(x) badge(s) !'),
+                  const SizedBox(height: 8),
+                  ...badges.map(
+                    (b) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6.0),
+                      child: AchievementBadgeWidget(
+                        achievement: b,
+                        unlocked: true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Fermer'),
+                  ),
+                ],
+              ),
+            ),
+          ),
     );
   }
 }

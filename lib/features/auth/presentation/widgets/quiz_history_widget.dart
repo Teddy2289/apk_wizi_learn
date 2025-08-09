@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/data/models/stats_model.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_detail_page.dart';
+import 'package:intl/intl.dart';
 
 class QuizHistoryWidget extends StatefulWidget {
   final List<QuizHistory> history;
@@ -14,9 +15,13 @@ class QuizHistoryWidget extends StatefulWidget {
 class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
   final int _itemsPerPage = 5;
   int _currentPage = 1;
+  bool _showAllItems = false;
   int get _totalPages => (widget.history.length / _itemsPerPage).ceil();
 
   List<QuizHistory> get _currentPageItems {
+    if (_showAllItems) {
+      return widget.history;
+    }
     final startIndex = (_currentPage - 1) * _itemsPerPage;
     final endIndex = startIndex + _itemsPerPage;
     return widget.history.sublist(
@@ -76,23 +81,90 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
                         color: theme.colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceVariant.withOpacity(
-                          0.3,
+                    Row(
+                      children: [
+                        if (!_showAllItems)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surfaceVariant
+                                  .withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'Page $_currentPage/$_totalPages',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _showAllItems = !_showAllItems;
+                              if (_showAllItems) {
+                                _currentPage = 1;
+                              }
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  _showAllItems
+                                      ? theme.colorScheme.primary.withOpacity(
+                                        0.1,
+                                      )
+                                      : theme.colorScheme.surfaceVariant
+                                          .withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color:
+                                    _showAllItems
+                                        ? theme.colorScheme.primary.withOpacity(
+                                          0.3,
+                                        )
+                                        : Colors.transparent,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _showAllItems
+                                      ? Icons.view_list
+                                      : Icons.view_module,
+                                  size: 16,
+                                  color:
+                                      _showAllItems
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.onSurface
+                                              .withOpacity(0.6),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _showAllItems ? 'Vue paginée' : 'Voir tout',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    color:
+                                        _showAllItems
+                                            ? theme.colorScheme.primary
+                                            : theme.colorScheme.onSurface
+                                                .withOpacity(0.6),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        'Page $_currentPage/$_totalPages',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -125,7 +197,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
           ),
 
           // Pagination
-          if (widget.history.isNotEmpty)
+          if (widget.history.isNotEmpty && !_showAllItems)
             _buildPaginationControls(isSmallScreen),
         ],
       ),
@@ -154,15 +226,18 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
   }
 
   Widget _buildHistoryItem(BuildContext context, QuizHistory history) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 600;
+
+    // Formatage de la date et heure
+    final completedDate =
+        DateTime.tryParse(history.completedAt) ?? DateTime.now();
+    final formattedDate = DateFormat('dd/MM/yyyy').format(completedDate);
+    final formattedTime = DateFormat('HH:mm').format(completedDate);
+    final formattedDateTime = '$formattedDate à $formattedTime';
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
-      child: ListTile(
-        leading: Icon(Icons.quiz, color: Theme.of(context).primaryColor),
-        title: Text(history.quiz.titre),
-        subtitle: Text(
-          'Score : ${history.score} | ${history.correctAnswers}/${history.totalQuestions} bonnes réponses',
-        ),
-        trailing: Icon(Icons.chevron_right),
+      child: InkWell(
         onTap: () {
           Navigator.push(
             context,
@@ -174,18 +249,167 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
                     totalQuestions: history.totalQuestions,
                     correctAnswers: history.correctAnswers,
                     timeSpent: history.timeSpent,
-                    completedAt:
-                        DateTime.tryParse(history.completedAt) ??
-                        DateTime.now(),
-                    questions:
-                        history.questions ??
-                        [], // Assure-toi que questions est bien rempli
+                    completedAt: completedDate,
+                    questions: history.questions ?? [],
                   ),
             ),
           );
         },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // En-tête avec titre et score
+              Row(
+                children: [
+                  Icon(
+                    Icons.quiz,
+                    color: Theme.of(context).primaryColor,
+                    size: isSmallScreen ? 20 : 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          history.quiz.titre,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Score : ${history.score} | ${history.correctAnswers}/${history.totalQuestions} bonnes réponses',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // Informations détaillées
+              Row(
+                children: [
+                  // Date et heure
+                  Expanded(
+                    child: _buildInfoChip(
+                      context,
+                      Icons.access_time,
+                      formattedDateTime,
+                      isSmallScreen,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Niveau
+                  if (history.quiz.niveau != null &&
+                      history.quiz.niveau!.isNotEmpty)
+                    Expanded(
+                      child: _buildInfoChip(
+                        context,
+                        Icons.trending_up,
+                        history.quiz.niveau!,
+                        isSmallScreen,
+                        color: _getLevelColor(history.quiz.niveau!),
+                      ),
+                    ),
+                  if (history.quiz.niveau != null &&
+                      history.quiz.niveau!.isNotEmpty)
+                    const SizedBox(width: 8),
+                  // Formation
+                  if (history.quiz.formation != null &&
+                      history.quiz.formation!.titre.isNotEmpty)
+                    Expanded(
+                      child: _buildInfoChip(
+                        context,
+                        Icons.school,
+                        history.quiz.formation!.titre,
+                        isSmallScreen,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  Widget _buildInfoChip(
+    BuildContext context,
+    IconData icon,
+    String label,
+    bool isSmallScreen, {
+    Color? color,
+  }) {
+    final chipColor = color ?? Theme.of(context).colorScheme.surfaceVariant;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isSmallScreen ? 8 : 12,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        color: chipColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: chipColor.withOpacity(0.3), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: isSmallScreen ? 14 : 16, color: chipColor),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: isSmallScreen ? 11 : 12,
+                color: chipColor,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getLevelColor(String niveau) {
+    switch (niveau.toLowerCase()) {
+      case 'débutant':
+      case 'beginner':
+        return Colors.green;
+      case 'intermédiaire':
+      case 'intermediate':
+        return Colors.orange;
+      case 'avancé':
+      case 'advanced':
+        return Colors.red;
+      default:
+        return Colors.blue;
+    }
   }
 
   Widget _buildScoreIndicator(double percentage, bool isSmallScreen) {
@@ -262,7 +486,9 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            '${_currentPageItems.length} éléments affichés',
+            _showAllItems
+                ? '${widget.history.length} éléments affichés'
+                : '${_currentPageItems.length} éléments affichés',
             style: TextStyle(
               color: Colors.grey.withOpacity(0.6),
               fontSize: isSmallScreen ? 12 : 14,

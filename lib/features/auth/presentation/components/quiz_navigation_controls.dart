@@ -21,7 +21,7 @@ class QuizNavigationControls extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.all(16.0),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               // ElevatedButton(
               //   onPressed:
@@ -51,31 +51,33 @@ class QuizNavigationControls extends StatelessWidget {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => const Center(
-            child: CircularProgressIndicator(),
-          ),
+          builder:
+              (context) => const Center(child: CircularProgressIndicator()),
         );
 
         try {
           final results = await sessionManager.completeQuiz();
           if (!context.mounted) return;
-          
+
           // Fermer le dialogue de chargement
           Navigator.of(context).pop();
 
           await Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => QuizSummaryPage(
-                questions: (results['questions'] as List)
-                    .map((q) => Question.fromJson(q))
-                    .toList(),
-                score: results['score'] ?? 0,
-                correctAnswers: results['correctAnswers'] ?? 0,
-                totalQuestions: results['totalQuestions'] ?? questions.length,
-                timeSpent: results['timeSpent'] ?? 0,
-                quizResult: results,
-              ),
+              builder:
+                  (context) => QuizSummaryPage(
+                    questions:
+                        (results['questions'] as List)
+                            .map((q) => Question.fromJson(q))
+                            .toList(),
+                    score: results['score'] ?? 0,
+                    correctAnswers: results['correctAnswers'] ?? 0,
+                    totalQuestions:
+                        results['totalQuestions'] ?? questions.length,
+                    timeSpent: results['timeSpent'] ?? 0,
+                    quizResult: results,
+                  ),
             ),
           );
         } catch (e) {
@@ -86,32 +88,33 @@ class QuizNavigationControls extends StatelessWidget {
 
           // Afficher un dialogue avec options
           if (!context.mounted) return;
-          
+
           showDialog(
             context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Erreur de soumission'),
-              content: Text(
-                'Impossible de soumettre le quiz en ce moment.\n\n'
-                'Voulez-vous voir vos résultats localement ou réessayer la soumission ?',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    _showLocalResults(context);
-                  },
-                  child: const Text('Voir résultats'),
+            builder:
+                (context) => AlertDialog(
+                  title: const Text('Erreur de soumission'),
+                  content: Text(
+                    'Impossible de soumettre le quiz en ce moment.\n\n'
+                    'Voulez-vous voir vos résultats localement ou réessayer la soumission ?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _showLocalResults(context);
+                      },
+                      child: const Text('Voir résultats'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _handleNextOrComplete(context, index);
+                      },
+                      child: const Text('Réessayer'),
+                    ),
+                  ],
                 ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    _handleNextOrComplete(context, index);
-                  },
-                  child: const Text('Réessayer'),
-                ),
-              ],
-            ),
           );
         }
       }
@@ -166,14 +169,16 @@ class QuizNavigationControls extends StatelessWidget {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => QuizSummaryPage(
-          questions: questions,
-          score: (localResults['score'] as int?) ?? 0,
-          correctAnswers: (localResults['correctAnswers'] as int?) ?? 0,
-          totalQuestions: (localResults['totalQuestions'] as int?) ?? questions.length,
-          timeSpent: (localResults['timeSpent'] as int?) ?? 0,
-          quizResult: localResults,
-        ),
+        builder:
+            (context) => QuizSummaryPage(
+              questions: questions,
+              score: (localResults['score'] as int?) ?? 0,
+              correctAnswers: (localResults['correctAnswers'] as int?) ?? 0,
+              totalQuestions:
+                  (localResults['totalQuestions'] as int?) ?? questions.length,
+              timeSpent: (localResults['timeSpent'] as int?) ?? 0,
+              quizResult: localResults,
+            ),
       ),
     );
   }

@@ -9,6 +9,7 @@ import 'package:wizi_learn/features/auth/presentation/widgets/quiz_session/quiz_
 import 'package:wizi_learn/features/auth/presentation/pages/question_type_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/quiz_summary_page.dart';
 
 class QuizSessionPage extends StatefulWidget {
   final Quiz quiz;
@@ -104,19 +105,74 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     setState(() => _dragOffset = details.primaryDelta ?? 0);
   }
 
-  void _handleHorizontalDragEnd(DragEndDetails details) {
+  void _handleHorizontalDragEnd(DragEndDetails details) async {
     if (_dragOffset.abs() > 20) {
-      final newIndex =
-          _sessionManager.currentQuestionIndex.value +
-          (_dragOffset < 0 ? 1 : -1);
-      _sessionManager.goToQuestion(
-        newIndex.clamp(0, widget.questions.length - 1),
-      );
+      final current = _sessionManager.currentQuestionIndex.value;
+      final isLast = current >= widget.questions.length - 1;
+      final swipedLeftToNext = _dragOffset < 0;
+
+      // Si dernière question et glissement vers la gauche, soumettre le quiz
+      if (isLast && swipedLeftToNext) {
+        await _submitQuiz();
+      } else {
+        final newIndex = current + (swipedLeftToNext ? 1 : -1);
+        _sessionManager.goToQuestion(
+          newIndex.clamp(0, widget.questions.length - 1),
+        );
+      }
 
       // Masquer les tutoriels après le premier glissement
       _hideSwipeTutorials();
     }
     setState(() => _dragOffset = 0);
+  }
+
+  Future<void> _submitQuiz() async {
+    // Afficher un indicateur de chargement
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final results = await _sessionManager.completeQuiz();
+      if (!mounted) return;
+      Navigator.of(context).pop();
+
+      await Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => QuizSummaryPage(
+                questions:
+                    (results['questions'] as List)
+                        .map((q) => Question.fromJson(q))
+                        .toList(),
+                score: results['score'] ?? 0,
+                correctAnswers: results['correctAnswers'] ?? 0,
+                totalQuestions:
+                    results['totalQuestions'] ?? widget.questions.length,
+                timeSpent: results['timeSpent'] ?? 0,
+                quizResult: results,
+              ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Erreur de soumission. Veuillez réessayer.'),
+          action: SnackBarAction(
+            label: 'Réessayer',
+            onPressed: () {
+              _submitQuiz();
+            },
+          ),
+        ),
+      );
+    }
   }
 
   // Méthodes pour les tutoriels de glissement
@@ -291,6 +347,15 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
 
                   // Indicateurs de tutoriel dynamiques
                   if (_showSwipeTutorial) _buildSwipeTutorial(),
+
+                  // Gesture detector overlay for swipe submit on last question
+                  Positioned.fill(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onHorizontalDragUpdate: _handleHorizontalDragUpdate,
+                      onHorizontalDragEnd: _handleHorizontalDragEnd,
+                    ),
+                  ),
                 ],
               ),
             ),

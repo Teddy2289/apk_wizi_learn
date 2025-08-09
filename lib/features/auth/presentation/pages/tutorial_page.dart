@@ -7,7 +7,6 @@ import 'package:wizi_learn/features/auth/data/models/media_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/media_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:wizi_learn/features/auth/data/models/media_model.dart';
 import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/youtube_player_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
@@ -69,6 +68,13 @@ class _TutorialPageState extends State<TutorialPage> {
           'Vous pouvez revenir ici à tout moment pour revoir les tutoriels.',
     },
   ];
+
+  void _triggerTutorial() {
+    setState(() {
+      _tutorialStep = 0;
+      _showTutorial = true;
+    });
+  }
 
   @override
   void initState() {
@@ -165,9 +171,10 @@ class _TutorialPageState extends State<TutorialPage> {
       final stagiaireId = user.stagiaire?.id;
 
       setState(() {
-        _formationsFuture = stagiaireId != null
-            ? _mediaRepository.getFormationsAvecMedias(stagiaireId)
-            : Future.value([]);
+        _formationsFuture =
+            stagiaireId != null
+                ? _mediaRepository.getFormationsAvecMedias(stagiaireId)
+                : Future.value([]);
       });
     } catch (e) {
       debugPrint("Erreur : $e");
@@ -189,21 +196,23 @@ class _TutorialPageState extends State<TutorialPage> {
       });
     }
   }
+
   Widget _buildMediaItem(
-      BuildContext context,
-      Media media,
-      bool isWatched,
-      ThemeData theme,
-      ColorScheme colorScheme,
-      ) {
+    BuildContext context,
+    Media media,
+    bool isWatched,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
     final screenWidth = MediaQuery.of(context).size.width;
     final videoId = YoutubePlayer.convertUrlToId(media.url);
-    final thumbnailUrl = videoId != null
-        ? YoutubePlayer.getThumbnail(
-      videoId: videoId,
-      quality: ThumbnailQuality.medium,
-    )
-        : null;
+    final thumbnailUrl =
+        videoId != null
+            ? YoutubePlayer.getThumbnail(
+              videoId: videoId,
+              quality: ThumbnailQuality.medium,
+            )
+            : null;
 
     return FutureBuilder<Duration>(
       future: _getVideoDuration(media),
@@ -215,34 +224,44 @@ class _TutorialPageState extends State<TutorialPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          color: isWatched
-              ? colorScheme.surfaceVariant.withOpacity(0.7)
-              : const Color(0xFFFFF9C4),
+          color:
+              isWatched
+                  ? colorScheme.surfaceVariant.withOpacity(0.7)
+                  : const Color(0xFFFFF9C4),
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: () async {
               if (!isWatched) {
-                final success = await _mediaRepository.markMediaAsWatched(media.id);
+                final resp = await _mediaRepository
+                    .markMediaAsWatchedWithResponse(media.id);
+                final success = resp['success'] == true;
                 if (success) setState(() => _loadWatchedMediaIds());
+                final newAchievements =
+                    (resp['newAchievements'] as List?) ?? [];
+                if (newAchievements.isNotEmpty && mounted) {
+                  _showNewBadgesDialog(context, newAchievements);
+                }
               }
 
               final formations = await _formationsFuture;
               if (formations == null || formations.isEmpty) return;
 
               final selectedFormation = formations.firstWhere(
-                    (f) => f.id == _selectedFormationId,
+                (f) => f.id == _selectedFormationId,
                 orElse: () => formations.first,
               );
 
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => YoutubePlayerPage(
-                    video: media,
-                    videosInSameCategory: selectedFormation.medias
-                        .where((m) => m.categorie == media.categorie)
-                        .toList(),
-                  ),
+                  builder:
+                      (_) => YoutubePlayerPage(
+                        video: media,
+                        videosInSameCategory:
+                            selectedFormation.medias
+                                .where((m) => m.categorie == media.categorie)
+                                .toList(),
+                      ),
                 ),
               );
             },
@@ -260,16 +279,18 @@ class _TutorialPageState extends State<TutorialPage> {
                         decoration: BoxDecoration(
                           color: colorScheme.surfaceVariant,
                           borderRadius: BorderRadius.circular(8),
-                          image: thumbnailUrl != null
-                              ? DecorationImage(
-                            image: NetworkImage(thumbnailUrl),
-                            fit: BoxFit.cover,
-                          )
-                              : null,
+                          image:
+                              thumbnailUrl != null
+                                  ? DecorationImage(
+                                    image: NetworkImage(thumbnailUrl),
+                                    fit: BoxFit.cover,
+                                  )
+                                  : null,
                         ),
-                        child: thumbnailUrl == null
-                            ? const Icon(Icons.videocam, size: 32)
-                            : null,
+                        child:
+                            thumbnailUrl == null
+                                ? const Icon(Icons.videocam, size: 32)
+                                : null,
                       ),
                       const Icon(
                         Icons.play_circle_fill,
@@ -298,7 +319,9 @@ class _TutorialPageState extends State<TutorialPage> {
                         right: 4,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 2),
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.7),
                             borderRadius: BorderRadius.circular(4),
@@ -324,9 +347,10 @@ class _TutorialPageState extends State<TutorialPage> {
                           media.titre,
                           style: theme.textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: isWatched
-                                ? colorScheme.onSurface.withOpacity(0.7)
-                                : colorScheme.onSurface,
+                            color:
+                                isWatched
+                                    ? colorScheme.onSurface.withOpacity(0.7)
+                                    : colorScheme.onSurface,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -365,7 +389,9 @@ class _TutorialPageState extends State<TutorialPage> {
       if (videoId == null) return const Duration(seconds: 0);
 
       final yt = YoutubeExplode();
-      final video = await yt.videos.get('https://www.youtube.com/watch?v=$videoId');
+      final video = await yt.videos.get(
+        'https://www.youtube.com/watch?v=$videoId',
+      );
       yt.close();
 
       final duration = video.duration ?? const Duration(seconds: 0);
@@ -384,7 +410,7 @@ class _TutorialPageState extends State<TutorialPage> {
     final seconds = twoDigits(duration.inSeconds.remainder(60));
     return hours > 0 ? "$hours:$minutes:$seconds" : "$minutes:$seconds";
   }
-  
+
   Future<void> _checkTutorialSeen() async {
     final prefs = await SharedPreferences.getInstance();
     final seen = prefs.getBool('hasSeenTutorial') ?? false;
@@ -491,6 +517,39 @@ class _TutorialPageState extends State<TutorialPage> {
     );
   }
 
+  void _showNewBadgesDialog(
+    BuildContext context,
+    List<dynamic> newAchievements,
+  ) {
+    if (newAchievements.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Nouveaux Badges !'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children:
+                  newAchievements.map((achievement) {
+                    return Text(
+                      '${achievement['name']} (${achievement['badgeType']})',
+                    );
+                  }).toList(),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Fermer'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -517,13 +576,14 @@ class _TutorialPageState extends State<TutorialPage> {
         }
 
         final selectedFormation = formations.firstWhere(
-              (f) => f.id == _selectedFormationId,
+          (f) => f.id == _selectedFormationId,
           orElse: () => formations.first,
         );
 
-        final mediasFiltres = selectedFormation.medias
-            .where((m) => m.categorie == _selectedCategory)
-            .toList();
+        final mediasFiltres =
+            selectedFormation.medias
+                .where((m) => m.categorie == _selectedCategory)
+                .toList();
 
         return FutureBuilder<Set<int>>(
           future: _watchedMediaIdsFuture,
@@ -562,17 +622,19 @@ class _TutorialPageState extends State<TutorialPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 8),
                             child: DropdownButton<int>(
                               isExpanded: true,
-                              value: _selectedFormationId ?? selectedFormation.id,
-                              items: formations.map((formation) {
-                                return DropdownMenuItem<int>(
-                                  value: formation.id,
-                                  child: Text(
-                                    formation.titre.toUpperCase(),
-                                    style: theme.textTheme.bodyMedium,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                );
-                              }).toList(),
+                              value:
+                                  _selectedFormationId ?? selectedFormation.id,
+                              items:
+                                  formations.map((formation) {
+                                    return DropdownMenuItem<int>(
+                                      value: formation.id,
+                                      child: Text(
+                                        formation.titre.toUpperCase(),
+                                        style: theme.textTheme.bodyMedium,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    );
+                                  }).toList(),
                               onChanged: (value) {
                                 setState(() {
                                   _selectedFormationId = value;
@@ -594,42 +656,49 @@ class _TutorialPageState extends State<TutorialPage> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: mediasFiltres.isEmpty
-                        ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.video_library_outlined,
-                            size: 64,
-                            color: colorScheme.onSurface.withOpacity(0.3),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            "Aucun média trouvé",
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: colorScheme.onSurface.withOpacity(0.5),
+                    child:
+                        mediasFiltres.isEmpty
+                            ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.video_library_outlined,
+                                    size: 64,
+                                    color: colorScheme.onSurface.withOpacity(
+                                      0.3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    "Aucun média trouvé",
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      color: colorScheme.onSurface.withOpacity(
+                                        0.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                            : ListView.separated(
+                              itemCount: mediasFiltres.length,
+                              separatorBuilder:
+                                  (context, index) => const SizedBox(height: 8),
+                              itemBuilder: (context, index) {
+                                final media = mediasFiltres[index];
+                                final isWatched = watchedMediaIds.contains(
+                                  media.id,
+                                );
+                                return _buildMediaItem(
+                                  context,
+                                  media,
+                                  isWatched,
+                                  theme,
+                                  colorScheme,
+                                );
+                              },
                             ),
-                          ),
-                        ],
-                      ),
-                    )
-                        : ListView.separated(
-                      itemCount: mediasFiltres.length,
-                      separatorBuilder: (context, index) =>
-                      const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final media = mediasFiltres[index];
-                        final isWatched = watchedMediaIds.contains(media.id);
-                        return _buildMediaItem(
-                          context,
-                          media,
-                          isWatched,
-                          theme,
-                          colorScheme,
-                        );
-                      },
-                    ),
                   ),
                 ),
               ],
@@ -689,9 +758,26 @@ class _TutorialPageState extends State<TutorialPage> {
                 ),
                 elevation: 1,
                 centerTitle: true,
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.help_outline),
+                    tooltip: 'Voir le tutoriel',
+                    onPressed: _triggerTutorial,
+                  ),
+                ],
               ),
               body: body,
             ),
+        if (_fromNotification)
+          Positioned(
+            right: 16,
+            bottom: 24,
+            child: FloatingActionButton.small(
+              onPressed: _triggerTutorial,
+              tooltip: 'Voir le tutoriel',
+              child: const Icon(Icons.help_outline),
+            ),
+          ),
         if (_showTutorial) _buildTutorialOverlay(context),
       ],
     );

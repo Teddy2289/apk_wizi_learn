@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
+import 'package:intl/intl.dart';
 
 class QuizDetailPage extends StatelessWidget {
   final String quizTitle;
@@ -23,45 +24,104 @@ class QuizDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final percent = totalQuestions > 0 ? (correctAnswers / totalQuestions) : 0.0;
-    final stars = percent >= 1.0 ? 3 : percent >= 0.7 ? 2 : percent >= 0.4 ? 1 : 0;
+    final percent =
+        totalQuestions > 0 ? (correctAnswers / totalQuestions) : 0.0;
+    final stars =
+        percent >= 1.0
+            ? 3
+            : percent >= 0.7
+            ? 2
+            : percent >= 0.4
+            ? 1
+            : 0;
     final theme = Theme.of(context);
+
+    // Filtrer seulement les questions qui ont été jouées (qui ont une réponse sélectionnée)
+    final playedQuestions =
+        questions.where((q) => q.selectedAnswers != null).toList();
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Détail du Quiz'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Détail du Quiz'), centerTitle: true),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // Résumé visuel
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             elevation: 2,
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(quizTitle, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  Text(
+                    quizTitle,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      ...List.generate(3, (i) => Icon(Icons.star, color: i < stars ? Colors.amber : Colors.grey[300])),
+                      ...List.generate(
+                        3,
+                        (i) => Icon(
+                          Icons.star,
+                          color: i < stars ? Colors.amber : Colors.grey[300],
+                        ),
+                      ),
                       const SizedBox(width: 16),
-                      Text('$score pts', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      Text(
+                        '$score pts',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.timer, size: 18, color: theme.colorScheme.primary),
+                      Icon(
+                        Icons.timer,
+                        size: 18,
+                        color: theme.colorScheme.primary,
+                      ),
                       const SizedBox(width: 4),
                       Text('${timeSpent}s'),
                       const SizedBox(width: 16),
-                      Icon(Icons.calendar_today, size: 18, color: theme.colorScheme.primary),
+                      Icon(
+                        Icons.calendar_today,
+                        size: 18,
+                        color: theme.colorScheme.primary,
+                      ),
                       const SizedBox(width: 4),
-                      Text('${completedAt.day}/${completedAt.month}/${completedAt.year}'),
+                      Text(
+                        DateFormat('dd/MM/yyyy à HH:mm').format(completedAt),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Statistiques détaillées
+                  Row(
+                    children: [
+                      _buildStatItem(
+                        context,
+                        Icons.check_circle,
+                        'Bonnes réponses',
+                        '$correctAnswers/$totalQuestions',
+                        Colors.green,
+                      ),
+                      const SizedBox(width: 16),
+                      _buildStatItem(
+                        context,
+                        Icons.percent,
+                        'Taux de réussite',
+                        '${(percent * 100).round()}%',
+                        theme.colorScheme.primary,
+                      ),
                     ],
                   ),
                 ],
@@ -69,12 +129,71 @@ class QuizDetailPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          Text('Questions', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            'Questions jouées (${playedQuestions.length})',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 12),
-          ...questions.map((q) => _buildQuestionFeedback(q, theme)).toList(),
+          if (playedQuestions.isNotEmpty)
+            ...playedQuestions
+                .map((q) => _buildQuestionFeedback(q, theme))
+                .toList()
+          else
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Aucune question jouée disponible',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+              ),
+            ),
           const SizedBox(height: 24),
-          _buildAdviceSection(theme),
+          _buildAdviceSection(theme, percent),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+  ) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: color.withOpacity(0.8)),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -85,43 +204,143 @@ class QuizDetailPage extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 1,
-      child: ListTile(
-        leading: Icon(isCorrect ? Icons.check_circle : Icons.cancel, color: isCorrect ? Colors.green : Colors.red),
-        title: Text(q.text, style: theme.textTheme.bodyLarge),
-        subtitle: q.selectedAnswers != null
-            ? Column(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  isCorrect ? Icons.check_circle : Icons.cancel,
+                  color: isCorrect ? Colors.green : Colors.red,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    q.text,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color:
+                    isCorrect
+                        ? Colors.green.withOpacity(0.1)
+                        : Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color:
+                      isCorrect
+                          ? Colors.green.withOpacity(0.3)
+                          : Colors.red.withOpacity(0.3),
+                ),
+              ),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(
+                    'Votre réponse :',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text('Votre réponse : ${q.selectedAnswers?.join(', ') ?? '-'}'),
-                  if (!isCorrect && q.correctAnswers != null)
-                    Text('Bonne réponse : ${q.correctAnswers?.join(', ')}', style: const TextStyle(color: Colors.green)),
+                  Text(
+                    q.selectedAnswers?.join(', ') ?? 'Aucune réponse',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: isCorrect ? Colors.green : Colors.red,
+                    ),
+                  ),
+                  if (!isCorrect && q.correctAnswers != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Bonne réponse :',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      q.correctAnswers?.join(', ') ?? '',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
                 ],
-              )
-            : null,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildAdviceSection(ThemeData theme) {
-    // Exemple de feedback simple, à personnaliser selon les stats
+  Widget _buildAdviceSection(ThemeData theme, double percent) {
+    String advice;
+    Color adviceColor;
+
+    if (percent >= 0.8) {
+      advice =
+          'Excellent travail ! Tu maîtrises bien ce sujet. Continue comme ça !';
+      adviceColor = Colors.green;
+    } else if (percent >= 0.6) {
+      advice = 'Bon travail ! Quelques révisions et tu seras au top.';
+      adviceColor = Colors.orange;
+    } else if (percent >= 0.4) {
+      advice =
+          'Pas mal ! Continue à t\'entraîner pour améliorer tes résultats.';
+      adviceColor = Colors.orange;
+    } else {
+      advice =
+          'N\'abandonne pas ! Revois le cours et réessaie, tu vas y arriver !';
+      adviceColor = Colors.red;
+    }
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: theme.colorScheme.primary.withOpacity(0.08),
+      color: adviceColor.withOpacity(0.08),
       elevation: 0,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Conseils personnalisés', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Row(
+              children: [
+                Icon(Icons.lightbulb, color: adviceColor),
+                const SizedBox(width: 8),
+                Text(
+                  'Conseil personnalisé',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: adviceColor,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
-            Text('• Points forts : Bravo pour les questions réussies !'),
-            Text('• À retravailler : Revois les questions où tu as eu des erreurs.'),
-            // Tu peux ajouter ici des conseils plus avancés selon les stats
+            Text(
+              advice,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: adviceColor.withOpacity(0.8),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
-} 
+}
