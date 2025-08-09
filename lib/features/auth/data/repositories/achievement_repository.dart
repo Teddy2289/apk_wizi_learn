@@ -21,7 +21,9 @@ class AchievementRepository {
       final List<dynamic> raw = response.data['achievements'];
       return raw.map((e) => Achievement.fromJson(e)).toList();
     } catch (e) {
-      debugPrint("❌ Erreur lors de la récupération des achievements utilisateur : $e");
+      debugPrint(
+        "❌ Erreur lors de la récupération des achievements utilisateur : $e",
+      );
       return [];
     }
   }
@@ -39,7 +41,40 @@ class AchievementRepository {
       final List<dynamic> raw = response.data['achievements'];
       return raw.map((e) => Achievement.fromJson(e)).toList();
     } catch (e) {
-      debugPrint("❌ Erreur lors de la récupération de tous les achievements : $e");
+      debugPrint(
+        "❌ Erreur lors de la récupération de tous les achievements : $e",
+      );
+      return [];
+    }
+  }
+
+  // Trigger server-side achievement checks and return newly unlocked ones
+  Future<List<Achievement>> checkAchievements({
+    String? code,
+    int? quizId,
+  }) async {
+    try {
+      final payload = <String, dynamic>{};
+      if (code != null) payload['code'] = code;
+      if (quizId != null) payload['quiz_id'] = quizId;
+      final response = await apiClient.post(
+        '/stagiaire/achievements/check',
+        data: payload,
+      );
+      final data = response.data;
+      List<dynamic> raw = [];
+      if (data is Map<String, dynamic>) {
+        // Support both snake_case (backend) and camelCase (some endpoints)
+        raw =
+            (data['new_achievements'] as List?) ??
+            (data['newAchievements'] as List?) ??
+            [];
+      }
+      return raw
+          .map((e) => Achievement.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('❌ Erreur checkAchievements: $e');
       return [];
     }
   }
