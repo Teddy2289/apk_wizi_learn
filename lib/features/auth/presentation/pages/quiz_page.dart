@@ -19,12 +19,14 @@ class QuizPage extends StatefulWidget {
   final int? selectedTabIndex;
   final bool useCustomScaffold;
   final bool scrollToPlayed;
+  final bool quizAdventureEnabled;
 
   const QuizPage({
     super.key,
     this.selectedTabIndex = 2,
     this.useCustomScaffold = false,
     this.scrollToPlayed = false,
+    this.quizAdventureEnabled = false,
   });
 
   @override
@@ -358,6 +360,7 @@ class _QuizPageState extends State<QuizPage> {
           }
         },
         showBanner: true,
+        quizAdventureEnabled: widget.quizAdventureEnabled,
       );
     } else {
       return Scaffold(
@@ -377,10 +380,16 @@ class _QuizPageState extends State<QuizPage> {
             IconButton(
               icon: const Icon(Icons.sports_esports),
               onPressed: () {
+                if (widget.quizAdventureEnabled) {
+                  // Already in adventure mode, do nothing
+                  return;
+                }
                 Navigator.pushReplacement(
                   context,
                   PageRouteBuilder(
-                    pageBuilder: (_, __, ___) => const QuizAdventurePage(),
+                    pageBuilder:
+                        (_, __, ___) =>
+                            QuizAdventurePage(quizAdventureEnabled: true),
                     transitionsBuilder:
                         (_, animation, __, child) =>
                             FadeTransition(opacity: animation, child: child),
@@ -962,7 +971,12 @@ class _QuizPageState extends State<QuizPage> {
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => QuizSessionPage(quiz: quiz, questions: questions),
+          builder:
+              (_) => QuizSessionPage(
+                quiz: quiz,
+                questions: questions,
+                quizAdventureEnabled: widget.quizAdventureEnabled,
+              ),
         ),
       );
 

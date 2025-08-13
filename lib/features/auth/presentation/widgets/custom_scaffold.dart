@@ -20,6 +20,7 @@ class CustomScaffold extends StatefulWidget {
   final ValueChanged<int> onTabSelected;
   final bool showBanner;
   final bool showBottomNavigationBar;
+  final bool quizAdventureEnabled;
 
   const CustomScaffold({
     super.key,
@@ -29,6 +30,7 @@ class CustomScaffold extends StatefulWidget {
     this.actions,
     this.showBanner = true,
     this.showBottomNavigationBar = true,
+    this.quizAdventureEnabled = false,
   });
 
   @override
@@ -112,6 +114,28 @@ class _CustomScaffoldState extends State<CustomScaffold> {
         foregroundColor: theme.colorScheme.onPrimary,
         actions: [
           _buildUserPointsAndNotifications(context),
+          if (widget.currentIndex == 2)
+            IconButton(
+              tooltip:
+                  widget.quizAdventureEnabled
+                      ? 'Liste des quiz'
+                      : 'Mode Aventure',
+              icon: Icon(
+                widget.quizAdventureEnabled
+                    ? Icons.list_alt
+                    : Icons.sports_esports,
+              ),
+              onPressed: () {
+                if (widget.quizAdventureEnabled) {
+                  Navigator.pushReplacementNamed(context, RouteConstants.quiz);
+                } else {
+                  Navigator.pushReplacementNamed(
+                    context,
+                    RouteConstants.quizAdventure,
+                  );
+                }
+              },
+            ),
           ...?widget.actions,
         ],
       ),
@@ -126,7 +150,18 @@ class _CustomScaffoldState extends State<CustomScaffold> {
           widget.showBottomNavigationBar
               ? CustomBottomNavBar(
                 currentIndex: widget.currentIndex,
-                onTap: widget.onTabSelected,
+                onTap: (index) {
+                  // If quiz adventure is enabled and trying to navigate to quiz tab (index 2),
+                  // redirect to quiz adventure instead
+                  if (widget.quizAdventureEnabled && index == 2) {
+                    Navigator.pushReplacementNamed(
+                      context,
+                      RouteConstants.quizAdventure,
+                    );
+                  } else {
+                    widget.onTabSelected(index);
+                  }
+                },
                 backgroundColor: Theme.of(context).colorScheme.surface,
                 selectedColor: Theme.of(context).colorScheme.primary,
                 unselectedColor: Colors.grey.shade600,

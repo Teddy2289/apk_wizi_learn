@@ -123,50 +123,50 @@ class _AchievementPageState extends State<AchievementPage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            tooltip: 'Retour',
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Retour',
+          onPressed: () {
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              RouteConstants.dashboard,
+              (route) => false,
+            );
+          },
+        ),
+        title: const Text('Mes Badges'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            key: _keyAllBadges,
+            icon: const Icon(Icons.grid_view),
+            tooltip: 'Tous les badges',
             onPressed: () {
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                RouteConstants.dashboard,
-                (route) => false,
-              );
-            },
-          ),
-          title: const Text('Mes Badges'),
-          centerTitle: true,
-          actions: [
-            IconButton(
-              key: _keyAllBadges,
-              icon: const Icon(Icons.grid_view),
-              tooltip: 'Tous les badges',
-              onPressed: () {
-                Navigator.push(
-                  context,
+              Navigator.push(
+                context,
                   MaterialPageRoute(
                     builder: (_) => const AllAchievementsPage(),
                   ),
-                );
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.help_outline),
-              tooltip: 'Voir le tutoriel',
-              onPressed: _showTutorial,
-            ),
-          ],
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Voir le tutoriel',
+            onPressed: _showTutorial,
+          ),
+        ],
           bottom: const TabBar(
             tabs: [Tab(text: 'Badges'), Tab(text: 'Missions accomplies')],
           ),
-        ),
-        body:
-            _isLoading
-                ? Center(
-                  child: CircularProgressIndicator(
-                    color: theme.colorScheme.primary,
-                  ),
-                )
+      ),
+      body:
+          _isLoading
+              ? Center(
+                child: CircularProgressIndicator(
+                  color: theme.colorScheme.primary,
+                ),
+              )
                 : TabBarView(
                   children: [
                     // Onglet Badges
@@ -177,27 +177,27 @@ class _AchievementPageState extends State<AchievementPage> {
                             style: theme.textTheme.bodyMedium,
                           ),
                         )
-                        : SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Text(
-                                  'Débloque des badges en progressant dans tes quiz !',
-                                  style: theme.textTheme.bodyLarge,
-                                ),
-                              ),
-                              Container(
-                                key: _keyBadgeGrid,
-                                child: AchievementBadgeGrid(
-                                  achievements: _achievements,
-                                  keyFirstBadge: _keyFirstBadge,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+              : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'Débloque des badges en progressant dans tes quiz !',
+                        style: theme.textTheme.bodyLarge,
+                      ),
+                    ),
+                    Container(
+                      key: _keyBadgeGrid,
+                      child: AchievementBadgeGrid(
+                        achievements: _achievements,
+                        keyFirstBadge: _keyFirstBadge,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
                     // Onglet Missions accomplies
                     _buildCompletedMissionsTab(theme),
