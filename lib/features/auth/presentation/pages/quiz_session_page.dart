@@ -10,17 +10,20 @@ import 'package:wizi_learn/features/auth/presentation/pages/question_type_page.d
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_summary_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/quiz_adventure_page.dart';
 
 class QuizSessionPage extends StatefulWidget {
   final Quiz quiz;
   final List<Question> questions;
   final bool isRestart;
+  final bool quizAdventureEnabled;
 
   const QuizSessionPage({
     Key? key,
     required this.quiz,
     required this.questions,
     this.isRestart = false,
+    this.quizAdventureEnabled = false,
   }) : super(key: key);
 
   @override
@@ -382,11 +385,27 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
         currentIndex: 2,
         onTabSelected: (index) {
           if (index != 2) {
-            Navigator.pushReplacementNamed(
-              context,
-              RouteConstants.dashboard,
-              arguments: index,
-            );
+            // If quiz adventure is enabled, redirect to adventure page instead of dashboard
+            if (widget.quizAdventureEnabled) {
+              Navigator.pushReplacement(
+                context,
+                PageRouteBuilder(
+                  pageBuilder:
+                      (_, __, ___) =>
+                          QuizAdventurePage(quizAdventureEnabled: true),
+                  transitionsBuilder:
+                      (_, animation, __, child) =>
+                          FadeTransition(opacity: animation, child: child),
+                  transitionDuration: const Duration(milliseconds: 250),
+                ),
+              );
+            } else {
+              Navigator.pushReplacementNamed(
+                context,
+                RouteConstants.dashboard,
+                arguments: index,
+              );
+            }
           }
         },
         showBanner: false, // Désactivez le banner si nécessaire

@@ -12,6 +12,7 @@ class RouteConstants {
   static const String myTrainings = '/mesFormations';
   static const String quizResult = '/quiz-result';
   static const String quiz = '/quiz';
+  static const String quizAdventure = '/quiz-adventure';
   static const String achievement = '/achievement';
   static const String tutorialPage = '/tutorial_page';
   static const String formations = '/formations';

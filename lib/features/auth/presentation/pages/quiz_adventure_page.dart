@@ -23,7 +23,8 @@ import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_sourc
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
 
 class QuizAdventurePage extends StatefulWidget {
-  const QuizAdventurePage({super.key});
+  final bool quizAdventureEnabled;
+  const QuizAdventurePage({super.key, this.quizAdventureEnabled = true});
 
   @override
   State<QuizAdventurePage> createState() => _QuizAdventurePageState();
@@ -464,6 +465,17 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Retour',
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              _goToQuizList();
+            }
+          },
+        ),
         title: const Text('Aventure Quiz'),
         centerTitle: true,
         actions: [
@@ -735,6 +747,8 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                             (_) => QuizSessionPage(
                                               quiz: quiz,
                                               questions: questions,
+                                              quizAdventureEnabled:
+                                                  widget.quizAdventureEnabled,
                                             ),
                                       ),
                                     );
@@ -828,6 +842,8 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                             (_) => QuizSessionPage(
                                               quiz: quiz,
                                               questions: questions,
+                                              quizAdventureEnabled:
+                                                  widget.quizAdventureEnabled,
                                             ),
                                       ),
                                     );
@@ -888,10 +904,14 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
   }
 
   void _goToQuizList() {
+    if (!widget.quizAdventureEnabled) {
+      // Adventure mode is disabled, stay in current page
+      return;
+    }
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const QuizPage(),
+        pageBuilder: (_, __, ___) => QuizPage(quizAdventureEnabled: false),
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -1176,6 +1196,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
 
             return parseDate(b.completedAt).compareTo(parseDate(a.completedAt));
           });
+    final latestAttempts = attempts.take(5).toList();
 
     showModalBottomSheet(
       context: context,
@@ -1224,10 +1245,10 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                 Flexible(
                   child: ListView.separated(
                     shrinkWrap: true,
-                    itemCount: attempts.length,
+                    itemCount: latestAttempts.length,
                     separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (_, i) {
-                      final h = attempts[i];
+                      final h = latestAttempts[i];
                       final date = DateTime.tryParse(h.completedAt);
                       final dateLabel =
                           date != null

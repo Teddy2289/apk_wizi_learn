@@ -6,17 +6,11 @@ import 'package:wizi_learn/features/auth/presentation/pages/training_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/tutorial_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 
-
 class DashboardPage extends StatefulWidget {
   final int? initialIndex;
   final Map<String, dynamic>? arguments;
 
-
-  const DashboardPage({
-    super.key,
-    this.initialIndex,
-    this.arguments,
-  });
+  const DashboardPage({super.key, this.initialIndex, this.arguments});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -35,6 +29,7 @@ class _DashboardPageState extends State<DashboardPage> {
       selectedTabIndex: _currentIndex,
       useCustomScaffold: _pageArguments?['useCustomScaffold'] ?? false,
       scrollToPlayed: _pageArguments?['scrollToPlayed'] ?? false,
+      quizAdventureEnabled: false,
       key: ValueKey(_pageArguments), // Important pour forcer le rebuild
     ),
     const RankingPage(),
@@ -78,6 +73,7 @@ class _DashboardPageState extends State<DashboardPage> {
       currentIndex: _currentIndex,
       onTabSelected: _onTabSelected,
       showBanner: true,
+      quizAdventureEnabled: false,
       actions: [],
     );
   }
