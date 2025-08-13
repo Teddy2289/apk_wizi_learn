@@ -710,12 +710,32 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                           stars = 1;
                       }
                       final isLeft = index % 2 == 0;
+                      // Couleur par catégorie de formation
+                      Color categoryColor =
+                          Theme.of(context).colorScheme.primary;
+                      final cat =
+                          (quiz.formation.categorie ?? '').trim().toLowerCase();
+                      switch (cat) {
+                        case 'bureautique':
+                          categoryColor = const Color(0xFF3D9BE9);
+                          break;
+                        case 'langues':
+                          categoryColor = const Color(0xFFA55E6E);
+                          break;
+                        case 'internet':
+                          categoryColor = const Color(0xFFFFC533);
+                          break;
+                        case 'création':
+                        case 'creation':
+                          categoryColor = const Color(0xFF9392BE);
+                          break;
+                        default:
+                          categoryColor = Theme.of(context).colorScheme.primary;
+                      }
                       final nodeColor =
                           isPlayed
                               ? Colors.amber
-                              : (isUnlocked
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Colors.grey);
+                              : (isUnlocked ? categoryColor : Colors.grey);
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(
@@ -734,7 +754,8 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                   stars,
                                   nodeColor,
                                   onTap: () async {
-                                    if (!isUnlocked || quiz.questions.isEmpty)
+                                    if (!(isUnlocked || isPlayed) ||
+                                        quiz.questions.isEmpty)
                                       return;
                                     await _playSound('audio/click.mp3');
                                     final questions = await _quizRepository
@@ -937,7 +958,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     return Opacity(
       opacity: isUnlocked ? 1.0 : 0.8,
       child: InkWell(
-        onTap: isUnlocked ? onTap : null,
+        onTap: (isUnlocked || isPlayed) ? onTap : null,
         borderRadius: BorderRadius.circular(14),
         child: Stack(
           children: [
@@ -1028,6 +1049,50 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                 ),
                               ),
                             ),
+                            // Mini stats si historique disponible
+                            if (_quizHistory.isNotEmpty)
+                              ...(() {
+                                final h = _quizHistory.firstWhere(
+                                  (qH) =>
+                                      qH.quiz.id.toString() ==
+                                      quiz.id.toString(),
+                                  orElse:
+                                      () => stats_model.QuizHistory(
+                                        id: '',
+                                        quiz: quiz,
+                                        score: 0,
+                                        completedAt: '',
+                                        timeSpent: 0,
+                                        totalQuestions: 0,
+                                        correctAnswers: 0,
+                                      ),
+                                );
+                                if (h.totalQuestions == 0) return <Widget>[];
+                                final percent =
+                                    ((h.correctAnswers / h.totalQuestions) *
+                                            100)
+                                        .round();
+                                return <Widget>[
+                                  const SizedBox(width: 10),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.shade50,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      '$percent% • ${h.correctAnswers}/${h.totalQuestions}',
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: Colors.blue.shade700,
+                                          ),
+                                    ),
+                                  ),
+                                ];
+                              }()),
                           ],
                         ),
                         if (isPlayed)
@@ -1071,7 +1136,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                 ],
               ),
             ),
-            if (!isUnlocked)
+            if (!isUnlocked && !isPlayed)
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(

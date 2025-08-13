@@ -1,9 +1,9 @@
 class AppConstants {
   static const String appName = "Wizi Learn";
-  static const String baseUrl = "https://wizi-learn.com/api";
-  static const String baseUrlImg = "https://wizi-learn.com/";
-  // static const String baseUrl = "http://192.168.88.33:8000/api";
-  // static const String baseUrlImg = "http://192.168.88.33:8000/";
+  // static const String baseUrl = "https://wizi-learn.com/api";
+  // static const String baseUrlImg = "https://wizi-learn.com/";
+  static const String baseUrl = "http://192.168.88.33:8000/api";
+  static const String baseUrlImg = "http://192.168.88.33:8000/";
   static const String loginEndpoint = "/login";
   static const String logoutEndpoint = "/logout";
   static const String userEndpoint = "/user";
@@ -13,6 +13,7 @@ class AppConstants {
   static const String catalogue_formation = "/catalogueFormations/formations";
   static const String formationStagiaire = "/stagiaire/formations";
   static const String contact = "/stagiaire/contacts";
+  static const String partner = "/stagiaire/partner";
   static const String quizHistory = "/quiz/history";
   static const String globalRanking = '/quiz/classement/global';
   static const String quizStats = '/quiz/stats';
