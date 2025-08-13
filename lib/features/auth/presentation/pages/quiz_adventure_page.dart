@@ -266,16 +266,16 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     List<quiz_model.Quiz> filtered = [];
     if (userPoints < 10)
       filtered = debutant.take(2).toList();
-    else if (userPoints < 20)
-      filtered = debutant.take(4).toList();
-    else if (userPoints < 40)
-      filtered = [...debutant, ...intermediaire.take(2)];
-    else if (userPoints < 60)
-      filtered = [...debutant, ...intermediaire];
-    else if (userPoints < 80)
-      filtered = [...debutant, ...intermediaire, ...avance.take(2)];
-    else if (userPoints < 100)
-      filtered = [...debutant, ...intermediaire, ...avance.take(4)];
+    // else if (userPoints < 20)
+    //   filtered = debutant.take(4).toList();
+    // else if (userPoints < 40)
+    //   filtered = [...debutant, ...intermediaire.take(2)];
+    // else if (userPoints < 60)
+    //   filtered = [...debutant, ...intermediaire];
+    // else if (userPoints < 80)
+    //   filtered = [...debutant, ...intermediaire, ...avance.take(2)];
+    // else if (userPoints < 100)
+    //   filtered = [...debutant, ...intermediaire, ...avance.take(4)];
     else
       filtered = [...debutant, ...intermediaire, ...avance];
 
