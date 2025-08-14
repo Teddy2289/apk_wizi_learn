@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:wizi_learn/features/auth/data/repositories/avatar_repository.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/intl.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
@@ -275,7 +276,7 @@ class CustomDrawer extends StatelessWidget {
                         route: RouteConstants.quiz,
                       ),
                       _MenuItem(
-                        icon: Icons.mail_rounded,
+                        icon: Icons.phone,
                         label: 'Mes Contacts',
                         route: RouteConstants.contact,
                       ),
@@ -356,6 +357,12 @@ class CustomDrawer extends StatelessWidget {
   // Les méthodes _buildInfoCard, _buildInfoTile, _buildMenuSection et _buildDrawerItem restent inchangées...
   Widget _buildInfoCard(BuildContext context, Authenticated state) {
     final theme = Theme.of(context);
+    String formatDate(String? s) {
+      if (s == null || s.isEmpty) return '-';
+      final d = DateTime.tryParse(s);
+      if (d == null) return s;
+      return DateFormat('dd/MM/yyyy').format(d);
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -383,26 +390,74 @@ class CustomDrawer extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _buildInfoTile(
+                icon: Icons.badge,
+                title: 'Prénom',
+                value: state.user.stagiaire?.prenom ?? '-',
+              ),
+              _buildInfoTile(
                 icon: Icons.person,
-                title: 'Identité',
-                value:
-                    '${state.user.stagiaire!.civilite} ${state.user.stagiaire!.prenom}',
+                title: 'Nom',
+                value: state.user.name,
               ),
-              _buildInfoTile(
-                icon: Icons.phone,
-                title: 'Téléphone',
-                value: state.user.stagiaire!.telephone,
-              ),
-              _buildInfoTile(
-                icon: Icons.location_on,
-                title: 'Adresse',
-                value:
-                    '${state.user.stagiaire!.adresse}, ${state.user.stagiaire!.codePostal} ${state.user.stagiaire!.ville}',
-              ),
-              _buildInfoTile(
-                icon: Icons.calendar_today,
-                title: 'Formation depuis',
-                value: state.user.stagiaire!.dateDebutFormation,
+              // Bloc dépliable avec l'email comme déclencheur
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: EdgeInsets.zero,
+                title: Row(
+                  children: [
+                    const Icon(Icons.email, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        state.user.email,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Voir plus',
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                children: [
+                  _buildInfoTile(
+                    icon: Icons.phone,
+                    title: 'Téléphone',
+                    value: state.user.stagiaire?.telephone ?? '-',
+                  ),
+                  _buildInfoTile(
+                    icon: Icons.home,
+                    title: 'Adresse',
+                    value: state.user.stagiaire?.adresse ?? '-',
+                  ),
+                  _buildInfoTile(
+                    icon: Icons.location_city,
+                    title: 'Ville',
+                    value: state.user.stagiaire?.ville ?? '-',
+                  ),
+                  _buildInfoTile(
+                    icon: Icons.markunread_mailbox,
+                    title: 'Code postal',
+                    value: state.user.stagiaire?.codePostal ?? '-',
+                  ),
+                  // Ne pas afficher la date de naissance
+                  _buildInfoTile(
+                    icon: Icons.rocket_launch,
+                    title: 'Date de lancement',
+                    value: formatDate(state.user.stagiaire?.dateDebutFormation),
+                  ),
+                  _buildInfoTile(
+                    icon: Icons.shopping_bag,
+                    title: 'Date de vente',
+                    value: formatDate(state.user.stagiaire?.dateInscription),
+                  ),
+                ],
               ),
             ],
           ),

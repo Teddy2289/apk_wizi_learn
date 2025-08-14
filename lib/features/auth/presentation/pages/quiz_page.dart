@@ -52,6 +52,11 @@ class _QuizPageState extends State<QuizPage> {
   List<String> _playedQuizIds = [];
   String? _scrollToQuizId;
   bool _didRedirectToAdventure = false;
+  // Optimisation: cache des listes filtrées pour éviter les FutureBuilder imbriqués
+  List<quiz_model.Quiz> _baseQuizzes = [];
+  List<quiz_model.Quiz> _visiblePlayed = [];
+  List<quiz_model.Quiz> _visibleUnplayed = [];
+  List<QuizHistory> _quizHistoryList = [];
 
   // Filtres
   String? _selectedLevel;
@@ -170,185 +175,6 @@ class _QuizPageState extends State<QuizPage> {
     }
   }
 
-  Future<void> _loadInitialData() async {
-    setState(() => _isInitialLoad = true);
-    try {
-      final user = await _authRepository.getMe();
-      _connectedStagiaireId = user.stagiaire?.id;
-
-      if (_connectedStagiaireId == null) {
-        setState(() => _isInitialLoad = false);
-        return;
-      }
-
-      await Future.wait([
-        _loadUserPoints(),
-        _loadQuizHistory(),
-        _loadQuizzes(),
-      ]);
-    } catch (e) {
-      debugPrint('Erreur chargement initial: $e');
-    } finally {
-      setState(() => _isInitialLoad = false);
-    }
-  }
-
-  Future<void> _loadUserPoints() async {
-    final rankings = await _statsRepository.getGlobalRanking();
-    final userRanking = rankings.firstWhere(
-      (r) => r.stagiaire.id == _connectedStagiaireId.toString(),
-      orElse: () => GlobalRanking.empty(),
-    );
-    setState(() => _userPoints = userRanking.totalPoints);
-  }
-
-  Future<void> _loadQuizHistory() async {
-    try {
-      debugPrint('Chargement historique des quiz...');
-      debugPrint('Stagiaire ID: $_connectedStagiaireId');
-
-      final history = await _statsRepository.getQuizHistory();
-      debugPrint('QuizHistory (raw):');
-      for (var h in history) {
-        debugPrint(
-          'id: ${h.id}, quizId: ${h.quiz.id}, completedAt: ${h.completedAt}, score: ${h.score}, totalQuestions: ${h.totalQuestions}, correctAnswers: ${h.correctAnswers}',
-        );
-      }
-      setState(() {
-        _futureQuizHistory = Future.value(history);
-        _playedQuizIds = history.map((h) => h.quiz.id.toString()).toList();
-      });
-    } catch (e) {
-      debugPrint('Erreur chargement historique: $e');
-    }
-  }
-
-  Future<void> _loadQuizzes() async {
-    try {
-      final quizzes = await _quizRepository.getQuizzesForStagiaire(
-        stagiaireId: _connectedStagiaireId!,
-      );
-      final filteredQuizzes = _filterQuizzesByPoints(quizzes, _userPoints);
-
-      // Extraire les niveaux et formations disponibles
-      _extractAvailableFilters(filteredQuizzes);
-      // Sélectionner par défaut la première formation disponible si aucune sélection
-      if (_selectedFormation == null && _availableFormations.isNotEmpty) {
-        _selectedFormation = _availableFormations.first;
-      }
-
-      setState(() {
-        _futureQuizzes = Future.value(filteredQuizzes);
-        _expandedQuizzes.clear();
-        for (var quiz in filteredQuizzes) {
-          _expandedQuizzes.putIfAbsent(quiz.id, () => false);
-        }
-      });
-    } catch (e) {
-      debugPrint('Erreur chargement quiz: $e');
-      setState(() => _futureQuizzes = Future.value([]));
-    }
-  }
-
-  void _extractAvailableFilters(List<quiz_model.Quiz> quizzes) {
-    final levels = <String>{};
-    final formations = <String>{};
-
-    for (final quiz in quizzes) {
-      if (quiz.niveau.isNotEmpty) {
-        levels.add(quiz.niveau);
-      }
-      if (quiz.formation.titre.isNotEmpty) {
-        formations.add(quiz.formation.titre);
-      }
-    }
-
-    _availableLevels = levels.toList()..sort();
-    _availableFormations = formations.toList()..sort();
-  }
-
-  Map<String, List<quiz_model.Quiz>> _separateQuizzes(
-    List<quiz_model.Quiz> allQuizzes,
-  ) {
-    // Appliquer les filtres
-    List<quiz_model.Quiz> filteredQuizzes = allQuizzes;
-
-    if (_selectedLevel != null) {
-      filteredQuizzes =
-          filteredQuizzes.where((q) => q.niveau == _selectedLevel).toList();
-    }
-
-    if (_selectedFormation != null) {
-      filteredQuizzes =
-          filteredQuizzes
-              .where((q) => q.formation.titre == _selectedFormation)
-              .toList();
-    }
-
-    final played =
-        filteredQuizzes
-            .where((q) => _playedQuizIds.contains(q.id.toString()))
-            .toList();
-    final unplayed =
-        filteredQuizzes
-            .where((q) => !_playedQuizIds.contains(q.id.toString()))
-            .toList();
-    return {'played': played, 'unplayed': unplayed};
-  }
-
-  void _scrollListener() {
-    if (_scrollController.offset >= 400 && !_showBackToTopButton) {
-      setState(() => _showBackToTopButton = true);
-    } else if (_scrollController.offset < 400 && _showBackToTopButton) {
-      setState(() => _showBackToTopButton = false);
-    }
-  }
-
-  void _scrollToTop() {
-    _scrollController.animateTo(
-      0,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  List<quiz_model.Quiz> _filterQuizzesByPoints(
-    List<quiz_model.Quiz> allQuizzes,
-    int userPoints,
-  ) {
-    if (allQuizzes.isEmpty) return [];
-
-    String normalizeLevel(String? level) {
-      if (level == null) return 'débutant';
-      final lvl = level.toLowerCase().trim();
-      if (lvl.contains('inter') || lvl.contains('moyen'))
-        return 'intermédiaire';
-      if (lvl.contains('avancé') || lvl.contains('expert')) return 'avancé';
-      return 'débutant';
-    }
-
-    final debutant =
-        allQuizzes
-            .where((q) => normalizeLevel(q.niveau) == 'débutant')
-            .toList();
-    final intermediaire =
-        allQuizzes
-            .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
-            .toList();
-    final avance =
-        allQuizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
-
-    if (userPoints < 10) return debutant.take(2).toList();
-    if (userPoints < 20) return debutant.take(4).toList();
-    if (userPoints < 40) return [...debutant, ...intermediaire.take(2)];
-    if (userPoints < 60) return [...debutant, ...intermediaire];
-    if (userPoints < 80)
-      return [...debutant, ...intermediaire, ...avance.take(2)];
-    if (userPoints < 100)
-      return [...debutant, ...intermediaire, ...avance.take(4)];
-    return [...debutant, ...intermediaire, ...avance];
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -369,10 +195,34 @@ class _QuizPageState extends State<QuizPage> {
       selectedTabIndex = 2;
     }
 
-    Widget content =
-        _isInitialLoad
-            ? _buildLoadingScreen(theme)
-            : _buildMainContent(theme, scrollToPlayed: scrollToPlayed);
+    // Contenu principal (header + liste optimisée)
+    Widget content = RefreshIndicator(
+      onRefresh: _loadInitialData,
+      child: CustomScrollView(
+        key: const PageStorageKey('quiz_scroll'),
+        controller: _scrollController,
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            sliver: SliverToBoxAdapter(child: _buildHeader(theme)),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: _buildQuizListContent(theme),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+        ],
+      ),
+    );
+
+    // Gestion scroll ciblé
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollToQuizId != null) {
+        _scrollToQuiz(_scrollToQuizId!);
+      } else if (scrollToPlayed) {
+        _scrollToPlayedQuizzes();
+      }
+    });
 
     if (useCustomScaffold) {
       return CustomScaffold(
@@ -420,28 +270,41 @@ class _QuizPageState extends State<QuizPage> {
               padding: const EdgeInsets.symmetric(horizontal: 6),
               child: Row(
                 children: [
-                  const Text('Aventure'),
+                  // const Text('Aventure'),
                   const SizedBox(width: 6),
-                  Switch(
-                    value: false,
-                    onChanged: (v) {
-                      if (!v) return;
-                      Navigator.pushReplacement(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder:
-                              (_, __, ___) => const QuizAdventurePage(
-                                quizAdventureEnabled: true,
-                              ),
-                          transitionsBuilder:
-                              (_, animation, __, child) => FadeTransition(
-                                opacity: animation,
-                                child: child,
-                              ),
-                          transitionDuration: const Duration(milliseconds: 250),
-                        ),
-                      );
-                    },
+                  Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.08),
+                      border: Border.all(
+                        color: theme.colorScheme.primary,
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Switch(
+                      value: false,
+                      onChanged: (v) {
+                        if (!v) return;
+                        Navigator.pushReplacement(
+                          context,
+                          PageRouteBuilder(
+                            pageBuilder:
+                                (_, __, ___) => const QuizAdventurePage(
+                                  quizAdventureEnabled: true,
+                                ),
+                            transitionsBuilder:
+                                (_, animation, __, child) => FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                ),
+                            transitionDuration: const Duration(
+                              milliseconds: 250,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -470,48 +333,178 @@ class _QuizPageState extends State<QuizPage> {
     }
   }
 
-  Widget _buildMainContent(ThemeData theme, {bool scrollToPlayed = false}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollToQuizId != null) {
-        _scrollToQuiz(_scrollToQuizId!);
-      } else if (scrollToPlayed) {
-        _scrollToPlayedQuizzes();
+  Future<void> _loadInitialData() async {
+    setState(() => _isInitialLoad = true);
+    try {
+      final user = await _authRepository.getMe();
+      _connectedStagiaireId = user.stagiaire?.id;
+
+      if (_connectedStagiaireId == null) {
+        setState(() => _isInitialLoad = false);
+        return;
+      }
+
+      await Future.wait([
+        _loadUserPoints(),
+        _loadQuizHistory(),
+        _loadQuizzes(),
+      ]);
+    } catch (e) {
+      debugPrint('Erreur chargement initial: $e');
+    } finally {
+      setState(() => _isInitialLoad = false);
+    }
+  }
+
+  Future<void> _loadUserPoints() async {
+    final rankings = await _statsRepository.getGlobalRanking();
+    final userRanking = rankings.firstWhere(
+      (r) => r.stagiaire.id == _connectedStagiaireId.toString(),
+      orElse: () => GlobalRanking.empty(),
+    );
+    setState(() => _userPoints = userRanking.totalPoints);
+  }
+
+  Future<void> _loadQuizHistory() async {
+    try {
+      debugPrint('Chargement historique des quiz...');
+      debugPrint('Stagiaire ID: $_connectedStagiaireId');
+
+      final history = await _statsRepository.getQuizHistory();
+      debugPrint('QuizHistory (raw):');
+      for (var h in history) {
+        debugPrint(
+          'id: ${h.id}, quizId: ${h.quiz.id}, completedAt: ${h.completedAt}, score: ${h.score}, totalQuestions: ${h.totalQuestions}, correctAnswers: ${h.correctAnswers}',
+        );
+      }
+      setState(() {
+        _futureQuizHistory = Future.value(history);
+        _playedQuizIds = history.map((h) => h.quiz.id.toString()).toList();
+        _quizHistoryList = history;
+      });
+      // Si déjà des quiz en base, tenter de sélectionner la formation du dernier quiz joué
+      if (_baseQuizzes.isNotEmpty) {
+        _selectFormationFromLastPlayedIfAny();
+      }
+    } catch (e) {
+      debugPrint('Erreur chargement historique: $e');
+    }
+  }
+
+  Future<void> _loadQuizzes() async {
+    try {
+      final quizzes = await _quizRepository.getQuizzesForStagiaire(
+        stagiaireId: _connectedStagiaireId!,
+      );
+      final filteredQuizzes = _filterQuizzesByPoints(quizzes, _userPoints);
+
+      // Extraire les niveaux et formations disponibles
+      _extractAvailableFilters(filteredQuizzes);
+      // Tenter de sélectionner la formation basée sur la dernière participation
+      _selectFormationFromLastPlayedIfAny();
+      // Sélectionner par défaut la première formation disponible si aucune sélection
+      if (_selectedFormation == null && _availableFormations.isNotEmpty) {
+        _selectedFormation = _availableFormations.first;
+      }
+
+      setState(() {
+        _futureQuizzes = Future.value(filteredQuizzes);
+        _baseQuizzes = filteredQuizzes;
+      });
+      _applyFilters();
+      _selectFormationFromLastPlayedIfAny();
+    } catch (e) {
+      debugPrint('Erreur chargement quiz: $e');
+      setState(() => _futureQuizzes = Future.value([]));
+    }
+  }
+
+  void _extractAvailableFilters(List<quiz_model.Quiz> quizzes) {
+    final levels = <String>{};
+    final formations = <String>{};
+
+    for (final quiz in quizzes) {
+      if (quiz.niveau.isNotEmpty) {
+        levels.add(quiz.niveau);
+      }
+      if (quiz.formation.titre.isNotEmpty) {
+        formations.add(quiz.formation.titre);
+      }
+    }
+
+    _availableLevels = levels.toList()..sort();
+    _availableFormations = formations.toList()..sort();
+  }
+
+  // _separateQuizzes supprimé: remplacé par _applyFilters()
+
+  void _applyFilters() {
+    List<quiz_model.Quiz> list = [..._baseQuizzes];
+    if (_selectedLevel != null) {
+      list = list.where((q) => q.niveau == _selectedLevel).toList();
+    }
+    if (_selectedFormation != null) {
+      list =
+          list.where((q) => q.formation.titre == _selectedFormation).toList();
+    }
+    final played =
+        list.where((q) => _playedQuizIds.contains(q.id.toString())).toList();
+    final unplayed =
+        list.where((q) => !_playedQuizIds.contains(q.id.toString())).toList();
+
+    if (_quizHistoryList.isNotEmpty) {
+      played.sort((a, b) {
+        final ha = _quizHistoryList.firstWhere(
+          (h) => h.quiz.id.toString() == a.id.toString(),
+          orElse:
+              () => QuizHistory(
+                id: '',
+                quiz: a,
+                score: 0,
+                completedAt: '',
+                timeSpent: 0,
+                totalQuestions: 0,
+                correctAnswers: 0,
+              ),
+        );
+        final hb = _quizHistoryList.firstWhere(
+          (h) => h.quiz.id.toString() == b.id.toString(),
+          orElse:
+              () => QuizHistory(
+                id: '',
+                quiz: b,
+                score: 0,
+                completedAt: '',
+                timeSpent: 0,
+                totalQuestions: 0,
+                correctAnswers: 0,
+              ),
+        );
+        try {
+          final da = DateTime.parse(ha.completedAt);
+          final db = DateTime.parse(hb.completedAt);
+          return db.compareTo(da);
+        } catch (_) {
+          return 0;
+        }
+      });
+    }
+
+    setState(() {
+      _visiblePlayed = played;
+      _visibleUnplayed = unplayed;
+      _expandedQuizzes.clear();
+      for (var quiz in list) {
+        _expandedQuizzes.putIfAbsent(quiz.id, () => false);
       }
     });
-    return RefreshIndicator(
-      onRefresh: _loadInitialData,
-      child: CustomScrollView(
-        key: const PageStorageKey('quiz_scroll'),
-        controller: _scrollController,
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            sliver: SliverToBoxAdapter(child: _buildHeader(theme)),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: _buildQuizListContent(theme),
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
-        ],
-      ),
-    );
   }
 
   Future<double> _calculatePlayedQuizzesPosition() async {
-    if (_futureQuizzes == null) return 0;
-
-    try {
-      final quizzes = await _futureQuizzes!;
-      final unplayedCount = _separateQuizzes(quizzes)['unplayed']?.length ?? 0;
-      // Estimation: 200px par élément (header + 1 item)
-      final headerHeight = 100.0; // Hauteur approximative du header
-      const itemHeight = 120.0; // Hauteur approximative d'un item de quiz
-      return headerHeight + (unplayedCount * itemHeight);
-    } catch (e) {
-      debugPrint('Erreur calcul position: $e');
-      return 0;
-    }
+    final unplayedCount = _visibleUnplayed.length;
+    final headerHeight = 100.0;
+    const itemHeight = 120.0;
+    return headerHeight + (unplayedCount * itemHeight);
   }
 
   Widget _buildHeader(ThemeData theme) {
@@ -590,7 +583,15 @@ class _QuizPageState extends State<QuizPage> {
                 const SizedBox(width: 8),
                 IconButton(
                   tooltip: 'Réinitialiser',
-                  onPressed: () => setState(() => _selectedFormation = null),
+                  onPressed: () {
+                    setState(() => _selectedFormation = null);
+                    _applyFilters();
+                    _scrollController.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.easeInOut,
+                    );
+                  },
                   icon: Icon(Icons.close, color: theme.colorScheme.primary),
                 ),
               ],
@@ -630,6 +631,12 @@ class _QuizPageState extends State<QuizPage> {
                       _selectedLevel = null;
                       _selectedFormation = null;
                     });
+                    _applyFilters();
+                    _scrollController.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.easeInOut,
+                    );
                   },
                   child: Icon(
                     Icons.close,
@@ -658,120 +665,42 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   Widget _buildQuizListContent(ThemeData theme) {
-    if (_futureQuizzes == null) {
-      return SliverFillRemaining(child: _buildEmptyState(theme));
+    if (_isInitialLoad) {
+      return SliverFillRemaining(child: _buildLoadingScreen(theme));
     }
-
-    return FutureBuilder<List<quiz_model.Quiz>>(
-      future: _futureQuizzes,
-      builder: (context, quizSnapshot) {
-        if (quizSnapshot.connectionState == ConnectionState.waiting &&
-            !_isInitialLoad) {
-          return SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => _buildQuizShimmer(theme),
-              childCount: 3,
-            ),
-          );
-        }
-
-        if (quizSnapshot.hasError) {
-          return SliverFillRemaining(child: _buildErrorState(theme));
-        }
-
-        if (quizSnapshot.hasData) {
-          return FutureBuilder<List<QuizHistory>>(
-            future: _futureQuizHistory,
-            builder: (context, historySnapshot) {
-              final separated = _separateQuizzes(quizSnapshot.data!);
-              final unplayed = separated['unplayed']!;
-              List<quiz_model.Quiz> played = separated['played']!;
-
-              // Trier les quiz joués par ordre antéchronologique si l'historique est disponible
-              if (historySnapshot.hasData) {
-                final history = historySnapshot.data!;
-                played.sort((a, b) {
-                  final historyA = history.firstWhere(
-                    (h) => h.quiz.id.toString() == a.id.toString(),
-                    orElse:
-                        () => QuizHistory(
-                          id: '',
-                          quiz: a,
-                          score: 0,
-                          completedAt: '',
-                          timeSpent: 0,
-                          totalQuestions: 0,
-                          correctAnswers: 0,
-                        ),
-                  );
-                  final historyB = history.firstWhere(
-                    (h) => h.quiz.id.toString() == b.id.toString(),
-                    orElse:
-                        () => QuizHistory(
-                          id: '',
-                          quiz: b,
-                          score: 0,
-                          completedAt: '',
-                          timeSpent: 0,
-                          totalQuestions: 0,
-                          correctAnswers: 0,
-                        ),
-                  );
-
-                  try {
-                    final dateA = DateTime.parse(historyA.completedAt);
-                    final dateB = DateTime.parse(historyB.completedAt);
-                    return dateB.compareTo(dateA); // Ordre antéchronologique
-                  } catch (e) {
-                    return 0; // En cas d'erreur de parsing, garder l'ordre original
-                  }
-                });
-              }
-
-              return SliverList(
-                delegate: SliverChildListDelegate([
-                  if (unplayed.isNotEmpty) ...[
-                    _buildSectionTitle('Quiz disponibles', theme),
-                    ...unplayed
-                        .map(
-                          (quiz) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _buildQuizCard(
-                              quiz,
-                              _expandedQuizzes[quiz.id] ?? false,
-                              theme,
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    const SizedBox(height: 16),
-                  ],
-
-                  if (played.isNotEmpty) ...[
-                    _buildSectionTitle(
-                      'Historique de vos quiz déjà jouer',
-                      theme,
-                    ),
-                    ...played
-                        .map(
-                          (quiz) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _buildPlayedQuizCard(quiz, theme),
-                          ),
-                        )
-                        .toList(),
-                  ],
-
-                  if (unplayed.isEmpty && played.isEmpty)
-                    _buildEmptyState(theme),
-                ]),
-              );
-            },
-          );
-        }
-
-        return SliverFillRemaining(child: _buildLoadingScreen(theme));
-      },
+    final unplayed = _visibleUnplayed;
+    final played = _visiblePlayed;
+    return SliverList(
+      delegate: SliverChildListDelegate([
+        if (unplayed.isNotEmpty) ...[
+          _buildSectionTitle('Quiz disponibles', theme),
+          ...unplayed
+              .map(
+                (quiz) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildQuizCard(
+                    quiz,
+                    _expandedQuizzes[quiz.id] ?? false,
+                    theme,
+                  ),
+                ),
+              )
+              .toList(),
+          const SizedBox(height: 16),
+        ],
+        if (played.isNotEmpty) ...[
+          _buildSectionTitle('Historique de vos quiz déjà jouer', theme),
+          ...played
+              .map(
+                (quiz) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildPlayedQuizCard(quiz, theme),
+                ),
+              )
+              .toList(),
+        ],
+        if (unplayed.isEmpty && played.isEmpty) _buildEmptyState(theme),
+      ]),
     );
   }
 
@@ -1389,106 +1318,9 @@ class _QuizPageState extends State<QuizPage> {
     );
   }
 
-  Widget _buildErrorState(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
-          const SizedBox(height: 16),
-          Text(
-            'Erreur de chargement',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.error,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Nous n\'avons pas pu charger vos quiz. Veuillez réessayer.',
-            style: theme.textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _loadInitialData,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('Réessayer'),
-          ),
-        ],
-      ),
-    );
-  }
+  // _buildErrorState supprimé (flux simplifié)
 
-  Widget _buildQuizShimmer(ThemeData theme) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        width: 120,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // _buildQuizShimmer supprimé (flux simplifié)
 
   void _scrollToPlayedQuizzes() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -1624,6 +1456,7 @@ class _QuizPageState extends State<QuizPage> {
                         setState(
                           () {},
                         ); // Rafraîchir l'affichage avec les filtres
+                        _applyFilters();
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
@@ -1673,6 +1506,12 @@ class _QuizPageState extends State<QuizPage> {
                 setState(() {
                   _selectedFormation = title;
                 });
+                _applyFilters();
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                );
                 Navigator.pop(context);
               },
             );
@@ -1742,5 +1581,78 @@ class _QuizPageState extends State<QuizPage> {
         Expanded(child: Text(text)),
       ],
     );
+  }
+
+  void _scrollListener() {
+    if (_scrollController.offset >= 400 && !_showBackToTopButton) {
+      setState(() => _showBackToTopButton = true);
+    } else if (_scrollController.offset < 400 && _showBackToTopButton) {
+      setState(() => _showBackToTopButton = false);
+    }
+  }
+
+  List<quiz_model.Quiz> _filterQuizzesByPoints(
+    List<quiz_model.Quiz> allQuizzes,
+    int userPoints,
+  ) {
+    if (allQuizzes.isEmpty) return [];
+
+    String normalizeLevel(String? level) {
+      if (level == null) return 'débutant';
+      final lvl = level.toLowerCase().trim();
+      if (lvl.contains('inter') || lvl.contains('moyen'))
+        return 'intermédiaire';
+      if (lvl.contains('avancé') || lvl.contains('expert')) return 'avancé';
+      return 'débutant';
+    }
+
+    final debutant =
+        allQuizzes
+            .where((q) => normalizeLevel(q.niveau) == 'débutant')
+            .toList();
+    final intermediaire =
+        allQuizzes
+            .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
+            .toList();
+    final avance =
+        allQuizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
+
+    if (userPoints < 10) return debutant.take(2).toList();
+    if (userPoints < 20) return debutant.take(4).toList();
+    if (userPoints < 40) return [...debutant, ...intermediaire.take(2)];
+    if (userPoints < 60) return [...debutant, ...intermediaire];
+    if (userPoints < 80)
+      return [...debutant, ...intermediaire, ...avance.take(2)];
+    if (userPoints < 100)
+      return [...debutant, ...intermediaire, ...avance.take(4)];
+    return [...debutant, ...intermediaire, ...avance];
+  }
+
+  void _scrollToTop() {
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _selectFormationFromLastPlayedIfAny() {
+    if (_selectedFormation != null)
+      return; // ne pas override le choix utilisateur
+    if (_quizHistoryList.isEmpty || _availableFormations.isEmpty) return;
+    DateTime _parseDate(String s) =>
+        DateTime.tryParse(s) ?? DateTime.fromMillisecondsSinceEpoch(0);
+    final sorted = List<QuizHistory>.from(_quizHistoryList)..sort(
+      (a, b) => _parseDate(b.completedAt).compareTo(_parseDate(a.completedAt)),
+    );
+    final last = sorted.first;
+    final lastFormationTitle = last.quiz.formation.titre;
+    if (lastFormationTitle.isNotEmpty &&
+        _availableFormations.contains(lastFormationTitle)) {
+      setState(() {
+        _selectedFormation = lastFormationTitle;
+      });
+      _applyFilters();
+    }
   }
 }

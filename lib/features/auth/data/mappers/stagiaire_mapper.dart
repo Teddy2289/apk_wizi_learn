@@ -31,6 +31,7 @@ class StagiaireMapper {
       ville: entity.ville,
       codePostal: entity.codePostal,
       dateDebutFormation: entity.dateDebutFormation,
+      dateFinFormation: '',
       dateInscription: entity.dateInscription,
       role: entity.role,
       statut: entity.statut,
