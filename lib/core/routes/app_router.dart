@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:wizi_learn/features/auth/presentation/pages/contact_faq_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/dashboard_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/faq_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/formation_stagiaire_page.dart';
@@ -19,6 +18,7 @@ import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dar
 import '../constants/route_constants.dart';
 import '../../features/auth/presentation/pages/auth/login_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/contact_page.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -75,7 +75,9 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const FAQPage());
 
       case RouteConstants.contact:
-        return MaterialPageRoute(builder: (_) => const ContactFaqPage());
+        return MaterialPageRoute(
+          builder: (_) => const ContactPage(contacts: []),
+        );
 
       case RouteConstants.terms:
         return MaterialPageRoute(builder: (_) => const TermsPage());

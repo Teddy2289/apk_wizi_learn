@@ -13,14 +13,13 @@ import 'package:confetti/confetti.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:wizi_learn/features/auth/presentation/widgets/avatar_selector_dialog.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/mission_card.dart';
 import 'package:wizi_learn/features/auth/data/models/mission_model.dart';
-import 'package:wizi_learn/features/auth/presentation/pages/avatar_shop_page.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
+import 'package:wizi_learn/core/constants/route_constants.dart';
 
 class QuizAdventurePage extends StatefulWidget {
   final bool quizAdventureEnabled;
@@ -45,20 +44,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
   int _lastCompletedCount = 0;
   List<stats_model.QuizHistory> _quizHistory = [];
   final AudioPlayer _audioPlayer = AudioPlayer();
-  int _avatarIndex = 0;
-  late AnimationController _avatarAnimController;
-  late Animation<double> _avatarAnim;
-  late AnimationController _avatarBounceController;
-  late Animation<double> _avatarBounceAnim;
-  String _avatarPath = 'assets/images/avatar.png';
-  final List<String> _avatarChoices = [
-    'assets/images/avatars/avatar1.png',
-    'assets/images/avatars/avatar2.png',
-    'assets/images/avatars/avatar3.png',
-    'assets/images/avatars/avatar4.png',
-    'assets/images/avatars/avatar5.png',
-    'assets/images/avatar.png',
-  ];
+  // Avatar & boutique supprimés
   int _loginStreak =
       1; // Valeur simulée pour la démo, à remplacer par la vraie valeur API si dispo
   bool _showMissions = false;
@@ -69,13 +55,11 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
   bool _showBackToTopButton = false;
 
   // GlobalKeys pour le tutoriel interactif
-  final GlobalKey _keyShop = GlobalKey();
-  final GlobalKey _keyAvatar = GlobalKey();
+  // Clés liées à la boutique/avatar supprimées
   final GlobalKey _keyBadges = GlobalKey();
   final GlobalKey _keyProgress = GlobalKey();
   final GlobalKey _keyMission = GlobalKey();
   final GlobalKey _keyQuiz = GlobalKey();
-  final GlobalKey _keyAvatarAnim = GlobalKey();
   // TutorialCoachMark? _tutorialCoachMark; // Unused field removed
   // bool _tutorialShown = false; // Unused field removed
 
@@ -86,22 +70,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 2),
     );
-    _avatarAnimController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-    _avatarAnim = CurvedAnimation(
-      parent: _avatarAnimController,
-      curve: Curves.easeInOut,
-    );
-    _avatarBounceController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _avatarBounceAnim = CurvedAnimation(
-      parent: _avatarBounceController,
-      curve: Curves.elasticOut,
-    );
+    // Animations avatar supprimées
     _scrollController.addListener(() {
       final show = _scrollController.offset >= 400;
       if (show != _showBackToTopButton && mounted) {
@@ -109,7 +78,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
       }
     });
     _loadLoginStreak();
-    _loadAvatarChoice();
+    // Chargement avatar supprimé
     _loadInitialData();
     _checkAndShowTutorial();
   }
@@ -190,29 +159,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
         await _playSound('audio/success.mp3');
       }
       _lastCompletedCount = completed;
-      // Calcul de la position de l'avatar
-      int lastPlayed = 0;
-      for (int i = 0; i < filteredQuizzes.length; i++) {
-        if (_playedQuizIds.contains(filteredQuizzes[i].id.toString())) {
-          lastPlayed = i;
-        } else {
-          break;
-        }
-      }
-      int newAvatarIndex = lastPlayed;
-      if (lastPlayed < filteredQuizzes.length - 1 &&
-          !_playedQuizIds.contains(
-            filteredQuizzes[lastPlayed + 1].id.toString(),
-          )) {
-        newAvatarIndex = lastPlayed + 1;
-      }
-      if (mounted && newAvatarIndex != _avatarIndex) {
-        _avatarAnimController.forward(from: 0);
-        _avatarBounceController.forward(from: 0);
-      }
-      setState(() {
-        _avatarIndex = newAvatarIndex;
-      });
+      // Gestion de position avatar supprimée
     } catch (e) {
       setState(() => _isLoading = false);
     }
@@ -222,8 +169,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
   void dispose() {
     _confettiController?.dispose();
     _audioPlayer.dispose();
-    _avatarBounceController.dispose();
-    _avatarAnimController.dispose();
+    // Dispose animations avatar supprimées
     _scrollController.dispose();
     super.dispose();
   }
@@ -315,31 +261,9 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     setState(() {});
   }
 
-  Future<void> _loadAvatarChoice() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _avatarPath =
-          prefs.getString('selected_avatar') ?? 'assets/images/avatar.png';
-    });
-  }
+  // Sélection d'avatar supprimée
 
-  Future<void> _selectAvatar() async {
-    final selected = await showDialog<String>(
-      context: context,
-      builder:
-          (context) => AvatarSelectorDialog(
-            avatarPaths: _avatarChoices,
-            selectedAvatar: _avatarPath,
-          ),
-    );
-    if (selected != null && selected != _avatarPath) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('selected_avatar', selected);
-      setState(() {
-        _avatarPath = selected;
-      });
-    }
-  }
+  // Sélection d'avatar supprimée
 
   Future<void> _checkAndShowTutorial() async {
     final prefs = await SharedPreferences.getInstance();
@@ -366,32 +290,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
 
   List<TargetFocus> _buildTargets() {
     return [
-      TargetFocus(
-        identify: 'shop',
-        keyTarget: _keyShop,
-        contents: [
-          TargetContent(
-            align: ContentAlign.bottom,
-            child: const Text(
-              'Découvre la boutique pour personnaliser ton avatar !',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ],
-      ),
-      TargetFocus(
-        identify: 'avatar',
-        keyTarget: _keyAvatar,
-        contents: [
-          TargetContent(
-            align: ContentAlign.bottom,
-            child: const Text(
-              'Change ton avatar à tout moment.',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ],
-      ),
+      // Targets boutique/avatar supprimés
       TargetFocus(
         identify: 'badges',
         keyTarget: _keyBadges,
@@ -444,19 +343,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
           ),
         ],
       ),
-      TargetFocus(
-        identify: 'avatarAnim',
-        keyTarget: _keyAvatarAnim,
-        contents: [
-          TargetContent(
-            align: ContentAlign.top,
-            child: const Text(
-              'Ton avatar progresse avec toi dans l’aventure !',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ],
-      ),
+      // Target avatarAnim supprimé
     ];
   }
 
@@ -466,36 +353,19 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Retour',
+          icon: const Icon(Icons.home),
+          tooltip: 'Accueil',
           onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            } else {
-              _goToQuizList();
-            }
+            Navigator.pushReplacementNamed(
+              context,
+              RouteConstants.dashboard,
+              arguments: 0,
+            );
           },
         ),
         title: const Text('Aventure Quiz'),
         centerTitle: true,
         actions: [
-          IconButton(
-            key: _keyShop,
-            icon: const Icon(Icons.shopping_bag),
-            tooltip: 'Boutique d\'avatars',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AvatarShopPage()),
-              );
-            },
-          ),
-          IconButton(
-            key: _keyAvatar,
-            icon: const Icon(Icons.person),
-            tooltip: 'Changer d\'avatar',
-            onPressed: _selectAvatar,
-          ),
           IconButton(
             key: _keyBadges,
             icon: const Icon(Icons.emoji_events),
@@ -508,10 +378,21 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.list_alt),
-            tooltip: 'Liste des quiz',
-            onPressed: _goToQuizList,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Row(
+              children: [
+                const Text('Aventure'),
+                const SizedBox(width: 6),
+                Switch(
+                  value: true,
+                  onChanged: (v) {
+                    if (v) return;
+                    _goToQuizList();
+                  },
+                ),
+              ],
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.help_outline),
@@ -714,7 +595,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                       Color categoryColor =
                           Theme.of(context).colorScheme.primary;
                       final cat =
-                          (quiz.formation.categorie ?? '').trim().toLowerCase();
+                          (quiz.formation.categorie).trim().toLowerCase();
                       switch (cat) {
                         case 'bureautique':
                           categoryColor = const Color(0xFF3D9BE9);
@@ -806,28 +687,6 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                           ),
                                         ),
                                       ),
-                                      if (index == _avatarIndex)
-                                        Positioned(
-                                          top: -26,
-                                          child: Container(
-                                            key: _keyAvatarAnim,
-                                            decoration: BoxDecoration(
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.yellow
-                                                      .withOpacity(0.25),
-                                                  blurRadius: 12,
-                                                  spreadRadius: 1,
-                                                ),
-                                              ],
-                                            ),
-                                            child: Image.asset(
-                                              _avatarPath,
-                                              width: 36,
-                                              height: 36,
-                                            ),
-                                          ),
-                                        ),
                                     ],
                                   ),
                                   Container(
@@ -932,7 +791,9 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => QuizPage(quizAdventureEnabled: false),
+        pageBuilder:
+            (_, __, ___) =>
+                QuizPage(quizAdventureEnabled: false, forceList: true),
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -1167,6 +1028,15 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
         _allQuizzes
             .where((q) => q.formation.titre == _selectedFormationTitle)
             .toList();
+    // Trier: quiz déjà joués en haut, puis par ordre de progression
+    full.sort((a, b) {
+      final aPlayed = _playedQuizIds.contains(a.id.toString());
+      final bPlayed = _playedQuizIds.contains(b.id.toString());
+      if (aPlayed && !bPlayed) return -1;
+      if (!aPlayed && bPlayed) return 1;
+      // Si les deux sont joués ou non joués, garder l'ordre original
+      return 0;
+    });
     if (_showAllForFormation) return full;
     if (full.length > 10) return full.sublist(0, 10);
     return full;
@@ -1225,27 +1095,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     return full.length > 10 ? 10 : full.length;
   }
 
-  Widget _buildProgressBar(ThemeData theme) {
-    final completed =
-        _quizzes.where((q) => _playedQuizIds.contains(q.id.toString())).length;
-    final total = _quizzes.length;
-    final percent = total == 0 ? 0.0 : completed / total;
-    return Column(
-      children: [
-        Text(
-          'Progression : $completed / $total quiz complétés',
-          style: theme.textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 8),
-        LinearProgressIndicator(
-          value: percent,
-          minHeight: 8,
-          backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
-          color: theme.colorScheme.primary,
-        ),
-      ],
-    );
-  }
+  // Progress bar supprimée
 
   void _showQuizHistorySheet(quiz_model.Quiz quiz) {
     final attempts =
