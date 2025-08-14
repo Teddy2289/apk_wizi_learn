@@ -20,6 +20,7 @@ class QuizPage extends StatefulWidget {
   final bool useCustomScaffold;
   final bool scrollToPlayed;
   final bool quizAdventureEnabled;
+  final bool forceList;
 
   const QuizPage({
     super.key,
@@ -27,6 +28,7 @@ class QuizPage extends StatefulWidget {
     this.useCustomScaffold = false,
     this.scrollToPlayed = false,
     this.quizAdventureEnabled = false,
+    this.forceList = false,
   });
 
   @override
@@ -49,6 +51,7 @@ class _QuizPageState extends State<QuizPage> {
   bool _fromNotification = false;
   List<String> _playedQuizIds = [];
   String? _scrollToQuizId;
+  bool _didRedirectToAdventure = false;
 
   // Filtres
   String? _selectedLevel;
@@ -74,6 +77,27 @@ class _QuizPageState extends State<QuizPage> {
           _fromNotification = args['fromNotification'] ?? false;
           _scrollToQuizId = args['scrollToQuizId'];
         });
+      }
+
+      final bool forceListArg =
+          (args is Map<String, dynamic>) ? (args['forceList'] ?? false) : false;
+      if (!_didRedirectToAdventure &&
+          !widget.quizAdventureEnabled &&
+          !widget.forceList &&
+          !forceListArg) {
+        _didRedirectToAdventure = true;
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder:
+                (_, __, ___) =>
+                    const QuizAdventurePage(quizAdventureEnabled: true),
+            transitionsBuilder:
+                (_, animation, __, child) =>
+                    FadeTransition(opacity: animation, child: child),
+            transitionDuration: const Duration(milliseconds: 250),
+          ),
+        );
       }
     });
   }
@@ -208,6 +232,10 @@ class _QuizPageState extends State<QuizPage> {
 
       // Extraire les niveaux et formations disponibles
       _extractAvailableFilters(filteredQuizzes);
+      // Sélectionner par défaut la première formation disponible si aucune sélection
+      if (_selectedFormation == null && _availableFormations.isNotEmpty) {
+        _selectedFormation = _availableFormations.first;
+      }
 
       setState(() {
         _futureQuizzes = Future.value(filteredQuizzes);
@@ -365,6 +393,17 @@ class _QuizPageState extends State<QuizPage> {
     } else {
       return Scaffold(
         appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.home),
+            tooltip: 'Accueil',
+            onPressed: () {
+              Navigator.pushReplacementNamed(
+                context,
+                RouteConstants.dashboard,
+                arguments: 0,
+              );
+            },
+          ),
           title: const Text('Mes Quiz'),
           centerTitle: true,
           backgroundColor:
@@ -377,27 +416,35 @@ class _QuizPageState extends State<QuizPage> {
               onPressed: _showFilterDialog,
               tooltip: 'Filtrer les quiz',
             ),
-            IconButton(
-              icon: const Icon(Icons.sports_esports),
-              onPressed: () {
-                if (widget.quizAdventureEnabled) {
-                  // Already in adventure mode, do nothing
-                  return;
-                }
-                Navigator.pushReplacement(
-                  context,
-                  PageRouteBuilder(
-                    pageBuilder:
-                        (_, __, ___) =>
-                            QuizAdventurePage(quizAdventureEnabled: true),
-                    transitionsBuilder:
-                        (_, animation, __, child) =>
-                            FadeTransition(opacity: animation, child: child),
-                    transitionDuration: const Duration(milliseconds: 250),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Row(
+                children: [
+                  const Text('Aventure'),
+                  const SizedBox(width: 6),
+                  Switch(
+                    value: false,
+                    onChanged: (v) {
+                      if (!v) return;
+                      Navigator.pushReplacement(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder:
+                              (_, __, ___) => const QuizAdventurePage(
+                                quizAdventureEnabled: true,
+                              ),
+                          transitionsBuilder:
+                              (_, animation, __, child) => FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              ),
+                          transitionDuration: const Duration(milliseconds: 250),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-              tooltip: 'Mode Aventure',
+                ],
+              ),
             ),
             IconButton(
               icon: const Icon(Icons.help_outline),
@@ -501,6 +548,54 @@ class _QuizPageState extends State<QuizPage> {
             ),
           ],
         ),
+        const SizedBox(height: 10),
+        if (_availableFormations.isNotEmpty)
+          Row(
+            children: [
+              Icon(Icons.school, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _showFormationPicker,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 12,
+                    ),
+                    side: BorderSide(
+                      color: theme.colorScheme.primary.withOpacity(0.5),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _selectedFormation ?? 'Choisir une formation',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withOpacity(0.8),
+                        ),
+                      ),
+                      Icon(
+                        Icons.keyboard_arrow_down,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (_selectedFormation != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: 'Réinitialiser',
+                  onPressed: () => setState(() => _selectedFormation = null),
+                  icon: Icon(Icons.close, color: theme.colorScheme.primary),
+                ),
+              ],
+            ],
+          ),
         if (_selectedLevel != null || _selectedFormation != null) ...[
           const SizedBox(height: 8),
           Container(
@@ -1544,6 +1639,48 @@ class _QuizPageState extends State<QuizPage> {
                   ),
                 ),
           ),
+    );
+  }
+
+  void _showFormationPicker() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        final items = [..._availableFormations];
+        return ListView.separated(
+          shrinkWrap: true,
+          padding: const EdgeInsets.all(8),
+          itemBuilder: (_, i) {
+            final title = items[i];
+            final selected = (_selectedFormation == title);
+            return ListTile(
+              leading: Icon(
+                Icons.school,
+                color: selected ? Theme.of(context).colorScheme.primary : null,
+              ),
+              title: Text(title),
+              trailing:
+                  selected
+                      ? Icon(
+                        Icons.check,
+                        color: Theme.of(context).colorScheme.primary,
+                      )
+                      : null,
+              onTap: () {
+                setState(() {
+                  _selectedFormation = title;
+                });
+                Navigator.pop(context);
+              },
+            );
+          },
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemCount: items.length,
+        );
+      },
     );
   }
 

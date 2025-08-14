@@ -113,6 +113,12 @@ class _CustomScaffoldState extends State<CustomScaffold> {
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
         actions: [
+          // IconButton(
+          //   icon: const Icon(Icons.mail_rounded),
+          //   tooltip: 'Contact',
+          //   onPressed:
+          //       () => Navigator.pushNamed(context, RouteConstants.contact),
+          // ),
           _buildUserPointsAndNotifications(context),
           if (widget.currentIndex == 2)
             IconButton(
