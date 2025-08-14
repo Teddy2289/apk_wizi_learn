@@ -142,13 +142,33 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                 .toSet()
                 .toList()
               ..sort();
-        // Select first formation by default if none selected yet
-        if (_selectedFormationTitle == null &&
-            _availableFormationTitles.isNotEmpty) {
-          _selectedFormationTitle = _availableFormationTitles.first;
-          _showAllForFormation = false;
-        }
       });
+      // Sélection formation par dernier quiz joué si possible
+      if (_selectedFormationTitle == null &&
+          _availableFormationTitles.isNotEmpty) {
+        DateTime _parseDate(String s) =>
+            DateTime.tryParse(s) ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final sorted = List<stats_model.QuizHistory>.from(history)..sort(
+          (a, b) =>
+              _parseDate(b.completedAt).compareTo(_parseDate(a.completedAt)),
+        );
+        if (sorted.isNotEmpty) {
+          final last = sorted.first;
+          final lastTitle = last.quiz.formation.titre;
+          if (lastTitle.isNotEmpty &&
+              _availableFormationTitles.contains(lastTitle)) {
+            setState(() {
+              _selectedFormationTitle = lastTitle;
+              _showAllForFormation = true;
+            });
+          }
+        }
+        // Fallback initial si rien déterminé par l’historique
+        if (_selectedFormationTitle == null) {
+          _selectedFormationTitle = _availableFormationTitles.first;
+          _showAllForFormation = true;
+        }
+      }
       // Animation confettis si progression
       final completed =
           filteredQuizzes
@@ -382,14 +402,25 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Row(
               children: [
-                const Text('Aventure'),
+                // const Text('Aventure'),
                 const SizedBox(width: 6),
-                Switch(
-                  value: true,
-                  onChanged: (v) {
-                    if (v) return;
-                    _goToQuizList();
-                  },
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.08),
+                    border: Border.all(
+                      color: theme.colorScheme.primary,
+                      width: 1,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Switch(
+                    value: true,
+                    onChanged: (v) {
+                      if (v) return;
+                      _goToQuizList();
+                    },
+                  ),
                 ),
               ],
             ),
@@ -426,9 +457,15 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.amber.withOpacity(0.12),
+                              color: theme.colorScheme.primary.withOpacity(
+                                0.12,
+                              ),
                               borderRadius: BorderRadius.circular(24),
-                              border: Border.all(color: Colors.amber.shade400),
+                              border: Border.all(
+                                color: theme.colorScheme.primary.withOpacity(
+                                  0.6,
+                                ),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -436,14 +473,14 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                 Icon(
                                   Icons.star_rounded,
                                   size: 18,
-                                  color: Colors.amber.shade700,
+                                  color: theme.colorScheme.primary,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   '$_userPoints points',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
-                                    color: Colors.amber.shade800,
+                                    color: theme.colorScheme.primary,
                                   ),
                                 ),
                               ],
