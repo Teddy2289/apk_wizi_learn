@@ -276,7 +276,7 @@ class CustomDrawer extends StatelessWidget {
                       ),
                       _MenuItem(
                         icon: Icons.mail_rounded,
-                        label: 'Contact & Remarques',
+                        label: 'Mes Contacts',
                         route: RouteConstants.contact,
                       ),
                       _MenuItem(

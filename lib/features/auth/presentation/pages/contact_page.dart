@@ -9,6 +9,7 @@ import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/features/auth/data/repositories/formation_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/random_formations_widget.dart';
 import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
+import 'package:wizi_learn/features/auth/data/repositories/contact_repository.dart';
 
 import '../../../../core/constants/route_constants.dart';
 
@@ -23,10 +24,13 @@ class ContactPage extends StatefulWidget {
 
 class _ContactPageState extends State<ContactPage> {
   late final FormationRepository _formationRepository;
+  late final ContactRepository _contactRepository;
   Future<List<Formation>>? _formationsFuture;
   bool _showFormationsWidget = true;
   Partner? _partner;
   bool _isLoadingPartner = false;
+  bool _isLoadingContacts = false;
+  List<Contact> _contacts = [];
 
   @override
   void initState() {
@@ -35,10 +39,17 @@ class _ContactPageState extends State<ContactPage> {
     final storage = const FlutterSecureStorage();
     final apiClient = ApiClient(dio: dio, storage: storage);
     _formationRepository = FormationRepository(apiClient: apiClient);
+    _contactRepository = ContactRepository(apiClient: apiClient);
     _loadFormations();
     _partner = widget.partner;
     if (_partner == null) {
       _fetchPartner();
+    }
+    // Charger les contacts si non fournis
+    if (widget.contacts.isEmpty) {
+      _loadContacts();
+    } else {
+      _contacts = widget.contacts;
     }
   }
 
@@ -46,6 +57,18 @@ class _ContactPageState extends State<ContactPage> {
     setState(() {
       _formationsFuture = _formationRepository.getRandomFormations(3);
     });
+  }
+
+  Future<void> _loadContacts() async {
+    setState(() => _isLoadingContacts = true);
+    try {
+      final contacts = await _contactRepository.getContacts();
+      if (mounted) setState(() => _contacts = contacts);
+    } catch (e) {
+      // Optionnel: afficher un message d'erreur
+    } finally {
+      if (mounted) setState(() => _isLoadingContacts = false);
+    }
   }
 
   Future<void> _fetchPartner() async {
@@ -114,6 +137,11 @@ class _ContactPageState extends State<ContactPage> {
           Expanded(
             child: ListView(
               children: [
+                if (_isLoadingContacts)
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: LinearProgressIndicator(),
+                  ),
                 if (_isLoadingPartner) ...[
                   const Padding(
                     padding: EdgeInsets.all(16.0),
@@ -140,12 +168,10 @@ class _ContactPageState extends State<ContactPage> {
                     const SizedBox(height: 16),
                   ],
                 ],
-                if (widget.contacts.isEmpty)
+                if (_contacts.isEmpty && !_isLoadingContacts)
                   const Center(child: Text('Aucun contact disponible'))
                 else ...[
-                  ...widget.contacts.map(
-                    (contact) => ContactCard(contact: contact),
-                  ),
+                  ..._contacts.map((contact) => ContactCard(contact: contact)),
                 ],
                 const SizedBox(height: 24),
                 if (_showFormationsWidget)
