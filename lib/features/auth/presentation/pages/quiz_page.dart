@@ -597,57 +597,57 @@ class _QuizPageState extends State<QuizPage> {
               ],
             ],
           ),
-        if (_selectedLevel != null || _selectedFormation != null) ...[
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: theme.colorScheme.primary.withOpacity(0.3),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.filter_list,
-                  size: 16,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  _buildFilterText(),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedLevel = null;
-                      _selectedFormation = null;
-                    });
-                    _applyFilters();
-                    _scrollController.animateTo(
-                      0,
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeInOut,
-                    );
-                  },
-                  child: Icon(
-                    Icons.close,
-                    size: 16,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        // if (_selectedLevel != null || _selectedFormation != null) ...[
+        //   const SizedBox(height: 8),
+        //   Container(
+        //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        //     decoration: BoxDecoration(
+        //       color: theme.colorScheme.primary.withOpacity(0.1),
+        //       borderRadius: BorderRadius.circular(20),
+        //       border: Border.all(
+        //         color: theme.colorScheme.primary.withOpacity(0.3),
+        //       ),
+        //     ),
+        //     child: Row(
+        //       mainAxisSize: MainAxisSize.min,
+        //       children: [
+        //         Icon(
+        //           Icons.filter_list,
+        //           size: 16,
+        //           color: theme.colorScheme.primary,
+        //         ),
+        //         const SizedBox(width: 6),
+        //         Text(
+        //           _buildFilterText(),
+        //           style: theme.textTheme.bodySmall?.copyWith(
+        //             color: theme.colorScheme.primary,
+        //             fontWeight: FontWeight.w500,
+        //           ),
+        //         ),
+        //         const SizedBox(width: 8),
+        //         GestureDetector(
+        //           onTap: () {
+        //             setState(() {
+        //               _selectedLevel = null;
+        //               _selectedFormation = null;
+        //             });
+        //             _applyFilters();
+        //             _scrollController.animateTo(
+        //               0,
+        //               duration: const Duration(milliseconds: 400),
+        //               curve: Curves.easeInOut,
+        //             );
+        //           },
+        //           child: Icon(
+        //             Icons.close,
+        //             size: 16,
+        //             color: theme.colorScheme.primary,
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ],
         const SizedBox(height: 16),
       ],
     );

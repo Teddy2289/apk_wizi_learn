@@ -30,6 +30,11 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
     );
   }
 
+  int get _distinctQuizCount {
+    final ids = widget.history.map((h) => h.quiz.id).toSet();
+    return ids.length;
+  }
+
   void _goToPage(int page) {
     if (page < 1 || page > _totalPages) return;
     setState(() => _currentPage = page);
@@ -39,7 +44,6 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
   Widget build(BuildContext context) {
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
     final theme = Theme.of(context);
-    final totalQuizzes = widget.history.length;
 
     return Card(
       margin: EdgeInsets.all(isSmallScreen ? 12 : 16),
@@ -76,7 +80,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '$totalQuizzes quiz complétés',
+                      '$_distinctQuizCount quiz uniques complétés',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withOpacity(0.6),
                       ),
