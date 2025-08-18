@@ -38,8 +38,7 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("C:\\apk_wizi_learn\\an" +
-                    "droid\\app\\my-release-key.jks")
+            storeFile = file("my-release-key.jks")
             storePassword = "123456"
             keyAlias = "wizi"
             keyPassword = "123456"
