@@ -110,7 +110,14 @@ class _AllAchievementsPageState extends State<AllAchievementsPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Tous les badges'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Tous les badges'),
+        centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(0),
+          child: const SizedBox.shrink(),
+        ),
+      ),
       body:
           _isLoading
               ? Center(

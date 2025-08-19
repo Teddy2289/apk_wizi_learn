@@ -11,6 +11,7 @@ import 'package:wizi_learn/features/auth/presentation/widgets/quiz_stats_widget.
 import 'package:share_plus/share_plus.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});
@@ -231,7 +232,18 @@ class _RankingPageState extends State<RankingPage>
           IconButton(
             icon: const Icon(Icons.help_outline),
             tooltip: 'Voir le tutoriel',
-            onPressed: _showTutorial,
+            onPressed:
+                () => showStandardHelpDialog(
+                  context,
+                  title: 'Comment utiliser cette page ?',
+                  steps: const [
+                    '1. Naviguez entre Classement, Statistiques et Historique via les onglets.',
+                    '2. Consultez le podium et votre position dans la liste.',
+                    '3. Dans Statistiques, explorez vos performances et votre progression.',
+                    '4. Dans Historique, retrouvez vos quiz passés.',
+                    '5. Utilisez le bouton Partager pour défier vos amis.',
+                  ],
+                ),
           ),
         ],
       ),

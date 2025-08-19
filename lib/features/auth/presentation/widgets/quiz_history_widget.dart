@@ -80,7 +80,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '$_distinctQuizCount quiz uniques complétés',
+                      '$_distinctQuizCount quiz joués',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withOpacity(0.6),
                       ),
@@ -98,12 +98,12 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
                                   .withOpacity(0.3),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Text(
-                              'Page $_currentPage/$_totalPages',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            // child: Text(
+                            //   'Page $_currentPage/$_totalPages',
+                            //   style: theme.textTheme.bodyMedium?.copyWith(
+                            //     fontWeight: FontWeight.bold,
+                            //   ),
+                            // ),
                           ),
                         const SizedBox(width: 8),
                         GestureDetector(
@@ -129,14 +129,6 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
                                       : theme.colorScheme.surfaceVariant
                                           .withOpacity(0.3),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color:
-                                    _showAllItems
-                                        ? theme.colorScheme.primary.withOpacity(
-                                          0.3,
-                                        )
-                                        : Colors.transparent,
-                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -231,6 +223,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
 
   Widget _buildHistoryItem(BuildContext context, QuizHistory history) {
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
+    final categoryColor = _getCategoryColor(history.quiz.formation?.categorie);
 
     // Formatage de la date et heure
     final completedDate =
@@ -270,7 +263,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
                 children: [
                   Icon(
                     Icons.quiz,
-                    color: Theme.of(context).primaryColor,
+                    color: categoryColor,
                     size: isSmallScreen ? 20 : 24,
                   ),
                   const SizedBox(width: 12),
@@ -347,7 +340,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
                         Icons.school,
                         history.quiz.formation!.titre,
                         isSmallScreen,
-                        color: Theme.of(context).primaryColor,
+                        color: categoryColor,
                       ),
                     ),
                 ],
@@ -376,7 +369,6 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
       decoration: BoxDecoration(
         color: chipColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: chipColor.withOpacity(0.3), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -416,6 +408,25 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
     }
   }
 
+  Color _getCategoryColor(String? category) {
+    final theme = Theme.of(context);
+    if (category == null) return theme.colorScheme.primary;
+    final cat = category.trim().toLowerCase();
+    switch (cat) {
+      case 'bureautique':
+        return const Color(0xFF3D9BE9);
+      case 'langues':
+        return const Color(0xFFA55E6E);
+      case 'internet':
+        return const Color(0xFFFFC533);
+      case 'création':
+      case 'creation':
+        return const Color(0xFF9392BE);
+      default:
+        return theme.colorScheme.primary;
+    }
+  }
+
   Widget _buildScoreIndicator(double percentage, bool isSmallScreen) {
     final color = _getScoreColor(percentage / 100);
     return Container(
@@ -424,7 +435,6 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: color.withOpacity(0.1),
-        border: Border.all(color: color, width: 2),
       ),
       child: Center(
         child: Text(

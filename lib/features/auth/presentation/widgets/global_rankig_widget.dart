@@ -67,27 +67,22 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
     }
 
     if (widget.rankings.isEmpty) {
-      return Card(
-        margin: const EdgeInsets.all(12),
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Center(
-            child: Column(
-              children: [
-                Icon(
-                  Icons.emoji_events_outlined,
-                  size: 48,
-                  color: Colors.grey.shade400,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Aucun classement disponible',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-                ),
-              ],
-            ),
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(
+                Icons.emoji_events_outlined,
+                size: 48,
+                color: Colors.grey.shade400,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Aucun classement disponible',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+              ),
+            ],
           ),
         ),
       );
@@ -102,76 +97,71 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
     final isCurrentUserInPodium = myIndex >= 0 && myIndex < 3;
     final isCurrentUserInRest = myIndex >= 3;
 
-    return Card(
-      margin: const EdgeInsets.all(12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.leaderboard,
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.leaderboard,
+                  color: Theme.of(context).primaryColor,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Classement Global',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Theme.of(context).primaryColor,
-                    size: 24,
+                    fontWeight: FontWeight.bold,
+                    fontSize: isSmallScreen ? 18 : 20,
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Classement Global',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Theme.of(context).primaryColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: isSmallScreen ? 18 : 20,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // Podium
-              _buildPodium(context, podium, isSmallScreen),
-              const SizedBox(height: 16),
-              // Liste classique
-              if (rest.isNotEmpty) ...[
-                _buildHeader(context, isSmallScreen),
-                const SizedBox(height: 8),
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: rest.length,
-                  separatorBuilder: (_, __) => const Divider(height: 8),
-                  itemBuilder: (_, index) {
-                    final ranking = rest[index];
-                    final isCurrentUser =
-                        int.tryParse(ranking.stagiaire.id.toString()) ==
-                        _connectedStagiaireId;
-                    return _buildRankingItem(
-                      context,
-                      ranking,
-                      isSmallScreen,
-                      isCurrentUser: isCurrentUser,
-                    );
-                  },
                 ),
               ],
-              // Si l'utilisateur n'est pas dans le top, l'afficher en bas
-              if (isCurrentUserInRest)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: _buildRankingItem(
+            ),
+            const SizedBox(height: 16),
+            // Podium
+            _buildPodium(context, podium, isSmallScreen),
+            const SizedBox(height: 16),
+            // Liste classique
+            if (rest.isNotEmpty) ...[
+              _buildHeader(context, isSmallScreen),
+              const SizedBox(height: 8),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: rest.length,
+                separatorBuilder: (_, __) => const Divider(height: 8),
+                itemBuilder: (_, index) {
+                  final ranking = rest[index];
+                  final isCurrentUser =
+                      int.tryParse(ranking.stagiaire.id.toString()) ==
+                      _connectedStagiaireId;
+                  return _buildRankingItem(
                     context,
-                    widget.rankings[myIndex],
+                    ranking,
                     isSmallScreen,
-                    isCurrentUser: true,
-                    highlight: true,
-                  ),
-                ),
+                    isCurrentUser: isCurrentUser,
+                  );
+                },
+              ),
             ],
-          ),
+            // Si l'utilisateur n'est pas dans le top, l'afficher en bas
+            if (isCurrentUserInRest)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: _buildRankingItem(
+                  context,
+                  widget.rankings[myIndex],
+                  isSmallScreen,
+                  isCurrentUser: true,
+                  highlight: true,
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -209,10 +199,6 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Theme.of(context).primaryColor.withOpacity(0.1),
-          width: 1,
-        ),
       ),
       child: Column(
         children: [
@@ -428,13 +414,6 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
             isCurrentUser
                 ? Theme.of(context).primaryColor.withOpacity(0.08)
                 : Colors.transparent,
-        border:
-            isCurrentUser
-                ? Border.all(
-                  color: Theme.of(context).primaryColor.withOpacity(0.3),
-                  width: 1.5,
-                )
-                : null,
         borderRadius: BorderRadius.circular(8),
         boxShadow:
             highlight

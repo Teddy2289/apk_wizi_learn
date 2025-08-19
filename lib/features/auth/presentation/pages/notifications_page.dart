@@ -7,6 +7,7 @@ import 'package:wizi_learn/features/auth/data/repositories/notification_reposito
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:provider/provider.dart';
 import '../providers/notification_provider.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 import 'dart:math';
 
 class NotificationsPage extends StatelessWidget {
@@ -323,6 +324,19 @@ class NotificationsPage extends StatelessWidget {
               ],
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.help_outline),
+                tooltip: 'Voir le tutoriel',
+                onPressed:
+                    () => showStandardHelpDialog(
+                      context,
+                      steps: const [
+                        '1. Balayez une notification pour la supprimer.',
+                        '2. Touchez une notification pour ouvrir la page liée.',
+                        '3. Utilisez les actions en haut pour tout lire/supprimer.',
+                      ],
+                    ),
+              ),
               IconButton(
                 icon: const Icon(Icons.done_all),
                 tooltip: 'Tout marquer comme lu',

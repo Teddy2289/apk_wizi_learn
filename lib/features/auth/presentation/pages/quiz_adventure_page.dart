@@ -20,6 +20,7 @@ import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart'
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 
 class QuizAdventurePage extends StatefulWidget {
   final bool quizAdventureEnabled;
@@ -180,6 +181,8 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
       }
       _lastCompletedCount = completed;
       // Gestion de position avatar supprimée
+      // Après chargement, défiler vers le prochain quiz non joué
+      _scrollToNextUnplayed();
     } catch (e) {
       setState(() => _isLoading = false);
     }
@@ -383,9 +386,13 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
             );
           },
         ),
-        title: const Text('Aventure Quiz'),
+        title: const Text('Quiz'),
         centerTitle: true,
         actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: _buildPointsChip(theme),
+          ),
           IconButton(
             key: _keyBadges,
             icon: const Icon(Icons.emoji_events),
@@ -398,6 +405,21 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
               );
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Voir le tutoriel',
+            onPressed:
+                () => showStandardHelpDialog(
+                  context,
+                  title: 'Comment jouer ?',
+                  steps: const [
+                    '1. Choisissez une formation',
+                    '2. Touchez un quiz débloqué pour commencer',
+                    '3. Répondez aux questions et validez',
+                    '4. Consultez votre historique et vos badges',
+                  ],
+                ),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Row(
@@ -407,15 +429,15 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                 Container(
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withOpacity(0.08),
-                    border: Border.all(
-                      color: theme.colorScheme.primary,
-                      width: 1,
-                    ),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Switch(
                     value: true,
+                    activeColor: Colors.white,
+                    activeTrackColor: Colors.black,
+                    inactiveThumbColor: Colors.black,
+                    inactiveTrackColor: Colors.white,
                     onChanged: (v) {
                       if (v) return;
                       _goToQuizList();
@@ -425,12 +447,60 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
               ],
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            tooltip: 'Voir le tutoriel',
-            onPressed: _showTutorial,
-          ),
         ],
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(
+            _availableFormationTitles.isNotEmpty ? 56 : 0,
+          ),
+          child:
+              _availableFormationTitles.isNotEmpty
+                  ? Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.school, color: theme.colorScheme.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _showFormationPicker,
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 10,
+                                horizontal: 12,
+                              ),
+                              side: BorderSide(
+                                color: theme.colorScheme.primary.withOpacity(
+                                  0.5,
+                                ),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  _selectedFormationTitle ??
+                                      'Choisir une formation',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.8),
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.keyboard_arrow_down,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                  : const SizedBox.shrink(),
+        ),
       ),
       body: Stack(
         children: [
@@ -446,103 +516,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                 key: const PageStorageKey('adventure_scroll'),
                 controller: _scrollController,
                 slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(
-                                0.12,
-                              ),
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                color: theme.colorScheme.primary.withOpacity(
-                                  0.6,
-                                ),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.star_rounded,
-                                  size: 18,
-                                  color: theme.colorScheme.primary,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '$_userPoints points',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Formation picker button
-                  if (_availableFormationTitles.isNotEmpty)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.school,
-                              color: theme.colorScheme.primary,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: _showFormationPicker,
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 10,
-                                    horizontal: 12,
-                                  ),
-                                  side: BorderSide(
-                                    color: theme.colorScheme.primary
-                                        .withOpacity(0.5),
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      _selectedFormationTitle == null
-                                          ? 'Choisir une formation'
-                                          : _selectedFormationTitle!,
-                                      style: TextStyle(
-                                        color: theme.colorScheme.onSurface
-                                            .withOpacity(0.8),
-                                      ),
-                                    ),
-                                    Icon(
-                                      Icons.keyboard_arrow_down,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  // Formation picker déplacé dans l'AppBar (toujours visible)
                   // Voir plus when many quizzes
                   SliverToBoxAdapter(
                     child:
@@ -566,22 +540,22 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                             : const SizedBox.shrink(),
                   ),
                   // Toggle missions
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Row(
-                        children: [
-                          Icon(Icons.flag, color: theme.colorScheme.primary),
-                          const SizedBox(width: 8),
-                          const Expanded(child: Text('Afficher les missions')),
-                          Switch(
-                            value: _showMissions,
-                            onChanged: (v) => setState(() => _showMissions = v),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // SliverToBoxAdapter(
+                  //   child: Padding(
+                  //     padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  //     child: Row(
+                  //       children: [
+                  //         Icon(Icons.flag, color: theme.colorScheme.primary),
+                  //         const SizedBox(width: 8),
+                  //         const Expanded(child: Text('Afficher les missions')),
+                  //         Switch(
+                  //           value: _showMissions,
+                  //           onChanged: (v) => setState(() => _showMissions = v),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
                   SliverToBoxAdapter(
                     child:
                         _showMissions
@@ -820,6 +794,52 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     );
   }
 
+  void _scrollToNextUnplayed() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!_scrollController.hasClients) return;
+      final displayQuizzes = _getDisplayQuizzes();
+      if (displayQuizzes.isEmpty) return;
+      final nextIndex = displayQuizzes.indexWhere(
+        (q) => !_playedQuizIds.contains(q.id.toString()),
+      );
+      if (nextIndex <= 0) return; // déjà en tête ou aucun non joué
+      const double headerApproxHeight = 220.0;
+      const double itemApproxHeight = 130.0;
+      final double position =
+          headerApproxHeight + (nextIndex * itemApproxHeight);
+      _scrollController.animateTo(
+        position,
+        duration: const Duration(milliseconds: 700),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  Widget _buildPointsChip(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: theme.colorScheme.primary.withOpacity(0.6),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.star_rounded, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 6),
+          Text(
+            '$_userPoints points',
+            style: TextStyle(fontWeight: FontWeight.w700, color: Colors.black),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _goToQuizList() {
     if (!widget.quizAdventureEnabled) {
       // Adventure mode is disabled, stay in current page
@@ -948,49 +968,49 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                               ),
                             ),
                             // Mini stats si historique disponible
-                            if (_quizHistory.isNotEmpty)
-                              ...(() {
-                                final h = _quizHistory.firstWhere(
-                                  (qH) =>
-                                      qH.quiz.id.toString() ==
-                                      quiz.id.toString(),
-                                  orElse:
-                                      () => stats_model.QuizHistory(
-                                        id: '',
-                                        quiz: quiz,
-                                        score: 0,
-                                        completedAt: '',
-                                        timeSpent: 0,
-                                        totalQuestions: 0,
-                                        correctAnswers: 0,
-                                      ),
-                                );
-                                if (h.totalQuestions == 0) return <Widget>[];
-                                final percent =
-                                    ((h.correctAnswers / h.totalQuestions) *
-                                            100)
-                                        .round();
-                                return <Widget>[
-                                  const SizedBox(width: 10),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.shade50,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Text(
-                                      '$percent% • ${h.correctAnswers}/${h.totalQuestions}',
-                                      style: theme.textTheme.bodySmall
-                                          ?.copyWith(
-                                            color: Colors.blue.shade700,
-                                          ),
-                                    ),
-                                  ),
-                                ];
-                              }()),
+                            // if (_quizHistory.isNotEmpty)
+                            //   ...(() {
+                            //     final h = _quizHistory.firstWhere(
+                            //       (qH) =>
+                            //           qH.quiz.id.toString() ==
+                            //           quiz.id.toString(),
+                            //       orElse:
+                            //           () => stats_model.QuizHistory(
+                            //             id: '',
+                            //             quiz: quiz,
+                            //             score: 0,
+                            //             completedAt: '',
+                            //             timeSpent: 0,
+                            //             totalQuestions: 0,
+                            //             correctAnswers: 0,
+                            //           ),
+                            //     );
+                            //     if (h.totalQuestions == 0) return <Widget>[];
+                            //     final percent =
+                            //         ((h.correctAnswers / h.totalQuestions) *
+                            //                 100)
+                            //             .round();
+                            //     return <Widget>[
+                            //         const SizedBox(width: 10),
+                            //         Container(
+                            //           padding: const EdgeInsets.symmetric(
+                            //             horizontal: 6,
+                            //             vertical: 2,
+                            //           ),
+                            //           decoration: BoxDecoration(
+                            //             color: Colors.blue.shade50,
+                            //             borderRadius: BorderRadius.circular(10),
+                            //           ),
+                            //           child: Text(
+                            //             '$percent% • ${h.correctAnswers}/${h.totalQuestions}',
+                            //             style: theme.textTheme.bodySmall
+                            //                 ?.copyWith(
+                            //                   color: Colors.blue.shade700,
+                            //                 ),
+                            //           ),
+                            //         ),
+                            //     ];
+                            //   }()),
                           ],
                         ),
                         if (isPlayed)

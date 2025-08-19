@@ -14,6 +14,8 @@ import 'package:wizi_learn/features/auth/data/repositories/stats_repository.dart
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_session_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_adventure_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 
 class QuizPage extends StatefulWidget {
   final int? selectedTabIndex;
@@ -57,6 +59,7 @@ class _QuizPageState extends State<QuizPage> {
   List<quiz_model.Quiz> _visiblePlayed = [];
   List<quiz_model.Quiz> _visibleUnplayed = [];
   List<QuizHistory> _quizHistoryList = [];
+  bool _showAllPlayed = false;
 
   // Filtres
   String? _selectedLevel;
@@ -254,13 +257,32 @@ class _QuizPageState extends State<QuizPage> {
               );
             },
           ),
-          title: const Text('Mes Quiz'),
+          title: const Text('Quiz'),
           centerTitle: true,
           backgroundColor:
               isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
           elevation: 0,
           automaticallyImplyLeading: false,
           actions: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: _buildPointsChip(theme),
+            ),
+            IconButton(
+              icon: const Icon(Icons.emoji_events),
+              tooltip: 'Mes Badges',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AchievementPage()),
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.help_outline),
+              onPressed: _showHowToPlayDialog,
+              tooltip: 'Voir le tutoriel',
+            ),
             IconButton(
               icon: const Icon(Icons.filter_list),
               onPressed: _showFilterDialog,
@@ -275,15 +297,15 @@ class _QuizPageState extends State<QuizPage> {
                   Container(
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary.withOpacity(0.08),
-                      border: Border.all(
-                        color: theme.colorScheme.primary,
-                        width: 1,
-                      ),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Switch(
                       value: false,
+                      activeColor: Colors.white,
+                      activeTrackColor: Colors.black,
+                      inactiveThumbColor: Colors.black,
+                      inactiveTrackColor: Colors.white,
                       onChanged: (v) {
                         if (!v) return;
                         Navigator.pushReplacement(
@@ -309,12 +331,61 @@ class _QuizPageState extends State<QuizPage> {
                 ],
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.help_outline),
-              onPressed: _showHowToPlayDialog,
-              tooltip: 'Comment jouer',
-            ),
           ],
+          bottom: PreferredSize(
+            preferredSize: Size.fromHeight(
+              _availableFormations.isNotEmpty ? 56 : 0,
+            ),
+            child:
+                _availableFormations.isNotEmpty
+                    ? Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.school, color: theme.colorScheme.primary),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _showFormationPicker,
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                  horizontal: 12,
+                                ),
+                                side: BorderSide(
+                                  color: theme.colorScheme.primary.withOpacity(
+                                    0.5,
+                                  ),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    _selectedFormation ??
+                                        'Choisir une formation',
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.8),
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.keyboard_arrow_down,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                    : const SizedBox.shrink(),
+          ),
         ),
         body: content,
         floatingActionButton:
@@ -497,6 +568,7 @@ class _QuizPageState extends State<QuizPage> {
       for (var quiz in list) {
         _expandedQuizzes.putIfAbsent(quiz.id, () => false);
       }
+      _showAllPlayed = false;
     });
   }
 
@@ -519,84 +591,29 @@ class _QuizPageState extends State<QuizPage> {
           ),
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            OutlinedButton.icon(
-              onPressed: () async {
-                // Scroll to available section (top)
-                _scrollController.animateTo(
-                  0,
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeInOut,
-                );
-              },
-              icon: const Icon(Icons.playlist_add_check),
-              label: const Text('Disponibles'),
-            ),
-            const SizedBox(width: 8),
-            OutlinedButton.icon(
-              onPressed: _scrollToPlayedQuizzes,
-              icon: const Icon(Icons.history),
-              label: const Text('Déjà joués'),
-            ),
-          ],
-        ),
+        // Row(
+        //   children: [
+        //     OutlinedButton.icon(
+        //       onPressed: () async {
+        //         // Scroll to available section (top)
+        //         _scrollController.animateTo(
+        //           0,
+        //           duration: const Duration(milliseconds: 500),
+        //           curve: Curves.easeInOut,
+        //         );
+        //       },
+        //       icon: const Icon(Icons.playlist_add_check),
+        //       label: const Text('Disponibles'),
+        //     ),
+        //     const SizedBox(width: 8),
+        //     OutlinedButton.icon(
+        //       onPressed: _scrollToPlayedQuizzes,
+        //       icon: const Icon(Icons.history),
+        //       label: const Text('Déjà joués'),
+        //     ),
+        //   ],
+        // ),
         const SizedBox(height: 10),
-        if (_availableFormations.isNotEmpty)
-          Row(
-            children: [
-              Icon(Icons.school, color: theme.colorScheme.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _showFormationPicker,
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 12,
-                    ),
-                    side: BorderSide(
-                      color: theme.colorScheme.primary.withOpacity(0.5),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _selectedFormation ?? 'Choisir une formation',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withOpacity(0.8),
-                        ),
-                      ),
-                      Icon(
-                        Icons.keyboard_arrow_down,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (_selectedFormation != null) ...[
-                const SizedBox(width: 8),
-                IconButton(
-                  tooltip: 'Réinitialiser',
-                  onPressed: () {
-                    setState(() => _selectedFormation = null);
-                    _applyFilters();
-                    _scrollController.animateTo(
-                      0,
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeInOut,
-                    );
-                  },
-                  icon: Icon(Icons.close, color: theme.colorScheme.primary),
-                ),
-              ],
-            ],
-          ),
         // if (_selectedLevel != null || _selectedFormation != null) ...[
         //   const SizedBox(height: 8),
         //   Container(
@@ -670,6 +687,7 @@ class _QuizPageState extends State<QuizPage> {
     }
     final unplayed = _visibleUnplayed;
     final played = _visiblePlayed;
+    final displayedPlayed = _showAllPlayed ? played : played.take(5).toList();
     return SliverList(
       delegate: SliverChildListDelegate([
         if (unplayed.isNotEmpty) ...[
@@ -690,7 +708,7 @@ class _QuizPageState extends State<QuizPage> {
         ],
         if (played.isNotEmpty) ...[
           _buildSectionTitle('Historique de vos quiz déjà jouer', theme),
-          ...played
+          ...displayedPlayed
               .map(
                 (quiz) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -698,6 +716,21 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               )
               .toList(),
+          if (played.length > 5)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed:
+                      () => setState(() => _showAllPlayed = !_showAllPlayed),
+                  icon: Icon(
+                    _showAllPlayed ? Icons.expand_less : Icons.expand_more,
+                  ),
+                  label: Text(_showAllPlayed ? 'Voir moins' : 'Voir plus'),
+                ),
+              ),
+            ),
         ],
         if (unplayed.isEmpty && played.isEmpty) _buildEmptyState(theme),
       ]),
@@ -1524,51 +1557,15 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   void _showHowToPlayDialog() {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Row(
-              children: [
-                Icon(Icons.help, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(width: 10),
-                const Text('Comment jouer ?'),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildStep('1. Choisissez un quiz dans la liste'),
-                const SizedBox(height: 10),
-                _buildStep('2. Répondez aux questions qui s\'affichent'),
-                const SizedBox(height: 10),
-                _buildStep('3. Validez vos réponses'),
-                const SizedBox(height: 10),
-                _buildStep('4. Découvrez votre score à la fin !'),
-                const SizedBox(height: 20),
-                Text(
-                  'Vous gagnez des points pour chaque bonne réponse !',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Compris !'),
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ],
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-          ),
+    showStandardHelpDialog(
+      context,
+      title: 'Comment jouer ?',
+      steps: const [
+        '1. Choisissez un quiz dans la liste',
+        '2. Répondez aux questions qui s\'affichent',
+        '3. Validez vos réponses',
+        '4. Découvrez votre score à la fin !',
+      ],
     );
   }
 
@@ -1589,6 +1586,34 @@ class _QuizPageState extends State<QuizPage> {
     } else if (_scrollController.offset < 400 && _showBackToTopButton) {
       setState(() => _showBackToTopButton = false);
     }
+  }
+
+  Widget _buildPointsChip(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: theme.colorScheme.primary.withOpacity(0.6),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.star_rounded, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 6),
+          Text(
+            '$_userPoints points',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   List<quiz_model.Quiz> _filterQuizzesByPoints(

@@ -3,6 +3,11 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../../../core/constants/route_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:wizi_learn/core/network/api_client.dart';
+import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 
 const Color kYellowLight = Color(0xFFFFF9C4); // jaune très clair
 const Color kYellow = Color(0xFFFFEB3B); // jaune
@@ -45,6 +50,48 @@ class _OnSplashPage extends State<SplashPage> {
     },
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    // Si l'utilisateur est déjà authentifié, ne pas afficher le splash
+    WidgetsBinding.instance.addPostFrameCallback((_) => _decideStart());
+  }
+
+  Future<void> _decideStart() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+    final isAuthenticated = await _isAuthenticated();
+    if (!mounted) return;
+    if (isAuthenticated) {
+      Navigator.pushReplacementNamed(context, RouteConstants.dashboard);
+      return;
+    }
+    if (hasSeenOnboarding) {
+      Navigator.pushReplacementNamed(context, RouteConstants.login);
+      return;
+    }
+    // Sinon: afficher l'onboarding (ne rien faire)
+  }
+
+  Future<bool> _isAuthenticated() async {
+    try {
+      final dio = Dio();
+      const storage = FlutterSecureStorage();
+      final apiClient = ApiClient(dio: dio, storage: storage);
+      final authRepo = AuthRepository(
+        remoteDataSource: AuthRemoteDataSourceImpl(
+          apiClient: apiClient,
+          storage: storage,
+        ),
+        storage: storage,
+      );
+      final user = await authRepo.getMe();
+      return user.stagiaire != null;
+    } catch (_) {
+      return false;
+    }
+  }
+
   void _goToNextPage() {
     if (_currentPage < _onboardingData.length - 1) {
       _pageController.nextPage(
@@ -67,24 +114,26 @@ class _OnSplashPage extends State<SplashPage> {
 
     // Appel API pour mettre à jour onboarding_seen côté serveur
     final token = await _getToken();
-    if (token != null) {
-      await http.post(
-        Uri.parse(
-          'https://ton-api.com/api/stagiaire/onboarding-seen',
-        ), // Remplace par ton URL
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
+    if (token != null && token.isNotEmpty) {
+      try {
+        await http.post(
+          Uri.parse('https://ton-api.com/api/stagiaire/onboarding-seen'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        );
+      } catch (_) {
+        // ne pas bloquer la navigation en cas d'erreur réseau
+      }
     }
     Navigator.pushReplacementNamed(context, RouteConstants.login);
   }
 
-  // Fonction pour récupérer le token (à adapter selon ton stockage)
+  // Récupération du token depuis le stockage sécurisé
   Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
+    const storage = FlutterSecureStorage();
+    return await storage.read(key: 'token');
   }
 
   @override

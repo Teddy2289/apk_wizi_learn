@@ -12,6 +12,7 @@ import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/contact_repository.dart';
 
 import '../../../../core/constants/route_constants.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 
 class ContactPage extends StatefulWidget {
   final List<Contact> contacts;
@@ -120,6 +121,21 @@ class _ContactPageState extends State<ContactPage> {
                 RouteConstants.dashboard,
               ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Voir le tutoriel',
+            onPressed:
+                () => showStandardHelpDialog(
+                  context,
+                  steps: const [
+                    '1. Consultez vos contacts utiles listés.',
+                    '2. Touchez un contact pour voir plus d’options.',
+                    '3. Retrouvez aussi les contacts du partenaire.',
+                  ],
+                ),
+          ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

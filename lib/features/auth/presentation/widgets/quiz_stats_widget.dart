@@ -27,9 +27,6 @@ class QuizStatsWidget extends StatelessWidget {
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: BorderSide(
-                  color: Theme.of(context).dividerColor.withOpacity(0.35),
-                ),
               ),
               color: Theme.of(context).colorScheme.surface,
               child: Padding(
@@ -357,68 +354,11 @@ class QuizStatsWidget extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // Category stats sobres et interactives
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(
-                  color: Theme.of(context).dividerColor.withOpacity(0.35),
-                ),
-              ),
-              color: Theme.of(context).colorScheme.surface,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Par catégorie',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    ...stats.categoryStats.map(
-                      (category) => InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap:
-                            () => _showInfoSheet(
-                              context,
-                              category.category,
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildSheetRow(
-                                    'Quiz dans cette catégorie',
-                                    '${category.quizCount}',
-                                  ),
-                                  _buildSheetRow(
-                                    'Score moyen',
-                                    '${(category.averageScore).toStringAsFixed(1)}%',
-                                  ),
-                                ],
-                              ),
-                            ),
-                        child: _buildCategoryItem(context, category),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
             // Level progress sobres et interactives
             Card(
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: BorderSide(
-                  color: Theme.of(context).dividerColor.withOpacity(0.35),
-                ),
               ),
               color: Theme.of(context).colorScheme.surface,
               child: Padding(
@@ -441,77 +381,6 @@ class QuizStatsWidget extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryItem(BuildContext context, CategoryStat category) {
-    final total = stats.totalQuizzes > 0 ? stats.totalQuizzes : 0;
-    final quizCount = category.quizCount >= 0 ? category.quizCount : 0;
-    final avg = category.averageScore >= 0 ? category.averageScore : 0.0;
-    final percentage =
-        total > 0 ? (quizCount / total * 100).toStringAsFixed(1) : '0.0';
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                category.category,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              Row(
-                children: [
-                  Text(
-                    '$percentage%',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  const Icon(Icons.touch_app, size: 16),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: total > 0 ? quizCount / total : 0.0,
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(4),
-            minHeight: 8,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '$quizCount quiz',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
-                ),
-              ),
-              Text(
-                'Moyenne: ${avg.toStringAsFixed(1)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
@@ -547,9 +416,6 @@ class QuizStatsWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.35),
-        ),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
