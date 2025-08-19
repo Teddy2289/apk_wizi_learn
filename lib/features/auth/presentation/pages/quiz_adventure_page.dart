@@ -448,59 +448,6 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
             ),
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(
-            _availableFormationTitles.isNotEmpty ? 56 : 0,
-          ),
-          child:
-              _availableFormationTitles.isNotEmpty
-                  ? Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    child: Row(
-                      children: [
-                        Icon(Icons.school, color: theme.colorScheme.primary),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _showFormationPicker,
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 10,
-                                horizontal: 12,
-                              ),
-                              side: BorderSide(
-                                color: theme.colorScheme.primary.withOpacity(
-                                  0.5,
-                                ),
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  _selectedFormationTitle ??
-                                      'Choisir une formation',
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface
-                                        .withOpacity(0.8),
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.keyboard_arrow_down,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                  : const SizedBox.shrink(),
-        ),
       ),
       body: Stack(
         children: [
@@ -516,7 +463,59 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                 key: const PageStorageKey('adventure_scroll'),
                 controller: _scrollController,
                 slivers: [
-                  // Formation picker déplacé dans l'AppBar (toujours visible)
+                  // Formation picker button
+                  if (_availableFormationTitles.isNotEmpty)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.school,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _showFormationPicker,
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                    horizontal: 12,
+                                  ),
+                                  side: BorderSide(
+                                    color: theme.colorScheme.primary
+                                        .withOpacity(0.5),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      _selectedFormationTitle == null
+                                          ? 'Choisir une formation'
+                                          : _selectedFormationTitle!,
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurface
+                                            .withOpacity(0.8),
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.keyboard_arrow_down,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   // Voir plus when many quizzes
                   SliverToBoxAdapter(
                     child:

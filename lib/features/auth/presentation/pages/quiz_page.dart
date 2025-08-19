@@ -332,60 +332,6 @@ class _QuizPageState extends State<QuizPage> {
               ),
             ),
           ],
-          bottom: PreferredSize(
-            preferredSize: Size.fromHeight(
-              _availableFormations.isNotEmpty ? 56 : 0,
-            ),
-            child:
-                _availableFormations.isNotEmpty
-                    ? Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                      child: Row(
-                        children: [
-                          Icon(Icons.school, color: theme.colorScheme.primary),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: _showFormationPicker,
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                  horizontal: 12,
-                                ),
-                                side: BorderSide(
-                                  color: theme.colorScheme.primary.withOpacity(
-                                    0.5,
-                                  ),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    _selectedFormation ??
-                                        'Choisir une formation',
-                                    style: TextStyle(
-                                      color: theme.colorScheme.onSurface
-                                          .withOpacity(0.8),
-                                    ),
-                                  ),
-                                  Icon(
-                                    Icons.keyboard_arrow_down,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                    : const SizedBox.shrink(),
-          ),
         ),
         body: content,
         floatingActionButton:
@@ -614,6 +560,61 @@ class _QuizPageState extends State<QuizPage> {
         //   ],
         // ),
         const SizedBox(height: 10),
+        if (_availableFormations.isNotEmpty)
+          Row(
+            children: [
+              Icon(Icons.school, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _showFormationPicker,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 12,
+                    ),
+                    side: BorderSide(
+                      color: theme.colorScheme.primary.withOpacity(0.5),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _selectedFormation ?? 'Choisir une formation',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withOpacity(0.8),
+                        ),
+                      ),
+                      Icon(
+                        Icons.keyboard_arrow_down,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (_selectedFormation != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: 'Réinitialiser',
+                  onPressed: () {
+                    setState(() => _selectedFormation = null);
+                    _applyFilters();
+                    _scrollController.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  icon: Icon(Icons.close, color: theme.colorScheme.primary),
+                ),
+              ],
+            ],
+          ),
         // if (_selectedLevel != null || _selectedFormation != null) ...[
         //   const SizedBox(height: 8),
         //   Container(
