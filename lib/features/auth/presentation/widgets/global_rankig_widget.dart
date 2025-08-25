@@ -67,30 +67,22 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
     }
 
     if (widget.rankings.isEmpty) {
-      return Card(
-        margin: const EdgeInsets.all(12),
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Center(
-            child: Column(
-              children: [
-                Icon(
-                  Icons.emoji_events_outlined,
-                  size: 48,
-                  color: Colors.grey.shade400,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Aucun classement disponible',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(
+                Icons.emoji_events_outlined,
+                size: 48,
+                color: Colors.grey.shade400,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Aucun classement disponible',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+              ),
+            ],
           ),
         ),
       );
@@ -99,16 +91,16 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
     // Séparation top 3 et reste
     final podium = widget.rankings.take(3).toList();
     final rest = widget.rankings.length > 3 ? widget.rankings.sublist(3) : [];
-    final myIndex = widget.rankings.indexWhere((r) => int.tryParse(r.stagiaire.id.toString()) == _connectedStagiaireId);
+    final myIndex = widget.rankings.indexWhere(
+      (r) => int.tryParse(r.stagiaire.id.toString()) == _connectedStagiaireId,
+    );
     final isCurrentUserInPodium = myIndex >= 0 && myIndex < 3;
     final isCurrentUserInRest = myIndex >= 3;
 
-    return Card(
-      margin: const EdgeInsets.all(12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -135,27 +127,39 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
             _buildPodium(context, podium, isSmallScreen),
             const SizedBox(height: 16),
             // Liste classique
-            if (rest.isNotEmpty)
-              ...[
-                _buildHeader(context, isSmallScreen),
-                const SizedBox(height: 8),
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: rest.length,
-                  separatorBuilder: (_, __) => const Divider(height: 8),
-                  itemBuilder: (_, index) {
-                    final ranking = rest[index];
-                    final isCurrentUser = int.tryParse(ranking.stagiaire.id.toString()) == _connectedStagiaireId;
-                    return _buildRankingItem(context, ranking, isSmallScreen, isCurrentUser: isCurrentUser);
-                  },
-                ),
-              ],
+            if (rest.isNotEmpty) ...[
+              _buildHeader(context, isSmallScreen),
+              const SizedBox(height: 8),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: rest.length,
+                separatorBuilder: (_, __) => const Divider(height: 8),
+                itemBuilder: (_, index) {
+                  final ranking = rest[index];
+                  final isCurrentUser =
+                      int.tryParse(ranking.stagiaire.id.toString()) ==
+                      _connectedStagiaireId;
+                  return _buildRankingItem(
+                    context,
+                    ranking,
+                    isSmallScreen,
+                    isCurrentUser: isCurrentUser,
+                  );
+                },
+              ),
+            ],
             // Si l'utilisateur n'est pas dans le top, l'afficher en bas
             if (isCurrentUserInRest)
               Padding(
                 padding: const EdgeInsets.only(top: 16),
-                child: _buildRankingItem(context, widget.rankings[myIndex], isSmallScreen, isCurrentUser: true, highlight: true),
+                child: _buildRankingItem(
+                  context,
+                  widget.rankings[myIndex],
+                  isSmallScreen,
+                  isCurrentUser: true,
+                  highlight: true,
+                ),
               ),
           ],
         ),
@@ -163,105 +167,198 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
     );
   }
 
-  Widget _buildPodium(BuildContext context, List<GlobalRanking> podium, bool isSmallScreen) {
+  Widget _buildPodium(
+    BuildContext context,
+    List<GlobalRanking> podium,
+    bool isSmallScreen,
+  ) {
     // Ordre d'affichage : 2e, 1er, 3e
     final List<int> order = [1, 0, 2];
-    final double base = 60;
-    final List<double> heights = [base, base + 30, base - 10];
-    final List<double> sizes = [48, 64, 40];
-    final List<Color> colors = [Colors.grey, Colors.amber, Colors.orange];
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: List.generate(3, (i) {
-        final idx = order[i];
-        if (idx >= podium.length) return const SizedBox(width: 60);
-        final ranking = podium[idx];
-        final isCurrentUser = int.tryParse(ranking.stagiaire.id.toString()) == _connectedStagiaireId;
-        return Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    height: heights[i],
-                    width: sizes[i],
-                    decoration: BoxDecoration(
-                      color: colors[i].withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: colors[i], width: 2),
-                    ),
-                  ),
-                  CircleAvatar(
-                    radius: sizes[i] / 2,
-                    backgroundImage: NetworkImage(
-                      '${AppConstants.baseUrlImg}/${ranking.stagiaire.image}',
-                    ),
-                    backgroundColor: Colors.white,
-                  ),
-                  if (isCurrentUser)
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 2,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 12,
+    final double base = isSmallScreen ? 50 : 70;
+    final List<double> heights = [base, base + 40, base - 15];
+    final List<double> sizes = [
+      isSmallScreen ? 40 : 56,
+      isSmallScreen ? 56 : 72,
+      isSmallScreen ? 32 : 48,
+    ];
+    final List<Color> colors = [
+      const Color(0xFFC0C0C0), // Argent
+      const Color(0xFFFFD700), // Or
+      const Color(0xFFCD7F32), // Bronze
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Theme.of(context).primaryColor.withOpacity(0.05),
+            Theme.of(context).primaryColor.withOpacity(0.02),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          // Titre du podium
+          Text(
+            '🏆 PODIUM 🏆',
+            style: TextStyle(
+              fontSize: isSmallScreen ? 16 : 18,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).primaryColor,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Podium
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: List.generate(3, (i) {
+              final idx = order[i];
+              if (idx >= podium.length)
+                return Expanded(child: const SizedBox());
+              final ranking = podium[idx];
+              final isCurrentUser =
+                  int.tryParse(ranking.stagiaire.id.toString()) ==
+                  _connectedStagiaireId;
+
+              return Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    // Badge de position
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors[i].withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: colors[i], width: 1.5),
+                      ),
+                      child: Text(
+                        '${idx + 1}${idx == 0 ? 'er' : 'e'}',
+                        style: TextStyle(
+                          color: colors[i],
+                          fontWeight: FontWeight.bold,
+                          fontSize: isSmallScreen ? 12 : 14,
                         ),
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                ranking.stagiaire.prenom,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: isCurrentUser ? Theme.of(context).primaryColor : (colors[i] is MaterialColor ? (colors[i] as MaterialColor).shade800 : colors[i]),
-                  fontSize: 14,
+                    // Avatar avec fond
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          height: heights[i],
+                          width: sizes[i],
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                colors[i].withOpacity(0.3),
+                                colors[i].withOpacity(0.1),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: colors[i], width: 2.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: colors[i].withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                        ),
+                        CircleAvatar(
+                          radius: (sizes[i] - 8) / 2,
+                          backgroundImage: NetworkImage(
+                            '${AppConstants.baseUrlImg}/${ranking.stagiaire.image}',
+                          ),
+                          backgroundColor: Colors.white,
+                        ),
+                        if (isCurrentUser)
+                          Positioned(
+                            right: -2,
+                            bottom: -2,
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 10,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // Nom du participant
+                    Text(
+                      ranking.stagiaire.prenom,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color:
+                            isCurrentUser
+                                ? Theme.of(context).primaryColor
+                                : Theme.of(context).colorScheme.onSurface,
+                        fontSize: isSmallScreen ? 13 : 15,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Points
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${ranking.totalPoints} pts',
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: isSmallScreen ? 11 : 13,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                 ),
-                textAlign: TextAlign.center,
-              ),
-              Text(
-                '${ranking.totalPoints} pts',
-                style: TextStyle(
-                  color: (colors[i] is MaterialColor ? (colors[i] as MaterialColor).shade800 : colors[i]),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                ),
-              ),
-              Container(
-                margin: const EdgeInsets.only(top: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: colors[i].withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${idx + 1}${idx == 0 ? 'er' : 'e'}',
-                  style: TextStyle(
-                    color: (colors[i] is MaterialColor ? (colors[i] as MaterialColor).shade800 : colors[i]),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
+              );
+            }),
           ),
-        );
-      }),
+        ],
+      ),
     );
   }
 
@@ -313,25 +410,21 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
     return Container(
       margin: highlight ? const EdgeInsets.symmetric(vertical: 8) : null,
       decoration: BoxDecoration(
-        color: isCurrentUser
-            ? Theme.of(context).primaryColor.withOpacity(0.08)
-            : Colors.transparent,
-        border: isCurrentUser
-            ? Border.all(
-                color: Theme.of(context).primaryColor.withOpacity(0.3),
-                width: 1.5,
-              )
-            : null,
+        color:
+            isCurrentUser
+                ? Theme.of(context).primaryColor.withOpacity(0.08)
+                : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
-        boxShadow: highlight
-            ? [
-                BoxShadow(
-                  color: Theme.of(context).primaryColor.withOpacity(0.15),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : [],
+        boxShadow:
+            highlight
+                ? [
+                  BoxShadow(
+                    color: Theme.of(context).primaryColor.withOpacity(0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+                : [],
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -376,9 +469,8 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                     ranking.stagiaire.prenom,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: isCurrentUser
-                          ? Theme.of(context).primaryColor
-                          : null,
+                      color:
+                          isCurrentUser ? Theme.of(context).primaryColor : null,
                     ),
                   ),
                 ],

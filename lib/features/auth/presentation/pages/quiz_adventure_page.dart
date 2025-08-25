@@ -13,26 +13,30 @@ import 'package:confetti/confetti.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:wizi_learn/features/auth/presentation/widgets/avatar_selector_dialog.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/mission_card.dart';
 import 'package:wizi_learn/features/auth/data/models/mission_model.dart';
-import 'package:wizi_learn/features/auth/presentation/pages/avatar_shop_page.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
+import 'package:wizi_learn/core/constants/route_constants.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 
 class QuizAdventurePage extends StatefulWidget {
-  const QuizAdventurePage({super.key});
+  final bool quizAdventureEnabled;
+  const QuizAdventurePage({super.key, this.quizAdventureEnabled = true});
 
   @override
   State<QuizAdventurePage> createState() => _QuizAdventurePageState();
 }
 
-class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProviderStateMixin {
+class _QuizAdventurePageState extends State<QuizAdventurePage>
+    with TickerProviderStateMixin {
   late final QuizRepository _quizRepository;
   late final StatsRepository _statsRepository;
   late final AuthRepository _authRepository;
   int? _connectedStagiaireId;
+  List<quiz_model.Quiz> _allQuizzes = [];
   List<quiz_model.Quiz> _quizzes = [];
   List<String> _playedQuizIds = [];
   bool _isLoading = true;
@@ -41,31 +45,22 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
   int _lastCompletedCount = 0;
   List<stats_model.QuizHistory> _quizHistory = [];
   final AudioPlayer _audioPlayer = AudioPlayer();
-  int _avatarIndex = 0;
-  late AnimationController _avatarAnimController;
-  late Animation<double> _avatarAnim;
-  late AnimationController _avatarBounceController;
-  late Animation<double> _avatarBounceAnim;
-  String _avatarPath = 'assets/images/avatar.png';
-  final List<String> _avatarChoices = [
-    'assets/images/avatars/avatar1.png',
-    'assets/images/avatars/avatar2.png',
-    'assets/images/avatars/avatar3.png',
-    'assets/images/avatars/avatar4.png',
-    'assets/images/avatars/avatar5.png',
-    'assets/images/avatar.png',
-  ];
+  // Avatar & boutique supprimés
   int _loginStreak =
       1; // Valeur simulée pour la démo, à remplacer par la vraie valeur API si dispo
+  bool _showMissions = false;
+  String? _selectedFormationTitle;
+  List<String> _availableFormationTitles = [];
+  bool _showAllForFormation = false;
+  final ScrollController _scrollController = ScrollController();
+  bool _showBackToTopButton = false;
 
   // GlobalKeys pour le tutoriel interactif
-  final GlobalKey _keyShop = GlobalKey();
-  final GlobalKey _keyAvatar = GlobalKey();
+  // Clés liées à la boutique/avatar supprimées
   final GlobalKey _keyBadges = GlobalKey();
   final GlobalKey _keyProgress = GlobalKey();
   final GlobalKey _keyMission = GlobalKey();
   final GlobalKey _keyQuiz = GlobalKey();
-  final GlobalKey _keyAvatarAnim = GlobalKey();
   // TutorialCoachMark? _tutorialCoachMark; // Unused field removed
   // bool _tutorialShown = false; // Unused field removed
 
@@ -76,24 +71,15 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 2),
     );
-    _avatarAnimController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-    _avatarAnim = CurvedAnimation(
-      parent: _avatarAnimController,
-      curve: Curves.easeInOut,
-    );
-    _avatarBounceController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _avatarBounceAnim = CurvedAnimation(
-      parent: _avatarBounceController,
-      curve: Curves.elasticOut,
-    );
+    // Animations avatar supprimées
+    _scrollController.addListener(() {
+      final show = _scrollController.offset >= 400;
+      if (show != _showBackToTopButton && mounted) {
+        setState(() => _showBackToTopButton = show);
+      }
+    });
     _loadLoginStreak();
-    _loadAvatarChoice();
+    // Chargement avatar supprimé
     _loadInitialData();
     _checkAndShowTutorial();
   }
@@ -127,7 +113,9 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
       );
       print('--- QUIZZES RECUS ---');
       for (var q in quizzes) {
-        print('id= [32m${q.id} [0m, titre=${q.titre}, niveau=${q.niveau}, status=${q.status}');
+        print(
+          'id= [32m${q.id} [0m, titre=${q.titre}, niveau=${q.niveau}, status=${q.status}',
+        );
       }
       print('---------------------');
       final history = await _statsRepository.getQuizHistory(
@@ -142,40 +130,59 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
       _userPoints = userRanking.totalPoints;
       final filteredQuizzes = _filterQuizzesByPoints(quizzes, _userPoints);
       setState(() {
+        _allQuizzes = quizzes;
         _quizzes = filteredQuizzes;
         _playedQuizIds = history.map((h) => h.quiz.id.toString()).toList();
         _quizHistory = history;
         _isLoading = false;
+        // Build available formation titles for filter
+        _availableFormationTitles =
+            _allQuizzes
+                .map((q) => q.formation.titre)
+                .where((t) => t.isNotEmpty)
+                .toSet()
+                .toList()
+              ..sort();
       });
+      // Sélection formation par dernier quiz joué si possible
+      if (_selectedFormationTitle == null &&
+          _availableFormationTitles.isNotEmpty) {
+        DateTime _parseDate(String s) =>
+            DateTime.tryParse(s) ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final sorted = List<stats_model.QuizHistory>.from(history)..sort(
+          (a, b) =>
+              _parseDate(b.completedAt).compareTo(_parseDate(a.completedAt)),
+        );
+        if (sorted.isNotEmpty) {
+          final last = sorted.first;
+          final lastTitle = last.quiz.formation.titre;
+          if (lastTitle.isNotEmpty &&
+              _availableFormationTitles.contains(lastTitle)) {
+            setState(() {
+              _selectedFormationTitle = lastTitle;
+              _showAllForFormation = true;
+            });
+          }
+        }
+        // Fallback initial si rien déterminé par l’historique
+        if (_selectedFormationTitle == null) {
+          _selectedFormationTitle = _availableFormationTitles.first;
+          _showAllForFormation = true;
+        }
+      }
       // Animation confettis si progression
       final completed =
-          filteredQuizzes.where((q) => _playedQuizIds.contains(q.id.toString())).length;
+          filteredQuizzes
+              .where((q) => _playedQuizIds.contains(q.id.toString()))
+              .length;
       if (completed > _lastCompletedCount && _lastCompletedCount != 0) {
         _confettiController?.play();
         await _playSound('audio/success.mp3');
       }
       _lastCompletedCount = completed;
-      // Calcul de la position de l'avatar
-      int lastPlayed = 0;
-      for (int i = 0; i < filteredQuizzes.length; i++) {
-        if (_playedQuizIds.contains(filteredQuizzes[i].id.toString())) {
-          lastPlayed = i;
-        } else {
-          break;
-        }
-      }
-      int newAvatarIndex = lastPlayed;
-      if (lastPlayed < filteredQuizzes.length - 1 &&
-          !_playedQuizIds.contains(filteredQuizzes[lastPlayed + 1].id.toString())) {
-        newAvatarIndex = lastPlayed + 1;
-      }
-      if (mounted && newAvatarIndex != _avatarIndex) {
-        _avatarAnimController.forward(from: 0);
-        _avatarBounceController.forward(from: 0);
-      }
-      setState(() {
-        _avatarIndex = newAvatarIndex;
-      });
+      // Gestion de position avatar supprimée
+      // Après chargement, défiler vers le prochain quiz non joué
+      _scrollToNextUnplayed();
     } catch (e) {
       setState(() => _isLoading = false);
     }
@@ -185,8 +192,8 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
   void dispose() {
     _confettiController?.dispose();
     _audioPlayer.dispose();
-    _avatarBounceController.dispose();
-    _avatarAnimController.dispose();
+    // Dispose animations avatar supprimées
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -215,20 +222,31 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
     }
 
     final debutant =
-        allQuizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
+        allQuizzes
+            .where((q) => normalizeLevel(q.niveau) == 'débutant')
+            .toList();
     final intermediaire =
-        allQuizzes.where((q) => normalizeLevel(q.niveau) == 'intermédiaire').toList();
+        allQuizzes
+            .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
+            .toList();
     final avance =
         allQuizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
 
     List<quiz_model.Quiz> filtered = [];
-    if (userPoints < 10) filtered = debutant.take(2).toList();
-    else if (userPoints < 20) filtered = debutant.take(4).toList();
-    else if (userPoints < 40) filtered = [...debutant, ...intermediaire.take(2)];
-    else if (userPoints < 60) filtered = [...debutant, ...intermediaire];
-    else if (userPoints < 80) filtered = [...debutant, ...intermediaire, ...avance.take(2)];
-    else if (userPoints < 100) filtered = [...debutant, ...intermediaire, ...avance.take(4)];
-    else filtered = [...debutant, ...intermediaire, ...avance];
+    if (userPoints < 10)
+      filtered = debutant.take(2).toList();
+    // else if (userPoints < 20)
+    //   filtered = debutant.take(4).toList();
+    // else if (userPoints < 40)
+    //   filtered = [...debutant, ...intermediaire.take(2)];
+    // else if (userPoints < 60)
+    //   filtered = [...debutant, ...intermediaire];
+    // else if (userPoints < 80)
+    //   filtered = [...debutant, ...intermediaire, ...avance.take(2)];
+    // else if (userPoints < 100)
+    //   filtered = [...debutant, ...intermediaire, ...avance.take(4)];
+    else
+      filtered = [...debutant, ...intermediaire, ...avance];
 
     // Fallback: si aucun quiz filtré mais la liste d'origine n'est pas vide, retourne au moins le premier quiz
     if (filtered.isEmpty && allQuizzes.isNotEmpty) {
@@ -266,31 +284,9 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
     setState(() {});
   }
 
-  Future<void> _loadAvatarChoice() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _avatarPath =
-          prefs.getString('selected_avatar') ?? 'assets/images/avatar.png';
-    });
-  }
+  // Sélection d'avatar supprimée
 
-  Future<void> _selectAvatar() async {
-    final selected = await showDialog<String>(
-      context: context,
-      builder:
-          (context) => AvatarSelectorDialog(
-            avatarPaths: _avatarChoices,
-            selectedAvatar: _avatarPath,
-          ),
-    );
-    if (selected != null && selected != _avatarPath) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('selected_avatar', selected);
-      setState(() {
-        _avatarPath = selected;
-      });
-    }
-  }
+  // Sélection d'avatar supprimée
 
   Future<void> _checkAndShowTutorial() async {
     final prefs = await SharedPreferences.getInstance();
@@ -317,32 +313,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
 
   List<TargetFocus> _buildTargets() {
     return [
-      TargetFocus(
-        identify: 'shop',
-        keyTarget: _keyShop,
-        contents: [
-          TargetContent(
-            align: ContentAlign.bottom,
-            child: const Text(
-              'Découvre la boutique pour personnaliser ton avatar !',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ],
-      ),
-      TargetFocus(
-        identify: 'avatar',
-        keyTarget: _keyAvatar,
-        contents: [
-          TargetContent(
-            align: ContentAlign.bottom,
-            child: const Text(
-              'Change ton avatar à tout moment.',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ],
-      ),
+      // Targets boutique/avatar supprimés
       TargetFocus(
         identify: 'badges',
         keyTarget: _keyBadges,
@@ -395,19 +366,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
           ),
         ],
       ),
-      TargetFocus(
-        identify: 'avatarAnim',
-        keyTarget: _keyAvatarAnim,
-        contents: [
-          TargetContent(
-            align: ContentAlign.top,
-            child: const Text(
-              'Ton avatar progresse avec toi dans l’aventure !',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ],
-      ),
+      // Target avatarAnim supprimé
     ];
   }
 
@@ -416,25 +375,23 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Aventure Quiz'),
+        leading: IconButton(
+          icon: const Icon(Icons.home),
+          tooltip: 'Accueil',
+          onPressed: () {
+            Navigator.pushReplacementNamed(
+              context,
+              RouteConstants.dashboard,
+              arguments: 0,
+            );
+          },
+        ),
+        title: const Text('Quiz'),
         centerTitle: true,
         actions: [
-          IconButton(
-            key: _keyShop,
-            icon: const Icon(Icons.shopping_bag),
-            tooltip: 'Boutique d\'avatars',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AvatarShopPage()),
-              );
-            },
-          ),
-          IconButton(
-            key: _keyAvatar,
-            icon: const Icon(Icons.person),
-            tooltip: 'Changer d\'avatar',
-            onPressed: _selectAvatar,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: _buildPointsChip(theme),
           ),
           IconButton(
             key: _keyBadges,
@@ -451,7 +408,44 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
           IconButton(
             icon: const Icon(Icons.help_outline),
             tooltip: 'Voir le tutoriel',
-            onPressed: _showTutorial,
+            onPressed:
+                () => showStandardHelpDialog(
+                  context,
+                  title: 'Comment jouer ?',
+                  steps: const [
+                    '1. Choisissez une formation',
+                    '2. Touchez un quiz débloqué pour commencer',
+                    '3. Répondez aux questions et validez',
+                    '4. Consultez votre historique et vos badges',
+                  ],
+                ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Row(
+              children: [
+                // const Text('Aventure'),
+                const SizedBox(width: 6),
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Switch(
+                    value: true,
+                    activeColor: Colors.white,
+                    activeTrackColor: Colors.black,
+                    inactiveThumbColor: Colors.black,
+                    inactiveTrackColor: Colors.white,
+                    onChanged: (v) {
+                      if (v) return;
+                      _goToQuizList();
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -465,326 +459,292 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
               )
               : _quizzes.isEmpty
               ? Center(child: Text('Aucun quiz disponible'))
-              : Column(
-                children: [
-                  const SizedBox(height: 16),
-                  Container(key: _keyProgress, child: _buildProgressBar(theme)),
-                  // Section Missions du jour
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Text(
-                            'Missions du jour',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          key: _keyMission,
-                          child: MissionCard(
-                            mission: Mission(
-                              id: 1,
-                              title: 'Série de connexion',
-                              description:
-                                  'Connecte-toi plusieurs jours d\'affilée pour gagner un badge.',
-                              type: 'daily',
-                              goal: 5,
-                              reward: 'Badge',
-                              progress: _loginStreak,
-                              completed: _loginStreak >= 5,
-                              completedAt: null,
-                            ),
-                          ),
-                        ),
-                        MissionCard(
-                          mission: Mission(
-                            id: 2,
-                            title: 'Réussir 2 quiz',
-                            description:
-                                'Complète 2 quiz aujourd\'hui pour gagner un badge.',
-                            type: 'daily',
-                            goal: 2,
-                            reward: 'Badge',
-                            progress:
-                                _quizHistory.length >= 2
-                                    ? 2
-                                    : _quizHistory.length,
-                            completed: _quizHistory.length >= 2,
-                            completedAt: null,
-                          ),
-                        ),
-                        MissionCard(
-                          mission: Mission(
-                            id: 3,
-                            title: 'Obtenir 5 étoiles',
-                            description: 'Cumule 5 étoiles sur tes quiz.',
-                            type: 'daily',
-                            goal: 5,
-                            reward: 'Badge',
-                            progress: _quizHistory.fold(0, (sum, h) {
-                              final percent =
-                                  h.totalQuestions > 0
-                                      ? (h.correctAnswers / h.totalQuestions) *
-                                          100
-                                      : 0;
-                              if (percent >= 100) return sum + 3;
-                              if (percent >= 70) return sum + 2;
-                              if (percent >= 40) return sum + 1;
-                              return sum;
-                            }),
-                            completed:
-                                _quizHistory.fold(0, (sum, h) {
-                                  final percent =
-                                      h.totalQuestions > 0
-                                          ? (h.correctAnswers /
-                                                  h.totalQuestions) *
-                                              100
-                                          : 0;
-                                  if (percent >= 100) return sum + 3;
-                                  if (percent >= 70) return sum + 2;
-                                  if (percent >= 40) return sum + 1;
-                                  return sum;
-                                }) >=
-                                5,
-                            completedAt: null,
-                          ),
-                        ),
-                        MissionCard(
-                          mission: Mission(
-                            id: 4,
-                            title: 'Jouer un quiz difficile',
-                            description: 'Termine un quiz de niveau avancé.',
-                            type: 'daily',
-                            goal: 1,
-                            reward: 'Points',
-                            progress:
-                                _quizHistory.any(
-                                      (h) => h.quiz.niveau
-                                          .toLowerCase()
-                                          .contains('avanc'),
-                                    )
-                                    ? 1
-                                    : 0,
-                            completed: _quizHistory.any(
-                              (h) =>
-                                  h.quiz.niveau.toLowerCase().contains('avanc'),
-                            ),
-                            completedAt: null,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final itemWidth = 120.0;
-                        return Stack(
+              : CustomScrollView(
+                key: const PageStorageKey('adventure_scroll'),
+                controller: _scrollController,
+                slivers: [
+                  // Formation picker button
+                  if (_availableFormationTitles.isNotEmpty)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
                           children: [
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: List.generate(_quizzes.length, (
-                                  index,
-                                ) {
-                                  final quiz = _quizzes[index];
-                                  final isPlayed = _playedQuizIds.contains(
-                                    quiz.id.toString(),
-                                  );
-                                  final isUnlocked = _isQuizUnlocked(index);
-                                  final history =
-                                      _quizHistory.isNotEmpty
-                                          ? _quizHistory.firstWhere(
-                                            (h) =>
-                                                h.quiz.id == quiz.id.toString(),
-                                            orElse: () => _quizHistory.first,
-                                          )
-                                          : stats_model.QuizHistory(
-                                            id: '',
-                                            quiz: quiz,
-                                            score: 0,
-                                            completedAt: '',
-                                            timeSpent: 0,
-                                            totalQuestions: 0,
-                                            correctAnswers: 0,
-                                          );
-                                  int stars = 0;
-                                  if (history != null &&
-                                      history.totalQuestions > 0) {
-                                    final percent =
-                                        (history.correctAnswers /
-                                            history.totalQuestions) *
-                                        100;
-                                    if (percent >= 100) {
-                                      stars = 3;
-                                    } else if (percent >= 70) {
-                                      stars = 2;
-                                    } else if (percent >= 40) {
-                                      stars = 1;
-                                    }
-                                  }
-                                  return SizedBox(
-                                    width: itemWidth,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16.0,
-                                      ),
-                                      child: GestureDetector(
-                                        key: index == 0 ? _keyQuiz : null,
-                                        onTap:
-                                            isUnlocked && quiz.questions.isNotEmpty
-                                                ? () async {
-                                                  await _playSound(
-                                                    'audio/click.mp3',
-                                                  );
-                                                  final questions =
-                                                      quiz.questions;
-                                                  if (questions.isEmpty) return;
-                                                  final result =
-                                                      await Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                          builder:
-                                                              (
-                                                                _,
-                                                              ) => QuizSessionPage(
-                                                                quiz: quiz,
-                                                                questions:
-                                                                    questions,
-                                                              ),
-                                                        ),
-                                                      );
-                                                  if (result == 'fail' ||
-                                                      (history != null &&
-                                                          stars == 0)) {
-                                                    await _playSound(
-                                                      'audio/fail.mp3',
-                                                    );
-                                                  }
-                                                  _loadInitialData();
-                                                }
-                                                : null,
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            _AnimatedQuizStep(
-                                              icon:
-                                                  isPlayed
-                                                      ? Icons.emoji_events
-                                                      : isUnlocked
-                                                      ? Icons.star
-                                                      : Icons.lock,
-                                              color:
-                                                  isPlayed
-                                                      ? Colors.amber
-                                                      : isUnlocked
-                                                      ? theme
-                                                          .colorScheme
-                                                          .primary
-                                                      : Colors.grey,
-                                              label: quiz.titre,
-                                              isCompleted: isPlayed,
-                                              isUnlocked: isUnlocked,
-                                            ),
-                                            if (quiz.questions.isEmpty)
-                                              Padding(
-                                                padding: const EdgeInsets.only(top: 4.0),
-                                                child: Text(
-                                                  'Aucune question disponible',
-                                                  style: TextStyle(color: Colors.red, fontSize: 12),
-                                                  textAlign: TextAlign.center,
-                                                ),
-                                              ),
-                                            if (isPlayed)
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                  top: 4.0,
-                                                ),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: List.generate(
-                                                    3,
-                                                    (i) => Icon(
-                                                      Icons.star,
-                                                      size: 18,
-                                                      color:
-                                                          i < stars
-                                                              ? Colors.amber
-                                                              : Colors
-                                                                  .grey[300],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                          ],
-                                        ),
+                            Icon(
+                              Icons.school,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _showFormationPicker,
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                    horizontal: 12,
+                                  ),
+                                  side: BorderSide(
+                                    color: theme.colorScheme.primary
+                                        .withOpacity(0.5),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      _selectedFormationTitle == null
+                                          ? 'Choisir une formation'
+                                          : _selectedFormationTitle!,
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurface
+                                            .withOpacity(0.8),
                                       ),
                                     ),
-                                  );
-                                }),
+                                    Icon(
+                                      Icons.keyboard_arrow_down,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            // Avatar animé
-                            AnimatedBuilder(
-                              animation: Listenable.merge([
-                                _avatarAnim,
-                                _avatarBounceAnim,
-                              ]),
-                              builder: (context, child) {
-                                final itemWidth = 120.0;
-                                final dx =
-                                    (_avatarIndex * itemWidth +
-                                        16.0 * (_avatarIndex * 2 + 1)) *
-                                    _avatarAnim.value;
-                                final scale =
-                                    1.0 + 0.15 * _avatarBounceAnim.value;
-                                return Positioned(
-                                  left: dx,
-                                  bottom: 0,
-                                  child: SizedBox(
-                                    width: itemWidth,
-                                    child: Center(
-                                      child: Container(
-                                        key: _keyAvatarAnim,
-                                        decoration: BoxDecoration(
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.yellow.withOpacity(
-                                                0.6 * _avatarBounceAnim.value,
-                                              ),
-                                              blurRadius:
-                                                  24 * _avatarBounceAnim.value,
-                                              spreadRadius:
-                                                  2 * _avatarBounceAnim.value,
+                          ],
+                        ),
+                      ),
+                    ),
+                  // Voir plus when many quizzes
+                  SliverToBoxAdapter(
+                    child:
+                        (_selectedFormationTitle != null &&
+                                !_showAllForFormation &&
+                                _getDisplayQuizzes().length > 10)
+                            ? Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton.icon(
+                                  onPressed:
+                                      () => setState(
+                                        () => _showAllForFormation = true,
+                                      ),
+                                  icon: const Icon(Icons.expand_more),
+                                  label: const Text('Voir plus'),
+                                ),
+                              ),
+                            )
+                            : const SizedBox.shrink(),
+                  ),
+                  // Toggle missions
+                  // SliverToBoxAdapter(
+                  //   child: Padding(
+                  //     padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  //     child: Row(
+                  //       children: [
+                  //         Icon(Icons.flag, color: theme.colorScheme.primary),
+                  //         const SizedBox(width: 8),
+                  //         const Expanded(child: Text('Afficher les missions')),
+                  //         Switch(
+                  //           value: _showMissions,
+                  //           onChanged: (v) => setState(() => _showMissions = v),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
+                  SliverToBoxAdapter(
+                    child:
+                        _showMissions
+                            ? DailyMissionsSection(
+                              keyMission: _keyMission,
+                              loginStreak: _loginStreak,
+                              quizHistory: _quizHistory,
+                            )
+                            : const SizedBox.shrink(),
+                  ),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final displayQuizzes = _getDisplayQuizzes();
+                      final quiz = displayQuizzes[index];
+                      final isPlayed = _playedQuizIds.contains(
+                        quiz.id.toString(),
+                      );
+                      final isUnlocked = _isQuizUnlocked(index);
+                      final history =
+                          _quizHistory.isNotEmpty
+                              ? _quizHistory.firstWhere(
+                                (h) => h.quiz.id == quiz.id.toString(),
+                                orElse: () => _quizHistory.first,
+                              )
+                              : stats_model.QuizHistory(
+                                id: '',
+                                quiz: quiz,
+                                score: 0,
+                                completedAt: '',
+                                timeSpent: 0,
+                                totalQuestions: 0,
+                                correctAnswers: 0,
+                              );
+                      int stars = 0;
+                      if (history.totalQuestions > 0) {
+                        final percent =
+                            (history.correctAnswers / history.totalQuestions) *
+                            100;
+                        if (percent >= 100)
+                          stars = 3;
+                        else if (percent >= 70)
+                          stars = 2;
+                        else if (percent >= 40)
+                          stars = 1;
+                      }
+                      final isLeft = index % 2 == 0;
+                      // Couleur par catégorie de formation
+                      Color categoryColor =
+                          Theme.of(context).colorScheme.primary;
+                      final cat =
+                          (quiz.formation.categorie).trim().toLowerCase();
+                      switch (cat) {
+                        case 'bureautique':
+                          categoryColor = const Color(0xFF3D9BE9);
+                          break;
+                        case 'langues':
+                          categoryColor = const Color(0xFFA55E6E);
+                          break;
+                        case 'internet':
+                          categoryColor = const Color(0xFFFFC533);
+                          break;
+                        case 'création':
+                        case 'creation':
+                          categoryColor = const Color(0xFF9392BE);
+                          break;
+                        default:
+                          categoryColor = Theme.of(context).colorScheme.primary;
+                      }
+                      final nodeColor =
+                          isPlayed
+                              ? Colors.amber
+                              : (isUnlocked ? categoryColor : Colors.grey);
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 8,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (!isLeft)
+                              Expanded(
+                                child: _buildStepCard(
+                                  quiz,
+                                  isPlayed,
+                                  isUnlocked,
+                                  stars,
+                                  nodeColor,
+                                  onTap: () async {
+                                    if (!(isUnlocked || isPlayed) ||
+                                        quiz.questions.isEmpty)
+                                      return;
+                                    await _playSound('audio/click.mp3');
+                                    final questions = await _quizRepository
+                                        .getQuizQuestions(quiz.id);
+                                    if (questions.isEmpty) return;
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (_) => QuizSessionPage(
+                                              quiz: quiz,
+                                              questions: questions,
+                                              quizAdventureEnabled:
+                                                  widget.quizAdventureEnabled,
                                             ),
-                                          ],
-                                        ),
-                                        child: Transform.scale(
-                                          scale: scale,
-                                          child: Image.asset(
-                                            _avatarPath,
-                                            width: 48,
-                                            height: 48,
+                                      ),
+                                    );
+                                    _loadInitialData();
+                                  },
+                                ),
+                              ),
+                            SizedBox(
+                              width: 70,
+                              child: Column(
+                                children: [
+                                  Container(
+                                    height: 12,
+                                    width: 2,
+                                    color:
+                                        index == 0
+                                            ? Colors.transparent
+                                            : Colors.grey.shade300,
+                                  ),
+                                  Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Container(
+                                        width: 24,
+                                        height: 24,
+                                        decoration: BoxDecoration(
+                                          color: nodeColor.withOpacity(
+                                            isUnlocked ? 0.12 : 0.08,
+                                          ),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: nodeColor,
+                                            width: 2,
                                           ),
                                         ),
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                );
-                              },
+                                  Container(
+                                    height: 60,
+                                    width: 2,
+                                    color:
+                                        index == displayQuizzes.length - 1
+                                            ? Colors.transparent
+                                            : Colors.grey.shade300,
+                                  ),
+                                ],
+                              ),
                             ),
+                            if (isLeft)
+                              Expanded(
+                                child: _buildStepCard(
+                                  quiz,
+                                  isPlayed,
+                                  isUnlocked,
+                                  stars,
+                                  nodeColor,
+                                  onTap: () async {
+                                    if (!isUnlocked || quiz.questions.isEmpty)
+                                      return;
+                                    await _playSound('audio/click.mp3');
+                                    final questions = await _quizRepository
+                                        .getQuizQuestions(quiz.id);
+                                    if (questions.isEmpty) return;
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (_) => QuizSessionPage(
+                                              quiz: quiz,
+                                              questions: questions,
+                                              quizAdventureEnabled:
+                                                  widget.quizAdventureEnabled,
+                                            ),
+                                      ),
+                                    );
+                                    _loadInitialData();
+                                  },
+                                ),
+                              ),
                           ],
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    }, childCount: _effectiveListLength()),
                   ),
                 ],
               ),
@@ -810,39 +770,636 @@ class _QuizAdventurePageState extends State<QuizAdventurePage> with TickerProvid
           ),
         ],
       ),
+      floatingActionButton:
+          _showBackToTopButton
+              ? FloatingActionButton(
+                onPressed: _scrollToTop,
+                mini: true,
+                backgroundColor: theme.colorScheme.primary,
+                child: Icon(
+                  Icons.arrow_upward,
+                  color: theme.colorScheme.onPrimary,
+                ),
+              )
+              : null,
+    );
+  }
+
+  void _scrollToTop() {
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _scrollToNextUnplayed() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!_scrollController.hasClients) return;
+      final displayQuizzes = _getDisplayQuizzes();
+      if (displayQuizzes.isEmpty) return;
+      final nextIndex = displayQuizzes.indexWhere(
+        (q) => !_playedQuizIds.contains(q.id.toString()),
+      );
+      if (nextIndex <= 0) return; // déjà en tête ou aucun non joué
+      const double headerApproxHeight = 220.0;
+      const double itemApproxHeight = 130.0;
+      final double position =
+          headerApproxHeight + (nextIndex * itemApproxHeight);
+      _scrollController.animateTo(
+        position,
+        duration: const Duration(milliseconds: 700),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  Widget _buildPointsChip(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: theme.colorScheme.primary.withOpacity(0.6),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.star_rounded, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 6),
+          Text(
+            '$_userPoints points',
+            style: TextStyle(fontWeight: FontWeight.w700, color: Colors.black),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _goToQuizList() {
+    if (!widget.quizAdventureEnabled) {
+      // Adventure mode is disabled, stay in current page
+      return;
+    }
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder:
+            (_, __, ___) =>
+                QuizPage(quizAdventureEnabled: false, forceList: true),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 250),
+      ),
+    );
+  }
+
+  Widget _buildStepCard(
+    quiz_model.Quiz quiz,
+    bool isPlayed,
+    bool isUnlocked,
+    int stars,
+    Color accentColor, {
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    final String levelRaw = quiz.niveau.trim();
+    final String levelLabel =
+        levelRaw.isEmpty
+            ? 'Niveau inconnu'
+            : (levelRaw[0].toUpperCase() + levelRaw.substring(1).toLowerCase());
+    return Opacity(
+      opacity: isUnlocked ? 1.0 : 0.8,
+      child: InkWell(
+        onTap: (isUnlocked || isPlayed) ? onTap : null,
+        borderRadius: BorderRadius.circular(14),
+        child: Stack(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+                border: Border.all(
+                  color:
+                      isPlayed
+                          ? accentColor.withOpacity(0.4)
+                          : theme.dividerColor.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [accentColor.withOpacity(0.9), accentColor],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Icon(
+                      isPlayed
+                          ? Icons.emoji_events
+                          : (isUnlocked ? Icons.star : Icons.lock),
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          quiz.titre,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.school, size: 14, color: accentColor),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                quiz.formation.titre,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.6),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.trending_up,
+                              size: 14,
+                              color: accentColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              levelLabel,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurface.withOpacity(
+                                  0.7,
+                                ),
+                              ),
+                            ),
+                            // Mini stats si historique disponible
+                            // if (_quizHistory.isNotEmpty)
+                            //   ...(() {
+                            //     final h = _quizHistory.firstWhere(
+                            //       (qH) =>
+                            //           qH.quiz.id.toString() ==
+                            //           quiz.id.toString(),
+                            //       orElse:
+                            //           () => stats_model.QuizHistory(
+                            //             id: '',
+                            //             quiz: quiz,
+                            //             score: 0,
+                            //             completedAt: '',
+                            //             timeSpent: 0,
+                            //             totalQuestions: 0,
+                            //             correctAnswers: 0,
+                            //           ),
+                            //     );
+                            //     if (h.totalQuestions == 0) return <Widget>[];
+                            //     final percent =
+                            //         ((h.correctAnswers / h.totalQuestions) *
+                            //                 100)
+                            //             .round();
+                            //     return <Widget>[
+                            //         const SizedBox(width: 10),
+                            //         Container(
+                            //           padding: const EdgeInsets.symmetric(
+                            //             horizontal: 6,
+                            //             vertical: 2,
+                            //           ),
+                            //           decoration: BoxDecoration(
+                            //             color: Colors.blue.shade50,
+                            //             borderRadius: BorderRadius.circular(10),
+                            //           ),
+                            //           child: Text(
+                            //             '$percent% • ${h.correctAnswers}/${h.totalQuestions}',
+                            //             style: theme.textTheme.bodySmall
+                            //                 ?.copyWith(
+                            //                   color: Colors.blue.shade700,
+                            //                 ),
+                            //           ),
+                            //         ),
+                            //     ];
+                            //   }()),
+                          ],
+                        ),
+                        if (isPlayed)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6.0),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                children: [
+                                  OutlinedButton.icon(
+                                    onPressed:
+                                        () => _showQuizHistorySheet(quiz),
+                                    icon: const Icon(Icons.history, size: 16),
+                                    label: const Text('Historique'),
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 8,
+                                      ),
+                                      visualDensity: VisualDensity.compact,
+                                      side: BorderSide(
+                                        color: accentColor.withOpacity(0.6),
+                                      ),
+                                      foregroundColor: accentColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.chevron_right,
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                ],
+              ),
+            ),
+            if (!isUnlocked && !isPlayed)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.lock, size: 28, color: Colors.grey),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
   bool _isQuizUnlocked(int index) {
-    // Premier quiz toujours débloqué, les suivants si le précédent est joué
+    final list = _getDisplayQuizzes();
     if (index == 0) return true;
-    final prevQuiz = _quizzes[index - 1];
+    final prevQuiz = list[index - 1];
     return _playedQuizIds.contains(prevQuiz.id.toString());
   }
 
-  Widget _buildProgressBar(ThemeData theme) {
-    final completed =
-        _quizzes.where((q) => _playedQuizIds.contains(q.id.toString())).length;
-    final total = _quizzes.length;
-    final percent = total == 0 ? 0.0 : completed / total;
-    return Column(
-      children: [
-        Text(
-          'Progression : $completed / $total quiz complétés',
-          style: theme.textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 8),
-        LinearProgressIndicator(
-          value: percent,
-          minHeight: 8,
-          backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
-          color: theme.colorScheme.primary,
-        ),
-      ],
+  List<quiz_model.Quiz> _getDisplayQuizzes() {
+    if (_selectedFormationTitle == null) return [];
+    final full =
+        _allQuizzes
+            .where((q) => q.formation.titre == _selectedFormationTitle)
+            .toList();
+    // Trier: quiz déjà joués en haut, puis par ordre de progression
+    full.sort((a, b) {
+      final aPlayed = _playedQuizIds.contains(a.id.toString());
+      final bPlayed = _playedQuizIds.contains(b.id.toString());
+      if (aPlayed && !bPlayed) return -1;
+      if (!aPlayed && bPlayed) return 1;
+      // Si les deux sont joués ou non joués, garder l'ordre original
+      return 0;
+    });
+    if (_showAllForFormation) return full;
+    if (full.length > 10) return full.sublist(0, 10);
+    return full;
+  }
+
+  void _showFormationPicker() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        final items = [..._availableFormationTitles];
+        return ListView.separated(
+          shrinkWrap: true,
+          padding: const EdgeInsets.all(8),
+          itemBuilder: (_, i) {
+            final title = items[i];
+            final selected = (_selectedFormationTitle == title);
+            return ListTile(
+              leading: Icon(
+                Icons.school,
+                color: selected ? Theme.of(context).colorScheme.primary : null,
+              ),
+              title: Text(title),
+              trailing:
+                  selected
+                      ? Icon(
+                        Icons.check,
+                        color: Theme.of(context).colorScheme.primary,
+                      )
+                      : null,
+              onTap: () {
+                setState(() {
+                  _selectedFormationTitle = title;
+                  _showAllForFormation = false;
+                });
+                Navigator.pop(context);
+              },
+            );
+          },
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemCount: items.length,
+        );
+      },
+    );
+  }
+
+  int _effectiveListLength() {
+    if (_selectedFormationTitle == null) return 0;
+    final full =
+        _allQuizzes
+            .where((q) => q.formation.titre == _selectedFormationTitle)
+            .toList();
+    if (_showAllForFormation) return full.length;
+    return full.length > 10 ? 10 : full.length;
+  }
+
+  // Progress bar supprimée
+
+  void _showQuizHistorySheet(quiz_model.Quiz quiz) {
+    final attempts =
+        _quizHistory
+            .where((h) => h.quiz.id.toString() == quiz.id.toString())
+            .toList()
+          ..sort((a, b) {
+            // Most recent first by completedAt string parse
+            DateTime parseDate(String s) {
+              final d = DateTime.tryParse(s);
+              return d ?? DateTime.fromMillisecondsSinceEpoch(0);
+            }
+
+            return parseDate(b.completedAt).compareTo(parseDate(a.completedAt));
+          });
+    final latestAttempts = attempts.take(5).toList();
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        final theme = Theme.of(context);
+        if (attempts.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Historique - ${quiz.titre}',
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                const Text('Aucune tentative trouvée.'),
+              ],
+            ),
+          );
+        }
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.history),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Historique - ${quiz.titre}',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: latestAttempts.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (_, i) {
+                      final h = latestAttempts[i];
+                      final date = DateTime.tryParse(h.completedAt);
+                      final dateLabel =
+                          date != null
+                              ? '${date.day}/${date.month}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}'
+                              : h.completedAt;
+                      final rate =
+                          h.totalQuestions == 0
+                              ? 0
+                              : ((h.correctAnswers / h.totalQuestions) * 100)
+                                  .round();
+                      return ListTile(
+                        dense: true,
+                        leading: CircleAvatar(
+                          backgroundColor: theme.colorScheme.primary
+                              .withOpacity(0.1),
+                          foregroundColor: theme.colorScheme.primary,
+                          child: const Icon(Icons.quiz, size: 18),
+                        ),
+                        title: Text('$rate% • ${h.score} pts'),
+                        subtitle: Text(
+                          '$dateLabel • ${h.correctAnswers}/${h.totalQuestions} • ${h.timeSpent}s',
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
 
+class DailyMissionsSection extends StatelessWidget {
+  final GlobalKey? keyMission;
+  final int loginStreak;
+  final List<stats_model.QuizHistory> quizHistory;
+
+  const DailyMissionsSection({
+    Key? key,
+    this.keyMission,
+    required this.loginStreak,
+    required this.quizHistory,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              'Missions du jour',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Builder(
+            builder: (context) {
+              final mission1Completed = loginStreak >= 5;
+              final mission2Completed = quizHistory.length >= 2;
+              final starsTotal = quizHistory.fold(0, (sum, h) {
+                final percent =
+                    h.totalQuestions > 0
+                        ? (h.correctAnswers / h.totalQuestions) * 100
+                        : 0;
+                if (percent >= 100) return sum + 3;
+                if (percent >= 70) return sum + 2;
+                if (percent >= 40) return sum + 1;
+                return sum;
+              });
+              final mission3Completed = starsTotal >= 5;
+              final mission4Completed = quizHistory.any(
+                (h) => h.quiz.niveau.toLowerCase().contains('avanc'),
+              );
+
+              final List<Widget> pending = [];
+              if (!mission1Completed)
+                pending.add(
+                  Container(
+                    key: keyMission,
+                    child: MissionCard(
+                      mission: Mission(
+                        id: 1,
+                        title: 'Série de connexion',
+                        description:
+                            'Connecte-toi plusieurs jours d\'affilée pour gagner un badge.',
+                        type: 'daily',
+                        goal: 5,
+                        reward: 'Badge',
+                        progress: loginStreak,
+                        completed: mission1Completed,
+                        completedAt: null,
+                      ),
+                    ),
+                  ),
+                );
+              if (!mission2Completed)
+                pending.add(
+                  MissionCard(
+                    mission: Mission(
+                      id: 2,
+                      title: 'Réussir 2 quiz',
+                      description:
+                          'Complète 2 quiz aujourd\'hui pour gagner un badge.',
+                      type: 'daily',
+                      goal: 2,
+                      reward: 'Badge',
+                      progress:
+                          quizHistory.length >= 2 ? 2 : quizHistory.length,
+                      completed: mission2Completed,
+                      completedAt: null,
+                    ),
+                  ),
+                );
+              if (!mission3Completed)
+                pending.add(
+                  MissionCard(
+                    mission: Mission(
+                      id: 3,
+                      title: 'Obtenir 5 étoiles',
+                      description: 'Cumule 5 étoiles sur tes quiz.',
+                      type: 'daily',
+                      goal: 5,
+                      reward: 'Badge',
+                      progress: starsTotal,
+                      completed: mission3Completed,
+                      completedAt: null,
+                    ),
+                  ),
+                );
+              if (!mission4Completed)
+                pending.add(
+                  MissionCard(
+                    mission: Mission(
+                      id: 4,
+                      title: 'Jouer un quiz difficile',
+                      description: 'Termine un quiz de niveau avancé.',
+                      type: 'daily',
+                      goal: 1,
+                      reward: 'Points',
+                      progress: mission4Completed ? 1 : 0,
+                      completed: mission4Completed,
+                      completedAt: null,
+                    ),
+                  ),
+                );
+
+              if (pending.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.celebration, color: Colors.green),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Toutes les missions du jour sont complétées !',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return Column(children: [...pending, const SizedBox(height: 24)]);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 // Widget animé pour rebond sur l'icône du quiz complété
 class _AnimatedQuizStep extends StatefulWidget {
@@ -864,7 +1421,8 @@ class _AnimatedQuizStep extends StatefulWidget {
   State<_AnimatedQuizStep> createState() => _AnimatedQuizStepState();
 }
 
-class _AnimatedQuizStepState extends State<_AnimatedQuizStep> with SingleTickerProviderStateMixin {
+class _AnimatedQuizStepState extends State<_AnimatedQuizStep>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnim;
 
@@ -911,7 +1469,10 @@ class _AnimatedQuizStepState extends State<_AnimatedQuizStep> with SingleTickerP
           widget.label,
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: widget.isUnlocked ? Theme.of(context).colorScheme.onSurface : Colors.grey,
+            color:
+                widget.isUnlocked
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Colors.grey,
           ),
         ),
       ],

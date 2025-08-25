@@ -66,9 +66,10 @@ class ContactRepository {
     List<PlatformFile>? attachments,
   }) async {
     try {
+      // Créer FormData pour le multipart
       final formData = FormData();
 
-      // Add simple fields
+      // Ajouter les champs simples
       formData.fields.addAll([
         MapEntry('email', email),
         MapEntry('subject', subject),
@@ -76,13 +77,13 @@ class ContactRepository {
         MapEntry('message', message),
       ]);
 
-      // Add attachments
+      // Ajouter les pièces jointes si elles existent
       if (attachments != null && attachments.isNotEmpty) {
         for (var file in attachments) {
           if (file.bytes != null) {
             formData.files.add(
               MapEntry(
-                'attachments[]', // Use 'attachments[]' for multiple files
+                'attachments', // Même nom pour tous les fichiers
                 MultipartFile.fromBytes(
                   file.bytes!,
                   filename: file.name,
@@ -92,7 +93,7 @@ class ContactRepository {
           } else if (file.path != null) {
             formData.files.add(
               MapEntry(
-                'attachments[]', // Use 'attachments[]' for multiple files
+                'attachments', // Même nom pour tous les fichiers
                 await MultipartFile.fromFile(
                   file.path!,
                   filename: file.name,
@@ -103,7 +104,7 @@ class ContactRepository {
         }
       }
 
-      // Send the request
+      // Envoyer la requête via ApiClient
       await apiClient.post(
         '/contact',
         data: formData,

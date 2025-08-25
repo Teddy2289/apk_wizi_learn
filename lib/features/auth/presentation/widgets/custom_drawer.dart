@@ -6,6 +6,11 @@ import 'package:wizi_learn/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_event.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_state.dart';
 import '../../../../core/constants/route_constants.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:dio/dio.dart';
+import 'package:wizi_learn/features/auth/data/repositories/avatar_repository.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/intl.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
@@ -26,7 +31,10 @@ class CustomDrawer extends StatelessWidget {
               if (state is Authenticated) {
                 return Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.only(top: 30, bottom: 20), // Hauteur réduite
+                  padding: const EdgeInsets.only(
+                    top: 30,
+                    bottom: 20,
+                  ), // Hauteur réduite
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -39,40 +47,105 @@ class CustomDrawer extends StatelessWidget {
                   ),
                   child: SafeArea(
                     child: Column(
-                      mainAxisSize: MainAxisSize.min, // Pour éviter l'expansion inutile
+                      mainAxisSize:
+                          MainAxisSize.min, // Pour éviter l'expansion inutile
                       children: [
                         // Avatar agrandi avec moins de marge
-                        Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 10,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
+                        GestureDetector(
+                          onTap: () async {
+                            final picker = ImagePicker();
+                            final pickedFile = await picker.pickImage(
+                              source: ImageSource.gallery,
+                            );
+                            if (pickedFile != null) {
+                              try {
+                                final token = await _getToken(context);
+                                final avatarRepo = AvatarRepository(dio: Dio());
+                                final success = await avatarRepo
+                                    .uploadUserPhoto(pickedFile.path, token);
+                                if (success) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Photo de profil mise à jour !',
+                                        ),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                    // Ajoute ici le rafraîchissement de l'utilisateur
+                                    context.read<AuthBloc>().add(
+                                      RefreshUserRequested(),
+                                    );
+                                  }
+                                } else {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Erreur lors de la mise à jour de la photo.',
+                                        ),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              } on DioException catch (e) {
+                                String errorMessage =
+                                    'Erreur lors de l\'upload';
+                                if (e.response?.statusCode == 422) {
+                                  errorMessage =
+                                      'Format de fichier non supporté ou fichier trop volumineux';
+                                } else if (e.response?.statusCode == 401) {
+                                  errorMessage =
+                                      'Session expirée, veuillez vous reconnecter';
+                                } else if (e.response?.statusCode == 500) {
+                                  errorMessage =
+                                      'Erreur serveur, veuillez réessayer';
+                                }
+
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(errorMessage),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Erreur inattendue: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            }
+                          },
                           child: CircleAvatar(
                             radius: 50, // Taille augmentée (était 40)
                             backgroundColor: Colors.white,
-                            backgroundImage: state.user.image != null
-                                ? CachedNetworkImageProvider(
-                              AppConstants.getUserImageUrl(state.user.image!),
-                            )
-                                : null,
-                            child: state.user.image == null
-                                ? Text(
-                              state.user.name[0].toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 40, // Taille augmentée
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            )
-                                : null,
+                            backgroundImage:
+                                state.user.image != null
+                                    ? CachedNetworkImageProvider(
+                                      AppConstants.getUserImageUrl(
+                                        state.user.image!,
+                                      ),
+                                    )
+                                    : null,
+                            child:
+                                state.user.image == null
+                                    ? Text(
+                                      state.user.name[0].toUpperCase(),
+                                      style: const TextStyle(
+                                        fontSize: 40, // Taille augmentée
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    )
+                                    : null,
                           ),
                         ),
                         const SizedBox(height: 12), // Marge réduite (était 16)
@@ -92,13 +165,16 @@ class CustomDrawer extends StatelessWidget {
                                       color: Colors.black45,
                                       blurRadius: 2,
                                       offset: Offset(1, 1),
-                                    )],
+                                    ),
+                                  ],
                                 ),
                                 textAlign: TextAlign.center,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 4), // Marge réduite (était 6)
+                              const SizedBox(
+                                height: 4,
+                              ), // Marge réduite (était 6)
                               Text(
                                 state.user.email,
                                 style: TextStyle(
@@ -124,7 +200,10 @@ class CustomDrawer extends StatelessWidget {
                 );
               }
               return Container(
-                padding: const EdgeInsets.only(top: 30, bottom: 20), // Hauteur réduite
+                padding: const EdgeInsets.only(
+                  top: 30,
+                  bottom: 20,
+                ), // Hauteur réduite
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -195,6 +274,16 @@ class CustomDrawer extends StatelessWidget {
                         icon: Icons.quiz,
                         label: 'Mes Quiz',
                         route: RouteConstants.quiz,
+                      ),
+                      _MenuItem(
+                        icon: Icons.phone,
+                        label: 'Mes Contacts',
+                        route: RouteConstants.contact,
+                      ),
+                      _MenuItem(
+                        icon: Icons.emoji_events,
+                        label: 'Mes Badges',
+                        route: RouteConstants.achievement,
                       ),
                     ],
                   ),
@@ -268,6 +357,12 @@ class CustomDrawer extends StatelessWidget {
   // Les méthodes _buildInfoCard, _buildInfoTile, _buildMenuSection et _buildDrawerItem restent inchangées...
   Widget _buildInfoCard(BuildContext context, Authenticated state) {
     final theme = Theme.of(context);
+    String formatDate(String? s) {
+      if (s == null || s.isEmpty) return '-';
+      final d = DateTime.tryParse(s);
+      if (d == null) return s;
+      return DateFormat('dd/MM/yyyy').format(d);
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -295,26 +390,74 @@ class CustomDrawer extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _buildInfoTile(
+                icon: Icons.badge,
+                title: 'Prénom',
+                value: state.user.stagiaire?.prenom ?? '-',
+              ),
+              _buildInfoTile(
                 icon: Icons.person,
-                title: 'Identité',
-                value:
-                '${state.user.stagiaire!.civilite} ${state.user.stagiaire!.prenom}',
+                title: 'Nom',
+                value: state.user.name,
               ),
-              _buildInfoTile(
-                icon: Icons.phone,
-                title: 'Téléphone',
-                value: state.user.stagiaire!.telephone,
-              ),
-              _buildInfoTile(
-                icon: Icons.location_on,
-                title: 'Adresse',
-                value:
-                '${state.user.stagiaire!.adresse}, ${state.user.stagiaire!.codePostal} ${state.user.stagiaire!.ville}',
-              ),
-              _buildInfoTile(
-                icon: Icons.calendar_today,
-                title: 'Formation depuis',
-                value: state.user.stagiaire!.dateDebutFormation,
+              // Bloc dépliable avec l'email comme déclencheur
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: EdgeInsets.zero,
+                title: Row(
+                  children: [
+                    const Icon(Icons.email, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        state.user.email,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Voir plus',
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                children: [
+                  _buildInfoTile(
+                    icon: Icons.phone,
+                    title: 'Téléphone',
+                    value: state.user.stagiaire?.telephone ?? '-',
+                  ),
+                  _buildInfoTile(
+                    icon: Icons.home,
+                    title: 'Adresse',
+                    value: state.user.stagiaire?.adresse ?? '-',
+                  ),
+                  _buildInfoTile(
+                    icon: Icons.location_city,
+                    title: 'Ville',
+                    value: state.user.stagiaire?.ville ?? '-',
+                  ),
+                  _buildInfoTile(
+                    icon: Icons.markunread_mailbox,
+                    title: 'Code postal',
+                    value: state.user.stagiaire?.codePostal ?? '-',
+                  ),
+                  // Ne pas afficher la date de naissance
+                  _buildInfoTile(
+                    icon: Icons.rocket_launch,
+                    title: 'Date de lancement',
+                    value: formatDate(state.user.stagiaire?.dateDebutFormation),
+                  ),
+                  _buildInfoTile(
+                    icon: Icons.shopping_bag,
+                    title: 'Date de vente',
+                    value: formatDate(state.user.stagiaire?.dateInscription),
+                  ),
+                ],
               ),
             ],
           ),
@@ -360,10 +503,10 @@ class CustomDrawer extends StatelessWidget {
   }
 
   Widget _buildMenuSection(
-      BuildContext context, {
-        required String title,
-        required List<_MenuItem> items,
-      }) {
+    BuildContext context, {
+    required String title,
+    required List<_MenuItem> items,
+  }) {
     final theme = Theme.of(context);
 
     return Padding(
@@ -383,7 +526,7 @@ class CustomDrawer extends StatelessWidget {
             ),
           ),
           ...items.map(
-                (item) => _buildDrawerItem(
+            (item) => _buildDrawerItem(
               context,
               icon: item.icon,
               label: item.label,
@@ -398,12 +541,12 @@ class CustomDrawer extends StatelessWidget {
   }
 
   Widget _buildDrawerItem(
-      BuildContext context, {
-        required IconData icon,
-        required String label,
-        required VoidCallback onTap,
-        Color? iconColor,
-      }) {
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color? iconColor,
+  }) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
 
@@ -464,4 +607,10 @@ class _MenuItem {
   final String route;
 
   _MenuItem({required this.icon, required this.label, required this.route});
+}
+
+// Helper pour récupérer le token (à adapter selon ta logique d'authentification)
+Future<String> _getToken(BuildContext context) async {
+  final storage = const FlutterSecureStorage();
+  return await storage.read(key: 'auth_token') ?? '';
 }

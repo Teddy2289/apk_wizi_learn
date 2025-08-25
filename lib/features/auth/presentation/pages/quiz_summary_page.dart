@@ -1,19 +1,17 @@
-import 'package:confetti/confetti.dart';
-import 'package:flutter/material.dart';
-import 'package:wizi_learn/features/auth/data/models/question_model.dart';
-import 'package:wizi_learn/features/auth/presentation/components/quiz_question_card.dart';
-import 'package:wizi_learn/features/auth/presentation/components/quiz_score_header.dart';
-import 'package:wizi_learn/features/auth/presentation/pages/dashboard_page.dart';
 import 'dart:math';
-
-import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
-import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
+import 'package:wizi_learn/core/network/api_client.dart';
+import 'package:confetti/confetti.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:wizi_learn/features/auth/data/models/achievement_model.dart';
+import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/achievement_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/dashboard_page.dart';
+import 'package:wizi_learn/features/auth/presentation/components/quiz_question_card.dart';
+import 'package:wizi_learn/features/auth/presentation/components/quiz_score_header.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_widget.dart';
-import 'package:dio/dio.dart';
-
-import 'package:wizi_learn/features/auth/data/models/achievement_model.dart';
 
 class QuizSummaryPage extends StatefulWidget {
   final List<Question> questions;
@@ -58,23 +56,53 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
         _showCongratulationDialog();
       });
     }
-    // Récupérer les nouveaux badges débloqués après le quiz
-    _fetchNewAchievements();
+
+    // If backend returned new achievements in quizResult, show them immediately
+    final serverNew =
+        (widget.quizResult?['newAchievements'] as List?) ??
+        (widget.quizResult?['new_achievements'] as List?) ??
+        [];
+    if (serverNew.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showBadgePopup(
+          serverNew
+              .map((e) => Achievement.fromJson(e as Map<String, dynamic>))
+              .toList(),
+        );
+      });
+    } else {
+      _fetchNewAchievements();
+    }
   }
 
   Future<void> _fetchNewAchievements() async {
-    final repo = AchievementRepository(dio: Dio());
-    final achievements = await repo.getUserAchievements();
-    // Filtrer les badges débloqués récemment (ex: aujourd'hui)
-    final today = DateTime.now();
-    final newOnes = achievements.where((a) => a.unlockedAt != null &&
-      a.unlockedAt!.year == today.year &&
-      a.unlockedAt!.month == today.month &&
-      a.unlockedAt!.day == today.day).toList();
-    if (newOnes.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showBadgePopup(newOnes);
-      });
+    final dio = Dio();
+    final storage = const FlutterSecureStorage();
+    final apiClient = ApiClient(dio: dio, storage: storage);
+    final repo = AchievementRepository(apiClient: apiClient);
+
+    try {
+      final achievements = await repo.getUserAchievements();
+
+      final today = DateTime.now();
+      final newOnes =
+          achievements
+              .where(
+                (a) =>
+                    a.unlockedAt != null &&
+                    a.unlockedAt!.year == today.year &&
+                    a.unlockedAt!.month == today.month &&
+                    a.unlockedAt!.day == today.day,
+              )
+              .toList();
+
+      if (newOnes.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showBadgePopup(newOnes);
+        });
+      }
+    } catch (e) {
+      debugPrint("Erreur récupération nouveaux badges: $e");
     }
   }
 
@@ -84,7 +112,9 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
       barrierDismissible: true,
       builder: (context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -92,12 +122,20 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
               children: [
                 const Icon(Icons.emoji_events, color: Colors.amber, size: 48),
                 const SizedBox(height: 16),
-                Text('Nouveau badge débloqué !', style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  'Nouveau badge débloqué !',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 const SizedBox(height: 16),
-                ...badges.map((badge) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: AchievementBadgeWidget(achievement: badge, unlocked: true),
-                )),
+                ...badges.map(
+                  (badge) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: AchievementBadgeWidget(
+                      achievement: badge,
+                      unlocked: true,
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.emoji_events),
@@ -105,7 +143,9 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
                   onPressed: () {
                     Navigator.of(context).pop();
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const AchievementPage()),
+                      MaterialPageRoute(
+                        builder: (_) => const AchievementPage(),
+                      ),
                     );
                   },
                 ),
@@ -158,7 +198,6 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
                 ),
                 onPressed: () {
                   Navigator.of(context).pop();
-                  // _showSuccessDialog removed as unused
                 },
                 child: const Text('Continuer'),
               ),
@@ -190,6 +229,32 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
         title: const Text("Récapitulatif du Quiz"),
         centerTitle: true,
         actions: [
+          // Indicateur pour les résultats locaux
+          if (widget.quizResult?['isLocal'] == true)
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.orange, width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.warning, size: 16, color: Colors.orange),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Local',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.orange,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.list),
             tooltip: 'Retour à la liste des quiz',
@@ -205,10 +270,36 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
               QuizScoreHeader(
                 score: calculatedScore,
                 correctAnswers: calculatedCorrectAnswers,
-                totalQuestions:
-                    answeredQuestions.length, // Utiliser le nouveau total
+                totalQuestions: answeredQuestions.length,
                 timeSpent: widget.timeSpent,
               ),
+              // Message d'information pour les résultats locaux
+              if (widget.quizResult?['isLocal'] == true)
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Ces résultats sont calculés localement car la soumission au serveur a échoué. '
+                          'Ils ne sont pas sauvegardés.',
+                          style: TextStyle(
+                            color: Colors.orange.shade800,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.all(8),
@@ -255,22 +346,26 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
           FloatingActionButton(
             heroTag: 'restart_quiz',
             onPressed: () {
-              debugPrint('Quiz ID to scroll to: ${widget.quizResult?['quizId']}');
+              debugPrint(
+                'Quiz ID to scroll to: ${widget.quizResult?['quizId']}',
+              );
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => DashboardPage(
-                    initialIndex: 2,
-                    arguments: {
-                      'selectedTabIndex': 2,
-                      'scrollToQuizId': widget.quizResult?['quizId'].toString(),
-                      'fromNotification': true,
-                      'useCustomScaffold': true,
-                      'scrollToPlayed': true,
-                    },
-                  ),
+                  builder:
+                      (context) => DashboardPage(
+                        initialIndex: 2,
+                        arguments: {
+                          'selectedTabIndex': 2,
+                          'scrollToQuizId':
+                              widget.quizResult?['quizId']?.toString(),
+                          'fromNotification': true,
+                          'useCustomScaffold': true,
+                          'scrollToPlayed': true,
+                        },
+                      ),
                 ),
-                    (route) => false,
+                (route) => false,
               );
             },
             tooltip: 'Retour aux quiz',

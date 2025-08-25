@@ -11,6 +11,7 @@ import 'package:wizi_learn/features/auth/presentation/widgets/quiz_stats_widget.
 import 'package:share_plus/share_plus.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});
@@ -114,7 +115,7 @@ class _RankingPageState extends State<RankingPage>
           TargetContent(
             align: ContentAlign.bottom,
             child: const Text(
-              'Navigue entre Statistiques, Classement et Historique.',
+              'Navigue entre Classement, Statistiques et Historique.',
               style: TextStyle(color: Colors.white, fontSize: 18),
             ),
           ),
@@ -196,8 +197,8 @@ class _RankingPageState extends State<RankingPage>
           key: _keyTabBar,
           controller: _tabController,
           tabs: const [
-            Tab(icon: Icon(Icons.assessment), text: 'Statistiques'),
             Tab(icon: Icon(Icons.leaderboard), text: 'Classement'),
+            Tab(icon: Icon(Icons.assessment), text: 'Statistiques'),
             Tab(icon: Icon(Icons.history), text: 'Historique'),
           ],
           labelColor: AppColors.accent,
@@ -231,7 +232,18 @@ class _RankingPageState extends State<RankingPage>
           IconButton(
             icon: const Icon(Icons.help_outline),
             tooltip: 'Voir le tutoriel',
-            onPressed: _showTutorial,
+            onPressed:
+                () => showStandardHelpDialog(
+                  context,
+                  title: 'Comment utiliser cette page ?',
+                  steps: const [
+                    '1. Naviguez entre Classement, Statistiques et Historique via les onglets.',
+                    '2. Consultez le podium et votre position dans la liste.',
+                    '3. Dans Statistiques, explorez vos performances et votre progression.',
+                    '4. Dans Historique, retrouvez vos quiz passés.',
+                    '5. Utilisez le bouton Partager pour défier vos amis.',
+                  ],
+                ),
           ),
         ],
       ),
@@ -263,8 +275,8 @@ class _RankingPageState extends State<RankingPage>
               : TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildStatsTab(),
                   _buildRankingTab(),
+                  _buildStatsTab(),
                   _buildHistoryTab(),
                 ],
               ),

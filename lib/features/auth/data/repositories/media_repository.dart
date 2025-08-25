@@ -10,7 +10,9 @@ class MediaRepository {
   MediaRepository({required this.apiClient});
 
   Future<List<Media>> getAstuces(int formationId) async {
-    final response = await apiClient.get(AppConstants.astucesByFormation(formationId));
+    final response = await apiClient.get(
+      AppConstants.astucesByFormation(formationId),
+    );
     print('Astuces reçues : ${response.data}');
 
     if (response.data is List) {
@@ -22,13 +24,17 @@ class MediaRepository {
   }
 
   Future<List<Media>> getTutoriels(int formationId) async {
-    final response = await apiClient.get(AppConstants.tutorielsByFormation(formationId));
+    final response = await apiClient.get(
+      AppConstants.tutorielsByFormation(formationId),
+    );
     print('Tutoriels reçus : ${response.data}');
 
     if (response.data is List) {
       return (response.data as List).map((e) => Media.fromJson(e)).toList();
     } else {
-      print('⚠ La réponse des tutoriels n’est pas une liste : ${response.data}');
+      print(
+        '⚠ La réponse des tutoriels n’est pas une liste : ${response.data}',
+      );
       return [];
     }
   }
@@ -47,12 +53,31 @@ class MediaRepository {
     try {
       final response = await apiClient.post(
         '/medias/$mediaId/watched',
-        data: {}, // Pas besoin de body car le backend récupère le stagiaire du token
+        data:
+            {}, // Pas besoin de body car le backend récupère le stagiaire du token
       );
       return response.data['success'] == true;
     } catch (e) {
       debugPrint("Erreur lors du marquage comme vu: $e");
       return false;
+    }
+  }
+
+  // New helper: return full server payload to access newAchievements
+  Future<Map<String, dynamic>> markMediaAsWatchedWithResponse(
+    int mediaId,
+  ) async {
+    try {
+      final response = await apiClient.post(
+        '/medias/$mediaId/watched',
+        data: {},
+      );
+      return (response.data is Map<String, dynamic>)
+          ? response.data as Map<String, dynamic>
+          : {'success': false};
+    } catch (e) {
+      debugPrint('Erreur lors du marquage comme vu (avec réponse): $e');
+      return {'success': false};
     }
   }
 
