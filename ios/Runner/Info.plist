@@ -49,5 +49,7 @@
     <string>NO</string>
     <key>FirebaseAutomaticScreenReportingEnabled</key>
     <string>NO</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Cette application nécessite l'accès au réseau local pour le débogage et la communication avec d'autres appareils.</string>
 </dict>
 </plist>
