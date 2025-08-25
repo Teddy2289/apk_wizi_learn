@@ -8,6 +8,8 @@ class RouteConstants {
   static const String classement = '/classement';
   static const String myStatistics = '/mesStatistics';
   static const String myProgress = '/mesProgressions';
+  static const String mescontact = '/mescontact';
+
   static const String myResults = '/mesResultats';
   static const String myTrainings = '/mesFormations';
   static const String quizResult = '/quiz-result';

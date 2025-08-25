@@ -63,7 +63,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     _sessionManager.currentQuestionIndex.addListener(_syncPageController);
 
     // Démarrer les tutoriels de glissement
-    _startSwipeTutorials();
+    // _startSwipeTutorials();
   }
 
   void _goToNextQuestionOnTimerEnd() {

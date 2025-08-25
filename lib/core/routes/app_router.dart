@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/contact_faq_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/dashboard_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/faq_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/formation_stagiaire_page.dart';
@@ -76,9 +77,12 @@ class AppRouter {
 
       case RouteConstants.contact:
         return MaterialPageRoute(
+          builder: (_) => const ContactFaqPage(),
+        );
+      case RouteConstants.mescontact:
+        return MaterialPageRoute(
           builder: (_) => const ContactPage(contacts: []),
         );
-
       case RouteConstants.terms:
         return MaterialPageRoute(builder: (_) => const TermsPage());
 
