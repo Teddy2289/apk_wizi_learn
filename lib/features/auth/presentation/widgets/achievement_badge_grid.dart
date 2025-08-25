@@ -5,7 +5,11 @@ import 'achievement_badge_widget.dart';
 class AchievementBadgeGrid extends StatelessWidget {
   final List<Achievement> achievements;
   final Key? keyFirstBadge;
-  const AchievementBadgeGrid({Key? key, required this.achievements, this.keyFirstBadge}) : super(key: key);
+  const AchievementBadgeGrid({
+    Key? key,
+    required this.achievements,
+    this.keyFirstBadge,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +30,10 @@ class AchievementBadgeGrid extends StatelessWidget {
         return AchievementBadgeWidget(
           achievement: achievement,
           unlocked: unlocked,
+          colored: true,
           key: index == 0 ? keyFirstBadge : null,
         );
       },
     );
   }
-} 
+}

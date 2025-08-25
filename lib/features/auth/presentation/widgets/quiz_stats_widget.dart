@@ -8,97 +8,345 @@ class QuizStatsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSmallScreen = MediaQuery.of(context).size.width < 600;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
+
     // Sécurisation des valeurs
-    final totalQuizzes = (stats.totalQuizzes is int && stats.totalQuizzes > 0) ? stats.totalQuizzes : 0;
-    final totalPoints = (stats.totalPoints is int && stats.totalPoints >= 0) ? stats.totalPoints : 0;
-    final averageScore = (stats.averageScore is double && stats.averageScore >= 0) ? stats.averageScore : 0.0;
+    final totalQuizzes = stats.totalQuizzes > 0 ? stats.totalQuizzes : 0;
+    final totalPoints = stats.totalPoints >= 0 ? stats.totalPoints : 0;
+    final averageScore = stats.averageScore >= 0 ? stats.averageScore : 0.0;
+
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
         child: Column(
           children: [
+            // Bloc performance global - design sobre
             Card(
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              color: Theme.of(context).colorScheme.surfaceVariant,
+              color: Theme.of(context).colorScheme.surface,
               child: Padding(
-                padding: const EdgeInsets.all(16), // Réduit de 20 à 16
+                padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Vos Performances',
+                      'Vos performances',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Theme.of(context).primaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: isSmallScreen ? 18 : 20,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w700,
+                        fontSize:
+                            isSmallScreen
+                                ? 18
+                                : isMediumScreen
+                                ? 20
+                                : 22,
                       ),
                     ),
                     const SizedBox(height: 12),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+
+                    // Stat cards adaptatives et interactives
+                    if (isSmallScreen) ...[
+                      Column(
                         children: [
                           _buildCompactStatCard(
                             context,
                             Icons.assignment_turned_in,
                             'Quiz complétés',
                             totalQuizzes > 0 ? totalQuizzes.toString() : '0',
-                            Colors.blueAccent,
+                            Theme.of(context).colorScheme.primary,
+                            isSmallScreen: true,
+                            onTap:
+                                () => _showInfoSheet(
+                                  context,
+                                  'Quiz complétés',
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _buildSheetRow('Total', '$totalQuizzes'),
+                                      _buildSheetRow(
+                                        'Score moyen',
+                                        '${averageScore.toStringAsFixed(1)}%',
+                                      ),
+                                      _buildSheetRow(
+                                        'Points totaux',
+                                        totalPoints.toString(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(height: 12),
                           _buildCompactStatCard(
                             context,
                             Icons.star_rate_rounded,
                             'Score moyen',
-                            totalQuizzes > 0 ? '${averageScore.toStringAsFixed(1)}%' : '-',
-                            Colors.amber,
+                            totalQuizzes > 0
+                                ? '${averageScore.toStringAsFixed(1)}%'
+                                : '-',
+                            Colors.amber.shade700,
+                            isSmallScreen: true,
+                            onTap:
+                                () => _showInfoSheet(
+                                  context,
+                                  'Score moyen',
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _buildSheetRow(
+                                        'Score moyen',
+                                        totalQuizzes > 0
+                                            ? '${averageScore.toStringAsFixed(1)}%'
+                                            : '-',
+                                      ),
+                                      _buildSheetRow(
+                                        'Quiz complétés',
+                                        '$totalQuizzes',
+                                      ),
+                                    ],
+                                  ),
+                                ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(height: 12),
                           _buildCompactStatCard(
                             context,
                             Icons.bolt_rounded,
                             'Points totaux',
                             totalPoints > 0 ? totalPoints.toString() : '0',
-                            Colors.greenAccent,
+                            Colors.green.shade700,
+                            isSmallScreen: true,
+                            onTap:
+                                () => _showInfoSheet(
+                                  context,
+                                  'Points totaux',
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _buildSheetRow(
+                                        'Points totaux',
+                                        totalPoints.toString(),
+                                      ),
+                                      _buildSheetRow(
+                                        'Quiz complétés',
+                                        '$totalQuizzes',
+                                      ),
+                                    ],
+                                  ),
+                                ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-            // Category stats
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              color: Theme.of(context).colorScheme.surfaceVariant,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Par Catégorie',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Theme.of(context).primaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: isSmallScreen ? 18 : 20,
+                    ] else if (isMediumScreen) ...[
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildCompactStatCard(
+                              context,
+                              Icons.assignment_turned_in,
+                              'Quiz complétés',
+                              totalQuizzes > 0 ? totalQuizzes.toString() : '0',
+                              Theme.of(context).colorScheme.primary,
+                              isSmallScreen: false,
+                              onTap:
+                                  () => _showInfoSheet(
+                                    context,
+                                    'Quiz complétés',
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        _buildSheetRow(
+                                          'Total',
+                                          '$totalQuizzes',
+                                        ),
+                                        _buildSheetRow(
+                                          'Score moyen',
+                                          '${averageScore.toStringAsFixed(1)}%',
+                                        ),
+                                        _buildSheetRow(
+                                          'Points totaux',
+                                          totalPoints.toString(),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                            ),
+                            const SizedBox(width: 16),
+                            _buildCompactStatCard(
+                              context,
+                              Icons.star_rate_rounded,
+                              'Score moyen',
+                              totalQuizzes > 0
+                                  ? '${averageScore.toStringAsFixed(1)}%'
+                                  : '-',
+                              Colors.amber.shade700,
+                              isSmallScreen: false,
+                              onTap:
+                                  () => _showInfoSheet(
+                                    context,
+                                    'Score moyen',
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        _buildSheetRow(
+                                          'Score moyen',
+                                          totalQuizzes > 0
+                                              ? '${averageScore.toStringAsFixed(1)}%'
+                                              : '-',
+                                        ),
+                                        _buildSheetRow(
+                                          'Quiz complétés',
+                                          '$totalQuizzes',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                            ),
+                            const SizedBox(width: 16),
+                            _buildCompactStatCard(
+                              context,
+                              Icons.bolt_rounded,
+                              'Points totaux',
+                              totalPoints > 0 ? totalPoints.toString() : '0',
+                              Colors.green.shade700,
+                              isSmallScreen: false,
+                              onTap:
+                                  () => _showInfoSheet(
+                                    context,
+                                    'Points totaux',
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        _buildSheetRow(
+                                          'Points totaux',
+                                          totalPoints.toString(),
+                                        ),
+                                        _buildSheetRow(
+                                          'Quiz complétés',
+                                          '$totalQuizzes',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    ...stats.categoryStats.map(
-                      (category) => _buildCategoryItem(context, category),
-                    ),
+                    ] else ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Expanded(
+                            child: _buildCompactStatCard(
+                              context,
+                              Icons.assignment_turned_in,
+                              'Quiz complétés',
+                              totalQuizzes > 0 ? totalQuizzes.toString() : '0',
+                              Theme.of(context).colorScheme.primary,
+                              isSmallScreen: false,
+                              onTap:
+                                  () => _showInfoSheet(
+                                    context,
+                                    'Quiz complétés',
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        _buildSheetRow(
+                                          'Total',
+                                          '$totalQuizzes',
+                                        ),
+                                        _buildSheetRow(
+                                          'Score moyen',
+                                          '${averageScore.toStringAsFixed(1)}%',
+                                        ),
+                                        _buildSheetRow(
+                                          'Points totaux',
+                                          totalPoints.toString(),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: _buildCompactStatCard(
+                              context,
+                              Icons.star_rate_rounded,
+                              'Score moyen',
+                              totalQuizzes > 0
+                                  ? '${averageScore.toStringAsFixed(1)}%'
+                                  : '-',
+                              Colors.amber.shade700,
+                              isSmallScreen: false,
+                              onTap:
+                                  () => _showInfoSheet(
+                                    context,
+                                    'Score moyen',
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        _buildSheetRow(
+                                          'Score moyen',
+                                          totalQuizzes > 0
+                                              ? '${averageScore.toStringAsFixed(1)}%'
+                                              : '-',
+                                        ),
+                                        _buildSheetRow(
+                                          'Quiz complétés',
+                                          '$totalQuizzes',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: _buildCompactStatCard(
+                              context,
+                              Icons.bolt_rounded,
+                              'Points totaux',
+                              totalPoints > 0 ? totalPoints.toString() : '0',
+                              Colors.green.shade700,
+                              isSmallScreen: false,
+                              onTap:
+                                  () => _showInfoSheet(
+                                    context,
+                                    'Points totaux',
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        _buildSheetRow(
+                                          'Points totaux',
+                                          totalPoints.toString(),
+                                        ),
+                                        _buildSheetRow(
+                                          'Quiz complétés',
+                                          '$totalQuizzes',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -106,24 +354,24 @@ class QuizStatsWidget extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // Level progress
+            // Level progress sobres et interactives
             Card(
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              color: Theme.of(context).colorScheme.surfaceVariant,
+              color: Theme.of(context).colorScheme.surface,
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Progression par Niveau',
+                      'Progression par niveau',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Theme.of(context).primaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: isSmallScreen ? 18 : 20,                      ),
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _buildLevelProgress(context, stats.levelProgress),
@@ -137,165 +385,90 @@ class QuizStatsWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(
+  // Version compacte interactive des cartes de statistiques
+  Widget _buildCompactStatCard(
     BuildContext context,
     IconData icon,
     String title,
     String value,
-    Color color,
-  ) {
+    Color color, {
+    bool isSmallScreen = false,
+    VoidCallback? onTap,
+  }) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    final isTablet = screenWidth >= 600 && screenWidth < 900;
+
+    // Calcul des dimensions adaptatives
+    final cardWidth =
+        isMobile
+            ? double.infinity
+            : isTablet
+            ? 140.0
+            : 160.0;
+    final cardPadding = isMobile ? 16.0 : 20.0;
+    final iconSize = isMobile ? 28.0 : 32.0;
+    final titleFontSize = isMobile ? 14.0 : 16.0;
+    final valueFontSize = isMobile ? 18.0 : 20.0;
+
     return Container(
+      width: cardWidth,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryItem(BuildContext context, CategoryStat category) {
-    final total = (stats.totalQuizzes is int && stats.totalQuizzes > 0) ? stats.totalQuizzes : 0;
-    final quizCount = (category.quizCount is int && category.quizCount >= 0) ? category.quizCount : 0;
-    final avg = (category.averageScore is double && category.averageScore >= 0) ? category.averageScore : 0.0;
-    final percentage = total > 0 ? (quizCount / total * 100).toStringAsFixed(1) : '0.0';
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.all(cardPadding),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                category.category,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+              Container(
+                padding: EdgeInsets.all(isMobile ? 12 : 16),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: iconSize),
               ),
+              SizedBox(height: isMobile ? 12 : 16),
               Text(
-                '$percentage%',
+                value,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: valueFontSize,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                title,
+                textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: total > 0 ? quizCount / total : 0.0,
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(4),
-            minHeight: 8,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '$quizCount quiz',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontSize: titleFontSize,
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
+                  ).colorScheme.onSurface.withOpacity(0.7),
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              Text(
-                'Moyenne: ${avg.toStringAsFixed(1)}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
+              if (onTap != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.touch_app, size: 16),
+                    SizedBox(width: 6),
+                    Text('En savoir plus', style: TextStyle(fontSize: 12)),
+                  ],
                 ),
-              ),
+              ],
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-
-// Version compacte des cartes de statistiques
-  Widget _buildCompactStatCard(
-      BuildContext context,
-      IconData icon,
-      String title,
-      String value,
-      Color color,
-      ) {
-    return Container(
-      width: 120, // Largeur fixe pour uniformité
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
-            maxLines: 2,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -303,25 +476,56 @@ class QuizStatsWidget extends StatelessWidget {
   Widget _buildLevelProgress(BuildContext context, LevelProgress progress) {
     return Column(
       children: [
-        _buildLevelProgressItem(
-          context,
-          'Débutant',
-          progress.debutant,
-          Colors.greenAccent,
+        InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap:
+              () => _showInfoSheet(
+                context,
+                'Débutant',
+                _buildLevelDetail(context, 'Débutant', progress.debutant),
+              ),
+          child: _buildLevelProgressItem(
+            context,
+            'Débutant',
+            progress.debutant,
+            Colors.greenAccent,
+          ),
         ),
         const SizedBox(height: 16),
-        _buildLevelProgressItem(
-          context,
-          'Intermédiaire',
-          progress.intermediaire,
-          Colors.orangeAccent,
+        InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap:
+              () => _showInfoSheet(
+                context,
+                'Intermédiaire',
+                _buildLevelDetail(
+                  context,
+                  'Intermédiaire',
+                  progress.intermediaire,
+                ),
+              ),
+          child: _buildLevelProgressItem(
+            context,
+            'Intermédiaire',
+            progress.intermediaire,
+            Colors.orangeAccent,
+          ),
         ),
         const SizedBox(height: 16),
-        _buildLevelProgressItem(
-          context,
-          'Avancé',
-          progress.avance,
-          Colors.redAccent,
+        InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap:
+              () => _showInfoSheet(
+                context,
+                'Avancé',
+                _buildLevelDetail(context, 'Avancé', progress.avance),
+              ),
+          child: _buildLevelProgressItem(
+            context,
+            'Avancé',
+            progress.avance,
+            Colors.redAccent,
+          ),
         ),
       ],
     );
@@ -333,9 +537,12 @@ class QuizStatsWidget extends StatelessWidget {
     LevelData data,
     Color color,
   ) {
-    final total = (stats.totalQuizzes is int && stats.totalQuizzes > 0) ? stats.totalQuizzes : 0;
-    final completed = (data.completed is int && data.completed >= 0) ? data.completed : 0;
-    final avg = (data.averageScore is double && data.averageScore != null && data.averageScore! >= 0) ? data.averageScore! : 0.0;
+    final total = stats.totalQuizzes > 0 ? stats.totalQuizzes : 0;
+    final completed = data.completed >= 0 ? data.completed : 0;
+    final avg =
+        (data.averageScore != null && data.averageScore! >= 0)
+            ? data.averageScore!
+            : 0.0;
     final percentage = total == 0 ? 0.0 : (completed / total * 100);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -362,11 +569,17 @@ class QuizStatsWidget extends StatelessWidget {
                 ),
               ],
             ),
-            Text(
-              '${percentage.toStringAsFixed(1)}%',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: color),
+            Row(
+              children: [
+                Text(
+                  '${percentage.toStringAsFixed(1)}%',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: color),
+                ),
+                const SizedBox(width: 6),
+                const Icon(Icons.touch_app, size: 16),
+              ],
             ),
           ],
         ),
@@ -396,6 +609,79 @@ class QuizStatsWidget extends StatelessWidget {
             ),
           ],
         ),
+      ],
+    );
+  }
+
+  // Helpers pour feuilles d’information
+  void _showInfoSheet(BuildContext context, String title, Widget content) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder:
+          (_) => SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.insights,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  content,
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  Widget _buildSheetRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+          Text(value),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLevelDetail(BuildContext context, String level, LevelData data) {
+    final completed = data.completed >= 0 ? data.completed : 0;
+    final avg =
+        (data.averageScore != null && data.averageScore! >= 0)
+            ? data.averageScore!
+            : 0.0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSheetRow('Niveau', level),
+        _buildSheetRow('Quiz complétés', '$completed'),
+        _buildSheetRow('Score moyen', '${avg.toStringAsFixed(1)}%'),
       ],
     );
   }

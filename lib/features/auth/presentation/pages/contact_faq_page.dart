@@ -1,5 +1,10 @@
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
+import 'package:wizi_learn/core/network/api_client.dart';
+import 'package:wizi_learn/features/auth/data/repositories/contact_repository.dart';
 
 class ContactFaqPage extends StatefulWidget {
   const ContactFaqPage({super.key});
@@ -14,6 +19,9 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
   final _subjectController = TextEditingController();
   final _messageController = TextEditingController();
   String? _selectedProblemType;
+  List<PlatformFile> _selectedFiles = [];
+  bool _isSending = false;
+
   final List<String> _problemTypes = [
     'Problème technique',
     'Question sur une formation',
@@ -49,8 +57,7 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
               ),
               child: const Icon(Icons.arrow_back, color: Colors.white),
             ),
-            onPressed:
-                () => Navigator.pushReplacementNamed(
+            onPressed: () => Navigator.pushReplacementNamed(
               context,
               RouteConstants.dashboard,
             ),
@@ -58,148 +65,290 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
           backgroundColor: isDarkMode
               ? theme.appBarTheme.backgroundColor
               : Colors.white,
-          elevation: 1,
-          foregroundColor: isDarkMode ? Colors.white : Colors.black87,
           bottom: const TabBar(
-              tabs: [
-          Tab(icon: Icon(Icons.help_outline)),
-          Tab(icon: Icon(Icons.mail_outlined)
-          ),],
+            tabs: [
+              Tab(icon: Icon(Icons.help_outline)),
+              Tab(icon: Icon(Icons.mail_outlined)),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildFAQSection(theme),
+            _buildContactForm(),
+          ],
         ),
       ),
-      body: TabBarView(
-        children: [
-          // Onglet FAQ
-          _buildFAQSection(theme),
+    );
+  }
 
-          // Onglet Contact
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Contactez notre équipe de support',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Email
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Votre email',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.email),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Veuillez entrer votre email';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Email invalide';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Objet
-                  TextFormField(
-                    controller: _subjectController,
-                    decoration: const InputDecoration(
-                      labelText: 'Objet',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.title),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Veuillez entrer un objet';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Type de problème
-                  DropdownButtonFormField<String>(
-                    value: _selectedProblemType,
-                    decoration: const InputDecoration(
-                      labelText: 'Type de problème',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.category),
-                    ),
-                    items: _problemTypes.map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (newValue) {
-                      setState(() {
-                        _selectedProblemType = newValue;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Veuillez sélectionner un type';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Message
-                  TextFormField(
-                    controller: _messageController,
-                    decoration: const InputDecoration(
-                      labelText: 'Votre message',
-                      border: OutlineInputBorder(),
-                      alignLabelWithHint: true,
-                    ),
-                    maxLines: 5,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Veuillez entrer un message';
-                      }
-                      if (value.length < 20) {
-                        return 'Veuillez détailler votre demande';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Pièce jointe
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.attach_file),
-                    label: const Text('Ajouter une pièce jointe'),
-                    onPressed: _attachFile,
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Bouton d'envoi
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      onPressed: _submitForm,
-                      child: const Text(
-                          'ENVOYER LE MESSAGE', style: TextStyle(fontSize: 16)),
-                    ),
-                  ),
-                ],
-              ),
+  Widget _buildContactForm() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Contactez notre équipe de support',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 16),
+            _buildEmailField(),
+            const SizedBox(height: 16),
+            _buildSubjectField(),
+            const SizedBox(height: 16),
+            _buildProblemTypeDropdown(),
+            const SizedBox(height: 16),
+            _buildMessageField(),
+            const SizedBox(height: 16),
+            _buildAttachmentsSection(),
+            const SizedBox(height: 24),
+            _buildSubmitButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmailField() {
+    return TextFormField(
+      controller: _emailController,
+      decoration: const InputDecoration(
+        labelText: 'Votre email',
+        border: OutlineInputBorder(),
+        prefixIcon: Icon(Icons.email),
+      ),
+      keyboardType: TextInputType.emailAddress,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Veuillez entrer votre email';
+        }
+        if (!value.contains('@')) {
+          return 'Email invalide';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildSubjectField() {
+    return TextFormField(
+      controller: _subjectController,
+      decoration: const InputDecoration(
+        labelText: 'Objet',
+        border: OutlineInputBorder(),
+        prefixIcon: Icon(Icons.title),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Veuillez entrer un objet';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildProblemTypeDropdown() {
+    return DropdownButtonFormField<String>(
+      value: _selectedProblemType,
+      decoration: const InputDecoration(
+        labelText: 'Type de problème',
+        border: OutlineInputBorder(),
+        prefixIcon: Icon(Icons.category),
+      ),
+      items: _problemTypes.map((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      onChanged: (newValue) {
+        setState(() {
+          _selectedProblemType = newValue;
+        });
+      },
+      validator: (value) {
+        if (value == null) {
+          return 'Veuillez sélectionner un type';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildMessageField() {
+    return TextFormField(
+      controller: _messageController,
+      decoration: const InputDecoration(
+        labelText: 'Votre message',
+        border: OutlineInputBorder(),
+        alignLabelWithHint: true,
+      ),
+      maxLines: 5,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Veuillez entrer un message';
+        }
+        if (value.length < 20) {
+          return 'Veuillez détailler votre demande';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildAttachmentsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        OutlinedButton.icon(
+          icon: const Icon(Icons.attach_file),
+          label: const Text('Ajouter des pièces jointes'),
+          onPressed: _isSending ? null : _attachFile,
+        ),
+        if (_selectedFiles.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          const Text(
+            'Fichiers sélectionnés:',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            children: _selectedFiles.map((file) {
+              return Chip(
+                label: SizedBox(
+                  width: 100,
+                  child: Text(
+                    file.name,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                deleteIcon: const Icon(Icons.close, size: 18),
+                onDeleted: _isSending
+                    ? null
+                    : () {
+                  setState(() {
+                    _selectedFiles.remove(file);
+                  });
+                },
+              );
+            }).toList(),
           ),
         ],
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+        ),
+        onPressed: _isSending ? null : _submitForm,
+        child: _isSending
+            ? const CircularProgressIndicator(color: Colors.white)
+            : const Text(
+          'ENVOYER LE MESSAGE',
+          style: TextStyle(fontSize: 16),
+        ),
       ),
-    ),);
+    );
+  }
+
+  Future<void> _attachFile() async {
+    debugPrint("ATTOOOO");
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'],
+      );
+
+      if (result != null) {
+        setState(() {
+          _selectedFiles = result.files;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${_selectedFiles.length} fichier(s) sélectionné(s)')),
+        );
+      }
+    } catch (e) {
+      debugPrint("Erreur lors de la sélection des fichiers: $e");
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text('Erreur lors de la sélection des fichiers: $e')),
+      // );
+    }
+  }
+
+  Future<List<MultipartFile>> _prepareAttachments() async {
+    List<MultipartFile> multipartFiles = [];
+
+    for (var file in _selectedFiles) {
+      if (file.bytes != null) {
+        multipartFiles.add(
+          MultipartFile.fromBytes(
+            file.bytes!,
+            filename: file.name,
+          ),
+        );
+      } else if (file.path != null) {
+        multipartFiles.add(
+          await MultipartFile.fromFile(
+            file.path!,
+            filename: file.name,
+          ),
+        );
+      }
+    }
+
+    return multipartFiles;
+  }
+
+  void _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isSending = true;
+      });
+
+      try {
+        await ContactRepository(apiClient: ApiClient(
+          dio: Dio(),
+          storage: const FlutterSecureStorage(),
+        )).sendContactForm(
+          email: _emailController.text,
+          subject: _subjectController.text,
+          problemType: _selectedProblemType ?? '',
+          message: _messageController.text,
+          attachments: _selectedFiles,
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Message envoyé avec succès')),
+        );
+
+        // Réinitialisation du formulaire
+        _emailController.clear();
+        _subjectController.clear();
+        _messageController.clear();
+        setState(() {
+          _selectedProblemType = null;
+          _selectedFiles = [];
+          _isSending = false;
+        });
+      } catch (e) {
+        setState(() {
+          _isSending = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de l\'envoi: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   Widget _buildFAQSection(ThemeData theme) {
@@ -215,27 +364,27 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
 
           _buildFAQItem(
             question: "Comment accéder à mes formations ?",
-            answer: "Toutes vos formations sont disponibles dans l'onglet 'Mes formations' du menu principal. Cliquez sur une formation pour la démarrer.",
+            answer: "Toutes vos formations sont disponibles dans l'onglet 'Mes formations' du menu principal.",
           ),
 
           _buildFAQItem(
             question: "Comment réinitialiser mon mot de passe ?",
-            answer: "Sur la page de connexion, cliquez sur 'Mot de passe oublié'. Vous recevrez un email avec un lien pour réinitialiser votre mot de passe.",
+            answer: "Sur la page de connexion, cliquez sur 'Mot de passe oublié'.",
           ),
 
           _buildFAQItem(
             question: "Comment contacter le support technique ?",
-            answer: "Utilisez le formulaire de contact dans l'onglet 'Contact' de cette page. Nous répondons sous 24h en semaine.",
+            answer: "Utilisez le formulaire de contact dans l'onglet 'Contact' de cette page.",
           ),
 
           _buildFAQItem(
             question: "Où voir ma progression ?",
-            answer: "Votre progression est visible dans l'onglet 'Mes Progrès'. Vous y trouverez vos statistiques et vos certifications obtenues.",
+            answer: "Votre progression est visible dans l'onglet 'Mes Progrès'.",
           ),
 
           _buildFAQItem(
             question: "Comment obtenir une attestation de formation ?",
-            answer: "Les attestations sont générées automatiquement lorsque vous terminez une formation. Elles sont disponibles dans votre espace 'Mes Certifications'.",
+            answer: "Les attestations sont générées automatiquement lorsque vous terminez une formation.",
           ),
 
           const SizedBox(height: 24),
@@ -277,33 +426,5 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
         ],
       ),
     );
-  }
-
-  void _attachFile() {
-    // Implémentez la logique d'attachement de fichier ici
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Fonctionnalité de pièce jointe en développement')),
-    );
-  }
-
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      _sendMessage();
-    }
-  }
-
-  void _sendMessage() {
-    // Implémentez l'envoi du message ici
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Message envoyé avec succès')),
-    );
-    // Réinitialisation du formulaire
-    _emailController.clear();
-    _subjectController.clear();
-    _messageController.clear();
-    setState(() {
-      _selectedProblemType = null;
-    });
   }
 }

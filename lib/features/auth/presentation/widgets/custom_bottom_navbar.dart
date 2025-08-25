@@ -57,13 +57,13 @@ class CustomBottomNavBar extends StatelessWidget {
   }
 
   Widget _buildNavItems(
-      ThemeData theme,
-      double navBarHeight,
-      double fabSize,
-      double iconSize,
-      double labelFontSize,
-      double safeAreaBottom,
-      ) {
+    ThemeData theme,
+    double navBarHeight,
+    double fabSize,
+    double iconSize,
+    double labelFontSize,
+    double safeAreaBottom,
+  ) {
     final navItems = [
       _buildNavItem(
         icon: LucideIcons.home,
@@ -87,6 +87,13 @@ class CustomBottomNavBar extends StatelessWidget {
         iconSize: iconSize,
         labelFontSize: labelFontSize,
       ),
+      // _buildNavItem(
+      //   icon: LucideIcons.mail,
+      //   label: "Contact",
+      //   index: 5,
+      //   iconSize: iconSize,
+      //   labelFontSize: labelFontSize,
+      // ),
       _buildNavItem(
         icon: LucideIcons.video,
         label: "Tutoriel",
@@ -97,11 +104,7 @@ class CustomBottomNavBar extends StatelessWidget {
     ];
 
     return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        bottom: safeAreaBottom,
-      ),
+      padding: EdgeInsets.only(left: 16, right: 16, bottom: safeAreaBottom),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: navItems,
@@ -197,11 +200,7 @@ class CustomBottomNavBar extends StatelessWidget {
         child: InkWell(
           onTap: () => onTap(2),
           customBorder: const CircleBorder(),
-          child: Icon(
-            LucideIcons.brain,
-            size: iconSize,
-            color: Colors.white,
-          ),
+          child: Icon(LucideIcons.brain, size: iconSize, color: Colors.white),
         ),
       ),
     );
