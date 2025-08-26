@@ -52,7 +52,7 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.arrow_back, color: Colors.white),
@@ -285,29 +285,6 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
     }
   }
 
-  Future<List<MultipartFile>> _prepareAttachments() async {
-    List<MultipartFile> multipartFiles = [];
-
-    for (var file in _selectedFiles) {
-      if (file.bytes != null) {
-        multipartFiles.add(
-          MultipartFile.fromBytes(
-            file.bytes!,
-            filename: file.name,
-          ),
-        );
-      } else if (file.path != null) {
-        multipartFiles.add(
-          await MultipartFile.fromFile(
-            file.path!,
-            filename: file.name,
-          ),
-        );
-      }
-    }
-
-    return multipartFiles;
-  }
 
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
