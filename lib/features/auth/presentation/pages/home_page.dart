@@ -58,8 +58,11 @@ class _HomePageState extends State<HomePage> {
   String? _prenom;
   String? _nom;
   bool _isLoadingUser = true;
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  // Série de connexions (login streak)
+  int _loginStreak = 0;
+  bool _showStreakModal = false;
+  bool _hideStreakFor7Days = false;
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   Future<void> _checkHomeTutorialSeen() async {
     final prefs = await SharedPreferences.getInstance();
@@ -99,17 +102,79 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadConnectedUser() async {
     try {
       final user = await _authRepository.getMe();
+
+      // récupérer la série de connexions depuis SharedPreferences (champ non présent dans l'entité stagiaire)
+      int loginStreak = 0;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        loginStreak = prefs.getInt('login_streak') ?? 0;
+      } catch (_) {
+        loginStreak = 0;
+      }
+
       if (mounted) {
         setState(() {
           _prenom = user?.stagiaire?.prenom;
           _nom = user?.name;
+          _loginStreak = loginStreak;
           _isLoadingUser = false;
         });
+
+        // vérifier si on doit afficher la modale de streak (une fois par jour)
+        await _checkAndShowStreakModal();
       }
     } catch (e) {
       debugPrint('Erreur en chargeant l\'utilisateur connecté: $e');
       if (mounted) setState(() => _isLoadingUser = false);
     }
+  }
+
+  Future<void> _checkAndShowStreakModal() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastShown = prefs.getString('lastStreakModalDate');
+      final hideUntil = prefs.getString('streakModalHideUntil');
+      // If user asked to hide until a later date, skip showing
+      if (hideUntil != null) {
+        try {
+          final hideDate = DateTime.parse(hideUntil);
+          final todayDate = DateTime.now();
+          if (!todayDate.isAfter(hideDate)) {
+            return;
+          }
+        } catch (_) {
+          // ignore parse errors and continue
+        }
+      }
+      final now = DateTime.now();
+      final today = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      if (lastShown == today) return;
+      if (_loginStreak > 0) {
+        if (mounted) setState(() => _showStreakModal = true);
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
+  }
+
+  Future<void> _closeStreakModal() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final now = DateTime.now();
+      final today = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      await prefs.setString('lastStreakModalDate', today);
+      if (_hideStreakFor7Days) {
+        final hideUntilDate = now.add(const Duration(days: 7));
+        final hideUntil = '${hideUntilDate.year.toString().padLeft(4, '0')}-${hideUntilDate.month.toString().padLeft(2, '0')}-${hideUntilDate.day.toString().padLeft(2, '0')}';
+        await prefs.setString('streakModalHideUntil', hideUntil);
+      } else {
+        // if previously set, clear the hideUntil so modal can show again tomorrow
+        await prefs.remove('streakModalHideUntil');
+      }
+    } catch (e) {
+      // ignore
+    }
+    if (mounted) setState(() => _showStreakModal = false);
   }
 
   void _initFcmListener() {
@@ -216,6 +281,77 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
         ),
+        // Streak full-screen modal (une fois par jour)
+        if (_showStreakModal)
+          Positioned.fill(
+            child: Material(
+              color: Colors.black.withOpacity(0.75),
+              child: Center(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: kWhite,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: kOrange.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: kOrange.withOpacity(0.15)),
+                        ),
+                        child: Column(
+                          children: [
+                            Text('7 jours', style: TextStyle(color: kOrangeDark, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 8),
+                            Text('🔥', style: TextStyle(fontSize: 56)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text('Série de connexions', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Text('$_loginStreak jour${_loginStreak > 1 ? 's' : ''} d\'affilée', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
+                      Text('Continuez comme ça pour débloquer des récompenses 🎉', textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _hideStreakFor7Days,
+                            onChanged: (val) {
+                              if (mounted) setState(() => _hideStreakFor7Days = val ?? false);
+                            },
+                          ),
+                          Expanded(child: Text('Ne plus montrer pendant 7 jours', style: theme.textTheme.bodyMedium)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(backgroundColor: kOrange, foregroundColor: kWhite),
+                            onPressed: _closeStreakModal,
+                            child: const Text('Continuer'),
+                          ),
+                          const SizedBox(width: 12),
+                          OutlinedButton(
+                            onPressed: _closeStreakModal,
+                            child: const Text('Fermer'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         // if (_showHomeTutorial)
         //   TutorialOverlay(...),
       ],
