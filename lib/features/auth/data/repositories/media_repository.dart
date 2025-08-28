@@ -40,13 +40,34 @@ class MediaRepository {
   }
 
   Future<List<FormationWithMedias>> getFormationsAvecMedias(int userId) async {
-    final response = await apiClient.get('/stagiaire/$userId/formations');
+    try {
+      final response = await apiClient.get('/stagiaire/$userId/formations');
 
-    final formationsJson = response.data['data'] as List;
+      if (response.data == null) {
+        debugPrint("Réponse nulle du serveur");
+        return [];
+      }
 
-    return formationsJson
-        .map((json) => FormationWithMedias.fromJson(json))
-        .toList();
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        debugPrint("Format de réponse invalide: ${data.runtimeType}");
+        return [];
+      }
+
+      final formationsJson = data['data'] as List?;
+
+      if (formationsJson == null) {
+        debugPrint("Aucune donnée de formation trouvée");
+        return [];
+      }
+
+      return formationsJson
+          .map((json) => FormationWithMedias.fromJson(json))
+          .toList();
+    } catch (e) {
+      debugPrint("Erreur lors de la récupération des formations: $e");
+      return [];
+    }
   }
 
   Future<bool> markMediaAsWatched(int mediaId) async {
@@ -84,6 +105,8 @@ class MediaRepository {
   Future<Set<int>> getWatchedMediaIds() async {
     try {
       final response = await apiClient.get('/medias/formations-with-status');
+      debugPrint('Erreur lors du marquage comme vu (avec réponse 2): $response');
+
       if (response.data is List) {
         final formations = response.data as List;
         final watchedMediaIds = <int>{};

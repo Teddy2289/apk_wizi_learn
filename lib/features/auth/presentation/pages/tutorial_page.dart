@@ -197,182 +197,6 @@ class _TutorialPageState extends State<TutorialPage> {
     }
   }
 
-  Widget _buildMediaItem(
-    BuildContext context,
-    Media media,
-    bool isWatched,
-    ThemeData theme,
-    ColorScheme colorScheme,
-  ) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final videoId = YoutubePlayer.convertUrlToId(media.url);
-    final thumbnailUrl =
-        videoId != null
-            ? YoutubePlayer.getThumbnail(
-              videoId: videoId,
-              quality: ThumbnailQuality.medium,
-            )
-            : null;
-
-    return FutureBuilder<Duration>(
-      future: _getVideoDuration(media),
-      builder: (context, snapshot) {
-        final duration = snapshot.data ?? const Duration(seconds: 0);
-
-        return Card(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          color:
-              isWatched
-                  ? colorScheme.surfaceVariant.withOpacity(0.7)
-                  : const Color(0xFFFFF9C4),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () async {
-              if (!isWatched) {
-                final resp = await _mediaRepository
-                    .markMediaAsWatchedWithResponse(media.id);
-                final success = resp['success'] == true;
-                if (success) setState(() => _loadWatchedMediaIds());
-                final newAchievements =
-                    (resp['newAchievements'] as List?) ?? [];
-                if (newAchievements.isNotEmpty && mounted) {
-                  _showNewBadgesDialog(context, newAchievements);
-                }
-              }
-
-              final formations = await _formationsFuture;
-              if (formations == null || formations.isEmpty) return;
-
-              final selectedFormation = formations.firstWhere(
-                (f) => f.id == _selectedFormationId,
-                orElse: () => formations.first,
-              );
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (_) => YoutubePlayerPage(
-                        video: media,
-                        videosInSameCategory:
-                            selectedFormation.medias
-                                .where((m) => m.categorie == media.categorie)
-                                .toList(),
-                      ),
-                ),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                children: [
-                  // Vignette de la vidéo
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        width: screenWidth * 0.35,
-                        height: screenWidth * 0.2,
-                        decoration: BoxDecoration(
-                          color: colorScheme.surfaceVariant,
-                          borderRadius: BorderRadius.circular(8),
-                          image:
-                              thumbnailUrl != null
-                                  ? DecorationImage(
-                                    image: NetworkImage(thumbnailUrl),
-                                    fit: BoxFit.cover,
-                                  )
-                                  : null,
-                        ),
-                        child:
-                            thumbnailUrl == null
-                                ? const Icon(Icons.videocam, size: 32)
-                                : null,
-                      ),
-                      const Icon(
-                        Icons.play_circle_fill,
-                        size: 36,
-                        color: Colors.white,
-                      ),
-                      if (isWatched)
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.green,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.check,
-                              size: 12,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      Positioned(
-                        bottom: 4,
-                        right: 4,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            _formatDuration(duration),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 12),
-                  // Titre et informations
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          media.titre,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color:
-                                isWatched
-                                    ? colorScheme.onSurface.withOpacity(0.7)
-                                    : colorScheme.onSurface,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (snapshot.connectionState == ConnectionState.waiting)
-                          const LinearProgressIndicator(),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.chevron_right,
-                    color: colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   Future<Duration> _getVideoDuration(Media media) async {
     try {
       if (_videoDurationCache.containsKey(media.id)) {
@@ -556,6 +380,7 @@ class _TutorialPageState extends State<TutorialPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     final body = FutureBuilder<List<FormationWithMedias>>(
       future: _formationsFuture,
@@ -566,13 +391,45 @@ class _TutorialPageState extends State<TutorialPage> {
         }
 
         if (snapshot.hasError) {
-          return Center(child: Text("Erreur : ${snapshot.error}"));
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Erreur de chargement",
+                    style: theme.textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Détail: ${snapshot.error}",
+                    style: theme.textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadFormations,
+                    child: const Text('Réessayer'),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
 
         final formations = snapshot.data ?? [];
 
         if (formations.isEmpty) {
-          return const Center(child: Text("Aucune formation trouvée."));
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text("Aucune formation trouvée."),
+            ),
+          );
         }
 
         final selectedFormation = formations.firstWhere(
@@ -592,70 +449,59 @@ class _TutorialPageState extends State<TutorialPage> {
 
             return Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      if (formations.length <= 1) {
-                        return const SizedBox.shrink();
-                      }
-
-                      return Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        alignment: WrapAlignment.center,
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: colorScheme.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: DropdownButton<int>(
-                              isExpanded: true,
-                              value:
-                                  _selectedFormationId ?? selectedFormation.id,
-                              items:
-                                  formations.map((formation) {
-                                    return DropdownMenuItem<int>(
-                                      value: formation.id,
-                                      child: Text(
-                                        formation.titre.toUpperCase(),
-                                        style: theme.textTheme.bodyMedium,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    );
-                                  }).toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedFormationId = value;
-                                });
-                              },
-                              underline: const SizedBox(),
-                              icon: Icon(
-                                Icons.arrow_drop_down,
-                                color: colorScheme.primary,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                // Sélecteur de formation (amélioré pour le responsive)
+                if (formations.length > 1)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
                           ),
                         ],
-                      );
-                    },
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: DropdownButton<int>(
+                        isExpanded: true,
+                        value: _selectedFormationId ?? selectedFormation.id,
+                        items:
+                            formations.map((formation) {
+                              return DropdownMenuItem<int>(
+                                value: formation.id,
+                                child: Text(
+                                  formation.titre,
+                                  style: theme.textTheme.bodyMedium,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedFormationId = value;
+                          });
+                        },
+                        underline: const SizedBox(),
+                        icon: Icon(
+                          Icons.arrow_drop_down,
+                          color: colorScheme.primary,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
-                ),
+                // Liste des médias
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     child:
                         mediasFiltres.isEmpty
                             ? Center(
@@ -677,11 +523,15 @@ class _TutorialPageState extends State<TutorialPage> {
                                         0.5,
                                       ),
                                     ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ],
                               ),
                             )
                             : ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8.0,
+                              ),
                               itemCount: mediasFiltres.length,
                               separatorBuilder:
                                   (context, index) => const SizedBox(height: 8),
@@ -713,7 +563,7 @@ class _TutorialPageState extends State<TutorialPage> {
         _fromNotification
             ? CustomScaffold(
               body: body,
-              currentIndex: 4, // Index de l'onglet Tutoriel
+              currentIndex: 4,
               onTabSelected: (index) {
                 Navigator.pushReplacementNamed(
                   context,
@@ -727,34 +577,41 @@ class _TutorialPageState extends State<TutorialPage> {
               appBar: AppBar(
                 backgroundColor: AppColors.background,
                 automaticallyImplyLeading: false,
-                title: ToggleButtons(
-                  isSelected: [
-                    _selectedCategory == 'tutoriel',
-                    _selectedCategory == 'astuce',
-                  ],
-                  onPressed: (index) {
-                    setState(() {
-                      _selectedCategory = index == 0 ? 'tutoriel' : 'astuce';
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  selectedColor: Colors.white,
-                  fillColor: const Color(0xFFFEB823),
-                  color: const Color(0xFF181818),
-                  constraints: BoxConstraints(
-                    minHeight: 40,
-                    minWidth: screenWidth / 2 - 32,
+                title: Container(
+                  constraints: BoxConstraints(maxWidth: screenWidth * 0.7),
+                  child: ToggleButtons(
+                    isSelected: [
+                      _selectedCategory == 'tutoriel',
+                      _selectedCategory == 'astuce',
+                    ],
+                    onPressed: (index) {
+                      setState(() {
+                        _selectedCategory = index == 0 ? 'tutoriel' : 'astuce';
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    selectedColor: Colors.white,
+                    fillColor: const Color(0xFFFEB823),
+                    color: const Color(0xFF181818),
+                    constraints: BoxConstraints(
+                      minHeight: 40,
+                      minWidth: (screenWidth * 0.7 - 32) / 2,
+                    ),
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: screenWidth > 400 ? 16.0 : 8.0,
+                        ),
+                        child: const Text('Tutos'),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: screenWidth > 400 ? 16.0 : 8.0,
+                        ),
+                        child: const Text('Astuces'),
+                      ),
+                    ],
                   ),
-                  children: const [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Text('Tutos'),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text('Astuces'),
-                    ),
-                  ],
                 ),
                 elevation: 1,
                 centerTitle: true,
@@ -780,6 +637,197 @@ class _TutorialPageState extends State<TutorialPage> {
           ),
         if (_showTutorial) _buildTutorialOverlay(context),
       ],
+    );
+  }
+
+  // Méthode _buildMediaItem améliorée pour le responsive
+  Widget _buildMediaItem(
+    BuildContext context,
+    Media media,
+    bool isWatched,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 400;
+
+    final videoId = YoutubePlayer.convertUrlToId(media.url);
+    final thumbnailUrl =
+        videoId != null
+            ? YoutubePlayer.getThumbnail(
+              videoId: videoId,
+              quality: ThumbnailQuality.medium,
+            )
+            : null;
+
+    return FutureBuilder<Duration>(
+      future: _getVideoDuration(media),
+      builder: (context, snapshot) {
+        final duration = snapshot.data ?? const Duration(seconds: 0);
+
+        return Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          color:
+              isWatched
+                  ? colorScheme.surfaceVariant.withOpacity(0.7)
+                  : const Color(0xFFFFF9C4),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () async {
+              if (!isWatched) {
+                final resp = await _mediaRepository
+                    .markMediaAsWatchedWithResponse(media.id);
+                final success = resp['success'] == true;
+                if (success) setState(() => _loadWatchedMediaIds());
+                final newAchievements =
+                    (resp['newAchievements'] as List?) ?? [];
+                if (newAchievements.isNotEmpty && mounted) {
+                  _showNewBadgesDialog(context, newAchievements);
+                }
+              }
+
+              final formations = await _formationsFuture;
+              if (formations == null || formations.isEmpty) return;
+
+              final selectedFormation = formations.firstWhere(
+                (f) => f.id == _selectedFormationId,
+                orElse: () => formations.first,
+              );
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (_) => YoutubePlayerPage(
+                        video: media,
+                        videosInSameCategory:
+                            selectedFormation.medias
+                                .where((m) => m.categorie == media.categorie)
+                                .toList(),
+                      ),
+                ),
+              );
+            },
+            child: Padding(
+              padding: EdgeInsets.all(isSmallScreen ? 8.0 : 12.0),
+              child: Row(
+                children: [
+                  // Vignette de la vidéo
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width:
+                            isSmallScreen
+                                ? screenWidth * 0.3
+                                : screenWidth * 0.35,
+                        height:
+                            isSmallScreen
+                                ? screenWidth * 0.18
+                                : screenWidth * 0.2,
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceVariant,
+                          borderRadius: BorderRadius.circular(8),
+                          image:
+                              thumbnailUrl != null
+                                  ? DecorationImage(
+                                    image: NetworkImage(thumbnailUrl),
+                                    fit: BoxFit.cover,
+                                  )
+                                  : null,
+                        ),
+                        child:
+                            thumbnailUrl == null
+                                ? Icon(
+                                  Icons.videocam,
+                                  size: isSmallScreen ? 24 : 32,
+                                )
+                                : null,
+                      ),
+                      Icon(
+                        Icons.play_circle_fill,
+                        size: isSmallScreen ? 28 : 36,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                      if (isWatched)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.check,
+                              size: isSmallScreen ? 10 : 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      Positioned(
+                        bottom: 4,
+                        right: 4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            _formatDuration(duration),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: isSmallScreen ? 10 : 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(width: isSmallScreen ? 8 : 12),
+                  // Titre et informations
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          media.titre,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color:
+                                isWatched
+                                    ? colorScheme.onSurface.withOpacity(0.7)
+                                    : colorScheme.onSurface,
+                            fontSize: isSmallScreen ? 14 : 16,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (snapshot.connectionState == ConnectionState.waiting)
+                          const LinearProgressIndicator(),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    color: colorScheme.onSurface.withOpacity(0.6),
+                    size: isSmallScreen ? 20 : 24,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

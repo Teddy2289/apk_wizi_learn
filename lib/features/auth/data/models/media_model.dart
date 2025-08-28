@@ -21,14 +21,14 @@ class Media {
 
   factory Media.fromJson(Map<String, dynamic> json) {
     return Media(
-      id: json['id'],
-      titre: json['titre'],
-      description: json['description'],
-      url: json['url'],
-      type: json['type'],
-      categorie: json['categorie'],
-      duree: json['duree'],
-      formationId: json['formation_id'],
+      id: json['id'] as int? ?? 0, // Valeur par défaut si null
+      titre: json['titre'] as String? ?? '', // Valeur par défaut si null
+      description: json['description'] as String?,
+      url: json['url'] as String? ?? '', // Valeur par défaut si null
+      type: json['type'] as String? ?? '', // Valeur par défaut si null
+      categorie: json['categorie'] as String? ?? '', // Valeur par défaut si null
+      duree: json['duree'] as int?,
+      formationId: json['formation_id'] as int? ?? 0, // Valeur par défaut si null
     );
   }
 }
