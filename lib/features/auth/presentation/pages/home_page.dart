@@ -36,7 +36,8 @@ class _HomePageState extends State<HomePage> {
   final List<Map<String, String>> _homeTutorialSteps = [
     {
       'title': 'Bienvenue sur l\'accueil !',
-      'desc': 'Retrouvez ici vos contacts, formations et notifications importantes.',
+      'desc':
+          'Retrouvez ici vos contacts, formations et notifications importantes.',
     },
     {
       'title': 'Vos contacts',
@@ -57,7 +58,8 @@ class _HomePageState extends State<HomePage> {
   String? _prenom;
   String? _nom;
   bool _isLoadingUser = true;
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   Future<void> _checkHomeTutorialSeen() async {
     final prefs = await SharedPreferences.getInstance();
@@ -166,47 +168,53 @@ class _HomePageState extends State<HomePage> {
     return Stack(
       children: [
         Scaffold(
-          body: (_isLoading || _isLoadingUser)
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-            onRefresh: _loadData,
-            color: theme.primaryColor,
-            child: CustomScrollView(
-              slivers: [
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                SliverToBoxAdapter(child: _buildWelcomeSection(isTablet)),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                SliverToBoxAdapter(
-                  child: _buildSectionTitle(
-                    context,
-                    title: 'Formations recommandées',
-                    icon: LucideIcons.bookOpen,
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: RandomFormationsWidget(
-                    formations: _randomFormations,
+          body:
+              (_isLoading || _isLoadingUser)
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
                     onRefresh: _loadData,
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                SliverToBoxAdapter(
-                  child: _buildSectionWithButton(
-                    context,
-                    title: 'Mes contacts',
-                    icon: LucideIcons.user,
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ContactPage(contacts: _contacts),
-                      ),
+                    color: theme.primaryColor,
+                    child: CustomScrollView(
+                      slivers: [
+                        const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                        SliverToBoxAdapter(
+                          child: _buildWelcomeSection(isTablet),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        SliverToBoxAdapter(
+                          child: _buildSectionTitle(
+                            context,
+                            title: 'Formations recommandées',
+                            icon: LucideIcons.bookOpen,
+                          ),
+                        ),
+                        SliverToBoxAdapter(
+                          child: RandomFormationsWidget(
+                            formations: _randomFormations,
+                            onRefresh: _loadData,
+                          ),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        SliverToBoxAdapter(
+                          child: _buildSectionWithButton(
+                            context,
+                            title: 'Mes contacts',
+                            icon: LucideIcons.user,
+                            onPressed:
+                                () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) =>
+                                            ContactPage(contacts: _contacts),
+                                  ),
+                                ),
+                          ),
+                        ),
+                        _buildContactsList(isTablet),
+                      ],
                     ),
                   ),
-                ),
-                _buildContactsList(isTablet),
-              ],
-            ),
-          ),
         ),
         // if (_showHomeTutorial)
         //   TutorialOverlay(...),
@@ -221,14 +229,14 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [kYellowLight, kWhite, kOrange.withOpacity(0.2)],
+            colors: [kYellowLight, kYellowLight, kYellowLight],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: kOrange.withOpacity(0.15),
+              color: kYellowLight.withOpacity(0.15),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
@@ -281,10 +289,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSectionTitle(
-      BuildContext context, {
-        required String title,
-        required IconData icon,
-      }) {
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
@@ -320,11 +328,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSectionWithButton(
-      BuildContext context, {
-        required String title,
-        required IconData icon,
-        required VoidCallback onPressed,
-      }) {
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
@@ -359,13 +367,16 @@ class _HomePageState extends State<HomePage> {
                 elevation: 0,
                 foregroundColor: kOrange,
                 shadowColor: Colors.transparent,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 8,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
               onPressed: onPressed,
-              child: const Text('Voir tous->'),
+              child: const Text('Voir tous'),
             ),
           ],
         ),
@@ -394,7 +405,9 @@ class _HomePageState extends State<HomePage> {
             child: Center(
               child: Text(
                 'Aucun contact disponible',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: kBrown),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: kBrown),
               ),
             ),
           ),
@@ -408,9 +421,10 @@ class _HomePageState extends State<HomePage> {
 
     for (final contact in _contacts) {
       if (wantedTypes.contains(contact.type)) {
-        final roleKey = contact.type.toLowerCase().contains('relation')
-            ? 'relation'
-            : contact.type.toLowerCase();
+        final roleKey =
+            contact.type.toLowerCase().contains('relation')
+                ? 'relation'
+                : contact.type.toLowerCase();
 
         if (!filteredContacts.containsKey(roleKey)) {
           filteredContacts[roleKey] = contact;
@@ -420,16 +434,19 @@ class _HomePageState extends State<HomePage> {
 
     // Ordonnancement des contacts
     final orderedContacts = [
-      if (filteredContacts.containsKey('commercial')) filteredContacts['commercial']!,
-      if (filteredContacts.containsKey('formateur')) filteredContacts['formateur']!,
-      if (filteredContacts.containsKey('relation')) filteredContacts['relation']!,
+      if (filteredContacts.containsKey('commercial'))
+        filteredContacts['commercial']!,
+      if (filteredContacts.containsKey('formateur'))
+        filteredContacts['formateur']!,
+      if (filteredContacts.containsKey('relation'))
+        filteredContacts['relation']!,
     ];
 
     return SliverPadding(
       padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
       sliver: SliverGrid(
         delegate: SliverChildBuilderDelegate(
-              (context, index) => ContactCard(
+          (context, index) => ContactCard(
             contact: orderedContacts[index],
             showFormations: false,
           ),
