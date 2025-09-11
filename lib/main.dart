@@ -24,7 +24,9 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialiser Firebase
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  }
 
   // Initialiser le gestionnaire de notifications
   await NotificationManager().initialize();
