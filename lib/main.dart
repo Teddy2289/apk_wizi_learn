@@ -24,8 +24,17 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialiser Firebase
-  if (Firebase.apps.isEmpty) {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    }
+  } catch (e) {
+    // Ignore duplicate-app error on hot restart
+    if (e.toString().contains('core/duplicate-app')) {
+      // Already initialized, safe to continue
+    } else {
+      rethrow;
+    }
   }
 
   // Initialiser le gestionnaire de notifications
