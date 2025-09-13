@@ -97,72 +97,170 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
     final isCurrentUserInPodium = myIndex >= 0 && myIndex < 3;
     final isCurrentUserInRest = myIndex >= 3;
 
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.leaderboard,
-                  color: Theme.of(context).primaryColor,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Classement Global',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+    // Responsive layout: single column on small screens, two-column on wider screens
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWide = screenWidth >= 800;
+
+    if (!isWide) {
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.leaderboard,
                     color: Theme.of(context).primaryColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: isSmallScreen ? 18 : 20,
+                    size: 24,
                   ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Classement Global',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Theme.of(context).primaryColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: isSmallScreen ? 18 : 20,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Podium
+              _buildPodium(context, podium, isSmallScreen),
+              const SizedBox(height: 16),
+              // Liste classique
+              if (rest.isNotEmpty) ...[
+                _buildHeader(context, isSmallScreen),
+                const SizedBox(height: 8),
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: rest.length,
+                  separatorBuilder: (_, __) => const Divider(height: 8),
+                  itemBuilder: (_, index) {
+                    final ranking = rest[index];
+                    final isCurrentUser =
+                        int.tryParse(ranking.stagiaire.id.toString()) ==
+                        _connectedStagiaireId;
+                    return _buildRankingItem(
+                      context,
+                      ranking,
+                      isSmallScreen,
+                      isCurrentUser: isCurrentUser,
+                    );
+                  },
                 ),
               ],
-            ),
-            const SizedBox(height: 16),
-            // Podium
-            _buildPodium(context, podium, isSmallScreen),
-            const SizedBox(height: 16),
-            // Liste classique
-            if (rest.isNotEmpty) ...[
-              _buildHeader(context, isSmallScreen),
-              const SizedBox(height: 8),
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: rest.length,
-                separatorBuilder: (_, __) => const Divider(height: 8),
-                itemBuilder: (_, index) {
-                  final ranking = rest[index];
-                  final isCurrentUser =
-                      int.tryParse(ranking.stagiaire.id.toString()) ==
-                      _connectedStagiaireId;
-                  return _buildRankingItem(
+              // Si l'utilisateur n'est pas dans le top, l'afficher en bas
+              if (isCurrentUserInRest)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: _buildRankingItem(
                     context,
-                    ranking,
+                    widget.rankings[myIndex],
                     isSmallScreen,
-                    isCurrentUser: isCurrentUser,
-                  );
-                },
-              ),
-            ],
-            // Si l'utilisateur n'est pas dans le top, l'afficher en bas
-            if (isCurrentUserInRest)
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: _buildRankingItem(
-                  context,
-                  widget.rankings[myIndex],
-                  isSmallScreen,
-                  isCurrentUser: true,
-                  highlight: true,
+                    isCurrentUser: true,
+                    highlight: true,
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
+      );
+    }
+
+    // Wide layout: podium on left, list on right
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Left: title + podium
+          Expanded(
+            flex: 4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.leaderboard,
+                      color: Theme.of(context).primaryColor,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Classement Global',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildPodium(context, podium, false),
+              ],
+            ),
+          ),
+          const SizedBox(width: 24),
+          // Right: header + list
+          Expanded(
+            flex: 6,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context, false),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: Card(
+                    margin: EdgeInsets.zero,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: rest.isEmpty
+                          ? Center(child: Text('Aucun classement supplémentaire'))
+                          : ListView.separated(
+                              itemCount: rest.length,
+                              separatorBuilder: (_, __) => const Divider(height: 8),
+                              itemBuilder: (_, index) {
+                                final ranking = rest[index];
+                                final isCurrentUser =
+                                    int.tryParse(ranking.stagiaire.id.toString()) ==
+                                    _connectedStagiaireId;
+                                return _buildRankingItem(
+                                  context,
+                                  ranking,
+                                  false,
+                                  isCurrentUser: isCurrentUser,
+                                );
+                              },
+                            ),
+                    ),
+                  ),
+                ),
+                if (isCurrentUserInRest)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: _buildRankingItem(
+                      context,
+                      widget.rankings[myIndex],
+                      false,
+                      isCurrentUser: true,
+                      highlight: true,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

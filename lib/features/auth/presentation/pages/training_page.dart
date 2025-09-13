@@ -365,222 +365,41 @@ class _TrainingPageState extends State<TrainingPage> {
                             }
 
                             final categoryFormations = categorySnapshot.data!;
-                            return ListView.separated(
-                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                              itemCount: categoryFormations.length,
-                              separatorBuilder:
-                                  (_, __) => const SizedBox(height: 12),
-                              itemBuilder: (context, index) {
-                                final formation = categoryFormations[index];
-                                final categoryColor = _getCategoryColor(
-                                  formation.category.categorie,
+
+                            // Responsive: use Grid on wide screens, List on narrow
+                            return LayoutBuilder(builder: (context, constraints) {
+                              final width = constraints.maxWidth;
+                              final isWide = width >= 800;
+
+                              if (!isWide) {
+                                return ListView.separated(
+                                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                  itemCount: categoryFormations.length,
+                                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                                  itemBuilder: (context, index) {
+                                    final formation = categoryFormations[index];
+                                    return _buildFormationListCard(context, formation);
+                                  },
                                 );
+                              }
 
-                                // ... (garder tout le code précédent jusqu'à la partie Card dans le ListView.builder)
-
-                                return Card(
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    side: BorderSide(
-                                      color: Colors.grey.shade200,
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(12),
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder:
-                                              (context) => FormationDetailPage(
-                                                formationId: formation.id,
-                                              ),
-                                        ),
-                                      );
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12),
-                                      child: Row(
-                                        children: [
-                                          // Image arrondie
-                                          Container(
-                                            width: 72,
-                                            height: 72,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: categoryColor
-                                                    .withOpacity(0.3),
-                                                width: 2,
-                                              ),
-                                            ),
-                                            child: ClipOval(
-                                              child:
-                                                  formation.imageUrl != null
-                                                      ? CachedNetworkImage(
-                                                        imageUrl:
-                                                            '${AppConstants.baseUrlImg}/${formation.imageUrl}',
-                                                        fit: BoxFit.cover,
-                                                        placeholder:
-                                                            (
-                                                              context,
-                                                              url,
-                                                            ) => Center(
-                                                              child: Icon(
-                                                                _categoryIcons[formation
-                                                                        .category
-                                                                        .categorie] ??
-                                                                    Icons
-                                                                        .school,
-                                                                color:
-                                                                    categoryColor,
-                                                                size: 32,
-                                                              ),
-                                                            ),
-                                                        errorWidget:
-                                                            (
-                                                              context,
-                                                              url,
-                                                              error,
-                                                            ) => Center(
-                                                              child: Icon(
-                                                                _categoryIcons[formation
-                                                                        .category
-                                                                        .categorie] ??
-                                                                    Icons
-                                                                        .school,
-                                                                color:
-                                                                    categoryColor,
-                                                                size: 32,
-                                                              ),
-                                                            ),
-                                                      )
-                                                      : Center(
-                                                        child: Icon(
-                                                          _categoryIcons[formation
-                                                                  .category
-                                                                  .categorie] ??
-                                                              Icons.school,
-                                                          color: categoryColor,
-                                                          size: 32,
-                                                        ),
-                                                      ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-
-                                          // Détails (garder le même contenu que précédemment)
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                // Titre
-                                                Text(
-                                                  formation.titre.toUpperCase(),
-                                                  style: const TextStyle(
-                                                    fontSize: 15,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                                const SizedBox(height: 4),
-
-                                                // Description
-                                                Text(
-                                                  formation.description
-                                                      .replaceAll(
-                                                        RegExp(r'<[^>]*>'),
-                                                        '',
-                                                      ),
-                                                  style: TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.grey.shade700,
-                                                  ),
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                                const SizedBox(height: 8),
-
-                                                // Métadonnées
-                                                Row(
-                                                  children: [
-                                                    // Durée
-                                                    Container(
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                            horizontal: 8,
-                                                            vertical: 4,
-                                                          ),
-                                                      decoration: BoxDecoration(
-                                                        color:
-                                                            Colors
-                                                                .grey
-                                                                .shade100,
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              4,
-                                                            ),
-                                                      ),
-                                                      child: Row(
-                                                        children: [
-                                                          Icon(
-                                                            Icons.schedule,
-                                                            size: 14,
-                                                            color:
-                                                                Colors
-                                                                    .grey
-                                                                    .shade600,
-                                                          ),
-                                                          const SizedBox(
-                                                            width: 4,
-                                                          ),
-                                                          Text(
-                                                            '${formation.duree}h',
-                                                            style: TextStyle(
-                                                              fontSize: 12,
-                                                              color:
-                                                                  Colors
-                                                                      .grey
-                                                                      .shade800,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    const Spacer(),
-                                                    // Prix
-                                                    Text(
-                                                      '${formatPrice(formation.tarif.toInt())} €',
-                                                      style: TextStyle(
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color:
-                                                            Colors
-                                                                .orange
-                                                                .shade700,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
-
-                                // ... (garder le reste du code inchangé)
-                              },
-                            );
+                              // Grid for wide screens: compute columns based on width
+                              final crossAxisCount = (width / 340).floor().clamp(2, 4);
+                              return GridView.builder(
+                                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossAxisCount,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 3.2,
+                                ),
+                                itemCount: categoryFormations.length,
+                                itemBuilder: (context, index) {
+                                  final formation = categoryFormations[index];
+                                  return _buildFormationGridCard(context, formation);
+                                },
+                              );
+                            });
                           },
                         ),
               ),
@@ -608,7 +427,215 @@ class _TrainingPageState extends State<TrainingPage> {
       default:
         return Colors.grey;
     }
+    }
+
+    // Helper: list-style card (existing look)
+  Widget _buildFormationListCard(BuildContext context, Formation formation) {
+    final categoryColor = _getCategoryColor(formation.category.categorie);
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Colors.grey.shade200,
+          width: 1,
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FormationDetailPage(
+                formationId: formation.id,
+              ),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              // Image arrondie
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: categoryColor.withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: ClipOval(
+                  child: formation.imageUrl != null
+                      ? CachedNetworkImage(
+                          imageUrl: '${AppConstants.baseUrlImg}/${formation.imageUrl}',
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Center(
+                            child: Icon(
+                              _categoryIcons[formation.category.categorie] ?? Icons.school,
+                              color: categoryColor,
+                              size: 32,
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Center(
+                            child: Icon(
+                              _categoryIcons[formation.category.categorie] ?? Icons.school,
+                              color: categoryColor,
+                              size: 32,
+                            ),
+                          ),
+                        )
+                      : Center(
+                          child: Icon(
+                            _categoryIcons[formation.category.categorie] ?? Icons.school,
+                            color: categoryColor,
+                            size: 32,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Détails
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      formation.titre.toUpperCase(),
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      formation.description.replaceAll(RegExp(r'<[^>]*>'), ''),
+                      style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.schedule, size: 14, color: Colors.grey.shade600),
+                              const SizedBox(width: 4),
+                              Text('${formation.duree}h', style: TextStyle(fontSize: 12, color: Colors.grey.shade800)),
+                            ],
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${formatPrice(formation.tarif.toInt())} €',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange.shade700),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
+
+  // Helper: grid-style card for wide layouts (compact horizontal layout)
+  Widget _buildFormationGridCard(BuildContext context, Formation formation) {
+    final categoryColor = _getCategoryColor(formation.category.categorie);
+    return Material(
+      color: Theme.of(context).cardColor,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FormationDetailPage(formationId: formation.id),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                width: 84,
+                height: 84,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: categoryColor.withOpacity(0.25), width: 2),
+                ),
+                child: ClipOval(
+                  child: formation.imageUrl != null
+                      ? CachedNetworkImage(
+                          imageUrl: '${AppConstants.baseUrlImg}/${formation.imageUrl}',
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Center(
+                            child: Icon(_categoryIcons[formation.category.categorie] ?? Icons.school, color: categoryColor, size: 36),
+                          ),
+                          errorWidget: (context, url, error) => Center(
+                            child: Icon(_categoryIcons[formation.category.categorie] ?? Icons.school, color: categoryColor, size: 36),
+                          ),
+                        )
+                      : Center(
+                          child: Icon(_categoryIcons[formation.category.categorie] ?? Icons.school, color: categoryColor, size: 36),
+                        ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      formation.titre,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      formation.description.replaceAll(RegExp(r'<[^>]*>'), ''),
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(4)),
+                          child: Row(children: [Icon(Icons.schedule, size: 13, color: Colors.grey.shade600), const SizedBox(width: 4), Text('${formation.duree}h', style: TextStyle(fontSize: 11, color: Colors.grey.shade800))]),
+                        ),
+                        const Spacer(),
+                        Text('${formatPrice(formation.tarif.toInt())} €', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange.shade700)),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
 }
 
 String formatPrice(num price) {

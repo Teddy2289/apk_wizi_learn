@@ -176,6 +176,16 @@ class _TutorialPageState extends State<TutorialPage> {
                 ? _mediaRepository.getFormationsAvecMedias(stagiaireId)
                 : Future.value([]);
       });
+      // After the future resolves, ensure a default selected formation id is set
+      if (_formationsFuture != null) {
+        _formationsFuture!.then((list) {
+          if (list.isNotEmpty && _selectedFormationId == null) {
+            setState(() {
+              _selectedFormationId = list.first.id;
+            });
+          }
+        }).catchError((_) {});
+      }
     } catch (e) {
       debugPrint("Erreur : $e");
       setState(() {
@@ -454,53 +464,6 @@ class _TutorialPageState extends State<TutorialPage> {
             Widget leftPanel() {
               return Column(
                 children: [
-                  if (formations.length > 1)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: DropdownButton<int>(
-                          isExpanded: true,
-                          value: _selectedFormationId ?? selectedFormation.id,
-                          items: formations.map((formation) {
-                            return DropdownMenuItem<int>(
-                              value: formation.id,
-                              child: Text(
-                                formation.titre,
-                                style: theme.textTheme.bodyMedium,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedFormationId = value;
-                            });
-                          },
-                          underline: const SizedBox(),
-                          icon: Icon(
-                            Icons.arrow_drop_down,
-                            color: colorScheme.primary,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -740,12 +703,31 @@ class _TutorialPageState extends State<TutorialPage> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Affiche le titre de la formation sélectionnée (lecture seule)
-                    Builder(builder: (context) {
-                      final items = (_formationsFuture == null) ? [] : (_formationsFuture is Future ? null : []);
-                      // We will simply show _selectedFormationId title when available in the body; keep AppBar lightweight
-                      return const SizedBox.shrink();
-                    }),
+                    // Formation selector in the same app bar row
+                    FutureBuilder<List<FormationWithMedias>>(
+                      future: _formationsFuture,
+                      builder: (context, snap) {
+                        final items = snap.data ?? [];
+                        if (items.isEmpty) return const SizedBox.shrink();
+                        return Container(
+                          constraints: BoxConstraints(maxWidth: screenWidth * 0.35),
+                          child: DropdownButton<int>(
+                            isExpanded: true,
+                            value: _selectedFormationId ?? items.first.id,
+                            items: items.map((f) => DropdownMenuItem<int>(
+                              value: f.id,
+                              child: Text(f.titre, overflow: TextOverflow.ellipsis),
+                            )).toList(),
+                            onChanged: (v) {
+                              setState(() {
+                                _selectedFormationId = v;
+                              });
+                            },
+                            underline: const SizedBox(),
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
                 elevation: 1,
