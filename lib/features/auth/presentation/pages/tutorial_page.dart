@@ -447,94 +447,91 @@ class _TutorialPageState extends State<TutorialPage> {
           builder: (context, watchedSnapshot) {
             final watchedMediaIds = watchedSnapshot.data ?? {};
 
-            return Column(
-              children: [
-                // Sélecteur de formation (amélioré pour le responsive)
-                if (formations.length > 1)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
-                    ),
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: colorScheme.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+            // Responsive: colonne sur mobile, layout en deux panneaux sur écrans larges
+            final isWideLayout = MediaQuery.of(context).size.width >= 800;
+
+            // Widget du sélecteur + liste (réutilisable pour les deux modes)
+            Widget leftPanel() {
+              return Column(
+                children: [
+                  if (formations.length > 1)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: DropdownButton<int>(
-                        isExpanded: true,
-                        value: _selectedFormationId ?? selectedFormation.id,
-                        items:
-                            formations.map((formation) {
-                              return DropdownMenuItem<int>(
-                                value: formation.id,
-                                child: Text(
-                                  formation.titre,
-                                  style: theme.textTheme.bodyMedium,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              );
-                            }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedFormationId = value;
-                          });
-                        },
-                        underline: const SizedBox(),
-                        icon: Icon(
-                          Icons.arrow_drop_down,
-                          color: colorScheme.primary,
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        borderRadius: BorderRadius.circular(12),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: DropdownButton<int>(
+                          isExpanded: true,
+                          value: _selectedFormationId ?? selectedFormation.id,
+                          items: formations.map((formation) {
+                            return DropdownMenuItem<int>(
+                              value: formation.id,
+                              child: Text(
+                                formation.titre,
+                                style: theme.textTheme.bodyMedium,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedFormationId = value;
+                            });
+                          },
+                          underline: const SizedBox(),
+                          icon: Icon(
+                            Icons.arrow_drop_down,
+                            color: colorScheme.primary,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
-                  ),
-                // Liste des médias
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child:
-                        mediasFiltres.isEmpty
-                            ? Center(
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: mediasFiltres.isEmpty
+                          ? Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
                                     Icons.video_library_outlined,
                                     size: 64,
-                                    color: colorScheme.onSurface.withOpacity(
-                                      0.3,
-                                    ),
+                                    color: colorScheme.onSurface.withOpacity(0.3),
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
                                     "Aucun média trouvé",
                                     style: theme.textTheme.bodyLarge?.copyWith(
-                                      color: colorScheme.onSurface.withOpacity(
-                                        0.5,
-                                      ),
+                                      color: colorScheme.onSurface.withOpacity(0.5),
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
                                 ],
                               ),
                             )
-                            : ListView.separated(
+                          : ListView.separated(
                               padding: const EdgeInsets.symmetric(
                                 vertical: 8.0,
                               ),
                               itemCount: mediasFiltres.length,
-                              separatorBuilder:
-                                  (context, index) => const SizedBox(height: 8),
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(height: 8),
                               itemBuilder: (context, index) {
                                 final media = mediasFiltres[index];
                                 final isWatched = watchedMediaIds.contains(
@@ -549,9 +546,135 @@ class _TutorialPageState extends State<TutorialPage> {
                                 );
                               },
                             ),
+                    ),
                   ),
+                ],
+              );
+            }
+
+            if (!isWideLayout) {
+              // Mode mobile / portrait : comportement inchangé
+              return leftPanel();
+            }
+
+            // Mode tablette / paysage : deux panneaux
+            final selectedMedia = mediasFiltres.isNotEmpty
+                ? mediasFiltres.firstWhere(
+                    (m) => m.id == (_selectedFormationId == null
+                        ? mediasFiltres.first.id
+                        : _selectedFormationId),
+                    orElse: () => mediasFiltres.first,
+                  )
+                : null;
+
+            Widget rightPanel() {
+              if (selectedMedia == null) {
+                return Center(
+                  child: Text('Aucun média sélectionné', style: theme.textTheme.bodyMedium),
+                );
+              }
+
+              final videoId = YoutubePlayer.convertUrlToId(selectedMedia.url);
+              final thumbnailUrl = videoId != null
+                  ? YoutubePlayer.getThumbnail(videoId: videoId, quality: ThumbnailQuality.medium)
+                  : null;
+
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Vignette + play
+                    if (thumbnailUrl != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(thumbnailUrl, fit: BoxFit.cover),
+                      )
+                    else
+                      Container(
+                        height: 180,
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceVariant,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Center(child: Icon(Icons.videocam, size: 48)),
+                      ),
+                    const SizedBox(height: 12),
+                    Text(
+                      selectedMedia.titre,
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      selectedMedia.description ?? '',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        // Ouvre le lecteur plein écran
+                        final formationsAll = await _formationsFuture;
+                        if (formationsAll == null || formationsAll.isEmpty) return;
+                        final parentFormation = formationsAll.firstWhere(
+                          (f) => f.medias.any((m) => m.id == selectedMedia.id),
+                          orElse: () => formationsAll.first,
+                        );
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => YoutubePlayerPage(
+                              video: selectedMedia,
+                              videosInSameCategory: parentFormation.medias
+                                  .map((m) => m)
+                                  .toList(),
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text('Lire'),
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Autres médias', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 8),
+                    ...mediasFiltres.map((m) {
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(m.titre, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        trailing: Text(_formatDuration(Duration(seconds: m.duree ?? 0)), style: theme.textTheme.bodySmall),
+                        onTap: () async {
+                          final formationsAll = await _formationsFuture;
+                          if (formationsAll == null || formationsAll.isEmpty) return;
+                          final parentFormation = formationsAll.firstWhere(
+                            (f) => f.medias.any((mm) => mm.id == m.id),
+                            orElse: () => formationsAll.first,
+                          );
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => YoutubePlayerPage(
+                                video: m,
+                                videosInSameCategory: parentFormation.medias.map((mm) => mm).toList(),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }).toList(),
+                  ],
                 ),
-              ],
+              );
+            }
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+              child: Row(
+                children: [
+                  Flexible(flex: 2, child: Container(height: MediaQuery.of(context).size.height * 0.8, child: leftPanel())),
+                  const SizedBox(width: 16),
+                  Flexible(flex: 3, child: Card(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), child: rightPanel())),
+                ],
+              ),
             );
           },
         );
@@ -577,41 +700,53 @@ class _TutorialPageState extends State<TutorialPage> {
               appBar: AppBar(
                 backgroundColor: AppColors.background,
                 automaticallyImplyLeading: false,
-                title: Container(
-                  constraints: BoxConstraints(maxWidth: screenWidth * 0.7),
-                  child: ToggleButtons(
-                    isSelected: [
-                      _selectedCategory == 'tutoriel',
-                      _selectedCategory == 'astuce',
-                    ],
-                    onPressed: (index) {
-                      setState(() {
-                        _selectedCategory = index == 0 ? 'tutoriel' : 'astuce';
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    selectedColor: Colors.white,
-                    fillColor: const Color(0xFFFEB823),
-                    color: const Color(0xFF181818),
-                    constraints: BoxConstraints(
-                      minHeight: 40,
-                      minWidth: (screenWidth * 0.7 - 32) / 2,
+                title: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      constraints: BoxConstraints(maxWidth: screenWidth * 0.5),
+                      child: ToggleButtons(
+                        isSelected: [
+                          _selectedCategory == 'tutoriel',
+                          _selectedCategory == 'astuce',
+                        ],
+                        onPressed: (index) {
+                          setState(() {
+                            _selectedCategory = index == 0 ? 'tutoriel' : 'astuce';
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        selectedColor: Colors.white,
+                        fillColor: const Color(0xFFFEB823),
+                        color: const Color(0xFF181818),
+                        constraints: BoxConstraints(
+                          minHeight: 40,
+                          minWidth: (screenWidth * 0.5 - 32) / 2,
+                        ),
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth > 400 ? 16.0 : 8.0,
+                            ),
+                            child: const Text('Tutos'),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth > 400 ? 16.0 : 8.0,
+                            ),
+                            child: const Text('Astuces'),
+                          ),
+                        ],
+                      ),
                     ),
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth > 400 ? 16.0 : 8.0,
-                        ),
-                        child: const Text('Tutos'),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth > 400 ? 16.0 : 8.0,
-                        ),
-                        child: const Text('Astuces'),
-                      ),
-                    ],
-                  ),
+                    const SizedBox(width: 12),
+                    // Affiche le titre de la formation sélectionnée (lecture seule)
+                    Builder(builder: (context) {
+                      final items = (_formationsFuture == null) ? [] : (_formationsFuture is Future ? null : []);
+                      // We will simply show _selectedFormationId title when available in the body; keep AppBar lightweight
+                      return const SizedBox.shrink();
+                    }),
+                  ],
                 ),
                 elevation: 1,
                 centerTitle: true,
