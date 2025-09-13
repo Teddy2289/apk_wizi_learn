@@ -578,21 +578,62 @@ class _HomePageState extends State<HomePage> {
         filteredContacts['relation']!,
     ];
 
-    return SliverPadding(
-      padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
-      sliver: SliverGrid(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) => ContactCard(
-            contact: orderedContacts[index],
-            showFormations: false,
+    // On phones keep the presentation as a vertical list. On tablets use
+    // a horizontal carousel to preserve the sliding principle.
+    final screenWidth = MediaQuery.of(context).size.width;
+    final viewportFraction = isTablet ? 0.6 : 0.95;
+    // Increase height for tablet carousel to avoid vertical overflow
+    final carouselHeight = isTablet ? 170.0 : 140.0;
+
+    if (!isTablet) {
+      // Vertical list for smartphones
+      return SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: ContactCard(
+                contact: orderedContacts[index],
+                showFormations: false,
+              ),
+            ),
+            childCount: orderedContacts.length,
           ),
-          childCount: orderedContacts.length,
         ),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: isTablet ? 2 : 1,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: isTablet ? 2.5 : 2.6,
+      );
+    }
+
+    // Tablet: horizontal carousel
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+        child: SizedBox(
+          height: carouselHeight,
+          child: PageView.builder(
+            controller: PageController(viewportFraction: viewportFraction),
+            itemCount: orderedContacts.length,
+            padEnds: false,
+            physics: const BouncingScrollPhysics(),
+            itemBuilder: (context, index) {
+              final itemWidth = screenWidth * viewportFraction;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                child: SizedBox(
+                  width: itemWidth,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: carouselHeight - 12),
+                      child: ContactCard(
+                        contact: orderedContacts[index],
+                        showFormations: false,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

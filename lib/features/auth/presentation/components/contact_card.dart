@@ -38,6 +38,8 @@ class ContactCard extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.all(cardPadding),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               CircleAvatar(
                 radius: avatarRadius,
@@ -55,6 +57,7 @@ class ContactCard extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       contact.name.isNotEmpty
@@ -87,64 +90,69 @@ class ContactCard extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: isSmallScreen ? 2 : 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.phone_android,
-                          size: iconSize,
-                          color: Colors.grey.shade600,
-                        ),
-                        SizedBox(width: isSmallScreen ? 3 : 6),
-                        Flexible(
-                          child: Text(
-                            contact.telephone.isNotEmpty
-                                ? contact.telephone
-                                : 'Non renseigné',
-                            style: TextStyle(fontSize: infoFontSize),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.phone_android,
+                            size: iconSize,
+                            color: Colors.grey.shade600,
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: isSmallScreen ? 2 : 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.email,
-                          size: iconSize,
-                          color: Colors.grey.shade600,
-                        ),
-                        SizedBox(width: isSmallScreen ? 3 : 6),
-                        Flexible(
-                          child: GestureDetector(
-                            onTap: () async {
-                              final mailUrl = Uri(
-                                scheme: 'mailto',
-                                path: contact.email,
-                              );
-                              try {
-                                await launchUrl(mailUrl);
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Impossible d\'ouvrir l\'application mail.',
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
+                          SizedBox(width: isSmallScreen ? 3 : 6),
+                          Expanded(
                             child: Text(
-                              contact.email,
+                              contact.telephone.isNotEmpty
+                                  ? contact.telephone
+                                  : 'Non renseigné',
                               style: TextStyle(fontSize: infoFontSize),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    SizedBox(height: isSmallScreen ? 2 : 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.email,
+                            size: iconSize,
+                            color: Colors.grey.shade600,
+                          ),
+                          SizedBox(width: isSmallScreen ? 3 : 6),
+                          Expanded(
+                            child: Tooltip(
+                              message: contact.email,
+                              child: GestureDetector(
+                                onTap: () async {
+                                  final mailUrl = Uri(
+                                    scheme: 'mailto',
+                                    path: contact.email,
+                                  );
+                                  try {
+                                    await launchUrl(mailUrl);
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Impossible d\'ouvrir l\'application mail.',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: SelectableText(
+                                  contact.email,
+                                  style: TextStyle(fontSize: infoFontSize),
+                                  maxLines: 2,
+                                  showCursor: true,
+                                  cursorWidth: 1,
+                                  toolbarOptions: const ToolbarOptions(copy: true, selectAll: true),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     // Ajout de l'affichage des formations pour les formateurs
                     if (showFormations &&
                         contact.type.toLowerCase().contains('formateur') &&
@@ -159,36 +167,52 @@ class ContactCard extends StatelessWidget {
                           color: Colors.brown.shade700,
                         ),
                       ),
-                      ...contact.formations!.map((f) {
-                        String formatDate(String? date) {
-                          if (date == null || date.isEmpty) return '';
-                          try {
-                            final d = DateTime.parse(date);
-                            return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
-                          } catch (_) {
-                            return date;
+                      // If many formations, show a compact summary to avoid vertical overflow
+                      if (contact.formations!.length > 1) ...[
+                        SizedBox(height: 4),
+                        Text(
+                          '${contact.formations!.length} formations disponibles',
+                          style: TextStyle(fontSize: infoFontSize, color: Colors.grey.shade700),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ] else ...[
+                        // Show detailed single formation info
+                        ...contact.formations!.map((f) {
+                          String formatDate(String? date) {
+                            if (date == null || date.isEmpty) return '';
+                            try {
+                              final d = DateTime.parse(date);
+                              return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+                            } catch (_) {
+                              return date;
+                            }
                           }
-                        }
 
-                        final debut = formatDate(f['dateDebut']);
-                        final fin = formatDate(f['dateFin']);
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              f['titre'] ?? '',
-                              style: TextStyle(fontSize: infoFontSize),
-                            ),
-                            Text(
-                              '(${debut} - ${fin})',
-                              style: TextStyle(
-                                fontSize: infoFontSize,
-                                color: Colors.grey.shade700,
+                          final debut = formatDate(f['dateDebut']);
+                          final fin = formatDate(f['dateFin']);
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                f['titre'] ?? '',
+                                style: TextStyle(fontSize: infoFontSize),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ],
-                        );
-                      }),
+                              Text(
+                                '(${debut} - ${fin})',
+                                style: TextStyle(
+                                  fontSize: infoFontSize,
+                                  color: Colors.grey.shade700,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          );
+                        }),
+                      ],
                     ],
                   ],
                 ),

@@ -40,57 +40,37 @@ class RandomFormationsWidget extends StatelessWidget {
             ),
           ),
         )
-            : (isWide
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final availableWidth = constraints.maxWidth;
-                        final columns = (availableWidth / 300).floor().clamp(2, 4);
-                        final spacing = 12.0;
-                        final totalSpacing = spacing * (columns - 1);
-                        final computedCardWidth = (availableWidth - totalSpacing) / columns;
-                        final cardHeight = 320.0;
+            : SizedBox(
+                // Use a consistent carousel for all sizes so the sliding principle is preserved
+                height: isWide ? 340 : 260,
+                child: Builder(builder: (context) {
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  final viewportFraction = isWide
+                      ? 0.45
+                      : (cardWidth / screenWidth).clamp(0.35, 0.75);
+                  final pageController = PageController(viewportFraction: viewportFraction);
 
-                        return GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: formations.length,
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: columns,
-                            mainAxisSpacing: spacing,
-                            crossAxisSpacing: spacing,
-                            childAspectRatio: computedCardWidth / cardHeight,
+                  return PageView.builder(
+                    controller: pageController,
+                    itemCount: formations.length,
+                    padEnds: false,
+                    physics: const BouncingScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      final itemWidth = screenWidth * viewportFraction;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        child: SizedBox(
+                          width: itemWidth,
+                          child: _FormationCard(
+                            formation: formations[index],
+                            cardWidth: itemWidth,
                           ),
-                          itemBuilder: (context, index) {
-                            return SizedBox(
-                              width: computedCardWidth,
-                              height: cardHeight,
-                              child: _FormationCard(
-                                formation: formations[index],
-                                cardWidth: computedCardWidth,
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  )
-                : SizedBox(
-                    height: 260, // Hauteur fixe pour toutes les cartes
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: formations.length,
-                      itemBuilder: (context, index) => SizedBox(
-                        width: cardWidth,
-                        child: _FormationCard(
-                          formation: formations[index],
-                          cardWidth: cardWidth,
                         ),
-                      ),
-                    ),
-                  )),
+                      );
+                    },
+                  );
+                }),
+              ),
       ],
     );
   }
