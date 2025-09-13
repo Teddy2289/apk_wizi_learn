@@ -9,7 +9,7 @@ import 'features/auth/auth_injection_container.dart' as auth_injection;
 import 'features/auth/data/repositories/auth_repository.dart';
 import 'core/services/fcm_service_mobile.dart'
     if (dart.library.html) 'core/services/fcm_service_web.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:wizi_learn/core/services/notification_manager.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/splash_page.dart';
 import 'core/routes/app_router.dart';
@@ -79,7 +79,7 @@ class MyApp extends StatelessWidget {
             create: (context) => auth_injection.sl<AuthRepository>(),
           ),
         ],
-        child: BlocProvider<AuthBloc>(
+          child: BlocProvider<AuthBloc>(
           create:
               (context) =>
                   AuthBloc(authRepository: context.read<AuthRepository>())
@@ -164,6 +164,18 @@ class MyApp extends StatelessWidget {
               visualDensity: VisualDensity.adaptivePlatformDensity,
               useMaterial3: true,
             ),
+            // Reduce iOS font scaling by overriding MediaQuery.textScaleFactor
+            builder: (context, child) {
+              if (defaultTargetPlatform == TargetPlatform.iOS) {
+                final mq = MediaQuery.of(context);
+                // Adjust this factor to taste (0.9 reduces fonts to 90%)
+                return MediaQuery(
+                  data: mq.copyWith(textScaleFactor: 0.9),
+                  child: child ?? const SizedBox.shrink(),
+                );
+              }
+              return child ?? const SizedBox.shrink();
+            },
             scrollBehavior: CustomScrollBehavior(),
             onGenerateRoute: AppRouter.generateRoute,
             home: SplashPage(),

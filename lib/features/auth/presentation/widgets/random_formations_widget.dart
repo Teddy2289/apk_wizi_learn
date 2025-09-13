@@ -22,9 +22,10 @@ class RandomFormationsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = screenWidth < 350
-        ? 160.0
-        : (screenWidth < 450 ? 180.0 : screenWidth / 2.5);
+  final isWide = screenWidth >= 600; // breakpoint for tablet/large screens
+  final cardWidth = screenWidth < 350
+    ? 160.0
+    : (screenWidth < 450 ? 180.0 : screenWidth / 2.5);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,21 +40,57 @@ class RandomFormationsWidget extends StatelessWidget {
             ),
           ),
         )
-            : SizedBox(
-          height: 260, // Hauteur fixe pour toutes les cartes
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: formations.length,
-            itemBuilder: (context, index) => SizedBox(
-              width: cardWidth,
-              child: _FormationCard(
-                formation: formations[index],
-                cardWidth: cardWidth,
-              ),
-            ),
-          ),
-        ),
+            : (isWide
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final availableWidth = constraints.maxWidth;
+                        final columns = (availableWidth / 300).floor().clamp(2, 4);
+                        final spacing = 12.0;
+                        final totalSpacing = spacing * (columns - 1);
+                        final computedCardWidth = (availableWidth - totalSpacing) / columns;
+                        final cardHeight = 320.0;
+
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: formations.length,
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: columns,
+                            mainAxisSpacing: spacing,
+                            crossAxisSpacing: spacing,
+                            childAspectRatio: computedCardWidth / cardHeight,
+                          ),
+                          itemBuilder: (context, index) {
+                            return SizedBox(
+                              width: computedCardWidth,
+                              height: cardHeight,
+                              child: _FormationCard(
+                                formation: formations[index],
+                                cardWidth: computedCardWidth,
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  )
+                : SizedBox(
+                    height: 260, // Hauteur fixe pour toutes les cartes
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: formations.length,
+                      itemBuilder: (context, index) => SizedBox(
+                        width: cardWidth,
+                        child: _FormationCard(
+                          formation: formations[index],
+                          cardWidth: cardWidth,
+                        ),
+                      ),
+                    ),
+                  )),
       ],
     );
   }
