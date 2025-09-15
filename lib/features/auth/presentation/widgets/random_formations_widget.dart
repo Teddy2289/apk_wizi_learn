@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -27,7 +29,7 @@ class RandomFormationsWidget extends StatelessWidget {
     ? 160.0
     : (screenWidth < 450 ? 180.0 : screenWidth / 2.5);
 
-    return Column(
+  return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         formations.isEmpty
@@ -41,33 +43,51 @@ class RandomFormationsWidget extends StatelessWidget {
           ),
         )
             : SizedBox(
-                // Use a consistent carousel for all sizes so the sliding principle is preserved
-                height: isWide ? 340 : 260,
                 child: Builder(builder: (context) {
                   final screenWidth = MediaQuery.of(context).size.width;
+                  final screenHeight = MediaQuery.of(context).size.height;
+                  // Compute responsive card height based on screen height
+                  double cardHeight;
+                  if (isWide) {
+                    cardHeight = screenHeight * 0.32;
+                    if (cardHeight < 320) cardHeight = 320;
+                    if (cardHeight > 520) cardHeight = 520;
+                  } else {
+                    cardHeight = screenHeight * 0.26;
+                    if (cardHeight < 240) cardHeight = 240;
+                    if (cardHeight > 360) cardHeight = 360;
+                  }
+
                   final viewportFraction = isWide
                       ? 0.45
                       : (cardWidth / screenWidth).clamp(0.35, 0.75);
                   final pageController = PageController(viewportFraction: viewportFraction);
 
-                  return PageView.builder(
-                    controller: pageController,
-                    itemCount: formations.length,
-                    padEnds: false,
-                    physics: const BouncingScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      final itemWidth = screenWidth * viewportFraction;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                        child: SizedBox(
-                          width: itemWidth,
-                          child: _FormationCard(
-                            formation: formations[index],
-                            cardWidth: itemWidth,
+                  return SizedBox(
+                    height: cardHeight,
+                    child: PageView.builder(
+                      controller: pageController,
+                      itemCount: formations.length,
+                      padEnds: false,
+                      physics: const BouncingScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        final itemWidth = screenWidth * viewportFraction;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          child: SizedBox(
+                            width: itemWidth,
+                            height: cardHeight,
+                            child: _FormationCard(
+                              formation: formations[index],
+                              cardWidth: itemWidth,
+                              cardHeight: cardHeight,
+                              // show description on wider/tablet/landscape screens
+                              showDescription: isWide || (screenWidth > 480 && screenWidth > screenHeight),
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   );
                 }),
               ),
@@ -79,10 +99,14 @@ class RandomFormationsWidget extends StatelessWidget {
 class _FormationCard extends StatefulWidget {
   final Formation formation;
   final double cardWidth;
+  final double cardHeight;
+  final bool showDescription;
 
   const _FormationCard({
     required this.formation,
     required this.cardWidth,
+    required this.cardHeight,
+    this.showDescription = false,
   });
 
   @override
@@ -109,6 +133,8 @@ class _FormationCardState extends State<_FormationCard> {
   Widget build(BuildContext context) {
     final categoryColor = _getCategoryColor(widget.formation.category.categorie);
     final theme = Theme.of(context);
+    // scale header image height based on overall card height
+    final imageHeight = math.min(math.max(widget.cardHeight * 0.28, 80.0), 140.0);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -125,7 +151,7 @@ class _FormationCardState extends State<_FormationCard> {
             children: [
               // Header avec image circulaire
               Container(
-                height: 100,
+                height: imageHeight,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: categoryColor.withOpacity(0.1),
@@ -136,8 +162,8 @@ class _FormationCardState extends State<_FormationCard> {
                 ),
                 child: Center(
                   child: Container(
-                    width: 70,
-                    height: 70,
+                    width: imageHeight * 0.7,
+                    height: imageHeight * 0.7,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
@@ -224,6 +250,19 @@ class _FormationCardState extends State<_FormationCard> {
                           ),
                         ],
                       ),
+
+                        // Optional description on wide/tablet/landscape
+                        if (widget.showDescription && (widget.formation.description?.isNotEmpty ?? false))
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              widget.formation.description!,
+                              style: theme.textTheme.bodySmall?.copyWith(color: Colors.black87),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
 
                       // Durée et prix
                       Row(
