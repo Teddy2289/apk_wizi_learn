@@ -168,7 +168,9 @@ class FirebaseNotificationService {
   }
 
   void _setupBackgroundMessageHandler() {
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    // Register the background handler that shows a local notification
+    // for data-only messages so the user can tap and open the app.
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandlerShow);
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {
@@ -265,4 +267,52 @@ class FirebaseNotificationService {
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print('Message reçu en arrière-plan: ${message.messageId}');
   // Ici vous pouvez traiter les notifications en arrière-plan
+}
+
+// Dans le cas de messages 'data-only' délivrés alors que l'app est terminée,
+// il est utile d'afficher une notification locale depuis l'handler en arrière-plan
+// afin que l'utilisateur puisse cliquer dessus. On initialise local notifications
+// dans cet isolate de background avant d'afficher.
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandlerShow(RemoteMessage message) async {
+  try {
+    print('Background handler (with local notif) for message: ${message.messageId}');
+
+    final FlutterLocalNotificationsPlugin fln = FlutterLocalNotificationsPlugin();
+
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+
+    await fln.initialize(initializationSettings);
+
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'high_importance_channel',
+      'Notifications importantes',
+      channelDescription: 'Canal pour les notifications importantes',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: false,
+    );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+    );
+
+    final payload = jsonEncode(message.data);
+
+    await fln.show(
+      message.hashCode,
+      message.notification?.title ?? 'Notification',
+      message.notification?.body ?? '',
+      platformChannelSpecifics,
+      payload: payload,
+    );
+  } catch (e) {
+    print('Erreur dans background handler show notification: $e');
+  }
 }

@@ -130,30 +130,25 @@ class NotificationManager {
     // Parse simple map-like payloads produced above and navigate
     if (response.payload != null && response.payload!.isNotEmpty) {
       try {
-        // payload was created via toString() on map earlier; try to recover
-        final cleaned = response.payload!
-            .replaceAll(' ', '')
-            .replaceAll("{", '{')
-            .replaceAll("}", '}');
-        // Attempt to parse as simple Map by splitting (best-effort)
-        // Prefer using JSON payloads from server for robust handling.
-        if (cleaned.startsWith('{') && cleaned.endsWith('}')) {
-          // crude parser: {key: value, key2: value2}
-          final inner = cleaned.substring(1, cleaned.length - 1);
-          final pairs = inner.split(',');
-          final Map<String, String> map = {};
-          for (final p in pairs) {
-            final kv = p.split(':');
-            if (kv.length >= 2) {
-              map[kv[0].replaceAll("'", '').replaceAll('"', '')] = kv.sublist(1).join(':');
-            }
+        // Try to decode JSON payload (this is the most robust format)
+        final payload = response.payload!;
+        Map<String, dynamic> data;
+        try {
+          data = Map<String, dynamic>.from(jsonDecode(payload));
+        } catch (_) {
+          // Fallback: try to parse a Dart-like Map string (best-effort)
+          final cleaned = payload.replaceAll("'", '"');
+          data = Map<String, dynamic>.from(jsonDecode(cleaned));
+        }
+
+        if (data.containsKey('type')) {
+          final type = data['type'];
+          if (type == 'quiz' && data.containsKey('id')) {
+            navigatorKey.currentState?.pushNamed('/quiz', arguments: {'id': data['id']});
           }
-          if (map.containsKey('type')) {
-            final type = map['type']!;
-            if (type == 'quiz' && map.containsKey('id')) {
-              navigatorKey.currentState?.pushNamed('/quiz', arguments: {'id': map['id']});
-            }
-          }
+        } else if (data.containsKey('link')) {
+          final String link = data['link'].toString();
+          navigatorKey.currentState?.pushNamed(link);
         }
       } catch (e) {
         print('Erreur lors du parsing du payload local: $e');
