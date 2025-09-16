@@ -110,18 +110,55 @@ class NotificationManager {
       android: androidPlatformChannelSpecifics,
     );
 
+    // Use a JSON payload so the tap handler can parse and navigate
+    final payload = {
+      'type': notification.type,
+      'id': notification.id,
+    };
+
     await _localNotifications.show(
       notification.hashCode,
       notification.title,
       notification.message,
       platformChannelSpecifics,
-      payload: notification.type,
+      payload: payload.isNotEmpty ? payload.toString() : null,
     );
   }
 
   void _onNotificationTapped(NotificationResponse response) {
     print('Notification tapée: ${response.payload}');
-    // Ici vous pouvez naviguer vers une page spécifique selon le type
+    // Parse simple map-like payloads produced above and navigate
+    if (response.payload != null && response.payload!.isNotEmpty) {
+      try {
+        // payload was created via toString() on map earlier; try to recover
+        final cleaned = response.payload!
+            .replaceAll(' ', '')
+            .replaceAll("{", '{')
+            .replaceAll("}", '}');
+        // Attempt to parse as simple Map by splitting (best-effort)
+        // Prefer using JSON payloads from server for robust handling.
+        if (cleaned.startsWith('{') && cleaned.endsWith('}')) {
+          // crude parser: {key: value, key2: value2}
+          final inner = cleaned.substring(1, cleaned.length - 1);
+          final pairs = inner.split(',');
+          final Map<String, String> map = {};
+          for (final p in pairs) {
+            final kv = p.split(':');
+            if (kv.length >= 2) {
+              map[kv[0].replaceAll("'", '').replaceAll('"', '')] = kv.sublist(1).join(':');
+            }
+          }
+          if (map.containsKey('type')) {
+            final type = map['type']!;
+            if (type == 'quiz' && map.containsKey('id')) {
+              navigatorKey.currentState?.pushNamed('/quiz', arguments: {'id': map['id']});
+            }
+          }
+        }
+      } catch (e) {
+        print('Erreur lors du parsing du payload local: $e');
+      }
+    }
   }
 
   // Méthodes publiques

@@ -13,6 +13,7 @@ import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, Tar
 import 'package:wizi_learn/core/services/notification_manager.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/splash_page.dart';
 import 'core/routes/app_router.dart';
+import 'core/services/navigation_service.dart';
 import 'package:provider/provider.dart';
 import 'features/auth/presentation/providers/notification_provider.dart';
 import 'features/auth/data/repositories/notification_repository.dart';
@@ -84,7 +85,7 @@ class MyApp extends StatelessWidget {
               (context) =>
                   AuthBloc(authRepository: context.read<AuthRepository>())
                     ..add(CheckAuthEvent()),
-          child: MaterialApp(
+            child: MaterialApp(
             title: 'Wizi Learn',
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
@@ -178,6 +179,7 @@ class MyApp extends StatelessWidget {
             },
             scrollBehavior: CustomScrollBehavior(),
             onGenerateRoute: AppRouter.generateRoute,
+            navigatorKey: navigatorKey,
             home: SplashPage(),
           ),
         ),

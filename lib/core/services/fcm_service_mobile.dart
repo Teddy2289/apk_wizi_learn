@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 class FcmService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final storage = const FlutterSecureStorage();
+  // Change this if your API base URL differs; kept default to existing host
+  static const String _apiBaseUrl = String.fromEnvironment('BASE_URL', defaultValue: 'https://wizi-learn.com');
 
   Future<void> initFcm(BuildContext? context) async {
     // Demande la permission à l'utilisateur
@@ -39,7 +41,7 @@ class FcmService {
     String? authToken = await storage.read(key: 'token');
     try {
       await Dio().post(
-        'https://wizi-learn.com/api/fcm-token',
+        '$_apiBaseUrl/api/fcm-token',
         data: {'token': token},
         options: Options(
           headers: {
