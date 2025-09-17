@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/data/models/notification_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/notification_repository.dart';
+import 'dart:async';
 
 class NotificationProvider extends ChangeNotifier {
   final NotificationRepository repository;
@@ -49,10 +50,25 @@ class NotificationProvider extends ChangeNotifier {
     }
   }
 
+  // Debounce refresh calls so rapid FCM bursts do not overload the API
+  Timer? _refreshTimer;
+  Duration _refreshDebounceDuration = const Duration(seconds: 2);
+
   void _onNewNotification(NotificationModel notification) {
+    // Update local state immediately for snappy UI
     _notifications.insert(0, notification);
     if (!notification.read) _unreadCount++;
     notifyListeners();
+
+    // Schedule a debounced refresh from server to ensure canonical state
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer(_refreshDebounceDuration, () async {
+      try {
+        await refresh();
+      } catch (e) {
+        // If refresh fails, keep local state — will retry on next manual refresh
+      }
+    });
   }
 
   Future<void> markAllAsRead() async {

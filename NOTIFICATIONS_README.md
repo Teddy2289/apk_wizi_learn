@@ -296,3 +296,13 @@ print('Token FCM: $token');
 print('Notification reçue: ${message.notification?.title}');
 print('Compteur non lus: $unreadCount');
 ``` 
+
+## Synchronisation FCM <-> API
+
+Le projet synchronise les notifications reçues via FCM avec l'état côté serveur :
+
+- Lorsqu'un message FCM arrive en premier plan, `FirebaseNotificationService` crée une notification locale et appelle le callback défini par `NotificationRepository`.
+- `NotificationProvider` met à jour immédiatement l'état local (UI réactive) puis planifie une `refresh()` dé-bounceée (2s) pour récupérer l'état canonique depuis l'API.
+- Cette stratégie évite les doublons et réduit les appels répétés au backend lorsque plusieurs pushes arrivent en rafale.
+
+Conseil : ajoutez un "pull-to-refresh" sur la page de notifications qui appelle `provider.refresh()` pour forcer une synchronisation manuelle.

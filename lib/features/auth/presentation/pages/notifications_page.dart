@@ -10,8 +10,21 @@ import '../providers/notification_provider.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 import 'dart:math';
 
-class NotificationsPage extends StatelessWidget {
+class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
+
+  @override
+  State<NotificationsPage> createState() => _NotificationsPageState();
+}
+
+class _NotificationsPageState extends State<NotificationsPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<NotificationProvider>(context, listen: false).initialize();
+    });
+  }
 
   void _navigateToNotificationPage(
     BuildContext context,
@@ -395,7 +408,7 @@ class NotificationsPage extends StatelessWidget {
             ],
           ),
           body:
-              isLoading
+              isLoading && !notifProvider.initialized
                   ? const Center(child: CircularProgressIndicator())
                   : RefreshIndicator(
                     onRefresh: notifProvider.refresh,
@@ -412,7 +425,7 @@ class NotificationsPage extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 12),
                                   Text(
-                                    'Aucune notification pour l\'instant, tu es à jour !',
+                                    "Aucune notification pour l'instant, tu es à jour !",
                                     style: TextStyle(
                                       color: Colors.grey.shade600,
                                     ),
