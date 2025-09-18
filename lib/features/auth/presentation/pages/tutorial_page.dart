@@ -13,6 +13,7 @@ import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.da
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+import 'package:flutter_html/flutter_html.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -178,13 +179,15 @@ class _TutorialPageState extends State<TutorialPage> {
       });
       // After the future resolves, ensure a default selected formation id is set
       if (_formationsFuture != null) {
-        _formationsFuture!.then((list) {
-          if (list.isNotEmpty && _selectedFormationId == null) {
-            setState(() {
-              _selectedFormationId = list.first.id;
-            });
-          }
-        }).catchError((_) {});
+        _formationsFuture!
+            .then((list) {
+              if (list.isNotEmpty && _selectedFormationId == null) {
+                setState(() {
+                  _selectedFormationId = list.first.id;
+                });
+              }
+            })
+            .catchError((_) {});
       }
     } catch (e) {
       debugPrint("Erreur : $e");
@@ -390,7 +393,6 @@ class _TutorialPageState extends State<TutorialPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     final body = FutureBuilder<List<FormationWithMedias>>(
       future: _formationsFuture,
@@ -467,48 +469,133 @@ class _TutorialPageState extends State<TutorialPage> {
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: mediasFiltres.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.video_library_outlined,
-                                    size: 64,
-                                    color: colorScheme.onSurface.withOpacity(0.3),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    "Aucun média trouvé",
-                                    style: theme.textTheme.bodyLarge?.copyWith(
-                                      color: colorScheme.onSurface.withOpacity(0.5),
+                      child:
+                          mediasFiltres.isEmpty
+                              ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.video_library_outlined,
+                                      size: 64,
+                                      color: colorScheme.onSurface.withOpacity(
+                                        0.3,
+                                      ),
                                     ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      "Aucun média trouvé",
+                                      style: theme.textTheme.bodyLarge
+                                          ?.copyWith(
+                                            color: colorScheme.onSurface
+                                                .withOpacity(0.5),
+                                          ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              )
+                              : ListView.separated(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8.0,
+                                ),
+                                itemCount: mediasFiltres.length,
+                                separatorBuilder:
+                                    (context, index) =>
+                                        const SizedBox(height: 8),
+                                itemBuilder: (context, index) {
+                                  final media = mediasFiltres[index];
+                                  final isWatched = watchedMediaIds.contains(
+                                    media.id,
+                                  );
+                                  if (isWideLayout) {
+                                    return ListTile(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      tileColor:
+                                          isWatched
+                                              ? colorScheme.surfaceVariant
+                                                  .withOpacity(0.5)
+                                              : null,
+                                      title: Text(
+                                        media.titre,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.bodyLarge,
+                                      ),
+                                      trailing: Icon(
+                                        Icons.chevron_right,
+                                        color: colorScheme.onSurface
+                                            .withOpacity(0.6),
+                                      ),
+                                      onTap: () async {
+                                        if (!isWatched) {
+                                          final resp = await _mediaRepository
+                                              .markMediaAsWatchedWithResponse(
+                                                media.id,
+                                              );
+                                          final success =
+                                              resp['success'] == true;
+                                          if (success)
+                                            setState(
+                                              () => _loadWatchedMediaIds(),
+                                            );
+                                          final newAchievements =
+                                              (resp['newAchievements']
+                                                  as List?) ??
+                                              [];
+                                          if (newAchievements.isNotEmpty &&
+                                              mounted) {
+                                            _showNewBadgesDialog(
+                                              context,
+                                              newAchievements,
+                                            );
+                                          }
+                                        }
+
+                                        final formations =
+                                            await _formationsFuture;
+                                        if (formations == null ||
+                                            formations.isEmpty)
+                                          return;
+
+                                        final selectedFormation = formations
+                                            .firstWhere(
+                                              (f) =>
+                                                  f.id == _selectedFormationId,
+                                              orElse: () => formations.first,
+                                            );
+
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (_) => YoutubePlayerPage(
+                                                  video: media,
+                                                  videosInSameCategory:
+                                                      selectedFormation.medias
+                                                          .where(
+                                                            (m) =>
+                                                                m.categorie ==
+                                                                media.categorie,
+                                                          )
+                                                          .toList(),
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  }
+                                  return _buildMediaItem(
+                                    context,
+                                    media,
+                                    isWatched,
+                                    theme,
+                                    colorScheme,
+                                  );
+                                },
                               ),
-                            )
-                          : ListView.separated(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 8.0,
-                              ),
-                              itemCount: mediasFiltres.length,
-                              separatorBuilder: (context, index) =>
-                                  const SizedBox(height: 8),
-                              itemBuilder: (context, index) {
-                                final media = mediasFiltres[index];
-                                final isWatched = watchedMediaIds.contains(
-                                  media.id,
-                                );
-                                return _buildMediaItem(
-                                  context,
-                                  media,
-                                  isWatched,
-                                  theme,
-                                  colorScheme,
-                                );
-                              },
-                            ),
                     ),
                   ),
                 ],
@@ -521,26 +608,36 @@ class _TutorialPageState extends State<TutorialPage> {
             }
 
             // Mode tablette / paysage : deux panneaux
-            final selectedMedia = mediasFiltres.isNotEmpty
-                ? mediasFiltres.firstWhere(
-                    (m) => m.id == (_selectedFormationId == null
-                        ? mediasFiltres.first.id
-                        : _selectedFormationId),
-                    orElse: () => mediasFiltres.first,
-                  )
-                : null;
+            final selectedMedia =
+                mediasFiltres.isNotEmpty
+                    ? mediasFiltres.firstWhere(
+                      (m) =>
+                          m.id ==
+                          (_selectedFormationId == null
+                              ? mediasFiltres.first.id
+                              : _selectedFormationId),
+                      orElse: () => mediasFiltres.first,
+                    )
+                    : null;
 
             Widget rightPanel() {
               if (selectedMedia == null) {
                 return Center(
-                  child: Text('Aucun média sélectionné', style: theme.textTheme.bodyMedium),
+                  child: Text(
+                    'Aucun média sélectionné',
+                    style: theme.textTheme.bodyMedium,
+                  ),
                 );
               }
 
               final videoId = YoutubePlayer.convertUrlToId(selectedMedia.url);
-              final thumbnailUrl = videoId != null
-                  ? YoutubePlayer.getThumbnail(videoId: videoId, quality: ThumbnailQuality.medium)
-                  : null;
+              final thumbnailUrl =
+                  videoId != null
+                      ? YoutubePlayer.getThumbnail(
+                        videoId: videoId,
+                        quality: ThumbnailQuality.medium,
+                      )
+                      : null;
 
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
@@ -560,24 +657,26 @@ class _TutorialPageState extends State<TutorialPage> {
                           color: colorScheme.surfaceVariant,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Center(child: Icon(Icons.videocam, size: 48)),
+                        child: const Center(
+                          child: Icon(Icons.videocam, size: 48),
+                        ),
                       ),
                     const SizedBox(height: 12),
                     Text(
                       selectedMedia.titre,
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      selectedMedia.description ?? '',
-                      style: theme.textTheme.bodyMedium,
-                    ),
+                    Html(data: selectedMedia.description ?? ''),
                     const SizedBox(height: 12),
                     ElevatedButton.icon(
                       onPressed: () async {
                         // Ouvre le lecteur plein écran
                         final formationsAll = await _formationsFuture;
-                        if (formationsAll == null || formationsAll.isEmpty) return;
+                        if (formationsAll == null || formationsAll.isEmpty)
+                          return;
                         final parentFormation = formationsAll.firstWhere(
                           (f) => f.medias.any((m) => m.id == selectedMedia.id),
                           orElse: () => formationsAll.first,
@@ -585,12 +684,14 @@ class _TutorialPageState extends State<TutorialPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => YoutubePlayerPage(
-                              video: selectedMedia,
-                              videosInSameCategory: parentFormation.medias
-                                  .map((m) => m)
-                                  .toList(),
-                            ),
+                            builder:
+                                (_) => YoutubePlayerPage(
+                                  video: selectedMedia,
+                                  videosInSameCategory:
+                                      parentFormation.medias
+                                          .map((m) => m)
+                                          .toList(),
+                                ),
                           ),
                         );
                       },
@@ -603,11 +704,19 @@ class _TutorialPageState extends State<TutorialPage> {
                     ...mediasFiltres.map((m) {
                       return ListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: Text(m.titre, maxLines: 1, overflow: TextOverflow.ellipsis),
-                        trailing: Text(_formatDuration(Duration(seconds: m.duree ?? 0)), style: theme.textTheme.bodySmall),
+                        title: Text(
+                          m.titre,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: Text(
+                          _formatDuration(Duration(seconds: m.duree ?? 0)),
+                          style: theme.textTheme.bodySmall,
+                        ),
                         onTap: () async {
                           final formationsAll = await _formationsFuture;
-                          if (formationsAll == null || formationsAll.isEmpty) return;
+                          if (formationsAll == null || formationsAll.isEmpty)
+                            return;
                           final parentFormation = formationsAll.firstWhere(
                             (f) => f.medias.any((mm) => mm.id == m.id),
                             orElse: () => formationsAll.first,
@@ -615,10 +724,14 @@ class _TutorialPageState extends State<TutorialPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => YoutubePlayerPage(
-                                video: m,
-                                videosInSameCategory: parentFormation.medias.map((mm) => mm).toList(),
-                              ),
+                              builder:
+                                  (_) => YoutubePlayerPage(
+                                    video: m,
+                                    videosInSameCategory:
+                                        parentFormation.medias
+                                            .map((mm) => mm)
+                                            .toList(),
+                                  ),
                             ),
                           );
                         },
@@ -630,12 +743,29 @@ class _TutorialPageState extends State<TutorialPage> {
             }
 
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12.0,
+                vertical: 8.0,
+              ),
               child: Row(
                 children: [
-                  Flexible(flex: 2, child: Container(height: MediaQuery.of(context).size.height * 0.8, child: leftPanel())),
+                  Flexible(
+                    flex: 2,
+                    child: Container(
+                      height: MediaQuery.of(context).size.height * 0.8,
+                      child: leftPanel(),
+                    ),
+                  ),
                   const SizedBox(width: 16),
-                  Flexible(flex: 3, child: Card(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), child: rightPanel())),
+                  Flexible(
+                    flex: 3,
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: rightPanel(),
+                    ),
+                  ),
                 ],
               ),
             );
@@ -675,7 +805,8 @@ class _TutorialPageState extends State<TutorialPage> {
                         ],
                         onPressed: (index) {
                           setState(() {
-                            _selectedCategory = index == 0 ? 'tutoriel' : 'astuce';
+                            _selectedCategory =
+                                index == 0 ? 'tutoriel' : 'astuce';
                           });
                         },
                         borderRadius: BorderRadius.circular(12),
@@ -710,14 +841,24 @@ class _TutorialPageState extends State<TutorialPage> {
                         final items = snap.data ?? [];
                         if (items.isEmpty) return const SizedBox.shrink();
                         return Container(
-                          constraints: BoxConstraints(maxWidth: screenWidth * 0.35),
+                          constraints: BoxConstraints(
+                            maxWidth: screenWidth * 0.35,
+                          ),
                           child: DropdownButton<int>(
                             isExpanded: true,
                             value: _selectedFormationId ?? items.first.id,
-                            items: items.map((f) => DropdownMenuItem<int>(
-                              value: f.id,
-                              child: Text(f.titre, overflow: TextOverflow.ellipsis),
-                            )).toList(),
+                            items:
+                                items
+                                    .map(
+                                      (f) => DropdownMenuItem<int>(
+                                        value: f.id,
+                                        child: Text(
+                                          f.titre,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
                             onChanged: (v) {
                               setState(() {
                                 _selectedFormationId = v;

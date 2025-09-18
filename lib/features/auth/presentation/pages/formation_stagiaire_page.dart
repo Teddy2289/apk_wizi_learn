@@ -126,9 +126,10 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
       );
 
       // Filtre les formations invalides
-      final validFormations = formations.where((f) =>
-      f.titre != null && f.titre.isNotEmpty && f.titre != 'null'
-      ).toList();
+      final validFormations =
+          formations
+              .where((f) => f.titre.isNotEmpty && f.titre != 'null')
+              .toList();
 
       setState(() {
         _formations = validFormations;
@@ -143,6 +144,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -184,9 +186,9 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
               ),
               onPressed:
                   () => Navigator.pushReplacementNamed(
-                context,
-                RouteConstants.dashboard,
-              ),
+                    context,
+                    RouteConstants.dashboard,
+                  ),
             ),
             backgroundColor:
                 isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
@@ -254,7 +256,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                 : SliverList(
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final formation = _formations[index];
-                    final category = formation.category?.categorie ?? 'Autre';
+                    final category = formation.category.categorie;
                     final styles =
                         _categoryStyles[category] ??
                         {
@@ -312,14 +314,14 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          formation.titre.toUpperCase(),
+                          (formation.category.titre).toUpperCase(),
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          formation.category?.categorie ?? 'Autre',
+                          formation.category.categorie,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: styles['color'],
                           ),
@@ -360,7 +362,8 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                   'Prix: ${NumberFormat('#,##0', 'fr_FR').format(formation.tarif)} €',
                   theme,
                 ),
-                if (formation.certification != null && formation.certification!.isNotEmpty) ...[
+                if (formation.certification != null &&
+                    formation.certification!.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   _buildInfoRow(
                     Icons.verified,
@@ -373,7 +376,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                   const SizedBox(height: 8),
                   _buildInfoRow(
                     Icons.person,
-                    'Formateur: ${formation.formateur!.prenom ?? ''} ${formation.formateur!.nom?.toUpperCase() ?? ''}',
+                    'Formateur: ${formation.formateur!.prenom} ${formation.formateur!.nom.toUpperCase()}',
                     theme,
                     color: Colors.blue,
                   ),
@@ -386,10 +389,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  formation.description,
-                  style: theme.textTheme.bodyMedium,
-                ),
+                Text(formation.description, style: theme.textTheme.bodyMedium),
               ],
             ],
           ),
@@ -482,22 +482,5 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
     }
   }
 
-  Color _getCategoryColor(String? category, ThemeData theme) {
-    if (category == null) return theme.colorScheme.primary;
-
-    final cat = category.trim().toLowerCase();
-    switch (cat) {
-      case 'bureautique':
-        return const Color(0xFF3D9BE9);
-      case 'langues':
-        return const Color(0xFFA55E6E);
-      case 'internet':
-        return const Color(0xFFFFC533);
-      case 'création':
-        return const Color(0xFF9392BE);
-      default:
-        return theme.colorScheme.primary;
-    }
-  }
-
+  //
 }
