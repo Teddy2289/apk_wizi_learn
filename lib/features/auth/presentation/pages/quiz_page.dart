@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
@@ -78,7 +79,7 @@ class _QuizPageState extends State<QuizPage> {
     _loadInitialData();
     _scrollController.addListener(_scrollListener);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map<String, dynamic>) {
         setState(() {
@@ -89,10 +90,15 @@ class _QuizPageState extends State<QuizPage> {
 
       final bool forceListArg =
           (args is Map<String, dynamic>) ? (args['forceList'] ?? false) : false;
+
+      // Charger la préférence utilisateur
+      final userPrefersAdventure = await _loadQuizViewPreference();
+
       if (!_didRedirectToAdventure &&
           !widget.quizAdventureEnabled &&
           !widget.forceList &&
-          !forceListArg) {
+          !forceListArg &&
+          userPrefersAdventure) {
         _didRedirectToAdventure = true;
         Navigator.pushReplacement(
           context,
@@ -162,6 +168,17 @@ class _QuizPageState extends State<QuizPage> {
       storage: storage,
     );
     _statsRepository = StatsRepository(apiClient: apiClient);
+  }
+
+  Future<void> _saveQuizViewPreference(bool isAdventureMode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('quiz_view_preference', isAdventureMode);
+  }
+
+  Future<bool> _loadQuizViewPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('quiz_view_preference') ??
+        true; // Par défaut: aventure
   }
 
   @override
@@ -306,8 +323,11 @@ class _QuizPageState extends State<QuizPage> {
                       activeTrackColor: Colors.black,
                       inactiveThumbColor: Colors.black,
                       inactiveTrackColor: Colors.white,
-                      onChanged: (v) {
+                      onChanged: (v) async {
                         if (!v) return;
+                        // Sauvegarder la préférence utilisateur pour la vue aventure
+                        await _saveQuizViewPreference(true);
+
                         Navigator.pushReplacement(
                           context,
                           PageRouteBuilder(
@@ -669,17 +689,6 @@ class _QuizPageState extends State<QuizPage> {
         const SizedBox(height: 16),
       ],
     );
-  }
-
-  String _buildFilterText() {
-    final filters = <String>[];
-    if (_selectedLevel != null) {
-      filters.add('Niveau: $_selectedLevel');
-    }
-    if (_selectedFormation != null) {
-      filters.add('Formation: $_selectedFormation');
-    }
-    return filters.join(' • ');
   }
 
   Widget _buildQuizListContent(ThemeData theme) {
@@ -1566,17 +1575,6 @@ class _QuizPageState extends State<QuizPage> {
         '2. Répondez aux questions qui s\'affichent',
         '3. Validez vos réponses',
         '4. Découvrez votre score à la fin !',
-      ],
-    );
-  }
-
-  Widget _buildStep(String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Icon(Icons.play_arrow, size: 16),
-        const SizedBox(width: 8),
-        Expanded(child: Text(text)),
       ],
     );
   }

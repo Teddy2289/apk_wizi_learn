@@ -284,6 +284,17 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     setState(() {});
   }
 
+  Future<void> _saveQuizViewPreference(bool isAdventureMode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('quiz_view_preference', isAdventureMode);
+  }
+
+  Future<bool> _loadQuizViewPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('quiz_view_preference') ??
+        true; // Par défaut: aventure
+  }
+
   // Sélection d'avatar supprimée
 
   // Sélection d'avatar supprimée
@@ -839,11 +850,14 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     );
   }
 
-  void _goToQuizList() {
+  void _goToQuizList() async {
     if (!widget.quizAdventureEnabled) {
       // Adventure mode is disabled, stay in current page
       return;
     }
+    // Sauvegarder la préférence utilisateur pour la vue liste
+    await _saveQuizViewPreference(false);
+
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
