@@ -541,127 +541,151 @@ class _TutorialPageState extends State<TutorialPage> {
                     )
                     : null;
 
-            Widget rightPanel() {
-              if (selectedMedia == null) {
-                return Center(
-                  child: Text(
-                    'Aucun média sélectionné',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                );
-              }
+            // Widget rightPanel() {
+            //   if (selectedMedia == null) {
+            //     return Center(
+            //       child: Text(
+            //         'Aucun média sélectionné',
+            //         style: theme.textTheme.bodyMedium,
+            //       ),
+            //     );
+            //   }
 
-              final videoId = YoutubePlayer.convertUrlToId(selectedMedia.url);
-              final thumbnailUrl =
-                  videoId != null
-                      ? YoutubePlayer.getThumbnail(
-                        videoId: videoId,
-                        quality: ThumbnailQuality.medium,
-                      )
-                      : null;
+            //   final videoId = YoutubePlayer.convertUrlToId(selectedMedia.url);
+            //   final thumbnailUrl =
+            //       videoId != null
+            //           ? YoutubePlayer.getThumbnail(
+            //             videoId: videoId,
+            //             quality: ThumbnailQuality.medium,
+            //           )
+            //           : null;
 
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Vignette + play
-                    if (thumbnailUrl != null)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(thumbnailUrl, fit: BoxFit.cover),
-                      )
-                    else
-                      Container(
-                        height: 180,
-                        decoration: BoxDecoration(
-                          color: colorScheme.surfaceVariant,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.videocam, size: 48),
-                        ),
-                      ),
-                    const SizedBox(height: 12),
-                    Text(
-                      selectedMedia.titre,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Html(data: selectedMedia.description ?? ''),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        // Ouvre le lecteur plein écran
-                        final formationsAll = await _formationsFuture;
-                        if (formationsAll == null || formationsAll.isEmpty)
-                          return;
-                        final parentFormation = formationsAll.firstWhere(
-                          (f) => f.medias.any((m) => m.id == selectedMedia.id),
-                          orElse: () => formationsAll.first,
-                        );
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (_) => YoutubePlayerPage(
-                                  video: selectedMedia,
-                                  videosInSameCategory:
-                                      parentFormation.medias
-                                          .map((m) => m)
-                                          .toList(),
-                                ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.play_arrow),
-                      label: const Text('Lire'),
-                    ),
-                    const SizedBox(height: 16),
-                    Text('Autres médias', style: theme.textTheme.titleSmall),
-                    const SizedBox(height: 8),
-                    ...mediasFiltres.map((m) {
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          m.titre,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: Text(
-                          _formatDuration(Duration(seconds: m.duree ?? 0)),
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        onTap: () async {
-                          final formationsAll = await _formationsFuture;
-                          if (formationsAll == null || formationsAll.isEmpty)
-                            return;
-                          final parentFormation = formationsAll.firstWhere(
-                            (f) => f.medias.any((mm) => mm.id == m.id),
-                            orElse: () => formationsAll.first,
-                          );
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (_) => YoutubePlayerPage(
-                                    video: m,
-                                    videosInSameCategory:
-                                        parentFormation.medias
-                                            .map((mm) => mm)
-                                            .toList(),
-                                  ),
-                            ),
-                          );
-                        },
-                      );
-                    }).toList(),
-                  ],
-                ),
-              );
-            }
+            //   return SingleChildScrollView(
+            //     padding: const EdgeInsets.all(16),
+            //     child: Column(
+            //       crossAxisAlignment: CrossAxisAlignment.start,
+            //       children: [
+            //         // Vignette + play
+            //         if (thumbnailUrl != null)
+            //           ClipRRect(
+            //             borderRadius: BorderRadius.circular(12),
+            //             child: Image.network(thumbnailUrl, fit: BoxFit.cover),
+            //           )
+            //         else
+            //           Container(
+            //             height: 180,
+            //             decoration: BoxDecoration(
+            //               color: colorScheme.surfaceVariant,
+            //               borderRadius: BorderRadius.circular(12),
+            //             ),
+            //             child: const Center(
+            //               child: Icon(Icons.videocam, size: 48),
+            //             ),
+            //           ),
+            //         const SizedBox(height: 12),
+            //         Text(
+            //           selectedMedia.titre,
+            //           style: theme.textTheme.titleMedium?.copyWith(
+            //             fontWeight: FontWeight.bold,
+            //           ),
+            //         ),
+            //         const SizedBox(height: 8),
+            //         Html(data: selectedMedia.description ?? ''),
+            //         const SizedBox(height: 12),
+            //         ElevatedButton.icon(
+            //           onPressed: () async {
+            //             // Ouvre le lecteur plein écran
+            //             final formationsAll = await _formationsFuture;
+            //             if (formationsAll == null || formationsAll.isEmpty)
+            //               return;
+            //             final parentFormation = formationsAll.firstWhere(
+            //               (f) => f.medias.any((m) => m.id == selectedMedia.id),
+            //               orElse: () => formationsAll.first,
+            //             );
+            //             Navigator.push(
+            //               context,
+            //               MaterialPageRoute(
+            //                 builder:
+            //                     (_) => YoutubePlayerPage(
+            //                       video: selectedMedia,
+            //                       videosInSameCategory:
+            //                           parentFormation.medias
+            //                               .map((m) => m)
+            //                               .toList(),
+            //                     ),
+            //               ),
+            //             );
+            //           },
+            //           icon: const Icon(Icons.play_arrow),
+            //           label: const Text('Lire'),
+            //         ),
+            //         const SizedBox(height: 16),
+            //         Text('Autres médias', style: theme.textTheme.titleSmall),
+            //         const SizedBox(height: 8),
+            //         ...mediasFiltres.map((m) {
+            //           return ListTile(
+            //             contentPadding: EdgeInsets.zero,
+            //             title: Text(
+            //               m.titre,
+            //               maxLines: 1,
+            //               overflow: TextOverflow.ellipsis,
+            //             ),
+            //             trailing: Text(
+            //               _formatDuration(Duration(seconds: m.duree ?? 0)),
+            //               style: theme.textTheme.bodySmall,
+            //             ),
+            //             onTap: () async {
+            //               final formationsAll = await _formationsFuture;
+            //               if (formationsAll == null || formationsAll.isEmpty)
+            //                 return;
+            //               final parentFormation = formationsAll.firstWhere(
+            //                 (f) => f.medias.any((mm) => mm.id == m.id),
+            //                 orElse: () => formationsAll.first,
+            //               );
+            //               Navigator.push(
+            //                 context,
+            //                 MaterialPageRoute(
+            //                   builder:
+            //                       (_) => YoutubePlayerPage(
+            //                         video: m,
+            //                         videosInSameCategory:
+            //                             parentFormation.medias
+            //                                 .map((mm) => mm)
+            //                                 .toList(),
+            //                       ),
+            //                 ),
+            //               );
+            //             },
+            //           );
+            //         }).toList(),
+            //       ],
+            //     ),
+            //   );
+            // }
+              Widget rightPanel() {
+  if (selectedMedia == null) {
+    return Center(
+      child: Text(
+        'Aucun média sélectionné',
+        style: theme.textTheme.bodyMedium,
+      ),
+    );
+  }
+
+  // 👉 Mode paysage/tablette : n’afficher que le titre
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Text(
+        selectedMedia.titre,
+        style: theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    ),
+  );
+}
 
             return Padding(
               padding: const EdgeInsets.symmetric(
