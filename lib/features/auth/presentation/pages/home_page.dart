@@ -32,23 +32,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool _showHomeTutorial = false;
-  final List<Map<String, String>> _homeTutorialSteps = [
-    {
-      'title': 'Bienvenue sur l\'accueil !',
-      'desc':
-          'Retrouvez ici vos contacts, formations et notifications importantes.',
-    },
-    {
-      'title': 'Vos contacts',
-      'desc': 'Accédez rapidement aux personnes clés pour votre formation.',
-    },
-    {
-      'title': 'Formations recommandées',
-      'desc': 'Découvrez les formations sélectionnées pour vous chaque jour.',
-    },
-  ];
-
   late final ContactRepository _contactRepository;
   late final FormationRepository _formationRepository;
   late final AuthRepository _authRepository;
@@ -62,20 +45,12 @@ class _HomePageState extends State<HomePage> {
   int _loginStreak = 0;
   bool _showStreakModal = false;
   bool _hideStreakFor7Days = false;
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
-  Future<void> _checkHomeTutorialSeen() async {
-    final prefs = await SharedPreferences.getInstance();
-    final seen = prefs.getBool('hasSeenHomeTutorial') ?? false;
-    if (!seen) {
-      setState(() => _showHomeTutorial = true);
-    }
-  }
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
     super.initState();
-    _checkHomeTutorialSeen();
     _initializeRepositories();
     _loadData();
     _loadConnectedUser();
@@ -114,8 +89,8 @@ class _HomePageState extends State<HomePage> {
 
       if (mounted) {
         setState(() {
-          _prenom = user?.stagiaire?.prenom;
-          _nom = user?.name;
+          _prenom = user.stagiaire?.prenom;
+          _nom = user.name;
           _loginStreak = loginStreak;
           _isLoadingUser = false;
         });
@@ -147,7 +122,8 @@ class _HomePageState extends State<HomePage> {
         }
       }
       final now = DateTime.now();
-      final today = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final today =
+          '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
       if (lastShown == today) return;
       if (_loginStreak > 0) {
         if (mounted) setState(() => _showStreakModal = true);
@@ -161,11 +137,13 @@ class _HomePageState extends State<HomePage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final now = DateTime.now();
-      final today = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final today =
+          '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
       await prefs.setString('lastStreakModalDate', today);
       if (_hideStreakFor7Days) {
         final hideUntilDate = now.add(const Duration(days: 7));
-        final hideUntil = '${hideUntilDate.year.toString().padLeft(4, '0')}-${hideUntilDate.month.toString().padLeft(2, '0')}-${hideUntilDate.day.toString().padLeft(2, '0')}';
+        final hideUntil =
+            '${hideUntilDate.year.toString().padLeft(4, '0')}-${hideUntilDate.month.toString().padLeft(2, '0')}-${hideUntilDate.day.toString().padLeft(2, '0')}';
         await prefs.setString('streakModalHideUntil', hideUntil);
       } else {
         // if previously set, clear the hideUntil so modal can show again tomorrow
@@ -247,6 +225,10 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const SliverToBoxAdapter(child: SizedBox(height: 24)),
                         SliverToBoxAdapter(
+                          child: _buildPlatformPresentation(isTablet),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        SliverToBoxAdapter(
                           child: _buildSectionTitle(
                             context,
                             title: 'Formations recommandées',
@@ -277,6 +259,11 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         _buildContactsList(isTablet),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        SliverToBoxAdapter(
+                          child: _buildGameModesSection(isTablet),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
                       ],
                     ),
                   ),
@@ -306,28 +293,56 @@ class _HomePageState extends State<HomePage> {
                         ),
                         child: Column(
                           children: [
-                            Text('7 jours', style: TextStyle(color: kOrangeDark, fontWeight: FontWeight.w600)),
+                            Text(
+                              '7 jours',
+                              style: TextStyle(
+                                color: kOrangeDark,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             Text('🔥', style: TextStyle(fontSize: 56)),
                           ],
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Text('Série de connexions', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                      Text(
+                        'Série de connexions',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 8),
-                      Text('$_loginStreak jour${_loginStreak > 1 ? 's' : ''} d\'affilée', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                      Text(
+                        '$_loginStreak jour${_loginStreak > 1 ? 's' : ''} d\'affilée',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 12),
-                      Text('Continuez comme ça pour débloquer des récompenses 🎉', textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
+                      Text(
+                        'Continuez comme ça pour débloquer des récompenses 🎉',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium,
+                      ),
                       const SizedBox(height: 12),
                       Row(
                         children: [
                           Checkbox(
                             value: _hideStreakFor7Days,
                             onChanged: (val) {
-                              if (mounted) setState(() => _hideStreakFor7Days = val ?? false);
+                              if (mounted)
+                                setState(
+                                  () => _hideStreakFor7Days = val ?? false,
+                                );
                             },
                           ),
-                          Expanded(child: Text('Ne plus montrer pendant 7 jours', style: theme.textTheme.bodyMedium)),
+                          Expanded(
+                            child: Text(
+                              'Ne plus montrer pendant 7 jours',
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -335,7 +350,10 @@ class _HomePageState extends State<HomePage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           ElevatedButton(
-                            style: ElevatedButton.styleFrom(backgroundColor: kOrange, foregroundColor: kWhite),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kOrange,
+                              foregroundColor: kWhite,
+                            ),
                             onPressed: _closeStreakModal,
                             child: const Text('Continuer'),
                           ),
@@ -364,20 +382,9 @@ class _HomePageState extends State<HomePage> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [kYellowLight, kYellowLight, kYellowLight],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: kYellowLight.withOpacity(0.15),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
-            ),
-          ],
-          border: Border.all(color: kYellow, width: 1.5),
+          color: kYellowLight,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: kYellow.withOpacity(0.5), width: 1),
         ),
         child: Row(
           children: [
@@ -527,16 +534,9 @@ class _HomePageState extends State<HomePage> {
           padding: const EdgeInsets.all(24),
           child: Container(
             decoration: BoxDecoration(
-              color: kYellowLight,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: kYellow, width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: kOrange.withOpacity(0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+              color: kYellowLight.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: kYellow.withOpacity(0.3), width: 0.5),
             ),
             child: Center(
               child: Text(
@@ -623,7 +623,9 @@ class _HomePageState extends State<HomePage> {
                   width: itemWidth,
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: carouselHeight - 12),
+                      constraints: BoxConstraints(
+                        maxHeight: carouselHeight - 12,
+                      ),
                       child: ContactCard(
                         contact: orderedContacts[index],
                         showFormations: false,
@@ -635,6 +637,279 @@ class _HomePageState extends State<HomePage> {
             },
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPlatformPresentation(bool isTablet) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: kYellowLight,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: kYellow.withOpacity(0.5), width: 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: isTablet ? 50 : 40,
+                  height: isTablet ? 50 : 40,
+                  decoration: BoxDecoration(
+                    color: kYellow,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    LucideIcons.rocket,
+                    color: kOrangeDark,
+                    size: isTablet ? 28 : 22,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    'Wizi Learn',
+                    style: TextStyle(
+                      fontSize: isTablet ? 24 : 20,
+                      fontWeight: FontWeight.bold,
+                      color: kBrown,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Votre plateforme d\'apprentissage intelligente',
+              style: TextStyle(
+                fontSize: isTablet ? 18 : 16,
+                fontWeight: FontWeight.w600,
+                color: kBrown,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Découvrez des formations personnalisées, des quiz interactifs et des défis gamifiés pour progresser à votre rythme. Apprenez, jouez et excellez !',
+              style: TextStyle(
+                fontSize: isTablet ? 16 : 14,
+                color: kBrown.withOpacity(0.7),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                _buildFeatureChip('🎯 Personnalisé', isTablet),
+                const SizedBox(width: 8),
+                _buildFeatureChip('🏆 Gamifié', isTablet),
+                const SizedBox(width: 8),
+                _buildFeatureChip('📱 Mobile', isTablet),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureChip(String text, bool isTablet) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 12 : 10,
+        vertical: isTablet ? 6 : 4,
+      ),
+      decoration: BoxDecoration(
+        color: kOrange.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: isTablet ? 12 : 10,
+          fontWeight: FontWeight.w600,
+          color: kOrangeDark,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGameModesSection(bool isTablet) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: kYellow,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    LucideIcons.gamepad2,
+                    color: kOrangeDark,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Modes de Jeux',
+                      style: TextStyle(
+                        fontSize: isTablet ? 22 : 18,
+                        fontWeight: FontWeight.bold,
+                        color: kBrown,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
+          child: isTablet ? _buildTabletGameModes() : _buildMobileGameModes(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileGameModes() {
+    return Column(
+      children: [
+        _buildGameModeCard(
+          icon: LucideIcons.target,
+          title: 'Quiz Classique',
+          description:
+              'Questions à choix multiples pour tester vos connaissances',
+          color: Colors.green,
+          isTablet: false,
+        ),
+        const SizedBox(height: 12),
+        _buildGameModeCard(
+          icon: LucideIcons.crown,
+          title: 'Quiz Aventure',
+          description: 'Parcours gamifié avec récompenses et niveaux',
+          color: Colors.purple,
+          isTablet: false,
+        ),
+        const SizedBox(height: 12),
+        _buildGameModeCard(
+          icon: LucideIcons.clock,
+          title: 'Défi Rapide',
+          description: 'Quiz chronométrés pour des sessions express',
+          color: Colors.red,
+          isTablet: false,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTabletGameModes() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildGameModeCard(
+            icon: LucideIcons.target,
+            title: 'Quiz Classique',
+            description:
+                'Questions à choix multiples pour tester vos connaissances',
+            color: Colors.green,
+            isTablet: true,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildGameModeCard(
+            icon: LucideIcons.crown,
+            title: 'Quiz Aventure',
+            description: 'Parcours gamifié avec récompenses et niveaux',
+            color: Colors.purple,
+            isTablet: true,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildGameModeCard(
+            icon: LucideIcons.clock,
+            title: 'Défi Rapide',
+            description: 'Quiz chronométrés pour des sessions express',
+            color: Colors.red,
+            isTablet: true,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGameModeCard({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+    required bool isTablet,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.all(isTablet ? 16 : 12),
+      decoration: BoxDecoration(
+        color: kYellowLight.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: kYellow.withOpacity(0.3), width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: isTablet ? 45 : 35,
+                height: isTablet ? 45 : 35,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: isTablet ? 24 : 18),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: isTablet ? 16 : 14,
+                    fontWeight: FontWeight.bold,
+                    color: kBrown,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: isTablet ? 12 : 8),
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: isTablet ? 14 : 12,
+              color: kBrown.withOpacity(0.7),
+              height: 1.3,
+            ),
+          ),
+        ],
       ),
     );
   }

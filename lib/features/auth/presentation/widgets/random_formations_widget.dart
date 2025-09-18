@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
@@ -233,7 +234,6 @@ class _FormationCardState extends State<_FormationCard> {
                   padding: const EdgeInsets.all(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Titre et catégorie
                       Column(
@@ -269,28 +269,32 @@ class _FormationCardState extends State<_FormationCard> {
                         ],
                       ),
 
-                      // Optional description on wide/tablet/landscape with HTML rendering
+                      // Optional description on wide/tablet/landscape
                       if (widget.showDescription &&
                           widget.formation.description.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Html(
-                            data: widget.formation.description,
-                            style: {
-                              "body": Style(
-                                margin: Margins.zero,
-                                padding: HtmlPaddings.zero,
-                                fontSize: FontSize(
-                                  theme.textTheme.bodySmall?.fontSize ?? 12,
+                        Expanded(
+                          flex: 1,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Html(
+                              data: widget.formation.description,
+                              style: {
+                                '*': Style(
+                                  maxLines: widget.cardWidth < 5 ? 2 : 3,
+                                  textOverflow: TextOverflow.ellipsis,
+                                  color: Colors.black87,
+                                  fontSize: FontSize(
+                                    theme.textTheme.bodySmall?.fontSize ?? 12,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
-                                color: Colors.black87,
-                                textAlign: TextAlign.center,
-                                maxLines: 3,
-                              ),
-                              "p": Style(margin: Margins.zero),
-                            },
+                              },
+                            ),
                           ),
                         ),
+
+                      // Spacer pour pousser le contenu vers le bas
+                      const Spacer(),
 
                       // Durée et prix
                       Row(
@@ -320,6 +324,8 @@ class _FormationCardState extends State<_FormationCard> {
                           ),
                         ],
                       ),
+
+                      const SizedBox(height: 8),
 
                       // Boutons d'action
                       Row(
