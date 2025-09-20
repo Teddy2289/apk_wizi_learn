@@ -22,7 +22,9 @@ class CustomDrawer extends StatelessWidget {
 
     return Drawer(
       backgroundColor: isDarkMode ? Colors.grey.shade900 : Colors.white,
-      width: MediaQuery.of(context).size.width * 0.85,
+      width: MediaQuery.of(context).size.width > 600
+          ? MediaQuery.of(context).size.width * 0.25
+          : MediaQuery.of(context).size.width * 0.85,
       child: Column(
         children: [
           // Header avec photo et infos utilisateur - Hauteur réduite

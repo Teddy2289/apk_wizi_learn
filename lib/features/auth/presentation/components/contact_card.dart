@@ -90,69 +90,73 @@ class ContactCard extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: isSmallScreen ? 2 : 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.phone_android,
-                            size: iconSize,
-                            color: Colors.grey.shade600,
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.phone_android,
+                          size: iconSize,
+                          color: Colors.grey.shade600,
+                        ),
+                        SizedBox(width: isSmallScreen ? 3 : 6),
+                        Expanded(
+                          child: Text(
+                            contact.telephone.isNotEmpty
+                                ? contact.telephone
+                                : 'Non renseigné',
+                            style: TextStyle(fontSize: infoFontSize),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(width: isSmallScreen ? 3 : 6),
-                          Expanded(
-                            child: Text(
-                              contact.telephone.isNotEmpty
-                                  ? contact.telephone
-                                  : 'Non renseigné',
-                              style: TextStyle(fontSize: infoFontSize),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    ),
                     SizedBox(height: isSmallScreen ? 2 : 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.email,
-                            size: iconSize,
-                            color: Colors.grey.shade600,
-                          ),
-                          SizedBox(width: isSmallScreen ? 3 : 6),
-                          Expanded(
-                            child: Tooltip(
-                              message: contact.email,
-                              child: GestureDetector(
-                                onTap: () async {
-                                  final mailUrl = Uri(
-                                    scheme: 'mailto',
-                                    path: contact.email,
-                                  );
-                                  try {
-                                    await launchUrl(mailUrl);
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Impossible d\'ouvrir l\'application mail.',
-                                        ),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.email,
+                          size: iconSize,
+                          color: Colors.grey.shade600,
+                        ),
+                        SizedBox(width: isSmallScreen ? 3 : 6),
+                        Expanded(
+                          child: Tooltip(
+                            message: 'Cliquer pour envoyer un email',
+                            child: InkWell(
+                              onTap: () async {
+                                if (contact.email.isEmpty) return;
+                                final mailUrl = Uri(
+                                  scheme: 'mailto',
+                                  path: contact.email,
+                                );
+                                try {
+                                  await launchUrl(mailUrl);
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Impossible d\'ouvrir l\'application mail.',
                                       ),
-                                    );
-                                  }
-                                },
-                                child: SelectableText(
-                                  contact.email,
-                                  style: TextStyle(fontSize: infoFontSize),
-                                  maxLines: 2,
-                                  showCursor: true,
-                                  cursorWidth: 1,
-                                  toolbarOptions: const ToolbarOptions(copy: true, selectAll: true),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: Text(
+                                contact.email.isNotEmpty
+                                    ? contact.email
+                                    : 'Non renseigné',
+                                style: TextStyle(
+                                  fontSize: infoFontSize,
+                                  color: Colors.grey.shade600,
                                 ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    ),
                     // Ajout de l'affichage des formations pour les formateurs
                     if (showFormations &&
                         contact.type.toLowerCase().contains('formateur') &&
@@ -172,7 +176,10 @@ class ContactCard extends StatelessWidget {
                         SizedBox(height: 4),
                         Text(
                           '${contact.formations!.length} formations disponibles',
-                          style: TextStyle(fontSize: infoFontSize, color: Colors.grey.shade700),
+                          style: TextStyle(
+                            fontSize: infoFontSize,
+                            color: Colors.grey.shade700,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
