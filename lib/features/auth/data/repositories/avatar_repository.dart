@@ -40,7 +40,7 @@ class AvatarRepository {
       data: formData,
       options: Options(
         headers: {
-          'Authorization': 'Bearer ' + token,
+          'Authorization': 'Bearer $token',
           'Accept': 'application/json',
         },
       ),

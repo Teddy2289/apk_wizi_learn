@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 class AvatarShopPage extends StatefulWidget {
-  const AvatarShopPage({Key? key}) : super(key: key);
+  const AvatarShopPage({super.key});
 
   @override
   State<AvatarShopPage> createState() => _AvatarShopPageState();

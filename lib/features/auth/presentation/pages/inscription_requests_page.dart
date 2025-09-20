@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 class InscriptionRequestsPage extends StatefulWidget {
-  const InscriptionRequestsPage({Key? key}) : super(key: key);
+  const InscriptionRequestsPage({super.key});
 
   @override
   State<InscriptionRequestsPage> createState() =>
@@ -10,7 +10,7 @@ class InscriptionRequestsPage extends StatefulWidget {
 }
 
 class _InscriptionRequestsPageState extends State<InscriptionRequestsPage> {
-  bool _isLoading = true;
+  final bool _isLoading = true;
 
   @override
   void initState() {

@@ -331,10 +331,11 @@ class _HomePageState extends State<HomePage> {
                           Checkbox(
                             value: _hideStreakFor7Days,
                             onChanged: (val) {
-                              if (mounted)
+                              if (mounted) {
                                 setState(
                                   () => _hideStreakFor7Days = val ?? false,
                                 );
+                              }
                             },
                           ),
                           Expanded(

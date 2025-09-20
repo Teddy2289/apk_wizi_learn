@@ -342,7 +342,7 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
           color: isSelected
               ? colorScheme.primary.withOpacity(0.08)
               : isWatched
-              ? colorScheme.surfaceVariant.withOpacity(0.5)
+              ? colorScheme.surfaceContainerHighest.withOpacity(0.5)
               : null,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -492,13 +492,10 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
 class _ExpandableDescription extends StatefulWidget {
   final String htmlDescription;
   final TextStyle? textStyle;
-  final Color? linkColor;
 
   const _ExpandableDescription({
     required this.htmlDescription,
     this.textStyle,
-    this.linkColor,
-    super.key,
   });
 
   @override

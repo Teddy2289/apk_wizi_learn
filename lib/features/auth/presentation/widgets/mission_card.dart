@@ -3,7 +3,7 @@ import 'package:wizi_learn/features/auth/data/models/mission_model.dart';
 
 class MissionCard extends StatelessWidget {
   final Mission mission;
-  const MissionCard({Key? key, required this.mission}) : super(key: key);
+  const MissionCard({super.key, required this.mission});
 
   @override
   Widget build(BuildContext context) {

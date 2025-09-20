@@ -183,6 +183,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       notif.read
                           ? Colors.grey.shade200
                           : Theme.of(context).primaryColor.withOpacity(0.15),
+                  radius: 22,
                   child: Icon(
                     _iconForType(notif.type),
                     color:
@@ -191,7 +192,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             : Theme.of(context).primaryColor,
                     semanticLabel: _labelForType(notif.type),
                   ),
-                  radius: 22,
                 ),
                 title: Text(
                   notif.title,
@@ -383,10 +383,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                     ),
                                     ElevatedButton(
                                       onPressed: () => Navigator.pop(ctx, true),
-                                      child: const Text('Supprimer'),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.red,
                                       ),
+                                      child: const Text('Supprimer'),
                                     ),
                                   ],
                                 ),

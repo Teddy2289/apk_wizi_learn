@@ -10,7 +10,7 @@ import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AllAchievementsPage extends StatefulWidget {
-  const AllAchievementsPage({Key? key}) : super(key: key);
+  const AllAchievementsPage({super.key});
 
   @override
   State<AllAchievementsPage> createState() => _AllAchievementsPageState();
@@ -94,7 +94,7 @@ class _AllAchievementsPageState extends State<AllAchievementsPage> {
     final theme = Theme.of(context);
     final unlockedIds = _user.map((a) => a.id).toSet();
 
-    List<Achievement> _filtered() {
+    List<Achievement> filtered() {
       final source =
           _selectedType == null
               ? _all
@@ -128,7 +128,7 @@ class _AllAchievementsPageState extends State<AllAchievementsPage> {
               : LayoutBuilder(
                 builder: (context, constraints) {
                   final cols = _computeCrossAxisCount(constraints.maxWidth);
-                  final items = _filtered();
+                  final items = filtered();
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

@@ -148,7 +148,7 @@ class _OrderingQuestionState extends State<OrderingQuestion> {
                     decoration: BoxDecoration(
                       color: isCorrect
                           ? Colors.green[50]
-                          : Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                          : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isCorrect

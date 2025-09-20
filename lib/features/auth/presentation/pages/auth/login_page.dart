@@ -6,7 +6,6 @@ import 'package:wizi_learn/features/auth/presentation/bloc/auth_state.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/auth/forgot_password.dart';
 import '../../bloc/auth_bloc.dart';
 import '../../components/auth_text_field.dart';
-import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

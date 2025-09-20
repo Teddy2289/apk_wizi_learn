@@ -140,7 +140,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final user = await authRepository.getMe();
       emit(Authenticated(user));
     } catch (e) {
-      emit(AuthError('Erreur lors du rafraîchissement du profil: \n' + e.toString()));
+      emit(AuthError('Erreur lors du rafraîchissement du profil: \n$e'));
     }
   }
 }

@@ -4,8 +4,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:wizi_learn/core/services/navigation_service.dart';
 import 'package:wizi_learn/features/auth/data/models/notification_model.dart';
 import 'package:wizi_learn/core/services/firebase_notification_service.dart';
-import 'package:wizi_learn/core/services/navigation_service.dart';
-import 'dart:convert';
 
 class NotificationManager {
   static final NotificationManager _instance = NotificationManager._internal();

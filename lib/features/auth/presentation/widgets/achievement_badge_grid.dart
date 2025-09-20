@@ -6,10 +6,10 @@ class AchievementBadgeGrid extends StatelessWidget {
   final List<Achievement> achievements;
   final Key? keyFirstBadge;
   const AchievementBadgeGrid({
-    Key? key,
+    super.key,
     required this.achievements,
     this.keyFirstBadge,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

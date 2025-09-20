@@ -201,7 +201,7 @@ class ContactCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               Text(
-                                '(${debut} - ${fin})',
+                                '($debut - $fin)',
                                 style: TextStyle(
                                   fontSize: infoFontSize,
                                   color: Colors.grey.shade700,

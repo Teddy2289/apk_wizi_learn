@@ -11,7 +11,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/repositories/formation_repository.dart';
-import 'package:flutter_html/flutter_html.dart';
 
 class RandomFormationsWidget extends StatelessWidget {
   final List<Formation> formations;

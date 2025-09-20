@@ -94,7 +94,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceVariant
+                              color: theme.colorScheme.surfaceContainerHighest
                                   .withOpacity(0.3),
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -126,7 +126,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
                                       ? theme.colorScheme.primary.withOpacity(
                                         0.1,
                                       )
-                                      : theme.colorScheme.surfaceVariant
+                                      : theme.colorScheme.surfaceContainerHighest
                                           .withOpacity(0.3),
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -223,7 +223,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
 
   Widget _buildHistoryItem(BuildContext context, QuizHistory history) {
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
-    final categoryColor = _getCategoryColor(history.quiz.formation?.categorie);
+    final categoryColor = _getCategoryColor(history.quiz.formation.categorie);
 
     // Formatage de la date et heure
     final completedDate =
@@ -317,28 +317,25 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
                   ),
                   const SizedBox(width: 8),
                   // Niveau
-                  if (history.quiz.niveau != null &&
-                      history.quiz.niveau!.isNotEmpty)
+                  if (history.quiz.niveau.isNotEmpty)
                     Expanded(
                       child: _buildInfoChip(
                         context,
                         Icons.trending_up,
-                        history.quiz.niveau!,
+                        history.quiz.niveau,
                         isSmallScreen,
-                        color: _getLevelColor(history.quiz.niveau!),
+                        color: _getLevelColor(history.quiz.niveau),
                       ),
                     ),
-                  if (history.quiz.niveau != null &&
-                      history.quiz.niveau!.isNotEmpty)
+                  if (history.quiz.niveau.isNotEmpty)
                     const SizedBox(width: 8),
                   // Formation
-                  if (history.quiz.formation != null &&
-                      history.quiz.formation!.titre.isNotEmpty)
+                  if (history.quiz.formation.titre.isNotEmpty)
                     Expanded(
                       child: _buildInfoChip(
                         context,
                         Icons.school,
-                        history.quiz.formation!.titre,
+                        history.quiz.formation.titre,
                         isSmallScreen,
                         color: categoryColor,
                       ),
@@ -359,7 +356,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
     bool isSmallScreen, {
     Color? color,
   }) {
-    final chipColor = color ?? Theme.of(context).colorScheme.surfaceVariant;
+    final chipColor = color ?? Theme.of(context).colorScheme.surfaceContainerHighest;
 
     return Container(
       padding: EdgeInsets.symmetric(

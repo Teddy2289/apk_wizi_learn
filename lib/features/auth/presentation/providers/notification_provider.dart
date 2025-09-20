@@ -52,7 +52,7 @@ class NotificationProvider extends ChangeNotifier {
 
   // Debounce refresh calls so rapid FCM bursts do not overload the API
   Timer? _refreshTimer;
-  Duration _refreshDebounceDuration = const Duration(seconds: 2);
+  final Duration _refreshDebounceDuration = const Duration(seconds: 2);
 
   void _onNewNotification(NotificationModel notification) {
     // Update local state immediately for snappy UI

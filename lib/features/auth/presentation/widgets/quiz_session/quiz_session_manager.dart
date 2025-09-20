@@ -15,7 +15,7 @@ class QuizSessionManager {
   Timer? _timer;
   DateTime? _questionStartTime;
   int _totalTimeSpent = 0;
-  Map<String, dynamic> _userAnswers = {};
+  final Map<String, dynamic> _userAnswers = {};
   final QuizSubmissionHandler _submissionHandler;
 
   QuizSessionManager({
@@ -71,8 +71,9 @@ class QuizSessionManager {
         return {'text': answer.toString()};
 
       case "carte flash":
-        if (answer is Map)
+        if (answer is Map) {
           return answer['text'] ?? answer.values.first?.toString();
+        }
         return answer.toString();
 
       case "choix multiples":

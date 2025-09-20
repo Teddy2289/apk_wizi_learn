@@ -13,7 +13,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 
 class AchievementPage extends StatefulWidget {
-  const AchievementPage({Key? key}) : super(key: key);
+  const AchievementPage({super.key});
 
   @override
   State<AchievementPage> createState() => _AchievementPageState();

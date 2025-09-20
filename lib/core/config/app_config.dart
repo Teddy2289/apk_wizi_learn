@@ -5,5 +5,5 @@ abstract class Environment {
     defaultValue: 'http://localhost:5173',
   );
 
-  static String get resetPasswordPath => '$baseUrl';
+  static String get resetPasswordPath => baseUrl;
 }

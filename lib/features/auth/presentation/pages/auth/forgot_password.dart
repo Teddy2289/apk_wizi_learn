@@ -8,7 +8,7 @@ import 'package:wizi_learn/features/auth/presentation/components/auth_text_field
 import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
-  const ForgotPasswordScreen({Key? key}) : super(key: key);
+  const ForgotPasswordScreen({super.key});
 
   @override
   _ForgotPasswordScreenState createState() => _ForgotPasswordScreenState();

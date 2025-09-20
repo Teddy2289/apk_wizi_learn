@@ -72,7 +72,7 @@ class Partner extends Equatable {
     final parsedContacts =
         (rawContacts is List)
             ? rawContacts
-                .where((e) => e is Map<String, dynamic>)
+                .whereType<Map<String, dynamic>>()
                 .map<PartnerContact>(
                   (e) => PartnerContact.fromJson(e as Map<String, dynamic>),
                 )

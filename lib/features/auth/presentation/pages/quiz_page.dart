@@ -713,7 +713,7 @@ class _QuizPageState extends State<QuizPage> {
                   ),
                 ),
               )
-              .toList(),
+              ,
           const SizedBox(height: 16),
         ],
         if (played.isNotEmpty) ...[
@@ -725,7 +725,7 @@ class _QuizPageState extends State<QuizPage> {
                   child: _buildPlayedQuizCard(quiz, theme),
                 ),
               )
-              .toList(),
+              ,
           if (played.length > 5)
             Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -805,10 +805,9 @@ class _QuizPageState extends State<QuizPage> {
         String debugDate = history.completedAt;
         try {
           formattedDate =
-              'Terminé le ' +
-              DateFormat(
+              'Terminé le ${DateFormat(
                 'dd/MM/yyyy',
-              ).format(DateTime.parse(history.completedAt));
+              ).format(DateTime.parse(history.completedAt))}';
         } catch (e) {
           formattedDate = 'Date inconnue (raw: $debugDate)';
         }
@@ -1485,10 +1484,10 @@ class _QuizPageState extends State<QuizPage> {
                           _selectedFormation = null;
                         });
                       },
-                      child: const Text('Réinitialiser'),
                       style: TextButton.styleFrom(
                         foregroundColor: Theme.of(context).colorScheme.error,
                       ),
+                      child: const Text('Réinitialiser'),
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(context),
@@ -1624,8 +1623,9 @@ class _QuizPageState extends State<QuizPage> {
     String normalizeLevel(String? level) {
       if (level == null) return 'débutant';
       final lvl = level.toLowerCase().trim();
-      if (lvl.contains('inter') || lvl.contains('moyen'))
+      if (lvl.contains('inter') || lvl.contains('moyen')) {
         return 'intermédiaire';
+      }
       if (lvl.contains('avancé') || lvl.contains('expert')) return 'avancé';
       return 'débutant';
     }
@@ -1645,10 +1645,12 @@ class _QuizPageState extends State<QuizPage> {
     if (userPoints < 20) return debutant.take(4).toList();
     if (userPoints < 40) return [...debutant, ...intermediaire.take(2)];
     if (userPoints < 60) return [...debutant, ...intermediaire];
-    if (userPoints < 80)
+    if (userPoints < 80) {
       return [...debutant, ...intermediaire, ...avance.take(2)];
-    if (userPoints < 100)
+    }
+    if (userPoints < 100) {
       return [...debutant, ...intermediaire, ...avance.take(4)];
+    }
     return [...debutant, ...intermediaire, ...avance];
   }
 
@@ -1661,13 +1663,14 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   void _selectFormationFromLastPlayedIfAny() {
-    if (_selectedFormation != null)
+    if (_selectedFormation != null) {
       return; // ne pas override le choix utilisateur
+    }
     if (_quizHistoryList.isEmpty || _availableFormations.isEmpty) return;
-    DateTime _parseDate(String s) =>
+    DateTime parseDate(String s) =>
         DateTime.tryParse(s) ?? DateTime.fromMillisecondsSinceEpoch(0);
     final sorted = List<QuizHistory>.from(_quizHistoryList)..sort(
-      (a, b) => _parseDate(b.completedAt).compareTo(_parseDate(a.completedAt)),
+      (a, b) => parseDate(b.completedAt).compareTo(parseDate(a.completedAt)),
     );
     final last = sorted.first;
     final lastFormationTitle = last.quiz.formation.titre;

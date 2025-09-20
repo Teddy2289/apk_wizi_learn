@@ -15,7 +15,7 @@ class QuizStatsWidget extends StatelessWidget {
     // Sécurisation des valeurs
     final totalQuizzes = stats.totalQuizzes > 0 ? stats.totalQuizzes : 0;
     final totalPoints = stats.totalPoints >= 0 ? stats.totalPoints : 0;
-    final averageScore = stats.averageScore >= 0 ? stats.averageScore : 0.0;
+    final averageScore = stats.averageScore >= 0 ? stats.averageScore*10 : 0.0;
 
     return SingleChildScrollView(
       child: Padding(
@@ -541,7 +541,7 @@ class QuizStatsWidget extends StatelessWidget {
     final completed = data.completed >= 0 ? data.completed : 0;
     final avg =
         (data.averageScore != null && data.averageScore! >= 0)
-            ? data.averageScore!
+            ? data.averageScore!*10
             : 0.0;
     final percentage = total == 0 ? 0.0 : (completed / total * 100);
     return Column(

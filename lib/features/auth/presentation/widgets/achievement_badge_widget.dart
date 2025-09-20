@@ -6,11 +6,11 @@ class AchievementBadgeWidget extends StatelessWidget {
   final bool unlocked;
   final bool colored;
   const AchievementBadgeWidget({
-    Key? key,
+    super.key,
     required this.achievement,
     required this.unlocked,
     this.colored = true,
-  }) : super(key: key);
+  });
 
   bool _isUrl(String value) {
     return value.startsWith('http://') || value.startsWith('https://');

@@ -171,7 +171,7 @@ class MyApp extends StatelessWidget {
                 final mq = MediaQuery.of(context);
                 // Adjust this factor to taste (0.9 reduces fonts to 90%)
                 return MediaQuery(
-                  data: mq.copyWith(textScaleFactor: 0.9),
+                  data: mq.copyWith(textScaler: TextScaler.linear(0.9)),
                   child: child ?? const SizedBox.shrink(),
                 );
               }

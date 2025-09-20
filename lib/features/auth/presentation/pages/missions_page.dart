@@ -5,7 +5,7 @@ import 'package:wizi_learn/features/auth/data/repositories/mission_repository.da
 import 'package:wizi_learn/features/auth/presentation/widgets/mission_card.dart';
 
 class MissionsPage extends StatefulWidget {
-  const MissionsPage({Key? key}) : super(key: key);
+  const MissionsPage({super.key});
 
   @override
   State<MissionsPage> createState() => _MissionsPageState();

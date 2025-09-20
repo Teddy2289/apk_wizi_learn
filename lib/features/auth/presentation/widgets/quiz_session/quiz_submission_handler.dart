@@ -179,8 +179,6 @@ class QuizSubmissionHandler {
 
   static String? _findAnswerId(List<dynamic> answers, dynamic answerValue) {
     try {
-      if (answers == null) return null;
-
       final answerText =
           answerValue is Map ? answerValue['text'] : answerValue.toString();
 

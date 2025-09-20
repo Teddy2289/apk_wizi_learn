@@ -12,7 +12,7 @@ class QuizDetailPage extends StatelessWidget {
   final List<Question> questions;
 
   const QuizDetailPage({
-    Key? key,
+    super.key,
     required this.quizTitle,
     required this.score,
     required this.totalQuestions,
@@ -20,7 +20,7 @@ class QuizDetailPage extends StatelessWidget {
     required this.timeSpent,
     required this.completedAt,
     required this.questions,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +139,7 @@ class QuizDetailPage extends StatelessWidget {
           if (playedQuestions.isNotEmpty)
             ...playedQuestions
                 .map((q) => _buildQuestionFeedback(q, theme))
-                .toList()
+                
           else
             Card(
               child: Padding(

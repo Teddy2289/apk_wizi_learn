@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AvatarSelectorDialog extends StatelessWidget {
   final List<String> avatarPaths;
   final String? selectedAvatar;
-  const AvatarSelectorDialog({Key? key, required this.avatarPaths, this.selectedAvatar}) : super(key: key);
+  const AvatarSelectorDialog({super.key, required this.avatarPaths, this.selectedAvatar});
 
   @override
   Widget build(BuildContext context) {

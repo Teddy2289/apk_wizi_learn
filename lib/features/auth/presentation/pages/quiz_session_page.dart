@@ -17,12 +17,12 @@ class QuizSessionPage extends StatefulWidget {
   final bool quizAdventureEnabled;
 
   const QuizSessionPage({
-    Key? key,
+    super.key,
     required this.quiz,
     required this.questions,
     this.isRestart = false,
     this.quizAdventureEnabled = false,
-  }) : super(key: key);
+  });
 
   @override
   State<QuizSessionPage> createState() => _QuizSessionPageState();

@@ -48,7 +48,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
   // Avatar & boutique supprimés
   int _loginStreak =
       1; // Valeur simulée pour la démo, à remplacer par la vraie valeur API si dispo
-  bool _showMissions = false;
+  final bool _showMissions = false;
   String? _selectedFormationTitle;
   List<String> _availableFormationTitles = [];
   bool _showAllForFormation = false;
@@ -147,11 +147,11 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
       // Sélection formation par dernier quiz joué si possible
       if (_selectedFormationTitle == null &&
           _availableFormationTitles.isNotEmpty) {
-        DateTime _parseDate(String s) =>
+        DateTime parseDate(String s) =>
             DateTime.tryParse(s) ?? DateTime.fromMillisecondsSinceEpoch(0);
         final sorted = List<stats_model.QuizHistory>.from(history)..sort(
           (a, b) =>
-              _parseDate(b.completedAt).compareTo(_parseDate(a.completedAt)),
+              parseDate(b.completedAt).compareTo(parseDate(a.completedAt)),
         );
         if (sorted.isNotEmpty) {
           final last = sorted.first;
@@ -215,8 +215,9 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     String normalizeLevel(String? level) {
       if (level == null) return 'débutant';
       final lvl = level.toLowerCase().trim();
-      if (lvl.contains('inter') || lvl.contains('moyen'))
+      if (lvl.contains('inter') || lvl.contains('moyen')) {
         return 'intermédiaire';
+      }
       if (lvl.contains('avancé') || lvl.contains('expert')) return 'avancé';
       return 'débutant';
     }
@@ -233,20 +234,11 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
         allQuizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
 
     List<quiz_model.Quiz> filtered = [];
-    if (userPoints < 10)
+    if (userPoints < 10) {
       filtered = debutant.take(2).toList();
-    // else if (userPoints < 20)
-    //   filtered = debutant.take(4).toList();
-    // else if (userPoints < 40)
-    //   filtered = [...debutant, ...intermediaire.take(2)];
-    // else if (userPoints < 60)
-    //   filtered = [...debutant, ...intermediaire];
-    // else if (userPoints < 80)
-    //   filtered = [...debutant, ...intermediaire, ...avance.take(2)];
-    // else if (userPoints < 100)
-    //   filtered = [...debutant, ...intermediaire, ...avance.take(4)];
-    else
+    } else {
       filtered = [...debutant, ...intermediaire, ...avance];
+    }
 
     // Fallback: si aucun quiz filtré mais la liste d'origine n'est pas vide, retourne au moins le premier quiz
     if (filtered.isEmpty && allQuizzes.isNotEmpty) {
@@ -604,9 +596,9 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                         final percent =
                             (history.correctAnswers / history.totalQuestions) *
                             100;
-                        if (percent >= 100)
+                        if (percent >= 100) {
                           stars = 3;
-                        else if (percent >= 70)
+                        } else if (percent >= 70)
                           stars = 2;
                         else if (percent >= 40)
                           stars = 1;
@@ -657,8 +649,9 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                   nodeColor,
                                   onTap: () async {
                                     if (!(isUnlocked || isPlayed) ||
-                                        quiz.questions.isEmpty)
+                                        quiz.questions.isEmpty) {
                                       return;
+                                    }
                                     await _playSound('audio/click.mp3');
                                     final questions = await _quizRepository
                                         .getQuizQuestions(quiz.id);
@@ -730,8 +723,9 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                   stars,
                                   nodeColor,
                                   onTap: () async {
-                                    if (!isUnlocked || quiz.questions.isEmpty)
+                                    if (!isUnlocked || quiz.questions.isEmpty) {
                                       return;
+                                    }
                                     await _playSound('audio/click.mp3');
                                     final questions = await _quizRepository
                                         .getQuizQuestions(quiz.id);
@@ -1275,11 +1269,11 @@ class DailyMissionsSection extends StatelessWidget {
   final List<stats_model.QuizHistory> quizHistory;
 
   const DailyMissionsSection({
-    Key? key,
+    super.key,
     this.keyMission,
     required this.loginStreak,
     required this.quizHistory,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1318,7 +1312,7 @@ class DailyMissionsSection extends StatelessWidget {
               );
 
               final List<Widget> pending = [];
-              if (!mission1Completed)
+              if (!mission1Completed) {
                 pending.add(
                   Container(
                     key: keyMission,
@@ -1338,7 +1332,8 @@ class DailyMissionsSection extends StatelessWidget {
                     ),
                   ),
                 );
-              if (!mission2Completed)
+              }
+              if (!mission2Completed) {
                 pending.add(
                   MissionCard(
                     mission: Mission(
@@ -1356,7 +1351,8 @@ class DailyMissionsSection extends StatelessWidget {
                     ),
                   ),
                 );
-              if (!mission3Completed)
+              }
+              if (!mission3Completed) {
                 pending.add(
                   MissionCard(
                     mission: Mission(
@@ -1372,7 +1368,8 @@ class DailyMissionsSection extends StatelessWidget {
                     ),
                   ),
                 );
-              if (!mission4Completed)
+              }
+              if (!mission4Completed) {
                 pending.add(
                   MissionCard(
                     mission: Mission(
@@ -1388,6 +1385,7 @@ class DailyMissionsSection extends StatelessWidget {
                     ),
                   ),
                 );
+              }
 
               if (pending.isEmpty) {
                 return Padding(
@@ -1428,8 +1426,8 @@ class _AnimatedQuizStep extends StatefulWidget {
     required this.label,
     required this.isCompleted,
     required this.isUnlocked,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<_AnimatedQuizStep> createState() => _AnimatedQuizStepState();

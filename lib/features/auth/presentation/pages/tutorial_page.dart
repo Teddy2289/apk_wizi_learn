@@ -534,9 +534,7 @@ class _TutorialPageState extends State<TutorialPage> {
                     ? mediasFiltres.firstWhere(
                       (m) =>
                           m.id ==
-                          (_selectedFormationId == null
-                              ? mediasFiltres.first.id
-                              : _selectedFormationId),
+                          (_selectedFormationId ?? mediasFiltres.first.id),
                       orElse: () => mediasFiltres.first,
                     )
                     : null;
@@ -696,7 +694,7 @@ class _TutorialPageState extends State<TutorialPage> {
                 children: [
                   Flexible(
                     flex: 2,
-                    child: Container(
+                    child: SizedBox(
                       height: MediaQuery.of(context).size.height * 0.8,
                       child: leftPanel(),
                     ),
@@ -875,7 +873,7 @@ class _TutorialPageState extends State<TutorialPage> {
           ),
           color:
               isWatched
-                  ? colorScheme.surfaceVariant.withOpacity(0.7)
+                  ? colorScheme.surfaceContainerHighest.withOpacity(0.7)
                   : const Color(0xFFFFF9C4),
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
@@ -932,7 +930,7 @@ class _TutorialPageState extends State<TutorialPage> {
                                 ? screenWidth * 0.18
                                 : screenWidth * 0.2,
                         decoration: BoxDecoration(
-                          color: colorScheme.surfaceVariant,
+                          color: colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(8),
                           image:
                               thumbnailUrl != null

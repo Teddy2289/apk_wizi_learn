@@ -7,7 +7,6 @@ import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/formation_repository.dart';
-import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/detail_formation_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 

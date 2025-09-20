@@ -36,7 +36,7 @@ class ContactRepository {
 
     if (poleRelation is List) {
       contacts.addAll(poleRelation.map((e) => Contact.fromJson(e)).toList());
-      debugPrint('Contacts du pôle relation : ${poleRelation}');
+      debugPrint('Contacts du pôle relation : $poleRelation');
     } else {
       print('⚠ pole_relation n’est pas une liste : $poleRelation');
     }

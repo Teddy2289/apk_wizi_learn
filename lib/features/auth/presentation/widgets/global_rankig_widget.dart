@@ -317,8 +317,9 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: List.generate(3, (i) {
               final idx = order[i];
-              if (idx >= podium.length)
+              if (idx >= podium.length) {
                 return Expanded(child: const SizedBox());
+              }
               final ranking = podium[idx];
               final isCurrentUser =
                   int.tryParse(ranking.stagiaire.id.toString()) ==
@@ -464,7 +465,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -625,7 +626,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
       case 3:
         return Colors.orange.withOpacity(0.3);
       default:
-        return Theme.of(context).colorScheme.surfaceVariant;
+        return Theme.of(context).colorScheme.surfaceContainerHighest;
     }
   }
 

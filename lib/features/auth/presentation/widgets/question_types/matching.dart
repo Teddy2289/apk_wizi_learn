@@ -157,7 +157,7 @@ class _MatchingQuestionState extends State<MatchingQuestion> {
                       ? isCorrect
                       ? Colors.green[50]
                       : Colors.red[50]
-                      : theme.colorScheme.surfaceVariant.withOpacity(0.05),
+                      : theme.colorScheme.surfaceContainerHighest.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Padding(
