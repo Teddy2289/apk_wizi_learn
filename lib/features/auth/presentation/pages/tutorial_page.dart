@@ -461,6 +461,9 @@ class _TutorialPageState extends State<TutorialPage> {
 
             // Responsive: colonne sur mobile, layout en deux panneaux sur écrans larges
             final isWideLayout = MediaQuery.of(context).size.width >= 800;
+            final isLandscape =
+                MediaQuery.of(context).orientation == Orientation.landscape;
+            final showThumbnail = !(isWideLayout || isLandscape);
 
             // Widget du sélecteur + liste (réutilisable pour les deux modes)
             Widget leftPanel() {
@@ -514,6 +517,7 @@ class _TutorialPageState extends State<TutorialPage> {
                                     isWatched,
                                     theme,
                                     colorScheme,
+                                    showThumbnail,
                                   );
                                 },
                               ),
@@ -848,6 +852,7 @@ class _TutorialPageState extends State<TutorialPage> {
     bool isWatched,
     ThemeData theme,
     ColorScheme colorScheme,
+    bool showThumbnail,
   ) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
@@ -916,85 +921,87 @@ class _TutorialPageState extends State<TutorialPage> {
               padding: EdgeInsets.all(isSmallScreen ? 8.0 : 12.0),
               child: Row(
                 children: [
-                  // Vignette de la vidéo
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        width:
-                            isSmallScreen
-                                ? screenWidth * 0.3
-                                : screenWidth * 0.35,
-                        height:
-                            isSmallScreen
-                                ? screenWidth * 0.18
-                                : screenWidth * 0.2,
-                        decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(8),
-                          image:
-                              thumbnailUrl != null
-                                  ? DecorationImage(
-                                    image: NetworkImage(thumbnailUrl),
-                                    fit: BoxFit.cover,
+                  if (showThumbnail)
+                    // Vignette de la vidéo
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width:
+                              isSmallScreen
+                                  ? screenWidth * 0.3
+                                  : screenWidth * 0.35,
+                          height:
+                              isSmallScreen
+                                  ? screenWidth * 0.18
+                                  : screenWidth * 0.2,
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(8),
+                            image:
+                                thumbnailUrl != null
+                                    ? DecorationImage(
+                                      image: NetworkImage(thumbnailUrl),
+                                      fit: BoxFit.cover,
+                                    )
+                                    : null,
+                          ),
+                          child:
+                              thumbnailUrl == null
+                                  ? Icon(
+                                    Icons.videocam,
+                                    size: isSmallScreen ? 24 : 32,
                                   )
                                   : null,
                         ),
-                        child:
-                            thumbnailUrl == null
-                                ? Icon(
-                                  Icons.videocam,
-                                  size: isSmallScreen ? 24 : 32,
-                                )
-                                : null,
-                      ),
-                      Icon(
-                        Icons.play_circle_fill,
-                        size: isSmallScreen ? 28 : 36,
-                        color: Colors.white.withOpacity(0.8),
-                      ),
-                      if (isWatched)
+                        Icon(
+                          Icons.play_circle_fill,
+                          size: isSmallScreen ? 28 : 36,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                        if (isWatched)
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.green,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.check,
+                                size: isSmallScreen ? 10 : 12,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         Positioned(
-                          top: 4,
+                          bottom: 4,
                           right: 4,
                           child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.green,
-                              shape: BoxShape.circle,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 2,
                             ),
-                            child: Icon(
-                              Icons.check,
-                              size: isSmallScreen ? 10 : 12,
-                              color: Colors.white,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.7),
+                              borderRadius: BorderRadius.circular(4),
                             ),
-                          ),
-                        ),
-                      Positioned(
-                        bottom: 4,
-                        right: 4,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            _formatDuration(duration),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: isSmallScreen ? 10 : 12,
+                            child: Text(
+                              _formatDuration(duration),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: isSmallScreen ? 10 : 12,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(width: isSmallScreen ? 8 : 12),
+                      ],
+                    ),
+                  if (showThumbnail)
+                    SizedBox(width: isSmallScreen ? 8 : 12),
                   // Titre et informations
                   Expanded(
                     child: Column(
