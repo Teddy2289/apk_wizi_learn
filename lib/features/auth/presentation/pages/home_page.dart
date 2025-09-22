@@ -293,13 +293,13 @@ class _HomePageState extends State<HomePage> {
                         ),
                         child: Column(
                           children: [
-                            Text(
-                              '7 jours',
-                              style: TextStyle(
-                                color: kOrangeDark,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                            // Text(
+                            //   '7 jours',
+                            //   style: TextStyle(
+                            //     color: kOrangeDark,
+                            //     fontWeight: FontWeight.w600,
+                            //   ),
+                            // ),
                             const SizedBox(height: 8),
                             Text('🔥', style: TextStyle(fontSize: 56)),
                           ],
@@ -359,10 +359,10 @@ class _HomePageState extends State<HomePage> {
                             child: const Text('Continuer'),
                           ),
                           const SizedBox(width: 12),
-                          OutlinedButton(
-                            onPressed: _closeStreakModal,
-                            child: const Text('Fermer'),
-                          ),
+                          // OutlinedButton(
+                          //   onPressed: _closeStreakModal,
+                          //   child: const Text('Fermer'),
+                          // ),
                         ],
                       ),
                     ],
