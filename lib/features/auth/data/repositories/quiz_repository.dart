@@ -26,7 +26,7 @@ class QuizRepository {
         try {
           if (rawQuiz is Map<String, dynamic>) {
             final quiz = Quiz.fromJson(rawQuiz);
-            // ✅ On ne garde que les quiz avec status == "actif"
+            // On ne garde que les quiz avec status == "actif"
             if (quiz.status.toLowerCase() == 'actif') {
               quizzes.add(quiz);
             }

@@ -1721,11 +1721,11 @@ class _QuizPageState extends State<QuizPage> {
 
     // GARANTIR qu'on retourne au moins 1 quiz si des quiz sont disponibles
     if (result.isEmpty && allQuizzes.isNotEmpty) {
-      debugPrint('⚠️ Aucun quiz après filtrage, retourne les premiers quiz disponibles');
+      debugPrint('Aucun quiz après filtrage, retourne les premiers quiz disponibles');
       result = allQuizzes.take(2).toList(); // Retourne au moins 2 quiz
     }
 
-    debugPrint('✅ Résultat final: ${result.length} quiz');
+    debugPrint('Résultat final: ${result.length} quiz');
     return result;
   }
 
