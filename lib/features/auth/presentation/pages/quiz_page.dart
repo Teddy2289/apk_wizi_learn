@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -67,7 +69,14 @@ class _QuizPageState extends State<QuizPage> {
   String? _selectedFormation;
   List<String> _availableLevels = [];
   List<String> _availableFormations = [];
+// Au début de la classe
+  Timer? _refreshTimer;
 
+// Dans _loadInitialData() ou les méthodes de rafraîchissement
+  void _scheduleRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer(const Duration(milliseconds: 500), _loadInitialData);
+  }
   @override
   void initState() {
     super.initState();
@@ -371,25 +380,50 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   Future<void> _loadInitialData() async {
-    setState(() => _isInitialLoad = true);
+    setState(() {
+      _isInitialLoad = true;
+      _baseQuizzes = []; // Réinitialiser explicitement
+      _visiblePlayed = [];
+      _visibleUnplayed = [];
+    });
+
     try {
       final user = await _authRepository.getMe();
       _connectedStagiaireId = user.stagiaire?.id;
 
       if (_connectedStagiaireId == null) {
-        setState(() => _isInitialLoad = false);
+        if (mounted) {
+          setState(() => _isInitialLoad = false);
+        }
         return;
       }
 
-      await Future.wait([
+      // Chargement PARALLÈLE mais avec gestion d'état correcte
+      final results = await Future.wait([
         _loadUserPoints(),
-        _loadQuizHistory(),
         _loadQuizzes(),
-      ]);
+        _loadQuizHistory(),
+      ], eagerError: true);
+
+      // FORCER l'application des filtres après tous les chargements
+      if (mounted) {
+        _applyFilters();
+      }
+
     } catch (e) {
       debugPrint('Erreur chargement initial: $e');
+      // Même en cas d'erreur, mettre à jour l'état
+      if (mounted) {
+        setState(() {
+          _baseQuizzes = [];
+          _visiblePlayed = [];
+          _visibleUnplayed = [];
+        });
+      }
     } finally {
-      setState(() => _isInitialLoad = false);
+      if (mounted) {
+        setState(() => _isInitialLoad = false);
+      }
     }
   }
 
@@ -404,55 +438,68 @@ class _QuizPageState extends State<QuizPage> {
 
   Future<void> _loadQuizHistory() async {
     try {
-      debugPrint('Chargement historique des quiz...');
-      debugPrint('Stagiaire ID: $_connectedStagiaireId');
+      debugPrint('🔄 Chargement historique...');
 
       final history = await _statsRepository.getQuizHistory();
-      debugPrint('QuizHistory (raw):');
-      for (var h in history) {
-        debugPrint(
-          'id: ${h.id}, quizId: ${h.quiz.id}, completedAt: ${h.completedAt}, score: ${h.score}, totalQuestions: ${h.totalQuestions}, correctAnswers: ${h.correctAnswers}',
-        );
+      debugPrint('✅ Historique chargé: ${history.length} entrées');
+
+      final playedIds = history.map((h) => h.quiz.id.toString()).toList();
+      debugPrint('✅ Quiz joués: $playedIds');
+
+      if (mounted) {
+        setState(() {
+          _futureQuizHistory = Future.value(history);
+          _playedQuizIds = playedIds;
+          _quizHistoryList = history;
+        });
       }
-      setState(() {
-        _futureQuizHistory = Future.value(history);
-        _playedQuizIds = history.map((h) => h.quiz.id.toString()).toList();
-        _quizHistoryList = history;
-      });
-      // Si déjà des quiz en base, tenter de sélectionner la formation du dernier quiz joué
-      if (_baseQuizzes.isNotEmpty) {
-        _selectFormationFromLastPlayedIfAny();
+
+    } catch (e, stack) {
+      debugPrint('❌ Erreur historique: $e');
+      debugPrint('Stack: $stack');
+
+      if (mounted) {
+        setState(() {
+          _futureQuizHistory = Future.value([]);
+          _playedQuizIds = [];
+          _quizHistoryList = [];
+        });
       }
-    } catch (e) {
-      debugPrint('Erreur chargement historique: $e');
     }
   }
-
   Future<void> _loadQuizzes() async {
     try {
       final quizzes = await _quizRepository.getQuizzesForStagiaire(
         stagiaireId: _connectedStagiaireId!,
       );
-      final filteredQuizzes = _filterQuizzesByPoints(quizzes, _userPoints);
 
-      // Extraire les niveaux et formations disponibles
+      debugPrint('✅ Quiz chargés: ${quizzes.length} quiz');
+
+      final filteredQuizzes = _filterQuizzesByPoints(quizzes, _userPoints);
+      debugPrint('✅ Quiz filtrés: ${filteredQuizzes.length} quiz');
+
+      // Extraire les filtres disponibles
       _extractAvailableFilters(filteredQuizzes);
-      // Tenter de sélectionner la formation basée sur la dernière participation
-      _selectFormationFromLastPlayedIfAny();
-      // Sélectionner par défaut la première formation disponible si aucune sélection
-      if (_selectedFormation == null && _availableFormations.isNotEmpty) {
-        _selectedFormation = _availableFormations.first;
+
+      // METTRE À JOUR L'ÉTAT IMMÉDIATEMENT
+      if (mounted) {
+        setState(() {
+          _baseQuizzes = filteredQuizzes;
+          _futureQuizzes = Future.value(filteredQuizzes);
+        });
       }
 
-      setState(() {
-        _futureQuizzes = Future.value(filteredQuizzes);
-        _baseQuizzes = filteredQuizzes;
-      });
-      _applyFilters();
-      _selectFormationFromLastPlayedIfAny();
-    } catch (e) {
-      debugPrint('Erreur chargement quiz: $e');
-      setState(() => _futureQuizzes = Future.value([]));
+    } catch (e, stack) {
+      debugPrint('❌ Erreur chargement quiz: $e');
+      debugPrint('Stack: $stack');
+
+      // Même en cas d'erreur, mettre à jour l'état
+      if (mounted) {
+        setState(() {
+          _baseQuizzes = [];
+          _futureQuizzes = Future.value([]);
+        });
+      }
     }
   }
 
@@ -476,48 +523,40 @@ class _QuizPageState extends State<QuizPage> {
   // _separateQuizzes supprimé: remplacé par _applyFilters()
 
   void _applyFilters() {
+    // Vérifier que les données de base sont disponibles
+    if (_baseQuizzes.isEmpty) {
+      setState(() {
+        _visiblePlayed = [];
+        _visibleUnplayed = [];
+      });
+      return;
+    }
+
     List<quiz_model.Quiz> list = [..._baseQuizzes];
+
+    // Appliquer les filtres uniquement si les données sont prêtes
     if (_selectedLevel != null) {
       list = list.where((q) => q.niveau == _selectedLevel).toList();
     }
     if (_selectedFormation != null) {
-      list =
-          list.where((q) => q.formation.titre == _selectedFormation).toList();
+      list = list.where((q) => q.formation.titre == _selectedFormation).toList();
     }
-    final played =
-        list.where((q) => _playedQuizIds.contains(q.id.toString())).toList();
-    final unplayed =
-        list.where((q) => !_playedQuizIds.contains(q.id.toString())).toList();
 
-    if (_quizHistoryList.isNotEmpty) {
+    // S'assurer que _playedQuizIds est initialisé
+    final playedIds = _playedQuizIds;
+    final played = list.where((q) => playedIds.contains(q.id.toString())).toList();
+    final unplayed = list.where((q) => !playedIds.contains(q.id.toString())).toList();
+
+    // Trier l'historique seulement si les données sont disponibles
+    if (_quizHistoryList.isNotEmpty && played.isNotEmpty) {
       played.sort((a, b) {
-        final ha = _quizHistoryList.firstWhere(
-          (h) => h.quiz.id.toString() == a.id.toString(),
-          orElse:
-              () => QuizHistory(
-                id: '',
-                quiz: a,
-                score: 0,
-                completedAt: '',
-                timeSpent: 0,
-                totalQuestions: 0,
-                correctAnswers: 0,
-              ),
-        );
-        final hb = _quizHistoryList.firstWhere(
-          (h) => h.quiz.id.toString() == b.id.toString(),
-          orElse:
-              () => QuizHistory(
-                id: '',
-                quiz: b,
-                score: 0,
-                completedAt: '',
-                timeSpent: 0,
-                totalQuestions: 0,
-                correctAnswers: 0,
-              ),
-        );
         try {
+          final ha = _quizHistoryList.firstWhere(
+                (h) => h.quiz.id.toString() == a.id.toString(),
+          );
+          final hb = _quizHistoryList.firstWhere(
+                (h) => h.quiz.id.toString() == b.id.toString(),
+          );
           final da = DateTime.parse(ha.completedAt);
           final db = DateTime.parse(hb.completedAt);
           return db.compareTo(da);
@@ -536,6 +575,9 @@ class _QuizPageState extends State<QuizPage> {
       }
       _showAllPlayed = false;
     });
+
+    // Maintenant que tout est chargé, on peut sélectionner la formation
+    _selectFormationFromLastPlayedIfAny();
   }
 
   Future<double> _calculatePlayedQuizzesPosition() async {
@@ -695,8 +737,13 @@ class _QuizPageState extends State<QuizPage> {
     if (_isInitialLoad) {
       return SliverFillRemaining(child: _buildLoadingScreen(theme));
     }
+    if (_baseQuizzes.isEmpty) {
+      return SliverFillRemaining(child: _buildEmptyState(theme));
+    }
+
     final unplayed = _visibleUnplayed;
     final played = _visiblePlayed;
+
     final displayedPlayed = _showAllPlayed ? played : played.take(5).toList();
     return SliverList(
       delegate: SliverChildListDelegate([
@@ -1615,10 +1662,14 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   List<quiz_model.Quiz> _filterQuizzesByPoints(
-    List<quiz_model.Quiz> allQuizzes,
-    int userPoints,
-  ) {
+      List<quiz_model.Quiz> allQuizzes,
+      int userPoints,
+      ) {
     if (allQuizzes.isEmpty) return [];
+
+    // DEBUG: Vérifier ce qui se passe
+    debugPrint('Filtrage par points - User points: $userPoints');
+    debugPrint('Quiz disponibles avant filtrage: ${allQuizzes.length}');
 
     String normalizeLevel(String? level) {
       if (level == null) return 'débutant';
@@ -1630,28 +1681,52 @@ class _QuizPageState extends State<QuizPage> {
       return 'débutant';
     }
 
-    final debutant =
-        allQuizzes
-            .where((q) => normalizeLevel(q.niveau) == 'débutant')
-            .toList();
-    final intermediaire =
-        allQuizzes
-            .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
-            .toList();
-    final avance =
-        allQuizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
+    final debutant = allQuizzes
+        .where((q) => normalizeLevel(q.niveau) == 'débutant')
+        .toList();
+    final intermediaire = allQuizzes
+        .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
+        .toList();
+    final avance = allQuizzes
+        .where((q) => normalizeLevel(q.niveau) == 'avancé')
+        .toList();
 
-    if (userPoints < 10) return debutant.take(2).toList();
-    if (userPoints < 20) return debutant.take(4).toList();
-    if (userPoints < 40) return [...debutant, ...intermediaire.take(2)];
-    if (userPoints < 60) return [...debutant, ...intermediaire];
-    if (userPoints < 80) {
-      return [...debutant, ...intermediaire, ...avance.take(2)];
+    debugPrint('Niveaux - Débutant: ${debutant.length}, Intermédiaire: ${intermediaire.length}, Avancé: ${avance.length}');
+
+    List<quiz_model.Quiz> result;
+
+    // RÈGLES PLUS PERMISSIVES - TOUJOURS retourner au moins quelques quiz
+    if (userPoints < 10) {
+      result = debutant.take(2).toList();
+      debugPrint('Règle <10 points: ${result.length} quiz');
+    } else if (userPoints < 20) {
+      result = debutant.take(4).toList();
+      debugPrint('Règle <20 points: ${result.length} quiz');
+    } else if (userPoints < 40) {
+      result = [...debutant, ...intermediaire.take(2)];
+      debugPrint('Règle <40 points: ${result.length} quiz');
+    } else if (userPoints < 60) {
+      result = [...debutant, ...intermediaire];
+      debugPrint('Règle <60 points: ${result.length} quiz');
+    } else if (userPoints < 80) {
+      result = [...debutant, ...intermediaire, ...avance.take(2)];
+      debugPrint('Règle <80 points: ${result.length} quiz');
+    } else if (userPoints < 100) {
+      result = [...debutant, ...intermediaire, ...avance.take(4)];
+      debugPrint('Règle <100 points: ${result.length} quiz');
+    } else {
+      result = [...debutant, ...intermediaire, ...avance];
+      debugPrint('Règle 100+ points: ${result.length} quiz');
     }
-    if (userPoints < 100) {
-      return [...debutant, ...intermediaire, ...avance.take(4)];
+
+    // GARANTIR qu'on retourne au moins 1 quiz si des quiz sont disponibles
+    if (result.isEmpty && allQuizzes.isNotEmpty) {
+      debugPrint('⚠️ Aucun quiz après filtrage, retourne les premiers quiz disponibles');
+      result = allQuizzes.take(2).toList(); // Retourne au moins 2 quiz
     }
-    return [...debutant, ...intermediaire, ...avance];
+
+    debugPrint('✅ Résultat final: ${result.length} quiz');
+    return result;
   }
 
   void _scrollToTop() {
@@ -1663,23 +1738,34 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   void _selectFormationFromLastPlayedIfAny() {
-    if (_selectedFormation != null) {
-      return; // ne pas override le choix utilisateur
-    }
+    if (_selectedFormation != null) return;
     if (_quizHistoryList.isEmpty || _availableFormations.isEmpty) return;
-    DateTime parseDate(String s) =>
-        DateTime.tryParse(s) ?? DateTime.fromMillisecondsSinceEpoch(0);
-    final sorted = List<QuizHistory>.from(_quizHistoryList)..sort(
-      (a, b) => parseDate(b.completedAt).compareTo(parseDate(a.completedAt)),
-    );
-    final last = sorted.first;
-    final lastFormationTitle = last.quiz.formation.titre;
-    if (lastFormationTitle.isNotEmpty &&
-        _availableFormations.contains(lastFormationTitle)) {
-      setState(() {
-        _selectedFormation = lastFormationTitle;
-      });
-      _applyFilters();
+
+    try {
+      DateTime parseDate(String s) =>
+          DateTime.tryParse(s) ?? DateTime.fromMillisecondsSinceEpoch(0);
+
+      final sorted = List<QuizHistory>.from(_quizHistoryList)..sort(
+            (a, b) => parseDate(b.completedAt).compareTo(parseDate(a.completedAt)),
+      );
+
+      final last = sorted.first;
+      final lastFormationTitle = last.quiz.formation.titre;
+
+      if (lastFormationTitle.isNotEmpty &&
+          _availableFormations.contains(lastFormationTitle)) {
+        // Utiliser un post-frame callback pour éviter setState durant build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {
+              _selectedFormation = lastFormationTitle;
+            });
+            _applyFilters(); // Re-appliquer les filtres avec la nouvelle formation
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Erreur dans _selectFormationFromLastPlayedIfAny: $e');
     }
   }
 }
