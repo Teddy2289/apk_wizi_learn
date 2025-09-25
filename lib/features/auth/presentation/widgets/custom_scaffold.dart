@@ -120,28 +120,7 @@ class _CustomScaffoldState extends State<CustomScaffold> {
           //       () => Navigator.pushNamed(context, RouteConstants.contact),
           // ),
           _buildUserPointsAndNotifications(context),
-          if (widget.currentIndex == 2)
-            IconButton(
-              tooltip:
-                  widget.quizAdventureEnabled
-                      ? 'Liste des quiz'
-                      : 'Mode Aventure',
-              icon: Icon(
-                widget.quizAdventureEnabled
-                    ? Icons.list_alt
-                    : Icons.sports_esports,
-              ),
-              onPressed: () {
-                if (widget.quizAdventureEnabled) {
-                  Navigator.pushReplacementNamed(context, RouteConstants.quiz);
-                } else {
-                  Navigator.pushReplacementNamed(
-                    context,
-                    RouteConstants.quizAdventure,
-                  );
-                }
-              },
-            ),
+          
           ...?widget.actions,
         ],
       ),
@@ -157,16 +136,7 @@ class _CustomScaffoldState extends State<CustomScaffold> {
               ? CustomBottomNavBar(
                 currentIndex: widget.currentIndex,
                 onTap: (index) {
-                  // If quiz adventure is enabled and trying to navigate to quiz tab (index 2),
-                  // redirect to quiz adventure instead
-                  if (widget.quizAdventureEnabled && index == 2) {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      RouteConstants.quizAdventure,
-                    );
-                  } else {
-                    widget.onTabSelected(index);
-                  }
+                  widget.onTabSelected(index);
                 },
                 backgroundColor: Theme.of(context).colorScheme.surface,
                 selectedColor: Theme.of(context).colorScheme.primary,

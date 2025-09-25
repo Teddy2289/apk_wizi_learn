@@ -26,8 +26,6 @@ class _DashboardPageState extends State<DashboardPage> {
     const HomePage(),
     const TrainingPage(),
     QuizPage(
-      selectedTabIndex: _currentIndex,
-      useCustomScaffold: _pageArguments?['useCustomScaffold'] ?? false,
       scrollToPlayed: _pageArguments?['scrollToPlayed'] ?? false,
       quizAdventureEnabled: false,
       key: ValueKey(_pageArguments), // Important pour forcer le rebuild

@@ -32,6 +32,7 @@ class QuizAdventurePage extends StatefulWidget {
 
 class _QuizAdventurePageState extends State<QuizAdventurePage>
     with TickerProviderStateMixin {
+  late final ApiClient _apiClient;
   late final QuizRepository _quizRepository;
   late final StatsRepository _statsRepository;
   late final AuthRepository _authRepository;
@@ -78,16 +79,19 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
         setState(() => _showBackToTopButton = show);
       }
     });
+    _primeStreakFromLocal();
     _loadLoginStreak();
     // Chargement avatar supprimé
     _loadInitialData();
-    _checkAndShowTutorial();
+    // _checkAndShowTutorial();
   }
 
   void _initializeRepositories() {
     final dio = Dio();
     final storage = const FlutterSecureStorage();
     final apiClient = ApiClient(dio: dio, storage: storage);
+
+    _apiClient = apiClient;
     _quizRepository = QuizRepository(apiClient: apiClient);
     _statsRepository = StatsRepository(apiClient: apiClient);
     _authRepository = AuthRepository(
@@ -248,32 +252,81 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
   }
 
   Future<void> _loadLoginStreak() async {
-    // À remplacer par un appel API réel si disponible
-    // Pour la démo, on stocke la date du dernier lancement dans SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    final lastDateStr = prefs.getString('last_login_date');
-    final today = DateTime.now();
-    if (lastDateStr != null) {
-      final lastDate = DateTime.tryParse(lastDateStr);
-      if (lastDate != null) {
-        if (lastDate.year == today.year &&
-            lastDate.month == today.month &&
-            lastDate.day == today.day) {
-          // déjà compté aujourd'hui
-        } else if (lastDate.add(const Duration(days: 1)).year == today.year &&
-            lastDate.add(const Duration(days: 1)).month == today.month &&
-            lastDate.add(const Duration(days: 1)).day == today.day) {
-          // connexion consécutive
-          _loginStreak = (prefs.getInt('login_streak') ?? 1) + 1;
+    try {
+      // 1) Préférer la valeur backend si disponible via un appel léger au profil
+      // 2) Repli: SharedPreferences
+      int loginStreak = await _fetchLoginStreakFromBackend().catchError((
+        _,
+      ) async {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          return prefs.getInt('login_streak') ?? 0;
+        } catch (_) {
+          return 0;
+        }
+      });
+
+      if (mounted) {
+        setState(() {
+          _loginStreak = loginStreak;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erreur en chargeant login streak: $e');
+    }
+  }
+
+  // Récupère login_streak depuis /stagiaire/profile, sinon lance une erreur
+  Future<int> _fetchLoginStreakFromBackend() async {
+    try {
+      // L'ApiClient injecte déjà l'Authorization via les interceptors
+      final response = await _apiClient.get('/stagiaire/profile');
+
+      final data = response.data;
+      if (data is Map) {
+        // Plusieurs structures possibles: { stagiaire: { login_streak: N } } ou { login_streak: N }
+        final stagiaire = data['stagiaire'];
+        final dynamic val =
+            stagiaire is Map ? stagiaire['login_streak'] : data['login_streak'];
+        int parsed;
+        if (val is int) {
+          parsed = val;
+        } else if (val is String) {
+          parsed = int.tryParse(val) ?? 0;
         } else {
-          // streak cassé
-          _loginStreak = 1;
+          parsed = 0;
+        }
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setInt('login_streak', parsed);
+        } catch (_) {
+          // ignore local persistence errors
+        }
+        return parsed;
+      }
+      // Si pas trouvé, lever pour déclencher le repli
+      throw Exception('login_streak absent');
+    } catch (e) {
+      // Propager pour utiliser le repli SharedPreferences
+      rethrow;
+    }
+  }
+
+  // Pré-charge la valeur locale pour un affichage instantané au démarrage
+  Future<void> _primeStreakFromLocal() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final local = prefs.getInt('login_streak');
+      if (local != null) {
+        if (mounted) {
+          setState(() {
+            _loginStreak = local;
+          });
         }
       }
+    } catch (_) {
+      // ignore
     }
-    await prefs.setString('last_login_date', today.toIso8601String());
-    await prefs.setInt('login_streak', _loginStreak);
-    setState(() {});
   }
 
   Future<void> _saveQuizViewPreference(bool isAdventureMode) async {

@@ -32,6 +32,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  late final ApiClient _apiClient;
   late final ContactRepository _contactRepository;
   late final FormationRepository _formationRepository;
   late final AuthRepository _authRepository;
@@ -45,16 +46,20 @@ class _HomePageState extends State<HomePage> {
   int _loginStreak = 0;
   bool _showStreakModal = false;
   bool _hideStreakFor7Days = false;
+  // Bienvenue: affichage une seule fois par jour
+  bool _showWelcomeBlock = false;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
     super.initState();
+    _primeStreakFromLocal();
     _initializeRepositories();
     _loadData();
     _loadConnectedUser();
     _initFcmListener();
+    _evaluateWelcomeBlockOncePerDay();
   }
 
   void _initializeRepositories() {
@@ -63,6 +68,7 @@ class _HomePageState extends State<HomePage> {
       storage: const FlutterSecureStorage(),
     );
 
+    _apiClient = apiClient;
     _contactRepository = ContactRepository(apiClient: apiClient);
     _formationRepository = FormationRepository(apiClient: apiClient);
     _authRepository = AuthRepository(
@@ -74,18 +80,60 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // Pré-charge la valeur locale pour un affichage instantané au démarrage
+  Future<void> _primeStreakFromLocal() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final local = prefs.getInt('login_streak');
+      if (local != null) {
+        if (mounted) {
+          setState(() {
+            _loginStreak = local;
+          });
+        }
+      }
+    } catch (_) {
+      // ignore
+    }
+  }
+
+  // Afficher le bloc de bienvenue uniquement une fois par jour
+  Future<void> _evaluateWelcomeBlockOncePerDay() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastShown = prefs.getString('lastWelcomeShownDate');
+      final now = DateTime.now();
+      final today =
+          '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      if (lastShown == today) {
+        if (mounted) setState(() => _showWelcomeBlock = false);
+      } else {
+        // Marquer comme montré pour aujourd'hui et activer l'affichage
+        await prefs.setString('lastWelcomeShownDate', today);
+        if (mounted) setState(() => _showWelcomeBlock = true);
+      }
+    } catch (_) {
+      // En cas d'erreur de stockage, on affiche par défaut
+      if (mounted) setState(() => _showWelcomeBlock = true);
+    }
+  }
+
   Future<void> _loadConnectedUser() async {
     try {
       final user = await _authRepository.getMe();
 
-      // récupérer la série de connexions depuis SharedPreferences (champ non présent dans l'entité stagiaire)
-      int loginStreak = 0;
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        loginStreak = prefs.getInt('login_streak') ?? 0;
-      } catch (_) {
-        loginStreak = 0;
-      }
+      // 1) Préférer la valeur backend si disponible via un appel léger au profil
+      // 2) Repli: SharedPreferences
+      int loginStreak = await _fetchLoginStreakFromBackend().catchError((
+        _,
+      ) async {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          return prefs.getInt('login_streak') ?? 0;
+        } catch (_) {
+          return 0;
+        }
+      });
 
       if (mounted) {
         setState(() {
@@ -101,6 +149,42 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       debugPrint('Erreur en chargeant l\'utilisateur connecté: $e');
       if (mounted) setState(() => _isLoadingUser = false);
+    }
+  }
+
+  // Récupère login_streak depuis /stagiaire/profile, sinon lance une erreur
+  Future<int> _fetchLoginStreakFromBackend() async {
+    try {
+      // L'ApiClient injecte déjà l'Authorization via les interceptors
+      final response = await _apiClient.get('/stagiaire/profile');
+
+      final data = response.data;
+      if (data is Map) {
+        // Plusieurs structures possibles: { stagiaire: { login_streak: N } } ou { login_streak: N }
+        final stagiaire = data['stagiaire'];
+        final dynamic val =
+            stagiaire is Map ? stagiaire['login_streak'] : data['login_streak'];
+        int parsed;
+        if (val is int) {
+          parsed = val;
+        } else if (val is String) {
+          parsed = int.tryParse(val) ?? 0;
+        } else {
+          parsed = 0;
+        }
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setInt('login_streak', parsed);
+        } catch (_) {
+          // ignore local persistence errors
+        }
+        return parsed;
+      }
+      // Si pas trouvé, lever pour déclencher le repli
+      throw Exception('login_streak absent');
+    } catch (e) {
+      // Propager pour utiliser le repli SharedPreferences
+      rethrow;
     }
   }
 
@@ -220,9 +304,10 @@ class _HomePageState extends State<HomePage> {
                     child: CustomScrollView(
                       slivers: [
                         const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                        SliverToBoxAdapter(
-                          child: _buildWelcomeSection(isTablet),
-                        ),
+                        if (_showWelcomeBlock)
+                          SliverToBoxAdapter(
+                            child: _buildWelcomeSection(isTablet),
+                          ),
                         const SliverToBoxAdapter(child: SizedBox(height: 24)),
                         SliverToBoxAdapter(
                           child: _buildPlatformPresentation(isTablet),
