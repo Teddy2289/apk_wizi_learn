@@ -1,16 +1,23 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:confetti/confetti.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:wizi_learn/features/auth/data/models/achievement_model.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
+import 'package:wizi_learn/features/auth/data/models/quiz_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/achievement_repository.dart';
+import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
+import 'package:wizi_learn/features/auth/data/repositories/quiz_repository.dart';
+import 'package:wizi_learn/features/auth/data/repositories/stats_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/dashboard_page.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_question_card.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_score_header.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/quiz_session_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_widget.dart';
 
 class QuizSummaryPage extends StatefulWidget {
@@ -40,6 +47,20 @@ class QuizSummaryPage extends StatefulWidget {
 class _QuizSummaryPageState extends State<QuizSummaryPage> {
   late ConfettiController _confettiController;
   bool _showConfetti = false;
+  Timer? _nextQuizTimer;
+  Timer? _countdownTimer;
+
+  // MODIFICATION: 30 secondes pour regarder les résultats
+  int _viewResultsSeconds = 30;
+  // MODIFICATION: 5 secondes pour le prochain quiz
+  int _nextQuizSeconds = 5;
+
+  bool _showViewResultsCountdown = true;
+  bool _showNextQuizCountdown = false;
+
+  List<Quiz>? _availableQuizzes;
+  Quiz? _nextQuiz;
+  List<Question>? _nextQuizQuestions;
 
   @override
   void initState() {
@@ -57,11 +78,17 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
       });
     }
 
+    // Charger les quizzes disponibles et sélectionner le prochain
+    _loadNextQuiz();
+
+    // MODIFICATION: Démarrer le décompte pour regarder les résultats (30s)
+    _startViewResultsTimer();
+
     // If backend returned new achievements in quizResult, show them immediately
     final serverNew =
         (widget.quizResult?['newAchievements'] as List?) ??
-        (widget.quizResult?['new_achievements'] as List?) ??
-        [];
+            (widget.quizResult?['new_achievements'] as List?) ??
+            [];
     if (serverNew.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showBadgePopup(
@@ -75,6 +102,296 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
     }
   }
 
+  Future<void> _loadNextQuiz() async {
+    try {
+      final dio = Dio();
+      final storage = const FlutterSecureStorage();
+      final apiClient = ApiClient(dio: dio, storage: storage);
+      final quizRepository = QuizRepository(apiClient: apiClient);
+      final authRepository = AuthRepository(
+        remoteDataSource: AuthRemoteDataSourceImpl(
+          apiClient: apiClient,
+          storage: storage,
+        ),
+        storage: storage,
+      );
+
+      // Récupérer l'utilisateur connecté
+      final user = await authRepository.getMe();
+      final stagiaireId = user.stagiaire?.id;
+
+      if (stagiaireId == null) return;
+
+      // Charger tous les quizzes
+      final allQuizzes = await quizRepository.getQuizzesForStagiaire(
+        stagiaireId: stagiaireId,
+      );
+
+      // Charger l'historique pour obtenir les IDs joués
+      final statsRepository = StatsRepository(apiClient: apiClient);
+      final history = await statsRepository.getQuizHistory();
+      final playedQuizIds = history.map((h) => h.quiz.id.toString()).toList();
+
+      // Filtrer pour obtenir seulement les quizzes non joués
+      final unplayedQuizzes = allQuizzes.where(
+              (quiz) => !playedQuizIds.contains(quiz.id.toString())
+      ).toList();
+
+      if (unplayedQuizzes.isNotEmpty) {
+        setState(() {
+          _availableQuizzes = unplayedQuizzes;
+          _nextQuiz = unplayedQuizzes.first;
+        });
+
+        // Précharger les questions du prochain quiz
+        _preloadNextQuizQuestions();
+      }
+    } catch (e) {
+      debugPrint('Erreur chargement prochain quiz: $e');
+    }
+  }
+
+  Future<void> _preloadNextQuizQuestions() async {
+    if (_nextQuiz == null) return;
+
+    try {
+      final dio = Dio();
+      final storage = const FlutterSecureStorage();
+      final apiClient = ApiClient(dio: dio, storage: storage);
+      final quizRepository = QuizRepository(apiClient: apiClient);
+
+      final questions = await quizRepository.getQuizQuestions(_nextQuiz!.id);
+      setState(() {
+        _nextQuizQuestions = questions;
+      });
+    } catch (e) {
+      debugPrint('Erreur préchargement questions: $e');
+    }
+  }
+
+  // MODIFICATION: Timer de 30 secondes pour regarder les résultats
+  void _startViewResultsTimer() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_viewResultsSeconds > 0) {
+        setState(() {
+          _viewResultsSeconds--;
+        });
+      } else {
+        timer.cancel();
+        _startNextQuizCountdown();
+      }
+    });
+  }
+
+  // MODIFICATION: Timer de 5 secondes pour le prochain quiz
+  void _startNextQuizCountdown() {
+    setState(() {
+      _showViewResultsCountdown = false;
+      _showNextQuizCountdown = true;
+      _nextQuizSeconds = 5;
+    });
+
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_nextQuizSeconds > 0) {
+        setState(() {
+          _nextQuizSeconds--;
+        });
+      } else {
+        timer.cancel();
+        _navigateToNextQuiz();
+      }
+    });
+  }
+
+  // MODIFICATION SUPPRIMÉE: _startNextQuizTimer n'est plus utilisé
+
+  List<String> _getPlayedQuizIds() {
+    // Récupérer l'ID du quiz actuel depuis quizResult
+    final currentQuizId = widget.quizResult?['quizId']?.toString();
+
+    // Si on a la liste des quizzes disponibles, on peut construire la liste des IDs joués
+    if (_availableQuizzes != null && currentQuizId != null) {
+      final allQuizIds = _availableQuizzes!.map((q) => q.id.toString()).toList();
+      final playedIds = allQuizIds.where((id) => id != currentQuizId).toList();
+      return playedIds;
+    }
+
+    // Fallback: retourner une liste vide ou avec l'ID actuel
+    return currentQuizId != null ? [currentQuizId] : [];
+  }
+
+  void _navigateToNextQuiz() {
+    // Annuler les timers pour éviter les actions multiples
+    _nextQuizTimer?.cancel();
+    _countdownTimer?.cancel();
+
+    // Si on a chargé le prochain quiz et ses questions, naviguer directement
+    if (_nextQuiz != null && _nextQuizQuestions != null && _nextQuizQuestions!.isNotEmpty) {
+      final playedQuizIds = _getPlayedQuizIds();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => QuizSessionPage(
+            quiz: _nextQuiz!,
+            questions: _nextQuizQuestions!,
+            quizAdventureEnabled: false,
+            playedQuizIds: playedQuizIds,
+          ),
+        ),
+      );
+    } else {
+      // Fallback: retourner à la liste des quiz
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DashboardPage(
+            initialIndex: 2,
+            arguments: {
+              'selectedTabIndex': 2,
+              'fromNotification': true,
+              'useCustomScaffold': true,
+              'scrollToPlayed': false,
+            },
+          ),
+        ),
+            (route) => false,
+      );
+    }
+  }
+
+  // MODIFICATION: Nouvelle méthode pour afficher les deux décomptes
+  Widget _buildCountdownInfo() {
+    if (_showViewResultsCountdown) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.blue.withOpacity(0.1),
+          border: Border(
+            bottom: BorderSide(color: Colors.blue.withOpacity(0.2)),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.visibility, color: Colors.blue, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Temps pour consulter vos résultats',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blue.shade800,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    'Prochain quiz dans ${_viewResultsSeconds}s',
+                    style: TextStyle(
+                      color: Colors.blue.shade600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.blue,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                '${_viewResultsSeconds}s',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_showNextQuizCountdown) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.1),
+          border: Border(
+            bottom: BorderSide(color: Colors.green.withOpacity(0.2)),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.quiz, color: Colors.green, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Prochain quiz: ${_nextQuiz?.titre ?? "Chargement..."}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green.shade800,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    'Démarrage dans ${_nextQuizSeconds}s',
+                    style: TextStyle(
+                      color: Colors.green.shade600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.green,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                '${_nextQuizSeconds}s',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: _navigateToNextQuiz,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+              child: Text(
+                'Commencer',
+                style: TextStyle(
+                  color: Colors.green.shade700,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  // MODIFICATION: Supprimer l'ancienne méthode _buildNextQuizInfo
+
   Future<void> _fetchNewAchievements() async {
     final dio = Dio();
     final storage = const FlutterSecureStorage();
@@ -86,15 +403,15 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
 
       final today = DateTime.now();
       final newOnes =
-          achievements
-              .where(
-                (a) =>
-                    a.unlockedAt != null &&
-                    a.unlockedAt!.year == today.year &&
-                    a.unlockedAt!.month == today.month &&
-                    a.unlockedAt!.day == today.day,
-              )
-              .toList();
+      achievements
+          .where(
+            (a) =>
+        a.unlockedAt != null &&
+            a.unlockedAt!.year == today.year &&
+            a.unlockedAt!.month == today.month &&
+            a.unlockedAt!.day == today.day,
+      )
+          .toList();
 
       if (newOnes.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -128,7 +445,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
                 ),
                 const SizedBox(height: 16),
                 ...badges.map(
-                  (badge) => Padding(
+                      (badge) => Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: AchievementBadgeWidget(
                       achievement: badge,
@@ -211,13 +528,15 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
   @override
   void dispose() {
     _confettiController.dispose();
+    _nextQuizTimer?.cancel();
+    _countdownTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final answeredQuestions =
-        widget.questions.where((q) => q.selectedAnswers != null).toList();
+    widget.questions.where((q) => q.selectedAnswers != null).toList();
 
     final calculatedScore =
         widget.questions.where((q) => q.isCorrect == true).length * 2;
@@ -229,6 +548,41 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
         title: const Text("Récapitulatif du Quiz"),
         centerTitle: true,
         actions: [
+          // MODIFICATION: Afficher le décompte actuel dans l'AppBar
+          if (_showViewResultsCountdown || _showNextQuizCountdown)
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: _showViewResultsCountdown ? Colors.blue.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _showViewResultsCountdown ? Colors.blue : Colors.green,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _showViewResultsCountdown ? Icons.visibility : Icons.quiz,
+                    size: 16,
+                    color: _showViewResultsCountdown ? Colors.blue : Colors.green,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _showViewResultsCountdown
+                        ? '${_viewResultsSeconds}s'
+                        : '${_nextQuizSeconds}s',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: _showViewResultsCountdown ? Colors.blue : Colors.green,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           // Indicateur pour les résultats locaux
           if (widget.quizResult?['isLocal'] == true)
             Container(
@@ -258,8 +612,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
           IconButton(
             icon: const Icon(Icons.list),
             tooltip: 'Retour à la liste des quiz',
-            onPressed:
-                () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
       ),
@@ -267,12 +620,16 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
         children: [
           Column(
             children: [
+              // MODIFICATION: Utiliser le nouveau widget de décompte
+              _buildCountdownInfo(),
+
               QuizScoreHeader(
                 score: calculatedScore,
                 correctAnswers: calculatedCorrectAnswers,
                 totalQuestions: answeredQuestions.length,
                 timeSpent: widget.timeSpent,
               ),
+
               // Message d'information pour les résultats locaux
               if (widget.quizResult?['isLocal'] == true)
                 Container(
@@ -290,7 +647,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
                       Expanded(
                         child: Text(
                           'Ces résultats sont calculés localement car la soumission au serveur a échoué. '
-                          'Ils ne sont pas sauvegardés.',
+                              'Ils ne sont pas sauvegardés.',
                           style: TextStyle(
                             color: Colors.orange.shade800,
                             fontSize: 13,
@@ -352,20 +709,18 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                  builder:
-                      (context) => DashboardPage(
-                        initialIndex: 2,
-                        arguments: {
-                          'selectedTabIndex': 2,
-                          'scrollToQuizId':
-                              widget.quizResult?['quizId']?.toString(),
-                          'fromNotification': true,
-                          'useCustomScaffold': true,
-                          'scrollToPlayed': true,
-                        },
-                      ),
+                  builder: (context) => DashboardPage(
+                    initialIndex: 2,
+                    arguments: {
+                      'selectedTabIndex': 2,
+                      'scrollToQuizId': widget.quizResult?['quizId']?.toString(),
+                      'fromNotification': true,
+                      'useCustomScaffold': true,
+                      'scrollToPlayed': true,
+                    },
+                  ),
                 ),
-                (route) => false,
+                    (route) => false,
               );
             },
             tooltip: 'Retour aux quiz',

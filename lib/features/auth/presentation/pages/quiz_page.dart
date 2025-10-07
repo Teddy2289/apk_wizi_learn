@@ -96,6 +96,10 @@ class _QuizPageState extends State<QuizPage> {
       // Charger la préférence utilisateur
       final userPrefersAdventure = await _loadQuizViewPreference();
 
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkAutoSelectNextQuiz();
+      });
+
       if (!_didRedirectToAdventure &&
           !widget.quizAdventureEnabled &&
           !widget.forceList &&
@@ -116,6 +120,18 @@ class _QuizPageState extends State<QuizPage> {
         );
       }
     });
+  }
+
+  void _checkAutoSelectNextQuiz() {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map<String, dynamic> && args['autoSelectNextQuiz'] == true) {
+      // Attendre que les données soient chargées puis sélectionner le premier quiz disponible
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (_visibleUnplayed.isNotEmpty && mounted) {
+          _startQuiz(_visibleUnplayed.first);
+        }
+      });
+    }
   }
 
   Future<void> _scrollToQuiz(String quizId) async {
@@ -1386,6 +1402,7 @@ class _QuizPageState extends State<QuizPage> {
                 quiz: quiz,
                 questions: questions,
                 quizAdventureEnabled: widget.quizAdventureEnabled,
+                playedQuizIds: _playedQuizIds,
               ),
         ),
       );

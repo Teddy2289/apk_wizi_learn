@@ -15,6 +15,7 @@ class QuizSessionPage extends StatefulWidget {
   final List<Question> questions;
   final bool isRestart;
   final bool quizAdventureEnabled;
+  final List<String> playedQuizIds;
 
   const QuizSessionPage({
     super.key,
@@ -22,6 +23,7 @@ class QuizSessionPage extends StatefulWidget {
     required this.questions,
     this.isRestart = false,
     this.quizAdventureEnabled = false,
+    required this.playedQuizIds,
   });
 
   @override
@@ -231,6 +233,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
               child: QuizNavigationControls(
                 sessionManager: _sessionManager,
                 questions: widget.questions,
+                playedQuizIds: widget.playedQuizIds,
               ),
             ),
           ],
@@ -261,7 +264,8 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
             }
           }
         },
-        showBanner: false, // Désactivez le banner si nécessaire
+        showBanner: false,
+        // Désactivez le banner si nécessaire
         showBottomNavigationBar:
             false, // Cache la barre de navigation pendant le quiz
       ),

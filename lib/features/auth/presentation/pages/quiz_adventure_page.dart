@@ -594,23 +594,6 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                             )
                             : const SizedBox.shrink(),
                   ),
-                  // Toggle missions
-                  // SliverToBoxAdapter(
-                  //   child: Padding(
-                  //     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  //     child: Row(
-                  //       children: [
-                  //         Icon(Icons.flag, color: theme.colorScheme.primary),
-                  //         const SizedBox(width: 8),
-                  //         const Expanded(child: Text('Afficher les missions')),
-                  //         Switch(
-                  //           value: _showMissions,
-                  //           onChanged: (v) => setState(() => _showMissions = v),
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),
-                  // ),
                   SliverToBoxAdapter(
                     child:
                         _showMissions
@@ -718,6 +701,8 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                               questions: questions,
                                               quizAdventureEnabled:
                                                   widget.quizAdventureEnabled,
+                                                playedQuizIds:_playedQuizIds
+
                                             ),
                                       ),
                                     );
@@ -792,6 +777,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                               questions: questions,
                                               quizAdventureEnabled:
                                                   widget.quizAdventureEnabled,
+                                              playedQuizIds: _playedQuizIds,
                                             ),
                                       ),
                                     );
