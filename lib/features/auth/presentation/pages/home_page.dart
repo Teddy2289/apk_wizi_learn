@@ -637,32 +637,62 @@ class _HomePageState extends State<HomePage> {
       );
     }
 
-    // Filtrage des contacts par type
-    final wantedTypes = {'Commercial', 'Formateur', 'pole_relation_client'};
-    final filteredContacts = <String, Contact>{};
+    // Filtrage et organisation des contacts par type dans l'ordre demandé
+    final orderedContacts = <Contact>[];
 
-    for (final contact in _contacts) {
-      if (wantedTypes.contains(contact.type)) {
-        final roleKey =
-            contact.type.toLowerCase().contains('relation')
-                ? 'relation'
-                : contact.type.toLowerCase();
+    // 1. FORMATEURS
+    final formateurs = _contacts.where((contact) =>
+        contact.type.toLowerCase().contains('formateur')
+    ).toList();
+    orderedContacts.addAll(formateurs);
 
-        if (!filteredContacts.containsKey(roleKey)) {
-          filteredContacts[roleKey] = contact;
-        }
-      }
+    // 2. PÔLE SAV
+    final poleSav = _contacts.where((contact) =>
+    contact.type.toLowerCase().contains('sav') ||
+        contact.type.toLowerCase().contains('pole_sav')
+    ).toList();
+    orderedContacts.addAll(poleSav);
+
+    // 3. COMMERCIAUX
+    final commerciaux = _contacts.where((contact) =>
+        contact.type.toLowerCase().contains('commercial')
+    ).toList();
+    orderedContacts.addAll(commerciaux);
+
+    // 4. PÔLE RELATION CLIENTS
+    final poleRelation = _contacts.where((contact) =>
+    contact.type.toLowerCase().contains('relation') ||
+        contact.type.toLowerCase().contains('pole_relation')
+    ).toList();
+    orderedContacts.addAll(poleRelation);
+
+    // Si vous voulez limiter à un contact par type (comme avant), décommentez ce code :
+    /*
+  final filteredContacts = <String, Contact>{};
+
+  // Prendre le premier contact de chaque type dans l'ordre
+  for (final contact in _contacts) {
+    final type = contact.type.toLowerCase();
+
+    if (type.contains('formateur') && !filteredContacts.containsKey('formateur')) {
+      filteredContacts['formateur'] = contact;
+    } else if ((type.contains('sav') || type.contains('pole_sav')) && !filteredContacts.containsKey('sav')) {
+      filteredContacts['sav'] = contact;
+    } else if (type.contains('commercial') && !filteredContacts.containsKey('commercial')) {
+      filteredContacts['commercial'] = contact;
+    } else if ((type.contains('relation') || type.contains('pole_relation')) && !filteredContacts.containsKey('relation')) {
+      filteredContacts['relation'] = contact;
     }
+  }
 
-    // Ordonnancement des contacts
-    final orderedContacts = [
-      if (filteredContacts.containsKey('commercial'))
-        filteredContacts['commercial']!,
-      if (filteredContacts.containsKey('formateur'))
-        filteredContacts['formateur']!,
-      if (filteredContacts.containsKey('relation'))
-        filteredContacts['relation']!,
-    ];
+  // Ordonnancement dans l'ordre demandé
+  final orderedContacts = [
+    if (filteredContacts.containsKey('formateur')) filteredContacts['formateur']!,
+    if (filteredContacts.containsKey('sav')) filteredContacts['sav']!,
+    if (filteredContacts.containsKey('commercial')) filteredContacts['commercial']!,
+    if (filteredContacts.containsKey('relation')) filteredContacts['relation']!,
+  ];
+  */
 
     // On phones keep the presentation as a vertical list. On tablets use
     // a horizontal carousel to preserve the sliding principle.
@@ -677,7 +707,7 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
-            (context, index) => Padding(
+                (context, index) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: ContactCard(
                 contact: orderedContacts[index],

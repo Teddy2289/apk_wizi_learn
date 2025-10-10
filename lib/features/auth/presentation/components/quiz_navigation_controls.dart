@@ -6,11 +6,13 @@ import 'package:wizi_learn/features/auth/presentation/widgets/quiz_session/quiz_
 class QuizNavigationControls extends StatelessWidget {
   final QuizSessionManager sessionManager;
   final List<Question> questions;
+  final List<String> playedQuizIds;
 
   const QuizNavigationControls({
     super.key,
     required this.sessionManager,
     required this.questions,
+    required this.playedQuizIds
   });
 
   @override
@@ -76,7 +78,10 @@ class QuizNavigationControls extends StatelessWidget {
                     totalQuestions:
                         results['totalQuestions'] ?? questions.length,
                     timeSpent: results['timeSpent'] ?? 0,
-                    quizResult: results,
+                    quizResult: {
+                      ...results,
+                      'playedQuizIds': playedQuizIds,
+                    },
                   ),
             ),
           );
@@ -163,7 +168,8 @@ class QuizNavigationControls extends StatelessWidget {
       'correctAnswers': correctAnswers,
       'totalQuestions': totalQuestions,
       'timeSpent': sessionManager.getTimeSpent(),
-      'isLocal': true, // Indicateur que ce sont des résultats locaux
+      'isLocal': true,
+      'playedQuizIds': playedQuizIds,
     };
 
     Navigator.pushReplacement(

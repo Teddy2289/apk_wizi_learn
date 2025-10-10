@@ -79,9 +79,7 @@ class ContactCard extends StatelessWidget {
                         ),
                         SizedBox(width: isSmallScreen ? 3 : 6),
                         Text(
-                          contact.type.toLowerCase() == 'pole_relation_client'
-                              ? 'Conseiller'
-                              : '${contact.type[0].toUpperCase()}${contact.type.substring(1)}',
+                          _getFormattedContactType(contact.type),
                           style: TextStyle(
                             fontSize: infoFontSize,
                             color: Colors.grey.shade700,
@@ -250,5 +248,24 @@ class ContactCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getFormattedContactType(String type) {
+    final lowerType = type.toLowerCase();
+
+    if (lowerType.contains('formateur')) {
+      return 'Formateur';
+    } else if (lowerType.contains('sav') || lowerType.contains('pole_sav')) {
+      return 'Pôle SAV';
+    } else if (lowerType.contains('commercial')) {
+      return 'Commercial';
+    } else if (lowerType.contains('relation') || lowerType.contains('pole_relation')) {
+      return 'Pôle relation client';
+    } else {
+      // Fallback : capitaliser la première lettre pour les types inconnus
+      return type.isNotEmpty
+          ? type[0].toUpperCase() + type.substring(1)
+          : 'Contact';
+    }
   }
 }

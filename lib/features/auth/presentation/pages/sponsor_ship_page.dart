@@ -2,14 +2,11 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/repositories/parrainage_repository.dart';
-import 'package:wizi_learn/features/auth/data/repositories/achievement_repository.dart';
-import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_widget.dart';
-import 'package:wizi_learn/features/auth/data/models/achievement_model.dart';
+import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
+import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
 
 import '../../../../core/constants/route_constants.dart';
 
@@ -21,103 +18,173 @@ class SponsorshipPage extends StatefulWidget {
 }
 
 class _SponsorshipPageState extends State<SponsorshipPage> {
-  String? _referralLink;
-  bool _isGenerating = false;
-  Map<String, dynamic>? _stats;
-  bool _isLoadingStats = false;
-  late ParrainageRepository _parrainageRepo;
-  StreamSubscription<Map<String, dynamic>>? _statsSubscription;
+  final _formKey = GlobalKey<FormState>();
+  late final ParrainageRepository _parrainageRepo;
+  late final AuthRepository _authRepository;
+
+  // Contrôleurs pour les champs du formulaire
+  final _prenomController = TextEditingController();
+  final _nomController = TextEditingController();
+  final _telephoneController = TextEditingController();
+
+  bool _isSubmitting = false;
+  bool _isSuccess = false;
+  String? _parrainId; // Stocker l'ID du parrain
+  bool _isLoadingUser = true;
+  String? _userError;
 
   @override
   void initState() {
     super.initState();
-    _parrainageRepo = ParrainageRepository(
-      apiClient: ApiClient(dio: Dio(), storage: const FlutterSecureStorage()),
-    );
-    _initStats();
+    _initializeRepositories();
+    _getConnectedUser(); // Récupérer l'utilisateur connecté
   }
 
-  void _initStats() async {
-    // Charge les stats initiales
-    setState(() => _isLoadingStats = true);
-    _stats = await _parrainageRepo.getStatsParrainage();
-    if (mounted) setState(() => _isLoadingStats = false);
+  void _initializeRepositories() {
+    final dio = Dio();
+    final storage = const FlutterSecureStorage();
+    final apiClient = ApiClient(dio: dio, storage: storage);
 
-    // Vérifier si des achievements de parrainage ont été débloqués
+    _parrainageRepo = ParrainageRepository(apiClient: apiClient);
+    _authRepository = AuthRepository(
+      remoteDataSource: AuthRemoteDataSourceImpl(
+        apiClient: apiClient,
+        storage: storage,
+      ),
+      storage: storage,
+    );
+  }
+
+  // Méthode pour récupérer l'utilisateur connecté
+  Future<void> _getConnectedUser() async {
     try {
-      final repo = AchievementRepository(
-        apiClient: ApiClient(dio: Dio(), storage: const FlutterSecureStorage()),
-      );
-      final unlocked = await repo.checkAchievements();
-      final today = DateTime.now();
-      final todays =
-          unlocked
-              .where(
-                (a) =>
-                    a.unlockedAt != null &&
-                    a.unlockedAt!.year == today.year &&
-                    a.unlockedAt!.month == today.month &&
-                    a.unlockedAt!.day == today.day,
-              )
-              .toList();
-      if (todays.isNotEmpty && mounted) {
-        _showBadgeDialog(context, todays);
-      }
-    } catch (_) {}
+      setState(() {
+        _isLoadingUser = true;
+        _userError = null;
+      });
 
-    // Écoute les mises à jour en temps réel
-    _statsSubscription = _parrainageRepo.getLiveStats().listen((newStats) {
-      if (mounted) {
+      final user = await _authRepository.getMe();
+
+      // L'ID du parrain est l'ID de l'utilisateur connecté
+      final connectedUserId = user.id?.toString();
+
+      if (connectedUserId == null) {
         setState(() {
-          _stats = newStats;
+          _userError = 'Impossible de récupérer votre identifiant utilisateur';
+          _isLoadingUser = false;
         });
+        return;
       }
-    });
+
+      setState(() {
+        _parrainId = connectedUserId;
+        _isLoadingUser = false;
+      });
+
+      debugPrint("Parrain ID récupéré: $_parrainId");
+      debugPrint("Utilisateur connecté: ${user.name}");
+
+    } catch (e) {
+      debugPrint("Erreur récupération user: $e");
+      setState(() {
+        _userError = 'Erreur lors de la récupération de vos informations';
+        _isLoadingUser = false;
+      });
+    }
   }
 
   @override
   void dispose() {
-    _statsSubscription?.cancel();
     _parrainageRepo.dispose();
+    _prenomController.dispose();
+    _nomController.dispose();
+    _telephoneController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadStats() async {
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    // Vérifier que nous avons le parrain_id
+    if (_parrainId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Erreur: Impossible de récupérer votre identifiant'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
-      _isLoadingStats = true;
+      _isSubmitting = true;
     });
 
-    final repo = ParrainageRepository(
-      apiClient: ApiClient(dio: Dio(), storage: const FlutterSecureStorage()),
+    final result = await _parrainageRepo.inscrireFilleul(
+      prenom: _prenomController.text,
+      nom: _nomController.text,
+      telephone: _telephoneController.text,
+      parrainId: _parrainId!, // Envoyer l'ID du parrain (utilisateur connecté)
     );
-    final stats = await repo.getStatsParrainage();
 
     setState(() {
-      _stats = stats;
-      _isLoadingStats = false;
+      _isSubmitting = false;
     });
+
+    if (result?['success'] == true) {
+      // Réinitialiser le formulaire
+      _formKey.currentState!.reset();
+
+      // Afficher le statut de succès
+      setState(() {
+        _isSuccess = true;
+      });
+
+      // Afficher le message de succès
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result?['message'] ?? 'Filleul inscrit avec succès !'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } else {
+      // Afficher les erreurs détaillées
+      String errorMessage = result?['message'] ?? 'Erreur lors de l\'inscription';
+
+      // Afficher les erreurs de validation du backend
+      if (result?['errors'] != null) {
+        final errors = result?['errors'] as Map<String, dynamic>;
+        final firstError = errors.values.first?.first?.toString();
+        errorMessage = firstError ?? errorMessage;
+
+        // Log détaillé pour le débogage
+        debugPrint("Erreurs détaillées: $errors");
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
-  Future<void> _genererLien() async {
+  void _resetForm() {
     setState(() {
-      _isGenerating = true;
+      _isSuccess = false;
     });
+    _formKey.currentState!.reset();
+  }
 
-    final repo = ParrainageRepository(
-      apiClient: ApiClient(dio: Dio(), storage: const FlutterSecureStorage()),
-    );
-    final lien = await repo.genererLienParrainage();
-
-    setState(() {
-      _referralLink = lien;
-      _isGenerating = false;
-    });
-
-    if (lien == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Erreur lors de la génération du lien")),
-      );
-    }
+  void _retryUserLoading() {
+    _getConnectedUser();
   }
 
   @override
@@ -139,14 +206,17 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
             ),
             child: const Icon(Icons.arrow_back, color: Colors.white),
           ),
-          onPressed:
-              () => Navigator.pushReplacementNamed(
-                context,
-                RouteConstants.dashboard,
-              ),
+          onPressed: () => Navigator.pushReplacementNamed(
+            context,
+            RouteConstants.dashboard,
+          ),
         ),
       ),
-      body: SingleChildScrollView(
+      body: _isLoadingUser
+          ? _buildLoadingState(theme)
+          : _userError != null
+          ? _buildErrorState(theme)
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,72 +239,42 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
             ),
             const SizedBox(height: 10),
             Text(
-              "Partagez votre lien de parrainage avec vos amis. Lorsqu'ils s'inscrivent et suivent leur première formation, vous gagnez tous les deux 50€ de crédit !",
+              "Inscrivez directement vos filleuls via ce formulaire. Lorsqu'ils s'inscrivent et suivent leur première formation, vous gagnez tous les deux 50€ de crédit !",
               style: theme.textTheme.bodyLarge,
             ),
             const SizedBox(height: 30),
 
-            // Bouton Générer le lien
-            _isGenerating
-                ? const Center(child: CircularProgressIndicator())
-                : Center(
-                  child: ElevatedButton.icon(
-                    onPressed: _genererLien,
-                    icon: const Icon(Icons.link),
-                    label: const Text("Générer mon lien"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFEB823),
-                      foregroundColor: Colors.black,
-                    ),
-                  ),
-                ),
+            // Message de succès
+            if (_isSuccess) _buildSuccessMessage(context),
 
-            const SizedBox(height: 20),
-            if (_referralLink != null) _buildReferralLinkSection(context),
-            const SizedBox(height: 20),
-            if (_isLoadingStats)
-              const Center(child: CircularProgressIndicator())
-            else if (_stats != null)
-              _buildStatsSection(context),
+            // Formulaire d'inscription (seulement si pas de succès)
+            if (!_isSuccess) _buildInscriptionForm(context),
+
             const SizedBox(height: 30),
+
             _buildStep(
               context,
               number: '1',
-              title: 'Copiez votre lien unique',
-              description:
-                  'Utilisez le bouton ci-dessus pour copier ou partager votre lien',
+              title: 'Remplissez le formulaire',
+              description: 'Saisissez les informations de votre filleul',
             ),
             _buildStep(
               context,
               number: '2',
-              title: 'Partagez avec vos amis',
-              description:
-                  'Envoyez-le par message, email ou sur les réseaux sociaux',
+              title: 'Validez l\'inscription',
+              description: 'Soumettez le formulaire pour inscrire votre filleul',
             ),
             _buildStep(
               context,
               number: '3',
-              title: 'Vos amis s\'inscrivent',
-              description:
-                  'Ils doivent utiliser votre lien pour créer leur compte',
+              title: 'Vos amis sont contactés',
+              description: 'Nos commerciaux les contactent pour finaliser l\'inscription',
             ),
             _buildStep(
               context,
               number: '4',
               title: 'Vous gagnez tous les deux',
-              description:
-                  'Dès qu\'ils suivent leur première formation payante',
-            ),
-            const SizedBox(height: 30),
-            _buildInfoCard(
-              context,
-              icon: Icons.help_outline,
-              title: 'Questions fréquentes',
-              content:
-                  'Consultez notre FAQ pour plus d\'informations sur le programme de parrainage.',
-              onTap: () {
-                // TODO: Navigation vers FAQ
-              },
+              description: 'Dès qu\'ils suivent leur première formation payante',
             ),
           ],
         ),
@@ -242,214 +282,244 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
     );
   }
 
-  Widget _buildStatsSection(BuildContext context) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.only(bottom: 20),
+  Widget _buildLoadingState(ThemeData theme) {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text('Chargement de vos informations...'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(ThemeData theme) {
+    return Center(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+            const SizedBox(height: 16),
             Text(
-              'Vos statistiques de parrainage',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              'Erreur de chargement',
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _userError ?? 'Erreur inconnue',
+              style: theme.textTheme.bodyMedium,
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem(
-                  context,
-                  value: _stats?['nombre_filleuls']?.toString() ?? '0',
-                  label: 'Filleuls',
-                  icon: Icons.people_alt_outlined,
-                ),
-                _buildStatItem(
-                  context,
-                  value: _stats?['total_points']?.toString() ?? '0',
-                  label: 'Points',
-                  icon: Icons.star_border,
-                ),
-                _buildStatItem(
-                  context,
-                  value: _stats?['gains']?.toString() ?? '0',
-                  label: 'Gains (€)',
-                  icon: Icons.euro_outlined,
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            if ((double.tryParse(_stats?['gains']?.toString() ?? '0') ?? 0) >
-                0.00)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _demanderRetrait,
-                  icon: const Icon(Icons.monetization_on_outlined),
-                  label: const Text("Retirer mes gains"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.brown[400],
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                ),
+            ElevatedButton(
+              onPressed: _retryUserLoading,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
               ),
+              child: const Text('Réessayer'),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Future<void> _demanderRetrait() async {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Demande de retrait"),
-          content: const Text(
-            "Votre demande est en cours de traitement. Merci de patienter un délai de 1 à 2 jours ouvrés.",
-          ),
-          actions: [
-            TextButton(
-              child: const Text("OK"),
-              onPressed: () {
-                Navigator.of(context).pop();
-                // Ici vous pourriez ajouter l'appel API pour enregistrer la demande
-                // _enregistrerDemandeRetrait();
-              },
+  Widget _buildSuccessMessage(BuildContext context) {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.green[50],
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green[600]),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Inscription réussie !',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green[800],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Félicitations, votre filleul a été inscrit avec succès. Nos commerciaux le contacteront rapidement.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _resetForm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green[600],
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Inscrire un autre filleul'),
+              ),
             ),
           ],
-        );
-      },
-    );
-  }
-
-  Widget _buildStatItem(
-    BuildContext context, {
-    required String value,
-    required String label,
-    required IconData icon,
-  }) {
-    // Conversion de la valeur en double puis formatage
-    final numValue = double.tryParse(value) ?? 0;
-    final formattedValue =
-        numValue % 1 == 0
-            ? numValue
-                .toInt()
-                .toString() // Affiche sans décimales si .00
-            : numValue.toStringAsFixed(2); // Affiche avec 2 décimales sinon
-
-    return Column(
-      children: [
-        Icon(icon, size: 32, color: const Color(0xFFFEB823)),
-        const SizedBox(height: 8),
-        Text(
-          formattedValue,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFFFEB823),
-          ),
         ),
-        const SizedBox(height: 4),
-        Text(label, style: Theme.of(context).textTheme.bodyMedium),
-      ],
+      ),
     );
   }
 
-  Widget _buildReferralLinkSection(BuildContext context) {
-    final referralLink = _referralLink!;
-
+  Widget _buildInscriptionForm(BuildContext context) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              'Votre lien de parrainage',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Inscrire un filleul',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      referralLink,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w500),
+              const SizedBox(height: 16),
+
+              // Prénom
+              TextFormField(
+                controller: _prenomController,
+                decoration: const InputDecoration(
+                  labelText: 'Prénom *',
+                  border: OutlineInputBorder(),
+                  hintText: 'Saisissez le prénom',
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Veuillez saisir le prénom';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // Nom
+              TextFormField(
+                controller: _nomController,
+                decoration: const InputDecoration(
+                  labelText: 'Nom *',
+                  border: OutlineInputBorder(),
+                  hintText: 'Saisissez le nom',
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Veuillez saisir le nom';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // Téléphone
+              TextFormField(
+                controller: _telephoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Téléphone *',
+                  border: OutlineInputBorder(),
+                  hintText: '06 12 34 56 78',
+                ),
+                keyboardType: TextInputType.phone,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Veuillez saisir le numéro de téléphone';
+                  }
+                  if (value.length < 8) {
+                    return 'Numéro de téléphone invalide';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Information sur le motif par défaut
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color:Color(0xFF32BBD3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue[600], size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Le motif "Soumission d\'une demande d\'inscription par parrainage" sera automatiquement enregistré.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.blue[800],
+                        ),
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.copy),
-                    onPressed: () async {
-                      await Clipboard.setData(
-                        ClipboardData(text: referralLink),
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Lien copié !')),
-                      );
-                    },
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 15),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.share),
-                    label: const Text('Partager'),
-                    onPressed: () {
-                      Share.share(
-                        'Rejoins Wizi Learn avec mon lien ! $referralLink',
-                        subject: 'Découvre Wizi Learn',
-                      );
-                    },
+              const SizedBox(height: 20),
+
+              // Bouton de soumission
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _submitForm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFEB823),
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                    ),
+                  )
+                      : const Text(
+                    'Inscrire le filleul',
+                    style: TextStyle(fontSize: 16),
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    child: const Text('Copier'),
-                    onPressed: () async {
-                      await Clipboard.setData(
-                        ClipboardData(text: referralLink),
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Lien copié !')),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildStep(
-    BuildContext context, {
-    required String number,
-    required String title,
-    required String description,
-  }) {
+      BuildContext context, {
+        required String number,
+        required String title,
+        required String description,
+      }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -493,88 +563,6 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildInfoCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String content,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFEB823).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFFEB823).withOpacity(0.3)),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 28, color: const Color(0xFFFEB823)),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFFFEB823),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(content, style: Theme.of(context).textTheme.bodyMedium),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showBadgeDialog(BuildContext context, List<Achievement> badges) {
-    showDialog(
-      context: context,
-      builder:
-          (_) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.emoji_events, color: Colors.amber, size: 48),
-                  const SizedBox(height: 8),
-                  const Text('Nouveau(x) badge(s) !'),
-                  const SizedBox(height: 8),
-                  ...badges.map(
-                    (b) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6.0),
-                      child: AchievementBadgeWidget(
-                        achievement: b,
-                        unlocked: true,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Fermer'),
-                  ),
-                ],
-              ),
-            ),
-          ),
     );
   }
 }

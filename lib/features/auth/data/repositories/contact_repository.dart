@@ -21,24 +21,32 @@ class ContactRepository {
     final commerciaux = data['commerciaux'];
     final formateurs = data['formateurs'];
     final poleRelation = data['pole_relation'];
+    final poleSav = data['pole_sav']; // Ajout du Pôle SAV
+
+    // ORDRE D'AJOUT : Formateurs -> Pôle SAV -> Commercial -> Pôle Relation
+    if (formateurs is List) {
+      contacts.addAll(formateurs.map((e) => Contact.fromJson(e)).toList());
+    } else {
+      print('⚠ formateurs n\'est pas une liste : $formateurs');
+    }
+
+    if (poleSav is List) {
+      contacts.addAll(poleSav.map((e) => Contact.fromJson(e)).toList());
+    } else {
+      print('⚠ pole_sav n\'est pas une liste : $poleSav');
+    }
 
     if (commerciaux is List) {
       contacts.addAll(commerciaux.map((e) => Contact.fromJson(e)).toList());
     } else {
-      print('⚠ commerciaux n’est pas une liste : $commerciaux');
-    }
-
-    if (formateurs is List) {
-      contacts.addAll(formateurs.map((e) => Contact.fromJson(e)).toList());
-    } else {
-      print('⚠ formateurs n’est pas une liste : $formateurs');
+      print('⚠ commerciaux n\'est pas une liste : $commerciaux');
     }
 
     if (poleRelation is List) {
       contacts.addAll(poleRelation.map((e) => Contact.fromJson(e)).toList());
       debugPrint('Contacts du pôle relation : $poleRelation');
     } else {
-      print('⚠ pole_relation n’est pas une liste : $poleRelation');
+      print('⚠ pole_relation n\'est pas une liste : $poleRelation');
     }
 
     // Filtrer les doublons par email
@@ -48,7 +56,6 @@ class ContactRepository {
     }
     return contactsUniques.values.toList();
   }
-
   Future<List<MultipartFile>> _prepareAttachments(List<PlatformFile> files) async {
     return files.map((platformFile) {
       return MultipartFile.fromBytes(

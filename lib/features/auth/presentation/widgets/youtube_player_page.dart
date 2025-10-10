@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -7,6 +9,7 @@ import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
 import 'package:wizi_learn/features/auth/data/models/media_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/formation_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/media_repository.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/tutorial_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/random_formations_widget.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -23,6 +26,30 @@ class YoutubePlayerPage extends StatefulWidget {
 
   @override
   State<YoutubePlayerPage> createState() => _YoutubePlayerPageState();
+}
+
+String _filterTitle(String title) {
+  // Supprimer le mot Microsoft (insensible à la casse)
+  return title.replaceAll(RegExp(r'microsoft', caseSensitive: false), '').trim();
+}
+
+String _getRandomThumbnailUrl(String youtubeUrl) {
+  final videoId = YoutubePlayer.convertUrlToId(normalizeYoutubeUrl(youtubeUrl));
+
+  if (videoId == null) {
+    return YoutubePlayer.getThumbnail(
+      videoId: '',
+      quality: ThumbnailQuality.medium,
+    );
+  }
+
+  // Générer un timestamp aléatoire entre 30 secondes et 8 minutes
+  // pour éviter les thumbnails du début
+  final random = Random();
+  final randomTimestamp = 30 + random.nextInt(450); // 30s à 480s (8min)
+
+  // Utiliser l'URL avec timestamp pour un extrait aléatoire
+  return 'https://img.youtube.com/vi/$videoId/mqdefault.jpg?t=${randomTimestamp}s';
 }
 
 class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
@@ -259,7 +286,7 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
         return Scaffold(
           appBar: AppBar(
             title: Text(
-              currentVideo.titre,
+              _filterTitle(currentVideo.titre), // FILTRE APPLIQUÉ
               style: textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w600,
                 fontSize: screenWidth * 0.045,
@@ -285,7 +312,7 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
                   children: [
                     Expanded(
                       child: Text(
-                        currentVideo.titre,
+                        _filterTitle(currentVideo.titre), // FILTRE APPLIQUÉ
                         style: textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                           fontSize: screenWidth * 0.04,
@@ -321,6 +348,7 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
       },
     );
   }
+
   Widget _buildPlaylist(
       List<Media> relatedVideos,
       ColorScheme colorScheme,
@@ -336,6 +364,9 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
         final media = index == 0 ? currentVideo : relatedVideos[index - 1];
         final isSelected = media.id == currentVideo.id;
         final isWatched = _watchedMediaIds.contains(media.id);
+
+        // Filtrer le titre
+        final filteredTitle = _filterTitle(media.titre);
 
         return Card(
           elevation: isSelected ? 4 : 1,
@@ -359,6 +390,7 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
                 children: [
                   Stack(
                     children: [
+                      // Thumbnail avec timestamp aléatoire (pas du début)
                       Container(
                         width: screenWidth * 0.2,
                         height: screenWidth * 0.15,
@@ -367,10 +399,7 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
                           borderRadius: BorderRadius.circular(6),
                           image: DecorationImage(
                             image: NetworkImage(
-                              YoutubePlayer.getThumbnail(
-                                videoId: YoutubePlayer.convertUrlToId(media.url) ?? '',
-                                quality: ThumbnailQuality.medium,
-                              ),
+                              _getRandomThumbnailUrl(media.url),
                             ),
                             fit: BoxFit.cover,
                           ),
@@ -410,7 +439,7 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          media.titre,
+                          filteredTitle, // Utiliser le titre filtré
                           style: textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w500,
                             color: isSelected

@@ -1,78 +1,59 @@
 import 'package:flutter/cupertino.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
-import 'dart:async';
 
 class ParrainageRepository {
   final ApiClient apiClient;
-  final StreamController<Map<String, dynamic>> _statsStreamController =
-  StreamController<Map<String, dynamic>>.broadcast();
-  Timer? _refreshTimer;
 
   ParrainageRepository({required this.apiClient});
 
-  Future<String?> genererLienParrainage() async {
+  Future<Map<String, dynamic>?> inscrireFilleul({
+    required String prenom,
+    required String nom,
+    required String telephone,
+    required String parrainId,
+  }) async {
     try {
-      final response = await apiClient.post('/parrainage/generate-link');
-      if (response.data['success'] == true && response.data['token'] != null) {
-        return "https://wizi-learn.com/parrainage/${response.data['token']}";
-      }
-      return null;
-    } catch (e) {
-      debugPrint("Erreur génération lien: $e");
-      return null;
-    }
-  }
+      final data = {
+        'prenom': prenom,
+        'nom': nom,
+        'telephone': telephone,
+        'parrain_id': int.tryParse(parrainId) ?? parrainId,
+        'motif': "Soumission d'une demande d'inscription par parrainage",
+        'statut': "1", // Statut comme string "1"
+        'civilite': 'M', // Optionnel
+        'date_inscription': DateTime.now().toIso8601String().split('T')[0], // Optionnel
+      };
 
-  // Stream pour les mises à jour en temps réel
-  Stream<Map<String, dynamic>> getLiveStats() {
-    // Démarrer le timer si pas déjà fait (rafraîchissement toutes les 5 secondes)
-    _refreshTimer ??= Timer.periodic(const Duration(seconds: 5), (_) {
-      _fetchAndUpdateStats();
-    });
+      debugPrint("🟡 Payload envoyé: $data");
 
-    // Récupérer les stats immédiatement
-    _fetchAndUpdateStats();
+      final response = await apiClient.post('/parrainage/register-filleul', data: data);
 
-    return _statsStreamController.stream;
-  }
+      debugPrint("🟢 Réponse backend: ${response.statusCode} - ${response.data}");
 
-  Future<void> _fetchAndUpdateStats() async {
-    try {
-      final stats = await getStatsParrainage();
-      if (stats != null) {
-        _statsStreamController.add(stats);
-      }
-    } catch (e) {
-      debugPrint('Erreur récupération stats: $e');
-    }
-  }
-
-  Future<Map<String, dynamic>?> getStatsParrainage() async {
-    try {
-      final response = await apiClient.get('/stagiaire/parrainage/stats');
       if (response.data['success'] == true) {
         return {
-          'parrain_id': response.data['parrain_id'],
-          'nombre_filleuls': response.data['nombre_filleuls'],
-          'total_points': response.data['total_points'],
-          'gains': response.data['gains'],
+          'success': true,
+          'message': response.data['message'],
+          'data': response.data['data'],
+        };
+      } else {
+        debugPrint("🔴 Erreurs backend: ${response.data['errors']}");
+        return {
+          'success': false,
+          'errors': response.data['errors'],
+          'message': response.data['message'] ?? 'Erreur lors de l\'inscription',
         };
       }
-      return null;
     } catch (e) {
-      debugPrint("Erreur getStatsParrainage: $e");
-      return null;
+      debugPrint("🔴 Erreur inscription filleul: $e");
+      return {
+        'success': false,
+        'message': 'Erreur technique: $e',
+      };
     }
   }
 
-  // Pour forcer un rafraîchissement manuel
-  void forceRefreshStats() {
-    _fetchAndUpdateStats();
-  }
-
-  // N'oubliez pas de libérer les ressources
   void dispose() {
-    _refreshTimer?.cancel();
-    _statsStreamController.close();
+    // Aucune ressource à libérer
   }
 }
