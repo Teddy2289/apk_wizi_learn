@@ -379,10 +379,19 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                         ),
                         CircleAvatar(
                           radius: (sizes[i] - 8) / 2,
-                          backgroundImage: NetworkImage(
-                            '${AppConstants.baseUrlImg}/${ranking.stagiaire.image}',
-                          ),
+                          backgroundImage: ranking.stagiaire.image.isNotEmpty
+                              ? NetworkImage(
+                                  '${AppConstants.baseUrlImg}/${ranking.stagiaire.image}',
+                                )
+                              : null,
                           backgroundColor: Colors.white,
+                          child: ranking.stagiaire.image.isEmpty
+                              ? Icon(
+                                  Icons.person,
+                                  size: sizes[i] / 3,
+                                  color: Colors.grey.shade400,
+                                )
+                              : null,
                         ),
                         if (isCurrentUser)
                           Positioned(
@@ -420,16 +429,33 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                       ranking.stagiaire.prenom,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color:
-                            isCurrentUser
-                                ? Theme.of(context).primaryColor
-                                : Theme.of(context).colorScheme.onSurface,
+                        color: isCurrentUser
+                            ? Theme.of(context).primaryColor
+                            : Theme.of(context).colorScheme.onSurface,
                         fontSize: isSmallScreen ? 13 : 15,
                       ),
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    // Formateurs
+                    if (ranking.formateurs.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        child: Text(
+                          ranking.formateurs.map((f) => f.prenom).join(', '),
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 9 : 11,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     // Points
                     Container(
@@ -477,7 +503,19 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
           const SizedBox(width: 12),
           Expanded(
             flex: 2,
-            child: Text('Participant', style: _headerTextStyle),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Participant', style: _headerTextStyle),
+                Text(
+                  'Formateur(s)',
+                  style: _headerTextStyle.copyWith(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
           if (!isSmallScreen)
             Expanded(
@@ -509,26 +547,31 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
     return Container(
       margin: highlight ? const EdgeInsets.symmetric(vertical: 8) : null,
       decoration: BoxDecoration(
-        color:
-            isCurrentUser
-                ? Theme.of(context).primaryColor.withOpacity(0.08)
-                : Colors.transparent,
+        color: isCurrentUser
+            ? Theme.of(context).primaryColor.withOpacity(0.08)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
-        boxShadow:
-            highlight
-                ? [
-                  BoxShadow(
-                    color: Theme.of(context).primaryColor.withOpacity(0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-                : [],
+        border: highlight
+            ? Border.all(
+                color: Theme.of(context).primaryColor.withOpacity(0.3),
+                width: 2,
+              )
+            : null,
+        boxShadow: highlight
+            ? [
+                BoxShadow(
+                  color: Theme.of(context).primaryColor.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : [],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         child: Row(
           children: [
+            // Rang
             SizedBox(
               width: isSmallScreen ? 36 : 48,
               child: Center(
@@ -545,6 +588,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                       style: TextStyle(
                         color: _getRankTextColor(context, ranking.rang),
                         fontWeight: FontWeight.bold,
+                        fontSize: isSmallScreen ? 12 : 14,
                       ),
                     ),
                   ),
@@ -552,44 +596,106 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
               ),
             ),
             const SizedBox(width: 12),
+            
+            // Participant et Formateurs
             Expanded(
               flex: 2,
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
-                    radius: isSmallScreen ? 20 : 24,
-                    backgroundImage: NetworkImage(
-                      '${AppConstants.baseUrlImg}/${ranking.stagiaire.image}',
-                    ),
-                    backgroundColor: Colors.white,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    ranking.stagiaire.prenom,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color:
-                          isCurrentUser ? Theme.of(context).primaryColor : null,
-                    ),
+                  // Ligne du stagiaire
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: isSmallScreen ? 20 : 24,
+                        backgroundImage: ranking.stagiaire.image.isNotEmpty
+                            ? NetworkImage(
+                                '${AppConstants.baseUrlImg}/${ranking.stagiaire.image}',
+                              )
+                            : null,
+                        backgroundColor: Colors.white,
+                        child: ranking.stagiaire.image.isEmpty
+                            ? Icon(
+                                Icons.person,
+                                size: isSmallScreen ? 16 : 20,
+                                color: Colors.grey.shade400,
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              ranking.stagiaire.prenom,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: isSmallScreen ? 14 : 16,
+                                color: isCurrentUser
+                                    ? Theme.of(context).primaryColor
+                                    : Theme.of(context).colorScheme.onSurface,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            // Formateurs
+                            if (ranking.formateurs.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                'Formateur: ${ranking.formateurs.map((f) => f.prenom).join(', ')}',
+                                style: TextStyle(
+                                  fontSize: isSmallScreen ? 10 : 12,
+                                  color: Colors.grey.shade600,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
+
+            // Quiz complétés (seulement sur grand écran)
             if (!isSmallScreen)
               Expanded(
                 child: Center(
-                  child: Text(
-                    '${ranking.quizCount}',
-                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${ranking.quizCount}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      Text(
+                        'quiz',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
+
+            // Points
             Expanded(
               child: Center(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 6,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -600,13 +706,26 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                     ),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Text(
-                    '${ranking.totalPoints} pts',
-                    style: TextStyle(
-                      color: Theme.of(context).primaryColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: isSmallScreen ? 12 : 14,
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${ranking.totalPoints}',
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: isSmallScreen ? 14 : 16,
+                        ),
+                      ),
+                      Text(
+                        'points',
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor.withOpacity(0.8),
+                          fontSize: isSmallScreen ? 10 : 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

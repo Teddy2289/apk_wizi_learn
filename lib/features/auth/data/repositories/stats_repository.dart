@@ -20,6 +20,7 @@ class StatsRepository {
   Future<List<GlobalRanking>> getGlobalRanking() async {
     final response = await apiClient.get(AppConstants.globalRanking);
     final data = response.data as List;
+    debugPrint('Global Ranking Data: $data'); // Debug print
     return data.map((e) => GlobalRanking.fromJson(e)).toList();
   }
 
@@ -55,6 +56,7 @@ class StatsRepository {
           (r) => r.stagiaire.id == userId,
       orElse: () => GlobalRanking(
         stagiaire: Stagiaire(id: '0', prenom: '', image: ''),
+        formateurs: [],
         totalPoints: 0,
         quizCount: 0,
         averageScore: 0,

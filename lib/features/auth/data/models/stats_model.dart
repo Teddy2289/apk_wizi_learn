@@ -37,6 +37,7 @@ class QuizHistory {
 
 class GlobalRanking {
   final Stagiaire stagiaire;
+  final List<Formateur> formateurs; // Ajout de la liste des formateurs
   final int totalPoints;
   final int quizCount;
   final double averageScore;
@@ -44,6 +45,7 @@ class GlobalRanking {
 
   GlobalRanking({
     required this.stagiaire,
+    required this.formateurs, // Ajout du paramètre
     required this.totalPoints,
     required this.quizCount,
     required this.averageScore,
@@ -55,12 +57,12 @@ class GlobalRanking {
       if (value == null) return fallback;
       final parsed = int.tryParse(value.toString());
       if (parsed == null) {
-        // Log pour debug
         print('GlobalRanking: champ "$field" non convertible en int: $value');
         return fallback;
       }
       return parsed;
     }
+    
     double safeDouble(dynamic value, {double fallback = 0, String field = ''}) {
       if (value == null) return fallback;
       final parsed = double.tryParse(value.toString());
@@ -70,8 +72,13 @@ class GlobalRanking {
       }
       return parsed;
     }
+
     return GlobalRanking(
       stagiaire: Stagiaire.fromJson(json['stagiaire'] ?? {}),
+      formateurs: (json['formateurs'] as List? ?? [])
+          .where((e) => e != null)
+          .map((e) => Formateur.fromJson(e))
+          .toList(),
       totalPoints: safeInt(json['totalPoints'], field: 'totalPoints'),
       quizCount: safeInt(json['quizCount'], field: 'quizCount'),
       averageScore: safeDouble(json['averageScore'], field: 'averageScore'),
@@ -82,6 +89,7 @@ class GlobalRanking {
   static GlobalRanking empty() {
     return GlobalRanking(
       stagiaire: Stagiaire(id: '0', prenom: 'Inconnu', image: ''),
+      formateurs: [], // Liste vide par défaut
       totalPoints: 0,
       quizCount: 0,
       averageScore: 0,
@@ -89,7 +97,28 @@ class GlobalRanking {
     );
   }
 }
+class Formateur {
+  final String id;
+  final String prenom;
+  final String telephone;
+  final String? image;
 
+  Formateur({
+    required this.id,
+    required this.prenom,
+    required this.telephone,
+    required this.image,
+  });
+
+  factory Formateur.fromJson(Map<String, dynamic> json) {
+    return Formateur(
+      id: QuizUtils.cleanString(json['id'], fallback: '0'),
+      prenom: QuizUtils.cleanString(json['prenom'], fallback: 'Formateur Inconnu'),
+      telephone: QuizUtils.cleanString(json['telephone'], fallback: ''),
+      image: QuizUtils.cleanString(json['image']),
+    );
+  }
+}
 class Stagiaire {
   final String id;
   final String prenom;
