@@ -10,6 +10,8 @@ import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.da
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_adventure_page.dart';
 
+import 'dashboard_page.dart';
+
 class QuizSessionPage extends StatefulWidget {
   final Quiz quiz;
   final List<Question> questions;
@@ -267,7 +269,42 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
         showBanner: false,
         // Désactivez le banner si nécessaire
         showBottomNavigationBar:
-            false, // Cache la barre de navigation pendant le quiz
+            false,
+        showHomeAndQuizIcons: true,
+        onHomePressed: () {
+          // Navigation vers l'accueil
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DashboardPage(
+                initialIndex: 0,
+                arguments: {
+                  'selectedTabIndex': 0,
+                  'fromNotification': true,
+                  'useCustomScaffold': true,
+                },
+              ),
+            ),
+                (route) => false,
+          );
+        },
+        onQuizListPressed: () {
+          // Navigation vers la liste des quiz
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DashboardPage(
+                initialIndex: 2,
+                arguments: {
+                  'selectedTabIndex': 2,
+                  'fromNotification': true,
+                  'useCustomScaffold': true,
+                },
+              ),
+            ),
+                (route) => false,
+          );
+        },// Cache la barre de navigation pendant le quiz
       ),
     );
   }
