@@ -11,6 +11,7 @@ import 'package:wizi_learn/features/auth/presentation/widgets/custom_bottom_navb
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_drawer.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
+import '../pages/dashboard_page.dart';
 import '../providers/notification_provider.dart';
 
 class CustomScaffold extends StatefulWidget {
@@ -21,6 +22,9 @@ class CustomScaffold extends StatefulWidget {
   final bool showBanner;
   final bool showBottomNavigationBar;
   final bool quizAdventureEnabled;
+  final bool? showHomeAndQuizIcons;
+  final VoidCallback? onHomePressed;
+  final VoidCallback? onQuizListPressed;
 
   const CustomScaffold({
     super.key,
@@ -31,6 +35,9 @@ class CustomScaffold extends StatefulWidget {
     this.showBanner = true,
     this.showBottomNavigationBar = true,
     this.quizAdventureEnabled = false,
+    this.showHomeAndQuizIcons = false,
+    this.onHomePressed,
+    this.onQuizListPressed,
   });
 
   @override
@@ -153,36 +160,82 @@ class _CustomScaffoldState extends State<CustomScaffold> {
         children: [
           // Points utilisateur (temps réel)
           GestureDetector(
-            onTap:
-                () => Navigator.pushNamed(context, RouteConstants.achievement),
+            onTap: () => Navigator.pushNamed(context, RouteConstants.achievement),
             child: _buildPointsBadge(_currentPoints, context),
           ),
           const SizedBox(width: 8),
-          // Notifications
-          Consumer<NotificationProvider>(
-            builder: (context, notifProvider, _) {
-              final unreadCount = notifProvider.unreadCount;
-              return IconButton(
-                icon: Badge(
-                  label: unreadCount > 0 ? Text('$unreadCount') : null,
-                  isLabelVisible: unreadCount > 0,
-                  child: const Icon(Icons.notifications),
-                ),
-                onPressed: () async {
-                  await Navigator.pushNamed(
-                    context,
-                    RouteConstants.notifications,
-                  );
-                  refreshData();
-                },
-              );
-            },
-          ),
+
+          // NOUVEAU: Afficher les icônes d'accueil et quiz OU les notifications normales
+          if (widget.showHomeAndQuizIcons == true) ...[
+            // Icône Accueil
+            IconButton(
+              icon: const Icon(Icons.home),
+              tooltip: 'Retour à l\'accueil',
+              onPressed: widget.onHomePressed ?? () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DashboardPage(
+                      initialIndex: 0,
+                      arguments: {
+                        'selectedTabIndex': 0,
+                        'fromNotification': true,
+                        'useCustomScaffold': true,
+                      },
+                    ),
+                  ),
+                      (route) => false,
+                );
+              },
+            ),
+            const SizedBox(width: 4),
+            // Icône Liste des quiz
+            IconButton(
+              icon: const Icon(Icons.quiz),
+              tooltip: 'Liste des quiz',
+              onPressed: widget.onQuizListPressed ?? () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DashboardPage(
+                      initialIndex: 2,
+                      arguments: {
+                        'selectedTabIndex': 2,
+                        'fromNotification': true,
+                        'useCustomScaffold': true,
+                      },
+                    ),
+                  ),
+                      (route) => false,
+                );
+              },
+            ),
+          ] else ...[
+            // Notifications normales (comportement par défaut)
+            Consumer<NotificationProvider>(
+              builder: (context, notifProvider, _) {
+                final unreadCount = notifProvider.unreadCount;
+                return IconButton(
+                  icon: Badge(
+                    label: unreadCount > 0 ? Text('$unreadCount') : null,
+                    isLabelVisible: unreadCount > 0,
+                    child: const Icon(Icons.notifications),
+                  ),
+                  onPressed: () async {
+                    await Navigator.pushNamed(
+                      context,
+                      RouteConstants.notifications,
+                    );
+                    refreshData();
+                  },
+                );
+              },
+            ),
+          ],
         ],
       ),
     );
   }
-
   Widget _buildPointsBadge(int points, BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
