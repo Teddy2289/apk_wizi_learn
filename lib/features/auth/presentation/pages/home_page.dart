@@ -404,12 +404,12 @@ class _HomePageState extends State<HomePage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Continuez comme ça pour débloquer des récompenses 🎉',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodyMedium,
-                      ),
+                      // const SizedBox(height: 12),
+                      // Text(
+                      //   'Continuez comme ça pour débloquer des récompenses 🎉',
+                      //   textAlign: TextAlign.center,
+                      //   style: theme.textTheme.bodyMedium,
+                      // ),
                       const SizedBox(height: 12),
                       Row(
                         children: [
@@ -641,29 +641,43 @@ class _HomePageState extends State<HomePage> {
     final orderedContacts = <Contact>[];
 
     // 1. FORMATEURS
-    final formateurs = _contacts.where((contact) =>
-        contact.type.toLowerCase().contains('formateur')
-    ).toList();
+    final formateurs =
+        _contacts
+            .where(
+              (contact) => contact.type.toLowerCase().contains('formateur'),
+            )
+            .toList();
     orderedContacts.addAll(formateurs);
 
     // 2. PÔLE SAV
-    final poleSav = _contacts.where((contact) =>
-    contact.type.toLowerCase().contains('sav') ||
-        contact.type.toLowerCase().contains('pole_sav')
-    ).toList();
+    final poleSav =
+        _contacts
+            .where(
+              (contact) =>
+                  contact.type.toLowerCase().contains('sav') ||
+                  contact.type.toLowerCase().contains('pole_sav'),
+            )
+            .toList();
     orderedContacts.addAll(poleSav);
 
     // 3. COMMERCIAUX
-    final commerciaux = _contacts.where((contact) =>
-        contact.type.toLowerCase().contains('commercial')
-    ).toList();
+    final commerciaux =
+        _contacts
+            .where(
+              (contact) => contact.type.toLowerCase().contains('commercial'),
+            )
+            .toList();
     orderedContacts.addAll(commerciaux);
 
     // 4. PÔLE RELATION CLIENTS
-    final poleRelation = _contacts.where((contact) =>
-    contact.type.toLowerCase().contains('relation') ||
-        contact.type.toLowerCase().contains('pole_relation')
-    ).toList();
+    final poleRelation =
+        _contacts
+            .where(
+              (contact) =>
+                  contact.type.toLowerCase().contains('relation') ||
+                  contact.type.toLowerCase().contains('pole_relation'),
+            )
+            .toList();
     orderedContacts.addAll(poleRelation);
 
     // Si vous voulez limiter à un contact par type (comme avant), décommentez ce code :
@@ -707,7 +721,7 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
-                (context, index) => Padding(
+            (context, index) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: ContactCard(
                 contact: orderedContacts[index],

@@ -9,7 +9,8 @@ import 'features/auth/auth_injection_container.dart' as auth_injection;
 import 'features/auth/data/repositories/auth_repository.dart';
 import 'core/services/fcm_service_mobile.dart'
     if (dart.library.html) 'core/services/fcm_service_web.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:wizi_learn/core/services/notification_manager.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/splash_page.dart';
 import 'core/routes/app_router.dart';
@@ -20,6 +21,8 @@ import 'features/auth/data/repositories/notification_repository.dart';
 import 'core/network/api_client.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
+import 'package:wizi_learn/core/services/app_usage_service.dart';
+import 'dart:async';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +30,9 @@ Future<void> main() async {
   // Initialiser Firebase
   try {
     if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
     }
   } catch (e) {
     // Ignore duplicate-app error on hot restart
@@ -58,8 +63,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // Initialiser FCM sur mobile
     if (!kIsWeb) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         FcmService().initFcm(context);
+        // Reporter l'usage si déjà connecté (token présent via ApiClient/AuthInterceptor)
+        try {
+          final apiClient = ApiClient(
+            dio: Dio(),
+            storage: const FlutterSecureStorage(),
+          );
+          // Throttle interne, pas d'impact si pas de token
+          unawaited(AppUsageService.instance.reportUsage(apiClient));
+        } catch (_) {}
       });
     }
     // Fournir NotificationProvider à toute l'app
@@ -80,12 +94,12 @@ class MyApp extends StatelessWidget {
             create: (context) => auth_injection.sl<AuthRepository>(),
           ),
         ],
-          child: BlocProvider<AuthBloc>(
+        child: BlocProvider<AuthBloc>(
           create:
               (context) =>
                   AuthBloc(authRepository: context.read<AuthRepository>())
                     ..add(CheckAuthEvent()),
-            child: MaterialApp(
+          child: MaterialApp(
             title: 'Wizi Learn',
             debugShowCheckedModeBanner: false,
             theme: ThemeData(

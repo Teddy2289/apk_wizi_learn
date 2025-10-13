@@ -4,6 +4,8 @@ import 'package:wizi_learn/core/exceptions/auth_exception.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository_contract.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_event.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_state.dart';
+import 'package:wizi_learn/core/services/app_usage_service.dart';
+import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepositoryContract authRepository;
@@ -28,6 +30,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       final user = await authRepository.login(event.email, event.password);
+      // Reporter l'usage immédiatement après login réussi (force = true)
+      try {
+        if (authRepository is AuthRepository) {
+          final concrete = authRepository as AuthRepository;
+          final apiClient = concrete.apiClient;
+          if (apiClient != null) {
+            // Force l'envoi pour initialiser first_used_at
+            unawaited(
+              AppUsageService.instance.reportUsage(apiClient, force: true),
+            );
+          }
+        }
+      } catch (_) {}
       emit(Authenticated(user));
     } on AuthException catch (e) {
       emit(AuthError(e.message));
