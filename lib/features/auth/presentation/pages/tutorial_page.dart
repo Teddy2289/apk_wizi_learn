@@ -73,6 +73,9 @@ class _TutorialPageState extends State<TutorialPage> {
 
   // Contrôleurs YouTube pour éviter les fuites de mémoire
   final Map<int, YoutubePlayerController> _youtubeControllers = {};
+  
+  // Nouvelle variable pour suivre la vidéo sélectionnée sur tablette
+  Media? _selectedMedia;
 
   @override
   void initState() {
@@ -238,6 +241,11 @@ class _TutorialPageState extends State<TutorialPage> {
           if (mounted && list.isNotEmpty && _selectedFormationId == null) {
             setState(() {
               _selectedFormationId = list.first.id;
+              // Sélectionner automatiquement le premier média sur tablette
+              final medias = _getFilteredMedias(list);
+              if (medias.isNotEmpty) {
+                _selectedMedia = medias.first;
+              }
             });
           }
         }).catchError((_) {});
@@ -248,6 +256,16 @@ class _TutorialPageState extends State<TutorialPage> {
         _formationsFuture = Future.error(e);
       });
     }
+  }
+
+  List<Media> _getFilteredMedias(List<FormationWithMedias> formations) {
+    final selectedFormation = formations.firstWhere(
+      (f) => f.id == _selectedFormationId,
+      orElse: () => formations.first,
+    );
+    return selectedFormation.medias
+        .where((m) => m.categorie == _selectedCategory)
+        .toList();
   }
 
   Future<void> _loadWatchedMediaIds() async {
@@ -401,7 +419,7 @@ class _TutorialPageState extends State<TutorialPage> {
                           )
                         else
                           ElevatedButton(
-                            onPressed: _completeTutorial, // CORRECTION ICI
+                            onPressed: _completeTutorial,
                             child: const Text('Terminer'),
                           ),
                       ],
@@ -535,6 +553,17 @@ class _TutorialPageState extends State<TutorialPage> {
         onPressed: (index) {
           setState(() {
             _selectedCategory = index == 0 ? 'tutoriel' : 'astuce';
+            // Mettre à jour la sélection média quand la catégorie change
+            if (_formationsFuture != null) {
+              _formationsFuture!.then((formations) {
+                if (mounted && formations.isNotEmpty) {
+                  final medias = _getFilteredMedias(formations);
+                  if (medias.isNotEmpty && _selectedMedia == null) {
+                    _selectedMedia = medias.first;
+                  }
+                }
+              });
+            }
           });
         },
         borderRadius: BorderRadius.circular(12),
@@ -582,6 +611,11 @@ class _TutorialPageState extends State<TutorialPage> {
             onChanged: (v) {
               setState(() {
                 _selectedFormationId = v;
+                // Mettre à jour la sélection média quand la formation change
+                final medias = _getFilteredMedias(items);
+                if (medias.isNotEmpty) {
+                  _selectedMedia = medias.first;
+                }
               });
             },
             underline: const SizedBox(),
@@ -663,6 +697,11 @@ class _TutorialPageState extends State<TutorialPage> {
         .where((m) => m.categorie == _selectedCategory)
         .toList();
 
+    // Mettre à jour la sélection si nécessaire
+    if (_selectedMedia == null && mediasFiltres.isNotEmpty) {
+      _selectedMedia = mediasFiltres.first;
+    }
+
     return FutureBuilder<Set<int>>(
       future: _watchedMediaIdsFuture,
       builder: (context, watchedSnapshot) {
@@ -699,6 +738,7 @@ class _TutorialPageState extends State<TutorialPage> {
                   theme,
                   theme.colorScheme,
                   true, // showThumbnail
+                  isTablet: false, // Mode mobile
                 );
               },
             ),
@@ -711,13 +751,6 @@ class _TutorialPageState extends State<TutorialPage> {
     ThemeData theme,
     List<FormationWithMedias> formations,
   ) {
-    final selectedMedia = medias.isNotEmpty
-        ? medias.firstWhere(
-            (m) => m.id == (_selectedFormationId ?? medias.first.id),
-            orElse: () => medias.first,
-          )
-        : null;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       child: Row(
@@ -736,7 +769,7 @@ class _TutorialPageState extends State<TutorialPage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: _buildRightPanel(selectedMedia, medias, formations, theme),
+              child: _buildRightPanel(_selectedMedia, medias, formations, theme),
             ),
           ),
         ],
@@ -759,6 +792,7 @@ class _TutorialPageState extends State<TutorialPage> {
                     itemBuilder: (context, index) {
                       final media = medias[index];
                       final isWatched = watchedMediaIds.contains(media.id);
+                      final isSelected = _selectedMedia?.id == media.id;
                       return _buildMediaItem(
                         context,
                         media,
@@ -766,6 +800,8 @@ class _TutorialPageState extends State<TutorialPage> {
                         theme,
                         theme.colorScheme,
                         false, // showThumbnail en mode tablette
+                        isTablet: true, // Mode tablette
+                        isSelected: isSelected,
                       );
                     },
                   ),
@@ -954,8 +990,10 @@ class _TutorialPageState extends State<TutorialPage> {
     bool isWatched,
     ThemeData theme,
     ColorScheme colorScheme,
-    bool showThumbnail,
-  ) {
+    bool showThumbnail, {
+    required bool isTablet,
+    bool isSelected = false,
+  }) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
 
@@ -965,16 +1003,21 @@ class _TutorialPageState extends State<TutorialPage> {
         final duration = snapshot.data ?? const Duration(seconds: 0);
 
         return Card(
-          elevation: 2,
+          elevation: isSelected ? 4 : 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
+            side: isSelected 
+                ? BorderSide(color: colorScheme.primary, width: 2)
+                : BorderSide.none,
           ),
-          color: isWatched
-              ? colorScheme.surfaceContainerHighest.withOpacity(0.7)
-              : const Color(0xFFFFF9C4),
+          color: isSelected
+              ? colorScheme.primaryContainer
+              : (isWatched
+                  ? colorScheme.surfaceContainerHighest.withOpacity(0.7)
+                  : const Color(0xFFFFF9C4)),
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
-            onTap: () => _onMediaItemTap(media, isWatched),
+            onTap: () => _onMediaItemTap(media, isWatched, isTablet),
             child: Padding(
               padding: EdgeInsets.all(isSmallScreen ? 8.0 : 12.0),
               child: Row(
@@ -989,9 +1032,11 @@ class _TutorialPageState extends State<TutorialPage> {
                           _filterTitle(media.titre),
                           style: theme.textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: isWatched
-                                ? colorScheme.onSurface.withOpacity(0.7)
-                                : colorScheme.onSurface,
+                            color: isSelected
+                                ? colorScheme.onPrimaryContainer
+                                : (isWatched
+                                    ? colorScheme.onSurface.withOpacity(0.7)
+                                    : colorScheme.onSurface),
                             fontSize: isSmallScreen ? 14 : 16,
                           ),
                           maxLines: 2,
@@ -1088,7 +1133,7 @@ class _TutorialPageState extends State<TutorialPage> {
     );
   }
 
-  Future<void> _onMediaItemTap(Media media, bool isWatched) async {
+  Future<void> _onMediaItemTap(Media media, bool isWatched, bool isTablet) async {
     if (!isWatched) {
       final resp = await _mediaRepository.markMediaAsWatchedWithResponse(media.id);
       final success = resp['success'] == true;
@@ -1101,24 +1146,33 @@ class _TutorialPageState extends State<TutorialPage> {
       }
     }
 
-    final formations = await _formationsFuture;
-    if (formations == null || formations.isEmpty) return;
+    // Comportement différent selon le device
+    if (isTablet) {
+      // Sur tablette : mettre à jour la sélection et jouer dans le lecteur intégré
+      setState(() {
+        _selectedMedia = media;
+      });
+    } else {
+      // Sur mobile : ouvrir le lecteur dédié
+      final formations = await _formationsFuture;
+      if (formations == null || formations.isEmpty) return;
 
-    final selectedFormation = formations.firstWhere(
-      (f) => f.id == _selectedFormationId,
-      orElse: () => formations.first,
-    );
+      final selectedFormation = formations.firstWhere(
+        (f) => f.id == _selectedFormationId,
+        orElse: () => formations.first,
+      );
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => YoutubePlayerPage(
-          video: media,
-          videosInSameCategory: selectedFormation.medias
-              .where((m) => m.categorie == media.categorie)
-              .toList(),
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => YoutubePlayerPage(
+            video: media,
+            videosInSameCategory: selectedFormation.medias
+                .where((m) => m.categorie == media.categorie)
+                .toList(),
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 }
