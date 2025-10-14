@@ -51,7 +51,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
   Timer? _countdownTimer;
 
   // MODIFICATION: 30 secondes pour regarder les résultats
-  int _viewResultsSeconds = 30;
+  int _viewResultsSeconds = 10;
   // MODIFICATION: 5 secondes pour le prochain quiz
   int _nextQuizSeconds = 5;
 
@@ -87,8 +87,8 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
     // If backend returned new achievements in quizResult, show them immediately
     final serverNew =
         (widget.quizResult?['newAchievements'] as List?) ??
-            (widget.quizResult?['new_achievements'] as List?) ??
-            [];
+        (widget.quizResult?['new_achievements'] as List?) ??
+        [];
     if (serverNew.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showBadgePopup(
@@ -133,9 +133,10 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
       final playedQuizIds = history.map((h) => h.quiz.id.toString()).toSet();
 
       // Filtrer pour obtenir seulement les quizzes non joués
-      final unplayedQuizzes = allQuizzes.where(
-              (quiz) => !playedQuizIds.contains(quiz.id.toString())
-      ).toList();
+      final unplayedQuizzes =
+          allQuizzes
+              .where((quiz) => !playedQuizIds.contains(quiz.id.toString()))
+              .toList();
 
       if (unplayedQuizzes.isNotEmpty) {
         setState(() {
@@ -211,7 +212,8 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
 
     // Si on a la liste des quizzes disponibles, on peut construire la liste des IDs joués
     if (_availableQuizzes != null && currentQuizId != null) {
-      final allQuizIds = _availableQuizzes!.map((q) => q.id.toString()).toList();
+      final allQuizIds =
+          _availableQuizzes!.map((q) => q.id.toString()).toList();
       final playedIds = allQuizIds.where((id) => id != currentQuizId).toList();
       return playedIds;
     }
@@ -226,17 +228,20 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
     _countdownTimer?.cancel();
 
     // Si on a chargé le prochain quiz et ses questions, naviguer directement
-    if (_nextQuiz != null && _nextQuizQuestions != null && _nextQuizQuestions!.isNotEmpty) {
+    if (_nextQuiz != null &&
+        _nextQuizQuestions != null &&
+        _nextQuizQuestions!.isNotEmpty) {
       final playedQuizIds = _getPlayedQuizIds();
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => QuizSessionPage(
-            quiz: _nextQuiz!,
-            questions: _nextQuizQuestions!,
-            quizAdventureEnabled: false,
-            playedQuizIds: playedQuizIds,
-          ),
+          builder:
+              (context) => QuizSessionPage(
+                quiz: _nextQuiz!,
+                questions: _nextQuizQuestions!,
+                quizAdventureEnabled: false,
+                playedQuizIds: playedQuizIds,
+              ),
         ),
       );
     } else {
@@ -244,17 +249,18 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (context) => DashboardPage(
-            initialIndex: 2,
-            arguments: {
-              'selectedTabIndex': 2,
-              'fromNotification': true,
-              'useCustomScaffold': true,
-              'scrollToPlayed': false,
-            },
-          ),
+          builder:
+              (context) => DashboardPage(
+                initialIndex: 2,
+                arguments: {
+                  'selectedTabIndex': 2,
+                  'fromNotification': true,
+                  'useCustomScaffold': true,
+                  'scrollToPlayed': false,
+                },
+              ),
         ),
-            (route) => false,
+        (route) => false,
       );
     }
   }
@@ -289,10 +295,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
                   ),
                   Text(
                     'Prochain quiz dans ${_viewResultsSeconds}s',
-                    style: TextStyle(
-                      color: Colors.blue.shade600,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Colors.blue.shade600, fontSize: 13),
                   ),
                 ],
               ),
@@ -403,15 +406,15 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
 
       final today = DateTime.now();
       final newOnes =
-      achievements
-          .where(
-            (a) =>
-        a.unlockedAt != null &&
-            a.unlockedAt!.year == today.year &&
-            a.unlockedAt!.month == today.month &&
-            a.unlockedAt!.day == today.day,
-      )
-          .toList();
+          achievements
+              .where(
+                (a) =>
+                    a.unlockedAt != null &&
+                    a.unlockedAt!.year == today.year &&
+                    a.unlockedAt!.month == today.month &&
+                    a.unlockedAt!.day == today.day,
+              )
+              .toList();
 
       if (newOnes.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -445,7 +448,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
                 ),
                 const SizedBox(height: 16),
                 ...badges.map(
-                      (badge) => Padding(
+                  (badge) => Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: AchievementBadgeWidget(
                       achievement: badge,
@@ -536,7 +539,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
   @override
   Widget build(BuildContext context) {
     final answeredQuestions =
-    widget.questions.where((q) => q.selectedAnswers != null).toList();
+        widget.questions.where((q) => q.selectedAnswers != null).toList();
 
     final calculatedScore =
         widget.questions.where((q) => q.isCorrect == true).length * 2;
@@ -554,7 +557,10 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: _showViewResultsCountdown ? Colors.blue.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+                color:
+                    _showViewResultsCountdown
+                        ? Colors.blue.withOpacity(0.1)
+                        : Colors.green.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: _showViewResultsCountdown ? Colors.blue : Colors.green,
@@ -567,7 +573,8 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
                   Icon(
                     _showViewResultsCountdown ? Icons.visibility : Icons.quiz,
                     size: 16,
-                    color: _showViewResultsCountdown ? Colors.blue : Colors.green,
+                    color:
+                        _showViewResultsCountdown ? Colors.blue : Colors.green,
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -576,7 +583,10 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
                         : '${_nextQuizSeconds}s',
                     style: TextStyle(
                       fontSize: 14,
-                      color: _showViewResultsCountdown ? Colors.blue : Colors.green,
+                      color:
+                          _showViewResultsCountdown
+                              ? Colors.blue
+                              : Colors.green,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -612,7 +622,8 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
           IconButton(
             icon: const Icon(Icons.list),
             tooltip: 'Retour à la liste des quiz',
-            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed:
+                () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
         ],
       ),
@@ -647,7 +658,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
                       Expanded(
                         child: Text(
                           'Ces résultats sont calculés localement car la soumission au serveur a échoué. '
-                              'Ils ne sont pas sauvegardés.',
+                          'Ils ne sont pas sauvegardés.',
                           style: TextStyle(
                             color: Colors.orange.shade800,
                             fontSize: 13,
@@ -733,16 +744,18 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => DashboardPage(
-                    initialIndex: 2,
-                    arguments: {
-                      'selectedTabIndex': 2,
-                      'scrollToQuizId': widget.quizResult?['quizId']?.toString(),
-                      'fromNotification': true,
-                      'useCustomScaffold': true,
-                      'scrollToPlayed': true,
-                    },
-                  ),
+                  builder:
+                      (context) => DashboardPage(
+                        initialIndex: 2,
+                        arguments: {
+                          'selectedTabIndex': 2,
+                          'scrollToQuizId':
+                              widget.quizResult?['quizId']?.toString(),
+                          'fromNotification': true,
+                          'useCustomScaffold': true,
+                          'scrollToPlayed': true,
+                        },
+                      ),
                 ),
                 (route) => false,
               );
