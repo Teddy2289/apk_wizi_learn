@@ -933,6 +933,7 @@ class _TutorialPageState extends State<TutorialPage> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: YoutubePlayer(
+                key: ValueKey(media.id),
                 controller: _getYoutubeController(videoId, media.id),
                 showVideoProgressIndicator: true,
                 progressIndicatorColor: Colors.amber,
@@ -960,6 +961,26 @@ class _TutorialPageState extends State<TutorialPage> {
             ),
           ),
         ),
+
+        // Description de la vidéo
+        if (media.description != null && media.description!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+            child: SizedBox(
+              height: 120,
+              child: SingleChildScrollView(
+                child: Html(
+                  data: media.description,
+                  style: {
+                    "body": Style(
+                      fontSize: FontSize.medium,
+                      color: theme.colorScheme.onSurface.withOpacity(0.8),
+                    ),
+                  },
+                ),
+              ),
+            ),
+          ),
 
         // Bouton pour ouvrir en plein écran
         Padding(
