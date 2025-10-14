@@ -130,7 +130,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
       // Charger l'historique pour obtenir les IDs joués
       final statsRepository = StatsRepository(apiClient: apiClient);
       final history = await statsRepository.getQuizHistory();
-      final playedQuizIds = history.map((h) => h.quiz.id.toString()).toList();
+      final playedQuizIds = history.map((h) => h.quiz.id.toString()).toSet();
 
       // Filtrer pour obtenir seulement les quizzes non joués
       final unplayedQuizzes =
@@ -711,6 +711,30 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
       floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
+          // NOUVEAU: Bouton Accueil
+          FloatingActionButton(
+            heroTag: 'home_button',
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DashboardPage(
+                    initialIndex: 0, // Index pour la page d'accueil
+                    arguments: {
+                      'selectedTabIndex': 0,
+                      'fromNotification': true,
+                      'useCustomScaffold': true,
+                    },
+                  ),
+                ),
+                (route) => false,
+              );
+            },
+            tooltip: 'Retour à l\'accueil',
+            child: const Icon(Icons.home),
+          ),
+          const SizedBox(width: 16),
+          // Bouton Retour aux quiz (existant)
           FloatingActionButton(
             heroTag: 'restart_quiz',
             onPressed: () {
@@ -740,6 +764,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
             child: const Icon(Icons.refresh),
           ),
           const SizedBox(width: 16),
+          // Bouton Rejouer ce quiz (existant)
           if (widget.onRestartQuiz != null)
             FloatingActionButton(
               heroTag: 'replay_quiz',
