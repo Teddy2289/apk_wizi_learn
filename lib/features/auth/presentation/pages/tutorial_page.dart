@@ -77,6 +77,9 @@ class _TutorialPageState extends State<TutorialPage> {
   // Nouvelle variable pour suivre la vidéo sélectionnée sur tablette
   Media? _selectedMedia;
 
+    YoutubePlayerController? _currentYoutubeController;
+
+
   @override
   void initState() {
     super.initState();
@@ -94,6 +97,7 @@ class _TutorialPageState extends State<TutorialPage> {
       controller.dispose();
     });
     _youtubeControllers.clear();
+    _currentYoutubeController?.dispose();
     super.dispose();
   }
 
@@ -203,6 +207,39 @@ class _TutorialPageState extends State<TutorialPage> {
     }
   }
 
+  void _updateSelectedMedia(Media media) {
+    if (_selectedMedia?.id == media.id) return; // Éviter les mises à jour inutiles
+
+    setState(() {
+      _selectedMedia = media;
+    });
+
+    // Préparer le contrôleur YouTube pour la nouvelle vidéo
+    _prepareYoutubeController(media);
+  }
+
+  void _prepareYoutubeController(Media media) {
+    final videoId = YoutubePlayer.convertUrlToId(normalizeYoutubeUrl(media.url));
+    if (videoId == null) return;
+
+    // Disposer l'ancien contrôleur s'il existe
+    _currentYoutubeController?.dispose();
+
+    // Créer un nouveau contrôleur pour la vidéo sélectionnée
+    _currentYoutubeController = YoutubePlayerController(
+      initialVideoId: videoId,
+      flags: const YoutubePlayerFlags(
+        autoPlay: true, // Lancer automatiquement la nouvelle vidéo
+        mute: false,
+        enableCaption: true,
+        disableDragSeek: false,
+        forceHD: false,
+        useHybridComposition: true,
+        controlsVisibleAtStart: true,
+      ),
+    );
+  }
+
   String _filterTitle(String title) {
     return title
         .replaceAll(RegExp(r'microsoft', caseSensitive: false), '')
@@ -244,7 +281,7 @@ class _TutorialPageState extends State<TutorialPage> {
               // Sélectionner automatiquement le premier média sur tablette
               final medias = _getFilteredMedias(list);
               if (medias.isNotEmpty) {
-                _selectedMedia = medias.first;
+                _updateSelectedMedia(medias.first);
               }
             });
           }
@@ -257,7 +294,7 @@ class _TutorialPageState extends State<TutorialPage> {
       });
     }
   }
-
+  
   List<Media> _getFilteredMedias(List<FormationWithMedias> formations) {
     final selectedFormation = formations.firstWhere(
       (f) => f.id == _selectedFormationId,
@@ -558,8 +595,15 @@ class _TutorialPageState extends State<TutorialPage> {
               _formationsFuture!.then((formations) {
                 if (mounted && formations.isNotEmpty) {
                   final medias = _getFilteredMedias(formations);
-                  if (medias.isNotEmpty && _selectedMedia == null) {
-                    _selectedMedia = medias.first;
+                  if (medias.isNotEmpty) {
+                    _updateSelectedMedia(medias.first);
+                  } else {
+                    // Si aucun média dans cette catégorie, vider la sélection
+                    setState(() {
+                      _selectedMedia = null;
+                      _currentYoutubeController?.dispose();
+                      _currentYoutubeController = null;
+                    });
                   }
                 }
               });
@@ -909,7 +953,12 @@ class _TutorialPageState extends State<TutorialPage> {
     );
   }
 
-  Widget _buildVideoPlayer(Media media, String videoId, List<Media> medias, ThemeData theme) {
+Widget _buildVideoPlayer(Media media, String videoId, List<Media> medias, ThemeData theme) {
+    // S'assurer que le contrôleur est prêt
+    if (_currentYoutubeController == null) {
+      _prepareYoutubeController(media);
+    }
+
     return Column(
       children: [
         // Titre de la vidéo
@@ -932,31 +981,42 @@ class _TutorialPageState extends State<TutorialPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: YoutubePlayer(
-                controller: _getYoutubeController(videoId, media.id),
-                showVideoProgressIndicator: true,
-                progressIndicatorColor: Colors.amber,
-                progressColors: const ProgressBarColors(
-                  playedColor: Colors.amber,
-                  handleColor: Colors.amberAccent,
-                  bufferedColor: Colors.grey,
-                ),
-                bottomActions: [
-                  CurrentPosition(),
-                  ProgressBar(isExpanded: true),
-                  RemainingDuration(),
-                  FullScreenButton(
-                    controller: _getYoutubeController(videoId, media.id),
-                  ),
-                ],
-                onReady: () {
-                  debugPrint('Lecteur YouTube prêt pour: ${media.titre}');
-                },
-                onEnded: (data) {
-                  _markMediaAsWatched(media);
-                  debugPrint('Vidéo terminée: ${media.titre}');
-                },
-              ),
+              child: _currentYoutubeController != null
+                  ? YoutubePlayer(
+                      controller: _currentYoutubeController!,
+                      showVideoProgressIndicator: true,
+                      progressIndicatorColor: Colors.amber,
+                      progressColors: const ProgressBarColors(
+                        playedColor: Colors.amber,
+                        handleColor: Colors.amberAccent,
+                        bufferedColor: Colors.grey,
+                      ),
+                      bottomActions: [
+                        CurrentPosition(),
+                        ProgressBar(isExpanded: true),
+                        RemainingDuration(),
+                        FullScreenButton(
+                          controller: _currentYoutubeController!,
+                        ),
+                      ],
+                      onReady: () {
+                        debugPrint('Lecteur YouTube prêt pour: ${media.titre}');
+                      },
+                      onEnded: (data) {
+                        _markMediaAsWatched(media);
+                        debugPrint('Vidéo terminée: ${media.titre}');
+                      },
+                    )
+                  : Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Chargement du lecteur...'),
+                        ],
+                      ),
+                    ),
             ),
           ),
         ),
@@ -984,7 +1044,7 @@ class _TutorialPageState extends State<TutorialPage> {
     );
   }
 
-  Widget _buildMediaItem(
+   Widget _buildMediaItem(
     BuildContext context,
     Media media,
     bool isWatched,
@@ -1133,7 +1193,7 @@ class _TutorialPageState extends State<TutorialPage> {
     );
   }
 
-  Future<void> _onMediaItemTap(Media media, bool isWatched, bool isTablet) async {
+ Future<void> _onMediaItemTap(Media media, bool isWatched, bool isTablet) async {
     if (!isWatched) {
       final resp = await _mediaRepository.markMediaAsWatchedWithResponse(media.id);
       final success = resp['success'] == true;
@@ -1149,11 +1209,9 @@ class _TutorialPageState extends State<TutorialPage> {
     // Comportement différent selon le device
     if (isTablet) {
       // Sur tablette : mettre à jour la sélection et jouer dans le lecteur intégré
-      setState(() {
-        _selectedMedia = media;
-      });
+      _updateSelectedMedia(media);
     } else {
-      // Sur mobile : ouvrir le lecteur dédié
+      // Sur mobile : ouvrir le lecteur dédié (comportement existant)
       final formations = await _formationsFuture;
       if (formations == null || formations.isEmpty) return;
 
