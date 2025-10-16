@@ -12,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
+import 'package:wizi_learn/core/constants/route_constants.dart';
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});
@@ -37,7 +38,8 @@ class _RankingPageState extends State<RankingPage>
   final GlobalKey _keyPodium = GlobalKey();
   final GlobalKey _keyMyRank = GlobalKey();
   final GlobalKey _keyShare = GlobalKey();
-  TutorialCoachMark? _tutorialCoachMark;
+  // TutorialCoachMark instance is created on demand in _showTutorial to avoid
+  // keeping an unused field that triggers analyzer warnings.
 
   @override
   void initState() {
@@ -93,7 +95,7 @@ class _RankingPageState extends State<RankingPage>
   }
 
   void _showTutorial() {
-    _tutorialCoachMark = TutorialCoachMark(
+    final tutorial = TutorialCoachMark(
       targets: _buildTargets(),
       colorShadow: Colors.black,
       textSkip: 'Passer',
@@ -103,7 +105,8 @@ class _RankingPageState extends State<RankingPage>
       onSkip: () {
         return true;
       },
-    )..show(context: context);
+    );
+    tutorial.show(context: context);
   }
 
   List<TargetFocus> _buildTargets() {
@@ -244,6 +247,12 @@ class _RankingPageState extends State<RankingPage>
                     '5. Utilisez le bouton Partager pour défier vos amis.',
                   ],
                 ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.emoji_events_outlined),
+            tooltip: 'Mode Challenge',
+            onPressed:
+                () => Navigator.pushNamed(context, RouteConstants.challenge),
           ),
         ],
       ),

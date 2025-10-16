@@ -17,6 +17,7 @@ import 'package:wizi_learn/features/auth/presentation/pages/user_point_page.dart
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_adventure_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/tutorial_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/challenge_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
 import '../constants/route_constants.dart';
 import '../../features/auth/presentation/pages/auth/login_page.dart';
@@ -69,6 +70,9 @@ class AppRouter {
 
       case RouteConstants.tutorialPage:
         return MaterialPageRoute(builder: (_) => const TutorialPage());
+
+      case RouteConstants.challenge:
+        return MaterialPageRoute(builder: (_) => const ChallengePage());
 
       case RouteConstants.formations:
         return MaterialPageRoute(

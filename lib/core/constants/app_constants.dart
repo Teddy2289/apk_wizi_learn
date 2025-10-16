@@ -49,6 +49,9 @@ class AppConstants {
   }
 
   static const String quizProgress = '/quiz/stats/progress';
+  // Challenge mode endpoints (admin-configured)
+  static const String challengeConfig = '/challenge/config';
+  static const String challengeLeaderboard = '/challenge/leaderboard';
 
   static String getAudioStreamUrl(String relativePath) {
     relativePath =
