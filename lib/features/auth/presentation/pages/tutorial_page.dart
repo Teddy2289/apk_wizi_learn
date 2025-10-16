@@ -48,6 +48,8 @@ class _TutorialPageState extends State<TutorialPage> {
   final Map<int, Duration> _videoDurationCache = {};
   bool _showTutorial = false;
   int _tutorialStep = 0;
+  // Etat pour basculer la liste gauche sur tablette (collapsible sidebar)
+  bool _isLeftPanelCollapsed = false;
   final List<Map<String, String>> _tutorialSteps = [
     {
       'title': 'Bienvenue dans la section Tutoriels !',
@@ -73,7 +75,7 @@ class _TutorialPageState extends State<TutorialPage> {
 
   // Contrôleurs YouTube pour éviter les fuites de mémoire
   final Map<int, YoutubePlayerController> _youtubeControllers = {};
-  
+
   // Nouvelle variable pour suivre la vidéo sélectionnée sur tablette
   Media? _selectedMedia;
 
@@ -136,19 +138,24 @@ class _TutorialPageState extends State<TutorialPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => YoutubePlayerPage(
-              video: _createMediaCopyWithNormalizedUrl(mediaToOpen),
-              videosInSameCategory: formation.medias
-                  .map(_createMediaCopyWithNormalizedUrl)
-                  .toList(),
-            ),
+            builder:
+                (_) => YoutubePlayerPage(
+                  video: _createMediaCopyWithNormalizedUrl(mediaToOpen),
+                  videosInSameCategory:
+                      formation.medias
+                          .map(_createMediaCopyWithNormalizedUrl)
+                          .toList(),
+                ),
           ),
         );
       });
     }
   }
 
-  Media _findMediaToOpen(List<FormationWithMedias> formations, dynamic mediaId) {
+  Media _findMediaToOpen(
+    List<FormationWithMedias> formations,
+    dynamic mediaId,
+  ) {
     final allMedias = formations.expand((f) => f.medias).toList();
     if (allMedias.isEmpty) throw Exception('Aucun média trouvé');
 
@@ -194,7 +201,7 @@ class _TutorialPageState extends State<TutorialPage> {
   Future<void> _completeTutorial() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('hasSeenTutorial', true);
-    
+
     if (mounted) {
       setState(() {
         _showTutorial = false;
@@ -210,7 +217,9 @@ class _TutorialPageState extends State<TutorialPage> {
   }
 
   String _getRandomThumbnailUrl(String youtubeUrl) {
-    final videoId = YoutubePlayer.convertUrlToId(normalizeYoutubeUrl(youtubeUrl));
+    final videoId = YoutubePlayer.convertUrlToId(
+      normalizeYoutubeUrl(youtubeUrl),
+    );
 
     if (videoId == null) {
       return YoutubePlayer.getThumbnail(
@@ -230,25 +239,28 @@ class _TutorialPageState extends State<TutorialPage> {
       final stagiaireId = user.stagiaire?.id;
 
       setState(() {
-        _formationsFuture = stagiaireId != null
-            ? _mediaRepository.getFormationsAvecMedias(stagiaireId)
-            : Future.value([]);
+        _formationsFuture =
+            stagiaireId != null
+                ? _mediaRepository.getFormationsAvecMedias(stagiaireId)
+                : Future.value([]);
       });
 
       // Définir la formation sélectionnée par défaut
       if (_formationsFuture != null) {
-        _formationsFuture!.then((list) {
-          if (mounted && list.isNotEmpty && _selectedFormationId == null) {
-            setState(() {
-              _selectedFormationId = list.first.id;
-              // Sélectionner automatiquement le premier média sur tablette
-              final medias = _getFilteredMedias(list);
-              if (medias.isNotEmpty) {
-                _selectedMedia = medias.first;
+        _formationsFuture!
+            .then((list) {
+              if (mounted && list.isNotEmpty && _selectedFormationId == null) {
+                setState(() {
+                  _selectedFormationId = list.first.id;
+                  // Sélectionner automatiquement le premier média sur tablette
+                  final medias = _getFilteredMedias(list);
+                  if (medias.isNotEmpty) {
+                    _selectedMedia = medias.first;
+                  }
+                });
               }
-            });
-          }
-        }).catchError((_) {});
+            })
+            .catchError((_) {});
       }
     } catch (e) {
       debugPrint("Erreur chargement formations: $e");
@@ -297,7 +309,9 @@ class _TutorialPageState extends State<TutorialPage> {
       if (videoId == null) return const Duration(seconds: 0);
 
       final yt = YoutubeExplode();
-      final video = await yt.videos.get('https://www.youtube.com/watch?v=$videoId');
+      final video = await yt.videos.get(
+        'https://www.youtube.com/watch?v=$videoId',
+      );
       yt.close();
 
       final duration = video.duration ?? const Duration(seconds: 0);
@@ -347,7 +361,9 @@ class _TutorialPageState extends State<TutorialPage> {
 
   Future<void> _markMediaAsWatched(Media media) async {
     try {
-      final resp = await _mediaRepository.markMediaAsWatchedWithResponse(media.id);
+      final resp = await _mediaRepository.markMediaAsWatchedWithResponse(
+        media.id,
+      );
       final success = resp['success'] == true;
       if (success && mounted) {
         _loadWatchedMediaIds();
@@ -433,7 +449,10 @@ class _TutorialPageState extends State<TutorialPage> {
                           width: 10,
                           height: 10,
                           decoration: BoxDecoration(
-                            color: i == _tutorialStep ? Colors.orange : Colors.grey[300],
+                            color:
+                                i == _tutorialStep
+                                    ? Colors.orange
+                                    : Colors.grey[300],
                             shape: BoxShape.circle,
                           ),
                         );
@@ -449,7 +468,10 @@ class _TutorialPageState extends State<TutorialPage> {
     );
   }
 
-  void _showNewBadgesDialog(BuildContext context, List<dynamic> newAchievements) {
+  void _showNewBadgesDialog(
+    BuildContext context,
+    List<dynamic> newAchievements,
+  ) {
     if (newAchievements.isEmpty) return;
 
     showDialog(
@@ -459,13 +481,19 @@ class _TutorialPageState extends State<TutorialPage> {
           title: const Text('Nouveaux Badges !'),
           content: SingleChildScrollView(
             child: ListBody(
-              children: newAchievements.map((achievement) {
-                return ListTile(
-                  leading: const Icon(Icons.emoji_events, color: Colors.amber),
-                  title: Text(achievement['name'] ?? 'Badge'),
-                  subtitle: Text(achievement['badgeType'] ?? 'Type inconnu'),
-                );
-              }).toList(),
+              children:
+                  newAchievements.map((achievement) {
+                    return ListTile(
+                      leading: const Icon(
+                        Icons.emoji_events,
+                        color: Colors.amber,
+                      ),
+                      title: Text(achievement['name'] ?? 'Badge'),
+                      subtitle: Text(
+                        achievement['badgeType'] ?? 'Type inconnu',
+                      ),
+                    );
+                  }).toList(),
             ),
           ),
           actions: <Widget>[
@@ -488,21 +516,21 @@ class _TutorialPageState extends State<TutorialPage> {
       children: [
         _fromNotification
             ? CustomScaffold(
-                body: _buildBody(theme),
-                currentIndex: 4,
-                onTabSelected: (index) {
-                  Navigator.pushReplacementNamed(
-                    context,
-                    RouteConstants.dashboard,
-                    arguments: index,
-                  );
-                },
-                showBanner: true,
-              )
+              body: _buildBody(theme),
+              currentIndex: 4,
+              onTabSelected: (index) {
+                Navigator.pushReplacementNamed(
+                  context,
+                  RouteConstants.dashboard,
+                  arguments: index,
+                );
+              },
+              showBanner: true,
+            )
             : Scaffold(
-                appBar: _buildAppBar(theme, screenWidth),
-                body: _buildBody(theme),
-              ),
+              appBar: _buildAppBar(theme, screenWidth),
+              body: _buildBody(theme),
+            ),
         if (_fromNotification)
           Positioned(
             right: 16,
@@ -598,16 +626,23 @@ class _TutorialPageState extends State<TutorialPage> {
       builder: (context, snap) {
         final items = snap.data ?? [];
         if (items.isEmpty) return const SizedBox.shrink();
-        
+
         return Container(
-          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.35),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.35,
+          ),
           child: DropdownButton<int>(
             isExpanded: true,
             value: _selectedFormationId ?? items.first.id,
-            items: items.map((f) => DropdownMenuItem<int>(
-              value: f.id,
-              child: Text(f.titre, overflow: TextOverflow.ellipsis),
-            )).toList(),
+            items:
+                items
+                    .map(
+                      (f) => DropdownMenuItem<int>(
+                        value: f.id,
+                        child: Text(f.titre, overflow: TextOverflow.ellipsis),
+                      ),
+                    )
+                    .toList(),
             onChanged: (v) {
               setState(() {
                 _selectedFormationId = v;
@@ -629,7 +664,8 @@ class _TutorialPageState extends State<TutorialPage> {
     return FutureBuilder<List<FormationWithMedias>>(
       future: _formationsFuture,
       builder: (context, snapshot) {
-        if (_formationsFuture == null || snapshot.connectionState == ConnectionState.waiting) {
+        if (_formationsFuture == null ||
+            snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -693,9 +729,10 @@ class _TutorialPageState extends State<TutorialPage> {
       orElse: () => formations.first,
     );
 
-    final mediasFiltres = selectedFormation.medias
-        .where((m) => m.categorie == _selectedCategory)
-        .toList();
+    final mediasFiltres =
+        selectedFormation.medias
+            .where((m) => m.categorie == _selectedCategory)
+            .toList();
 
     // Mettre à jour la sélection si nécessaire
     if (_selectedMedia == null && mediasFiltres.isNotEmpty) {
@@ -708,40 +745,49 @@ class _TutorialPageState extends State<TutorialPage> {
         final watchedMediaIds = watchedSnapshot.data ?? {};
 
         final isWideLayout = MediaQuery.of(context).size.width >= 800;
-        final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
         if (!isWideLayout) {
           return _buildMobileLayout(mediasFiltres, watchedMediaIds, theme);
         }
 
-        return _buildTabletLayout(mediasFiltres, watchedMediaIds, theme, formations);
+        return _buildTabletLayout(
+          mediasFiltres,
+          watchedMediaIds,
+          theme,
+          formations,
+        );
       },
     );
   }
 
-  Widget _buildMobileLayout(List<Media> medias, Set<int> watchedMediaIds, ThemeData theme) {
+  Widget _buildMobileLayout(
+    List<Media> medias,
+    Set<int> watchedMediaIds,
+    ThemeData theme,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: medias.isEmpty
-          ? _buildNoMediaWidget(theme)
-          : ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              itemCount: medias.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final media = medias[index];
-                final isWatched = watchedMediaIds.contains(media.id);
-                return _buildMediaItem(
-                  context,
-                  media,
-                  isWatched,
-                  theme,
-                  theme.colorScheme,
-                  true, // showThumbnail
-                  isTablet: false, // Mode mobile
-                );
-              },
-            ),
+      child:
+          medias.isEmpty
+              ? _buildNoMediaWidget(theme)
+              : ListView.separated(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                itemCount: medias.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final media = medias[index];
+                  final isWatched = watchedMediaIds.contains(media.id);
+                  return _buildMediaItem(
+                    context,
+                    media,
+                    isWatched,
+                    theme,
+                    theme.colorScheme,
+                    true, // showThumbnail
+                    isTablet: false, // Mode mobile
+                  );
+                },
+              ),
     );
   }
 
@@ -755,11 +801,42 @@ class _TutorialPageState extends State<TutorialPage> {
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       child: Row(
         children: [
+          // Left panel: collapsible list of medias
           Flexible(
-            flex: 2,
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height * 0.8,
-              child: _buildLeftPanel(medias, watchedMediaIds, theme),
+            flex: _isLeftPanelCollapsed ? 0 : 2,
+            child: AnimatedCrossFade(
+              duration: const Duration(milliseconds: 300),
+              crossFadeState:
+                  _isLeftPanelCollapsed
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+              firstChild: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.8,
+                child: _buildLeftPanel(medias, watchedMediaIds, theme),
+              ),
+              secondChild: SizedBox.shrink(),
+            ),
+          ),
+          // Toggle button for collapsing left panel on tablet/landscape
+          SizedBox(
+            width: 40,
+            child: Column(
+              children: [
+                IconButton(
+                  tooltip:
+                      _isLeftPanelCollapsed
+                          ? 'Afficher la liste'
+                          : 'Masquer la liste',
+                  onPressed: () {
+                    setState(
+                      () => _isLeftPanelCollapsed = !_isLeftPanelCollapsed,
+                    );
+                  },
+                  icon: Icon(
+                    _isLeftPanelCollapsed ? Icons.menu : Icons.menu_open,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 16),
@@ -769,7 +846,12 @@ class _TutorialPageState extends State<TutorialPage> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: _buildRightPanel(_selectedMedia, medias, formations, theme),
+              child: _buildRightPanel(
+                _selectedMedia,
+                medias,
+                formations,
+                theme,
+              ),
             ),
           ),
         ],
@@ -777,34 +859,40 @@ class _TutorialPageState extends State<TutorialPage> {
     );
   }
 
-  Widget _buildLeftPanel(List<Media> medias, Set<int> watchedMediaIds, ThemeData theme) {
+  Widget _buildLeftPanel(
+    List<Media> medias,
+    Set<int> watchedMediaIds,
+    ThemeData theme,
+  ) {
     return Column(
       children: [
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: medias.isEmpty
-                ? _buildNoMediaWidget(theme)
-                : ListView.separated(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    itemCount: medias.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final media = medias[index];
-                      final isWatched = watchedMediaIds.contains(media.id);
-                      final isSelected = _selectedMedia?.id == media.id;
-                      return _buildMediaItem(
-                        context,
-                        media,
-                        isWatched,
-                        theme,
-                        theme.colorScheme,
-                        false, // showThumbnail en mode tablette
-                        isTablet: true, // Mode tablette
-                        isSelected: isSelected,
-                      );
-                    },
-                  ),
+            child:
+                medias.isEmpty
+                    ? _buildNoMediaWidget(theme)
+                    : ListView.separated(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      itemCount: medias.length,
+                      separatorBuilder:
+                          (context, index) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final media = medias[index];
+                        final isWatched = watchedMediaIds.contains(media.id);
+                        final isSelected = _selectedMedia?.id == media.id;
+                        return _buildMediaItem(
+                          context,
+                          media,
+                          isWatched,
+                          theme,
+                          theme.colorScheme,
+                          false, // showThumbnail en mode tablette
+                          isTablet: true, // Mode tablette
+                          isSelected: isSelected,
+                        );
+                      },
+                    ),
           ),
         ),
       ],
@@ -821,7 +909,9 @@ class _TutorialPageState extends State<TutorialPage> {
       return _buildNoVideoSelectedWidget(theme);
     }
 
-    final videoId = YoutubePlayer.convertUrlToId(normalizeYoutubeUrl(selectedMedia.url));
+    final videoId = YoutubePlayer.convertUrlToId(
+      normalizeYoutubeUrl(selectedMedia.url),
+    );
     if (videoId == null) {
       return _buildInvalidVideoWidget(selectedMedia, medias, theme);
     }
@@ -874,31 +964,29 @@ class _TutorialPageState extends State<TutorialPage> {
     );
   }
 
-  Widget _buildInvalidVideoWidget(Media media, List<Media> medias, ThemeData theme) {
+  Widget _buildInvalidVideoWidget(
+    Media media,
+    List<Media> medias,
+    ThemeData theme,
+  ) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 48,
-            color: theme.colorScheme.error,
-          ),
+          Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
           const SizedBox(height: 16),
-          Text(
-            'URL vidéo invalide',
-            style: theme.textTheme.bodyMedium,
-          ),
+          Text('URL vidéo invalide', style: theme.textTheme.bodyMedium),
           const SizedBox(height: 8),
           ElevatedButton(
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => YoutubePlayerPage(
-                    video: media,
-                    videosInSameCategory: medias,
-                  ),
+                  builder:
+                      (_) => YoutubePlayerPage(
+                        video: media,
+                        videosInSameCategory: medias,
+                      ),
                 ),
               );
             },
@@ -909,7 +997,12 @@ class _TutorialPageState extends State<TutorialPage> {
     );
   }
 
-  Widget _buildVideoPlayer(Media media, String videoId, List<Media> medias, ThemeData theme) {
+  Widget _buildVideoPlayer(
+    Media media,
+    String videoId,
+    List<Media> medias,
+    ThemeData theme,
+  ) {
     return Column(
       children: [
         // Titre de la vidéo
@@ -929,7 +1022,10 @@ class _TutorialPageState extends State<TutorialPage> {
         // Lecteur YouTube
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 16.0,
+            ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: YoutubePlayer(
@@ -965,7 +1061,10 @@ class _TutorialPageState extends State<TutorialPage> {
         // Description de la vidéo
         if (media.description != null && media.description!.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 8.0,
+            ),
             child: SizedBox(
               height: 120,
               child: SingleChildScrollView(
@@ -990,10 +1089,11 @@ class _TutorialPageState extends State<TutorialPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => YoutubePlayerPage(
-                    video: media,
-                    videosInSameCategory: medias,
-                  ),
+                  builder:
+                      (_) => YoutubePlayerPage(
+                        video: media,
+                        videosInSameCategory: medias,
+                      ),
                 ),
               );
             },
@@ -1027,15 +1127,17 @@ class _TutorialPageState extends State<TutorialPage> {
           elevation: isSelected ? 4 : 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: isSelected 
-                ? BorderSide(color: colorScheme.primary, width: 2)
-                : BorderSide.none,
+            side:
+                isSelected
+                    ? BorderSide(color: colorScheme.primary, width: 2)
+                    : BorderSide.none,
           ),
-          color: isSelected
-              ? colorScheme.primaryContainer
-              : (isWatched
-                  ? colorScheme.surfaceContainerHighest.withOpacity(0.7)
-                  : const Color(0xFFFFF9C4)),
+          color:
+              isSelected
+                  ? colorScheme.primaryContainer
+                  : (isWatched
+                      ? colorScheme.surfaceContainerHighest.withOpacity(0.7)
+                      : const Color(0xFFFFF9C4)),
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: () => _onMediaItemTap(media, isWatched, isTablet),
@@ -1043,7 +1145,14 @@ class _TutorialPageState extends State<TutorialPage> {
               padding: EdgeInsets.all(isSmallScreen ? 8.0 : 12.0),
               child: Row(
                 children: [
-                  if (showThumbnail) _buildThumbnail(media, isWatched, duration, theme, isSmallScreen),
+                  if (showThumbnail)
+                    _buildThumbnail(
+                      media,
+                      isWatched,
+                      duration,
+                      theme,
+                      isSmallScreen,
+                    ),
                   if (showThumbnail) SizedBox(width: isSmallScreen ? 8 : 12),
                   Expanded(
                     child: Column(
@@ -1053,11 +1162,12 @@ class _TutorialPageState extends State<TutorialPage> {
                           _filterTitle(media.titre),
                           style: theme.textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: isSelected
-                                ? colorScheme.onPrimaryContainer
-                                : (isWatched
-                                    ? colorScheme.onSurface.withOpacity(0.7)
-                                    : colorScheme.onSurface),
+                            color:
+                                isSelected
+                                    ? colorScheme.onPrimaryContainer
+                                    : (isWatched
+                                        ? colorScheme.onSurface.withOpacity(0.7)
+                                        : colorScheme.onSurface),
                             fontSize: isSmallScreen ? 14 : 16,
                           ),
                           maxLines: 2,
@@ -1082,32 +1192,49 @@ class _TutorialPageState extends State<TutorialPage> {
     );
   }
 
-  Widget _buildThumbnail(Media media, bool isWatched, Duration duration, ThemeData theme, bool isSmallScreen) {
+  Widget _buildThumbnail(
+    Media media,
+    bool isWatched,
+    Duration duration,
+    ThemeData theme,
+    bool isSmallScreen,
+  ) {
     final videoId = YoutubePlayer.convertUrlToId(media.url);
-    final thumbnailUrl = videoId != null ? _getRandomThumbnailUrl(media.url) : null;
+    final thumbnailUrl =
+        videoId != null ? _getRandomThumbnailUrl(media.url) : null;
 
     return Stack(
       alignment: Alignment.center,
       children: [
+        // Ajuster la taille de la miniature pour tablettes/paysage (meilleure lisibilité)
         Container(
-          width: isSmallScreen ? MediaQuery.of(context).size.width * 0.3 : MediaQuery.of(context).size.width * 0.35,
-          height: isSmallScreen ? MediaQuery.of(context).size.width * 0.18 : MediaQuery.of(context).size.width * 0.2,
+          width:
+              isSmallScreen
+                  ? MediaQuery.of(context).size.width * 0.3
+                  : (MediaQuery.of(context).size.width >= 800
+                      ? 220
+                      : MediaQuery.of(context).size.width * 0.35),
+          height:
+              isSmallScreen
+                  ? MediaQuery.of(context).size.width * 0.18
+                  : (MediaQuery.of(context).size.width >= 800
+                      ? 124
+                      : MediaQuery.of(context).size.width * 0.2),
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(8),
-            image: thumbnailUrl != null
-                ? DecorationImage(
-                    image: NetworkImage(thumbnailUrl),
-                    fit: BoxFit.cover,
-                  )
-                : null,
+            image:
+                thumbnailUrl != null
+                    ? DecorationImage(
+                      image: NetworkImage(thumbnailUrl),
+                      fit: BoxFit.cover,
+                    )
+                    : null,
           ),
-          child: thumbnailUrl == null
-              ? Icon(
-                  Icons.videocam,
-                  size: isSmallScreen ? 24 : 32,
-                )
-              : null,
+          child:
+              thumbnailUrl == null
+                  ? Icon(Icons.videocam, size: isSmallScreen ? 24 : 32)
+                  : null,
         ),
         Icon(
           Icons.play_circle_fill,
@@ -1154,9 +1281,15 @@ class _TutorialPageState extends State<TutorialPage> {
     );
   }
 
-  Future<void> _onMediaItemTap(Media media, bool isWatched, bool isTablet) async {
+  Future<void> _onMediaItemTap(
+    Media media,
+    bool isWatched,
+    bool isTablet,
+  ) async {
     if (!isWatched) {
-      final resp = await _mediaRepository.markMediaAsWatchedWithResponse(media.id);
+      final resp = await _mediaRepository.markMediaAsWatchedWithResponse(
+        media.id,
+      );
       final success = resp['success'] == true;
       if (success && mounted) {
         _loadWatchedMediaIds();
@@ -1186,12 +1319,14 @@ class _TutorialPageState extends State<TutorialPage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => YoutubePlayerPage(
-            video: media,
-            videosInSameCategory: selectedFormation.medias
-                .where((m) => m.categorie == media.categorie)
-                .toList(),
-          ),
+          builder:
+              (_) => YoutubePlayerPage(
+                video: media,
+                videosInSameCategory:
+                    selectedFormation.medias
+                        .where((m) => m.categorie == media.categorie)
+                        .toList(),
+              ),
         ),
       );
     }
