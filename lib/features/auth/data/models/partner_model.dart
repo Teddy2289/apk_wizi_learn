@@ -40,6 +40,8 @@ class PartnerContact extends Equatable {
       type: (fonction ?? 'Contact partenaire'),
       telephone: tel ?? '',
       email: email ?? '',
+      prenom: prenom ?? '',
+      civilite: '',
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/features/auth/data/models/contact_model.dart';
@@ -80,30 +81,6 @@ class ContactCard extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: isSmallScreen ? 2 : 4),
-
-                    // Téléphone
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.phone_android,
-                          size: iconSize,
-                          color: Colors.grey.shade600,
-                        ),
-                        SizedBox(width: isSmallScreen ? 3 : 6),
-                        Expanded(
-                          child: Text(
-                            contact.telephone.isNotEmpty
-                                ? contact.telephone
-                                : 'Non renseigné',
-                            style: TextStyle(fontSize: infoFontSize),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: isSmallScreen ? 2 : 4),
-
                     // Email - phrase cliquable
                     Row(
                       children: [
@@ -150,7 +127,28 @@ class ContactCard extends StatelessWidget {
                         ),
                       ],
                     ),
-
+                    // Téléphone
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.phone_android,
+                          size: iconSize,
+                          color: Colors.grey.shade600,
+                        ),
+                        SizedBox(width: isSmallScreen ? 3 : 6),
+                        Expanded(
+                          child: Text(
+                            contact.telephone.isNotEmpty
+                                ? contact.telephone
+                                : 'Non renseigné',
+                            style: TextStyle(fontSize: infoFontSize),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: isSmallScreen ? 2 : 4),
                     // Formations pour les formateurs/formatrices
                     if (showFormations &&
                         _isFormateur() &&
@@ -248,34 +246,63 @@ class ContactCard extends StatelessWidget {
 
   // Construction de l'avatar avec image ou initiales - CORRECTION : utiliser 'image' au lieu de 'photo'
   Widget _buildAvatar(double radius) {
-    // Vérifier si une image de profil existe
-    final hasProfileImage = contact.image != null && contact.image!.isNotEmpty;
+    debugPrint(
+      'Avatar debug - Image: ${contact.image}, Prenom: ${contact.prenom}, Name: ${contact.name}',
+    );
+
+    final hasProfileImage =
+        contact.image != null &&
+        contact.image!.isNotEmpty &&
+        contact.image != 'null';
 
     if (hasProfileImage) {
-      return CircleAvatar(
-        radius: radius,
-        backgroundImage: NetworkImage(_resolveImageUrl(contact.image!)),
-        onBackgroundImageError: (exception, stackTrace) {
-          // En cas d'erreur de chargement, on utilise les initiales
-        },
-        child: _buildFallbackAvatar(radius),
-      );
+      try {
+        String imageUrl = AppConstants.getUserImageUrl(contact.image!);
+        debugPrint('Full Image URL: $imageUrl');
+
+        return CachedNetworkImage(
+          imageUrl: imageUrl,
+          imageBuilder:
+              (context, imageProvider) =>
+                  CircleAvatar(radius: radius, backgroundImage: imageProvider),
+          placeholder: (context, url) => _buildFallbackAvatar(radius),
+          errorWidget: (context, url, error) {
+            debugPrint('CachedNetworkImage error: $error for URL: $url');
+            return _buildFallbackAvatar(radius);
+          },
+        );
+      } catch (e) {
+        debugPrint('Error processing image URL: $e');
+        return _buildFallbackAvatar(radius);
+      }
     } else {
       return _buildFallbackAvatar(radius);
     }
   }
 
-  // Avatar de secours avec initiales
   Widget _buildFallbackAvatar(double radius) {
+    String initiales = '';
+
+    // Priorité au prénom + nom pour les initiales
+    if (contact.prenom?.isNotEmpty == true && contact.name.isNotEmpty) {
+      initiales = '${contact.prenom![0]}${contact.name[0]}'.toUpperCase();
+    } else if (contact.prenom?.isNotEmpty == true) {
+      initiales = contact.prenom![0].toUpperCase();
+    } else if (contact.name.isNotEmpty) {
+      initiales = contact.name[0].toUpperCase();
+    } else {
+      initiales = '?';
+    }
+
     return CircleAvatar(
       radius: radius,
       backgroundColor: Colors.amber.shade100,
       child: Text(
-        contact.name.isNotEmpty ? contact.name[0].toUpperCase() : '?',
+        initiales,
         style: TextStyle(
-          fontSize: radius,
+          fontSize: radius * 0.8,
           fontWeight: FontWeight.bold,
-          color: Colors.brown.shade300,
+          color: Colors.brown.shade700,
         ),
       ),
     );
@@ -283,26 +310,40 @@ class ContactCard extends StatelessWidget {
 
   // Résolution de l'URL de l'image
   String _resolveImageUrl(String path) {
-    if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    // Utiliser votre méthode AppConstants.getUserImageUrl si elle existe
-    return AppConstants.getUserImageUrl(
-      path,
-    ); // À adapter selon votre configuration
+    return AppConstants.getUserImageUrl(path);
   }
 
   // Formatage du nom avec civilité - CORRECTION : civilite n'est plus nullable
+  // Formatage du nom avec civilité et prénom
   String _getFormattedName() {
-    String name =
+    String nom =
         contact.name.isNotEmpty
-            ? contact.name[0].toUpperCase() + contact.name.substring(1)
-            : 'Inconnu';
+            ? contact.name
+                .toUpperCase() // Garder le nom en majuscules comme dans les logs
+            : '';
+
+    String prenom =
+        contact.prenom?.isNotEmpty == true
+            ? '${contact.prenom![0].toUpperCase()}${contact.prenom!.substring(1).toLowerCase()}'
+            : '';
+
+    String nomComplet = '';
+    if (prenom.isNotEmpty && nom.isNotEmpty) {
+      nomComplet = '$prenom $nom';
+    } else if (prenom.isNotEmpty) {
+      nomComplet = prenom;
+    } else if (nom.isNotEmpty) {
+      nomComplet = nom;
+    } else {
+      nomComplet = 'Inconnu';
+    }
 
     // Ajouter la civilité si disponible
     if (contact.civilite != null && contact.civilite!.isNotEmpty) {
-      return '${contact.civilite} $name';
+      return '${contact.civilite} $nomComplet';
     }
 
-    return name;
+    return nomComplet;
   }
 
   // Formatage du rôle avec distinction masculin/féminin - CORRECTION : utiliser le rôle du backend
