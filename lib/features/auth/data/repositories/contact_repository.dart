@@ -17,29 +17,22 @@ class ContactRepository {
     final data = response.data;
     List<Contact> contacts = [];
 
-    // Vérifie bien que c'est une liste
     final commerciaux = data['commerciaux'];
     final formateurs = data['formateurs'];
     final poleRelation = data['pole_relation'];
-    final poleSav = data['pole_sav']; // Ajout du Pôle SAV
+    final poleSav = data['pole_sav'];
 
-    // ORDRE D'AJOUT : Formateurs -> Pôle SAV -> Commercial -> Pôle Relation
-    if (formateurs is List) {
-      contacts.addAll(formateurs.map((e) => Contact.fromJson(e)).toList());
-    } else {
-      print('⚠ formateurs n\'est pas une liste : $formateurs');
-    }
-
-    if (poleSav is List) {
-      contacts.addAll(poleSav.map((e) => Contact.fromJson(e)).toList());
-    } else {
-      print('⚠ pole_sav n\'est pas une liste : $poleSav');
-    }
-
+    // CORRECTION : Les données sont déjà plates, pas besoin de _parseContactWithUser
     if (commerciaux is List) {
       contacts.addAll(commerciaux.map((e) => Contact.fromJson(e)).toList());
     } else {
       print('⚠ commerciaux n\'est pas une liste : $commerciaux');
+    }
+
+    if (formateurs is List) {
+      contacts.addAll(formateurs.map((e) => Contact.fromJson(e)).toList());
+    } else {
+      print('⚠ formateurs n\'est pas une liste : $formateurs');
     }
 
     if (poleRelation is List) {
@@ -49,14 +42,28 @@ class ContactRepository {
       print('⚠ pole_relation n\'est pas une liste : $poleRelation');
     }
 
+    if (poleSav is List) {
+      contacts.addAll(poleSav.map((e) => Contact.fromJson(e)).toList());
+    } else {
+      print('⚠ pole_sav n\'est pas une liste : $poleSav');
+    }
+
     // Filtrer les doublons par email
     final contactsUniques = <String, Contact>{};
     for (var c in contacts) {
-      contactsUniques[c.email] = c;
+      if (c.email.isNotEmpty) {
+        contactsUniques[c.email] = c;
+      }
     }
     return contactsUniques.values.toList();
   }
-  Future<List<MultipartFile>> _prepareAttachments(List<PlatformFile> files) async {
+
+  // SUPPRIMER cette méthode car elle n'est plus nécessaire
+  // Contact _parseContactWithUser(Map<String, dynamic> data, String type) { ... }
+
+  Future<List<MultipartFile>> _prepareAttachments(
+    List<PlatformFile> files,
+  ) async {
     return files.map((platformFile) {
       return MultipartFile.fromBytes(
         platformFile.bytes!,
@@ -73,10 +80,8 @@ class ContactRepository {
     List<PlatformFile>? attachments,
   }) async {
     try {
-      // Créer FormData pour le multipart
       final formData = FormData();
 
-      // Ajouter les champs simples
       formData.fields.addAll([
         MapEntry('email', email),
         MapEntry('subject', subject),
@@ -84,40 +89,30 @@ class ContactRepository {
         MapEntry('message', message),
       ]);
 
-      // Ajouter les pièces jointes si elles existent
       if (attachments != null && attachments.isNotEmpty) {
         for (var file in attachments) {
           if (file.bytes != null) {
             formData.files.add(
               MapEntry(
-                'attachments', // Même nom pour tous les fichiers
-                MultipartFile.fromBytes(
-                  file.bytes!,
-                  filename: file.name,
-                ),
+                'attachments',
+                MultipartFile.fromBytes(file.bytes!, filename: file.name),
               ),
             );
           } else if (file.path != null) {
             formData.files.add(
               MapEntry(
-                'attachments', // Même nom pour tous les fichiers
-                await MultipartFile.fromFile(
-                  file.path!,
-                  filename: file.name,
-                ),
+                'attachments',
+                await MultipartFile.fromFile(file.path!, filename: file.name),
               ),
             );
           }
         }
       }
 
-      // Envoyer la requête via ApiClient
       await apiClient.post(
         '/contact',
         data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-        ),
+        options: Options(contentType: 'multipart/form-data'),
       );
     } catch (e) {
       debugPrint('Error sending contact form: $e');

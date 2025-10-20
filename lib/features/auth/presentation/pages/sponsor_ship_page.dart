@@ -29,9 +29,13 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
 
   bool _isSubmitting = false;
   bool _isSuccess = false;
+  bool _showSuccessModal = false;
   String? _parrainId; // Stocker l'ID du parrain
   bool _isLoadingUser = true;
   String? _userError;
+  String? _userName;
+  String? _userEmail;
+  String? _userPhone;
 
   @override
   void initState() {
@@ -76,13 +80,28 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
         return;
       }
 
+      // Concaténer username (majuscules) + prénom du stagiaire
+      final userName = user.name?.toUpperCase() ?? '';
+      final stagiairePrenom = user.stagiaire?.prenom ?? '';
+      final fullName = userName.isNotEmpty && stagiairePrenom.isNotEmpty
+          ? '$userName $stagiairePrenom'
+          : userName.isNotEmpty
+          ? userName
+          : stagiairePrenom.isNotEmpty
+          ? stagiairePrenom
+          : 'Non renseigné';
+
+      // Récupérer les informations directement
       setState(() {
         _parrainId = connectedUserId;
+        _userName = fullName;
+        _userEmail = user.email ?? 'Non renseigné';
+        _userPhone = user.stagiaire?.telephone ?? 'Non renseigné';
         _isLoadingUser = false;
       });
 
       debugPrint("Parrain ID récupéré: $_parrainId");
-      debugPrint("Utilisateur connecté: ${user.name}");
+      debugPrint("Nom complet: $_userName");
 
     } catch (e) {
       debugPrint("Erreur récupération user: $e");
@@ -92,7 +111,6 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
       });
     }
   }
-
   @override
   void dispose() {
     _parrainageRepo.dispose();
@@ -137,20 +155,12 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
       // Réinitialiser le formulaire
       _formKey.currentState!.reset();
 
-      // Afficher le statut de succès
+      // Afficher le modal de succès
       setState(() {
         _isSuccess = true;
+        _showSuccessModal = true;
       });
 
-      // Afficher le message de succès
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result?['message'] ?? 'Filleul inscrit avec succès !'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
     } else {
       // Afficher les erreurs détaillées
       String errorMessage = result?['message'] ?? 'Erreur lors de l\'inscription';
@@ -179,8 +189,22 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
   void _resetForm() {
     setState(() {
       _isSuccess = false;
+      _showSuccessModal = false;
     });
     _formKey.currentState!.reset();
+  }
+
+  void _goToHome() {
+    Navigator.pushReplacementNamed(
+      context,
+      RouteConstants.dashboard,
+    );
+  }
+
+  void _closeSuccessModal() {
+    setState(() {
+      _showSuccessModal = false;
+    });
   }
 
   void _retryUserLoading() {
@@ -212,71 +236,223 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
           ),
         ),
       ),
-      body: _isLoadingUser
-          ? _buildLoadingState(theme)
-          : _userError != null
-          ? _buildErrorState(theme)
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+      body: Stack(
+        children: [
+          _isLoadingUser
+              ? _buildLoadingState(theme)
+              : _userError != null
+              ? _buildErrorState(theme)
+              : SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Image.asset(
+                    'assets/images/share.png',
+                    width: screenWidth * 0.7,
+                    height: 200,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Parlez de nos formations à votre entourage (famille, amis, collègues et connaissances) et gagnez 50 €',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFFEB823),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  "Parrainez et gagnez une carte cadeau de 50€ pour toute formation validée grâce à vous !",
+                  style: theme.textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 30),
+
+                // Informations du parrain (utilisateur connecté)
+                _buildParrainInfo(context),
+                const SizedBox(height: 30),
+
+                // Formulaire d'inscription (seulement si pas de succès)
+                if (!_isSuccess) _buildInscriptionForm(context),
+
+                const SizedBox(height: 30),
+
+                _buildStep(
+                  context,
+                  number: '1',
+                  title: 'Remplissez le formulaire',
+                  description: 'Saisissez les informations de votre filleul',
+                ),
+                _buildStep(
+                  context,
+                  number: '2',
+                  title: 'Validez l\'inscription',
+                  description: 'Soumettez le formulaire pour inscrire votre filleul',
+                ),
+                _buildStep(
+                  context,
+                  number: '3',
+                  title: 'Vos amis sont contactés',
+                  description: 'Nos commerciaux les contactent pour finaliser l\'inscription',
+                ),
+                _buildStep(
+                  context,
+                  number: '4',
+                  title: 'Vous gagnez tous les deux',
+                  description: 'Dès qu\'ils suivent leur première formation payante',
+                ),
+              ],
+            ),
+          ),
+
+          // Modal de succès
+          if (_showSuccessModal) _buildSuccessModal(context),
+        ],
+      ),
+    );
+  }
+
+  // Méthode pour afficher les informations du parrain
+  Widget _buildParrainInfo(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade300),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Image.asset(
-                'assets/images/share.png',
-                width: screenWidth * 0.7,
-                height: 200,
-                fit: BoxFit.contain,
-              ),
+            Row(
+              children: [
+                Icon(
+                  Icons.person_outline,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Vos informations (Parrain)',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            Text(
-              'Parrainez vos amis et gagnez ensemble !',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFFFEB823),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Inscrivez directement vos filleuls via ce formulaire. Lorsqu'ils s'inscrivent et suivent leur première formation, vous gagnez tous les deux 50€ de crédit !",
-              style: theme.textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 30),
-
-            // Message de succès
-            if (_isSuccess) _buildSuccessMessage(context),
-
-            // Formulaire d'inscription (seulement si pas de succès)
-            if (!_isSuccess) _buildInscriptionForm(context),
-
-            const SizedBox(height: 30),
-
-            _buildStep(
-              context,
-              number: '1',
-              title: 'Remplissez le formulaire',
-              description: 'Saisissez les informations de votre filleul',
-            ),
-            _buildStep(
-              context,
-              number: '2',
-              title: 'Validez l\'inscription',
-              description: 'Soumettez le formulaire pour inscrire votre filleul',
-            ),
-            _buildStep(
-              context,
-              number: '3',
-              title: 'Vos amis sont contactés',
-              description: 'Nos commerciaux les contactent pour finaliser l\'inscription',
-            ),
-            _buildStep(
-              context,
-              number: '4',
-              title: 'Vous gagnez tous les deux',
-              description: 'Dès qu\'ils suivent leur première formation payante',
-            ),
+            const SizedBox(height: 12),
+            _buildInfoRow('Nom complet', _userName ?? 'Non renseigné'),
+            _buildInfoRow('Email', _userEmail ?? 'Non renseigné'),
+            _buildInfoRow('Téléphone', _userPhone ?? 'Non renseigné'),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label :',
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Modal de succès
+  Widget _buildSuccessModal(BuildContext context) {
+    return Container(
+      color: Colors.black54,
+      child: Center(
+        child: Container(
+          margin: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.check_circle,
+                color: Colors.green,
+                size: 64,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Demande envoyée avec succès !',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Votre demande de parrainage a été enregistrée avec succès. Nos commerciaux contacteront votre filleul rapidement.',
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _closeSuccessModal,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                      ),
+                      child: Text(
+                        'Fermer',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _goToHome,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFEB823),
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Accueil'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -322,60 +498,6 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
                 foregroundColor: theme.colorScheme.onPrimary,
               ),
               child: const Text('Réessayer'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSuccessMessage(BuildContext context) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.green[50],
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green[600]),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Inscription réussie !',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[800],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Félicitations, votre filleul a été inscrit avec succès. Nos commerciaux le contacteront rapidement.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.green[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _resetForm,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[600],
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Inscrire un autre filleul'),
-              ),
             ),
           ],
         ),
@@ -463,7 +585,7 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
                 decoration: BoxDecoration(
                   color: Colors.blue[50],
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color:Color(0xFF32BBD3)),
+                  border: Border.all(color: const Color(0xFF32BBD3)),
                 ),
                 child: Row(
                   children: [

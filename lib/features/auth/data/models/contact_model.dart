@@ -6,6 +6,9 @@ class Contact extends Equatable {
   final String type;
   final String telephone;
   final String email;
+  final String? image;
+  final String? civilite;
+  final String? role;
   final List<dynamic>? formations;
 
   const Contact({
@@ -14,6 +17,9 @@ class Contact extends Equatable {
     required this.type,
     required this.telephone,
     required this.email,
+    this.image,
+    this.civilite,
+    this.role,
     this.formations,
   });
 
@@ -25,13 +31,25 @@ class Contact extends Equatable {
       telephone: json['telephone'] ?? '',
       email: json['email'] ?? '',
       formations: json['formations'],
+      image: json['image'] ?? json['avatar'] ?? null,
+      civilite: json['civilite'],
+      role: json['role'],
     );
   }
 
   @override
-  List<Object?> get props => [id, name, type, telephone, email, formations];
+  List<Object?> get props => [
+    id,
+    name,
+    type,
+    telephone,
+    email,
+    image,
+    civilite,
+    role,
+    formations,
+  ];
 }
-
 
 class ContactFormModel {
   final String email;
