@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
 
 class ChallengeConfig {
   final int id;
@@ -56,6 +58,8 @@ class ChallengeEntry {
 
 class ChallengeRepository {
   final ApiClient apiClient;
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  static const _queueKey = 'challenge_submission_queue';
 
   ChallengeRepository({required this.apiClient});
 
@@ -85,6 +89,108 @@ class ChallengeRepository {
     } catch (e) {
       debugPrint('Challenge leaderboard fetch failed: $e');
       return [];
+    }
+  }
+
+  Future<bool> submitEntry({
+    required int challengeId,
+    required int points,
+    required int quizzesCompleted,
+    required int durationSeconds,
+  }) async {
+    try {
+      final payload = {
+        'challenge_id': challengeId,
+        'points': points,
+        'quizzes_completed': quizzesCompleted,
+        'duration_seconds': durationSeconds,
+      };
+      final res = await apiClient.post(
+        AppConstants.challengeEntries,
+        data: payload,
+      );
+      return res.statusCode != null &&
+          res.statusCode! >= 200 &&
+          res.statusCode! < 300;
+    } catch (e) {
+      debugPrint('Failed to submit challenge entry: $e');
+      return false;
+    }
+  }
+
+  /// Submit entry with local queueing: if network fails the payload is stored and
+  /// retried on next call to flushQueue() or on app start.
+  Future<bool> submitEntryWithQueue({
+    required int challengeId,
+    required int points,
+    required int quizzesCompleted,
+    required int durationSeconds,
+  }) async {
+    final payload = {
+      'challenge_id': challengeId,
+      'points': points,
+      'quizzes_completed': quizzesCompleted,
+      'duration_seconds': durationSeconds,
+      'ts': DateTime.now().toIso8601String(),
+    };
+
+    final ok = await submitEntry(
+      challengeId: challengeId,
+      points: points,
+      quizzesCompleted: quizzesCompleted,
+      durationSeconds: durationSeconds,
+    );
+
+    if (ok) return true;
+
+    // Save to local queue
+    try {
+      final raw = await _storage.read(key: _queueKey);
+      final list =
+          raw == null
+              ? []
+              : List<Map<String, dynamic>>.from(jsonDecode(raw) as List);
+      list.add(payload);
+      await _storage.write(key: _queueKey, value: jsonEncode(list));
+    } catch (e) {
+      debugPrint('Failed to persist challenge payload: $e');
+    }
+
+    return false;
+  }
+
+  /// Attempt to flush the stored queue. Stops on first failure to avoid busy loops.
+  Future<void> flushQueue() async {
+    try {
+      final raw = await _storage.read(key: _queueKey);
+      if (raw == null) return;
+      final list = List<Map<String, dynamic>>.from(jsonDecode(raw) as List);
+      final remaining = <Map<String, dynamic>>[];
+      for (final item in list) {
+        try {
+          final ok = await submitEntry(
+            challengeId: item['challenge_id'] as int,
+            points: item['points'] as int,
+            quizzesCompleted: item['quizzes_completed'] as int,
+            durationSeconds: item['duration_seconds'] as int,
+          );
+          if (!ok) {
+            remaining.add(item);
+            break; // stop on first failure
+          }
+        } catch (e) {
+          remaining.add(item);
+          break;
+        }
+      }
+
+      if (remaining.isEmpty) {
+        await _storage.delete(key: _queueKey);
+      } else {
+        await _storage.write(key: _queueKey, value: jsonEncode(remaining));
+      }
+    } catch (e) {
+      debugPrint('Failed to flush challenge queue: $e');
     }
   }
 }

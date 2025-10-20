@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/repositories/challenge_repository.dart';
+import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
+import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
 
 class ChallengePage extends StatefulWidget {
   const ChallengePage({super.key});
@@ -17,6 +19,7 @@ class _ChallengePageState extends State<ChallengePage>
   late TabController _tabController;
   Future<ChallengeConfig?>? _configFuture;
   Future<List<ChallengeEntry>>? _leaderboardFuture;
+  int? _myStagiaireId;
   bool _isLoading = true;
 
   @override
@@ -38,6 +41,25 @@ class _ChallengePageState extends State<ChallengePage>
     _leaderboardFuture = _repository.fetchLeaderboard(
       formationId: config?.formationId,
     );
+
+    // Fetch current user stagiaire id to highlight "You"
+    try {
+      final apiClient = ApiClient(
+        dio: Dio(),
+        storage: const FlutterSecureStorage(),
+      );
+      final authRepo = AuthRepository(
+        remoteDataSource: AuthRemoteDataSourceImpl(
+          apiClient: apiClient,
+          storage: const FlutterSecureStorage(),
+        ),
+        storage: const FlutterSecureStorage(),
+      );
+      final me = await authRepo.getMe();
+      _myStagiaireId = me.stagiaire?.id;
+    } catch (e) {
+      debugPrint('Unable to fetch current user: $e');
+    }
     await Future.wait([_configFuture!, _leaderboardFuture!]);
     setState(() => _isLoading = false);
   }
@@ -80,24 +102,42 @@ class _ChallengePageState extends State<ChallengePage>
         // Sort by duration ascending
         final sorted = [...list]
           ..sort((a, b) => a.duration.compareTo(b.duration));
-        return ListView.separated(
-          padding: const EdgeInsets.all(12),
-          itemCount: sorted.length,
-          separatorBuilder: (_, __) => const Divider(),
-          itemBuilder: (context, index) {
-            final e = sorted[index];
-            return ListTile(
-              leading: CircleAvatar(child: Text('${index + 1}')),
-              title: Text(e.name),
-              subtitle: Text(
-                'Quizzes: ${e.quizzesCompleted} • Temps: ${_formatDuration(e.duration)}',
+        final top3 = sorted.take(3).toList();
+
+        return Column(
+          children: [
+            _buildPodium(top3, isTime: true),
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(12),
+                itemCount: sorted.length,
+                separatorBuilder: (_, __) => const Divider(),
+                itemBuilder: (context, index) {
+                  final e = sorted[index];
+                  final isMe =
+                      _myStagiaireId != null &&
+                      _myStagiaireId.toString() == e.userId;
+                  return Container(
+                    color: isMe ? Colors.blue.withOpacity(0.08) : null,
+                    child: ListTile(
+                      leading: CircleAvatar(child: Text('${index + 1}')),
+                      title: Text(e.name + (isMe ? ' (Vous)' : '')),
+                      subtitle: Text(
+                        'Quizzes: ${e.quizzesCompleted}  Temps: ${_formatDuration(e.duration)}',
+                      ),
+                      trailing:
+                          e.userId == '0'
+                              ? null
+                              : const Icon(
+                                Icons.emoji_events,
+                                color: Colors.amber,
+                              ),
+                    ),
+                  );
+                },
               ),
-              trailing:
-                  e.userId == '0'
-                      ? null
-                      : const Icon(Icons.emoji_events, color: Colors.amber),
-            );
-          },
+            ),
+          ],
         );
       },
     );
@@ -114,26 +154,96 @@ class _ChallengePageState extends State<ChallengePage>
           return const Center(child: Text('Aucun participant pour le moment'));
         // Sort by points descending
         final sorted = [...list]..sort((a, b) => b.points.compareTo(a.points));
-        return ListView.separated(
-          padding: const EdgeInsets.all(12),
-          itemCount: sorted.length,
-          separatorBuilder: (_, __) => const Divider(),
-          itemBuilder: (context, index) {
-            final e = sorted[index];
-            return ListTile(
-              leading: CircleAvatar(child: Text('${index + 1}')),
-              title: Text(e.name),
-              subtitle: Text(
-                'Points: ${e.points} • Quizzes: ${e.quizzesCompleted}',
+        final top3 = sorted.take(3).toList();
+        return Column(
+          children: [
+            _buildPodium(top3, isTime: false),
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(12),
+                itemCount: sorted.length,
+                separatorBuilder: (_, __) => const Divider(),
+                itemBuilder: (context, index) {
+                  final e = sorted[index];
+                  final isMe =
+                      _myStagiaireId != null &&
+                      _myStagiaireId.toString() == e.userId;
+                  return Container(
+                    color: isMe ? Colors.blue.withOpacity(0.08) : null,
+                    child: ListTile(
+                      leading: CircleAvatar(child: Text('${index + 1}')),
+                      title: Text(e.name + (isMe ? ' (Vous)' : '')),
+                      subtitle: Text(
+                        'Points: ${e.points}  Quizzes: ${e.quizzesCompleted}',
+                      ),
+                      trailing:
+                          e.userId == '0'
+                              ? null
+                              : const Icon(
+                                Icons.leaderboard,
+                                color: Colors.blue,
+                              ),
+                    ),
+                  );
+                },
               ),
-              trailing:
-                  e.userId == '0'
-                      ? null
-                      : const Icon(Icons.leaderboard, color: Colors.blue),
-            );
-          },
+            ),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildPodium(List<ChallengeEntry> top, {required bool isTime}) {
+    // Basic podium visuals: 2-1-3 columns
+    final a = top.length > 0 ? top[0] : null;
+    final b = top.length > 1 ? top[1] : null;
+    final c = top.length > 2 ? top[2] : null;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _podiumCard(b, 2, isTime),
+          _podiumCard(a, 1, isTime),
+          _podiumCard(c, 3, isTime),
+        ],
+      ),
+    );
+  }
+
+  Widget _podiumCard(ChallengeEntry? e, int rank, bool isTime) {
+    if (e == null) return SizedBox(width: 80, height: 80);
+    final value = isTime ? _formatDuration(e.duration) : '${e.points} pts';
+    final color =
+        rank == 1 ? Colors.amber : (rank == 2 ? Colors.grey : Colors.brown);
+    return Column(
+      children: [
+        Container(
+          width: 80,
+          height: rank == 1 ? 96 : 72,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: color, width: 2),
+          ),
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                e.name,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(value, style: const TextStyle(fontSize: 12)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text('#$rank', style: const TextStyle(fontWeight: FontWeight.bold)),
+      ],
     );
   }
 

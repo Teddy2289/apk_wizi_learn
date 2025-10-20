@@ -52,6 +52,7 @@ class AppConstants {
   // Challenge mode endpoints (admin-configured)
   static const String challengeConfig = '/challenge/config';
   static const String challengeLeaderboard = '/challenge/leaderboard';
+  static const String challengeEntries = '/challenge/entries';
 
   static String getAudioStreamUrl(String relativePath) {
     relativePath =

@@ -13,6 +13,7 @@ import 'package:wizi_learn/features/auth/data/repositories/achievement_repositor
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/quiz_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/stats_repository.dart';
+import 'package:wizi_learn/features/auth/data/repositories/challenge_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/dashboard_page.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_question_card.dart';
@@ -100,6 +101,30 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
     } else {
       _fetchNewAchievements();
     }
+    // Attempt to report this completion to the Challenge API (non-blocking)
+    (() async {
+      try {
+        final dio = Dio();
+        final storage = const FlutterSecureStorage();
+        final apiClient = ApiClient(dio: dio, storage: storage);
+        final challengeRepo = ChallengeRepository(apiClient: apiClient);
+
+        final config = await challengeRepo.fetchConfig();
+        if (config != null && config.id != 0) {
+          // Attempt to flush any queued submissions first
+          await challengeRepo.flushQueue();
+          final posted = await challengeRepo.submitEntryWithQueue(
+            challengeId: config.id,
+            points: widget.score,
+            quizzesCompleted: 1,
+            durationSeconds: widget.timeSpent,
+          );
+          debugPrint('Challenge entry posted (or queued): $posted');
+        }
+      } catch (e) {
+        debugPrint('Challenge reporting failed (non-blocking): $e');
+      }
+    })();
   }
 
   Future<void> _loadNextQuiz() async {
@@ -718,14 +743,15 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => DashboardPage(
-                    initialIndex: 0, // Index pour la page d'accueil
-                    arguments: {
-                      'selectedTabIndex': 0,
-                      'fromNotification': true,
-                      'useCustomScaffold': true,
-                    },
-                  ),
+                  builder:
+                      (context) => DashboardPage(
+                        initialIndex: 0, // Index pour la page d'accueil
+                        arguments: {
+                          'selectedTabIndex': 0,
+                          'fromNotification': true,
+                          'useCustomScaffold': true,
+                        },
+                      ),
                 ),
                 (route) => false,
               );
