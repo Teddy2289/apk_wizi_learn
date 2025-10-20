@@ -88,10 +88,10 @@ class _RankingPageState extends State<RankingPage>
   Future<void> _checkAndShowTutorial() async {
     final prefs = await SharedPreferences.getInstance();
     final seen = prefs.getBool('ranking_tutorial_seen') ?? false;
-    if (!seen) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _showTutorial());
-      await prefs.setBool('ranking_tutorial_seen', true);
-    }
+    // if (!seen) {
+    //   WidgetsBinding.instance.addPostFrameCallback((_) => _showTutorial());
+    //   await prefs.setBool('ranking_tutorial_seen', true);
+    // }
   }
 
   void _showTutorial() {

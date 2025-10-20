@@ -225,24 +225,30 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(12),
-                      child: rest.isEmpty
-                          ? Center(child: Text('Aucun classement supplémentaire'))
-                          : ListView.separated(
-                              itemCount: rest.length,
-                              separatorBuilder: (_, __) => const Divider(height: 8),
-                              itemBuilder: (_, index) {
-                                final ranking = rest[index];
-                                final isCurrentUser =
-                                    int.tryParse(ranking.stagiaire.id.toString()) ==
-                                    _connectedStagiaireId;
-                                return _buildRankingItem(
-                                  context,
-                                  ranking,
-                                  false,
-                                  isCurrentUser: isCurrentUser,
-                                );
-                              },
-                            ),
+                      child:
+                          rest.isEmpty
+                              ? Center(
+                                child: Text('Aucun classement supplémentaire'),
+                              )
+                              : ListView.separated(
+                                itemCount: rest.length,
+                                separatorBuilder:
+                                    (_, __) => const Divider(height: 8),
+                                itemBuilder: (_, index) {
+                                  final ranking = rest[index];
+                                  final isCurrentUser =
+                                      int.tryParse(
+                                        ranking.stagiaire.id.toString(),
+                                      ) ==
+                                      _connectedStagiaireId;
+                                  return _buildRankingItem(
+                                    context,
+                                    ranking,
+                                    false,
+                                    isCurrentUser: isCurrentUser,
+                                  );
+                                },
+                              ),
                     ),
                   ),
                 ),
@@ -379,19 +385,21 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                         ),
                         CircleAvatar(
                           radius: (sizes[i] - 8) / 2,
-                          backgroundImage: ranking.stagiaire.image.isNotEmpty
-                              ? NetworkImage(
-                                  '${AppConstants.baseUrlImg}/${ranking.stagiaire.image}',
-                                )
-                              : null,
+                          backgroundImage:
+                              ranking.stagiaire.image.isNotEmpty
+                                  ? NetworkImage(
+                                    '${AppConstants.baseUrlImg}/${ranking.stagiaire.image}',
+                                  )
+                                  : null,
                           backgroundColor: Colors.white,
-                          child: ranking.stagiaire.image.isEmpty
-                              ? Icon(
-                                  Icons.person,
-                                  size: sizes[i] / 3,
-                                  color: Colors.grey.shade400,
-                                )
-                              : null,
+                          child:
+                              ranking.stagiaire.image.isEmpty
+                                  ? Icon(
+                                    Icons.person,
+                                    size: sizes[i] / 3,
+                                    color: Colors.grey.shade400,
+                                  )
+                                  : null,
                         ),
                         if (isCurrentUser)
                           Positioned(
@@ -426,12 +434,13 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                     const SizedBox(height: 12),
                     // Nom du participant
                     Text(
-                      ranking.stagiaire.prenom,
+                      '${ranking.stagiaire.prenom} ${ranking.stagiaire.nom.toUpperCase()}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: isCurrentUser
-                            ? Theme.of(context).primaryColor
-                            : Theme.of(context).colorScheme.onSurface,
+                        color:
+                            isCurrentUser
+                                ? Theme.of(context).primaryColor
+                                : Theme.of(context).colorScheme.onSurface,
                         fontSize: isSmallScreen ? 13 : 15,
                       ),
                       textAlign: TextAlign.center,
@@ -442,9 +451,14 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                     if (ranking.formateurs.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 2,
+                        ),
                         child: Text(
-                          ranking.formateurs.map((f) => f.prenom).join(', '),
+                          ranking.formateurs
+                              .map((f) => '${f.prenom} ${f.nom.toUpperCase()}')
+                              .join(', '),
                           style: TextStyle(
                             fontSize: isSmallScreen ? 9 : 11,
                             color: Colors.grey.shade600,
@@ -491,7 +505,9 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withOpacity(0.3),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -547,25 +563,28 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
     return Container(
       margin: highlight ? const EdgeInsets.symmetric(vertical: 8) : null,
       decoration: BoxDecoration(
-        color: isCurrentUser
-            ? Theme.of(context).primaryColor.withOpacity(0.08)
-            : Colors.transparent,
+        color:
+            isCurrentUser
+                ? Theme.of(context).primaryColor.withOpacity(0.08)
+                : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
-        border: highlight
-            ? Border.all(
-                color: Theme.of(context).primaryColor.withOpacity(0.3),
-                width: 2,
-              )
-            : null,
-        boxShadow: highlight
-            ? [
-                BoxShadow(
-                  color: Theme.of(context).primaryColor.withOpacity(0.15),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : [],
+        border:
+            highlight
+                ? Border.all(
+                  color: Theme.of(context).primaryColor.withOpacity(0.3),
+                  width: 2,
+                )
+                : null,
+        boxShadow:
+            highlight
+                ? [
+                  BoxShadow(
+                    color: Theme.of(context).primaryColor.withOpacity(0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+                : [],
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -596,7 +615,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
               ),
             ),
             const SizedBox(width: 12),
-            
+
             // Participant et Formateurs
             Expanded(
               flex: 2,
@@ -608,19 +627,21 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                     children: [
                       CircleAvatar(
                         radius: isSmallScreen ? 20 : 24,
-                        backgroundImage: ranking.stagiaire.image.isNotEmpty
-                            ? NetworkImage(
-                                '${AppConstants.baseUrlImg}/${ranking.stagiaire.image}',
-                              )
-                            : null,
+                        backgroundImage:
+                            ranking.stagiaire.image.isNotEmpty
+                                ? NetworkImage(
+                                  '${AppConstants.baseUrlImg}/${ranking.stagiaire.image}',
+                                )
+                                : null,
                         backgroundColor: Colors.white,
-                        child: ranking.stagiaire.image.isEmpty
-                            ? Icon(
-                                Icons.person,
-                                size: isSmallScreen ? 16 : 20,
-                                color: Colors.grey.shade400,
-                              )
-                            : null,
+                        child:
+                            ranking.stagiaire.image.isEmpty
+                                ? Icon(
+                                  Icons.person,
+                                  size: isSmallScreen ? 16 : 20,
+                                  color: Colors.grey.shade400,
+                                )
+                                : null,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -628,13 +649,16 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              ranking.stagiaire.prenom,
+                              '${ranking.stagiaire.prenom} ${ranking.stagiaire.nom.toUpperCase()}',
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: isSmallScreen ? 14 : 16,
-                                color: isCurrentUser
-                                    ? Theme.of(context).primaryColor
-                                    : Theme.of(context).colorScheme.onSurface,
+                                color:
+                                    isCurrentUser
+                                        ? Theme.of(context).primaryColor
+                                        : Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -643,7 +667,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                             if (ranking.formateurs.isNotEmpty) ...[
                               const SizedBox(height: 2),
                               Text(
-                                'Formateur: ${ranking.formateurs.map((f) => f.prenom).join(', ')}',
+                                'Formateur: ${ranking.formateurs.map((f) => '${f.prenom} ${f.nom.toUpperCase()}').join(', ')}',
                                 style: TextStyle(
                                   fontSize: isSmallScreen ? 10 : 12,
                                   color: Colors.grey.shade600,
@@ -720,7 +744,9 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                       Text(
                         'points',
                         style: TextStyle(
-                          color: Theme.of(context).primaryColor.withOpacity(0.8),
+                          color: Theme.of(
+                            context,
+                          ).primaryColor.withOpacity(0.8),
                           fontSize: isSmallScreen ? 10 : 12,
                           fontWeight: FontWeight.w500,
                         ),

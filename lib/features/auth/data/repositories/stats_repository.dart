@@ -55,7 +55,7 @@ class StatsRepository {
     final userRanking = rankings.firstWhere(
           (r) => r.stagiaire.id == userId,
       orElse: () => GlobalRanking(
-        stagiaire: Stagiaire(id: '0', prenom: '', image: ''),
+        stagiaire: Stagiaire(id: '0', prenom: '', nom: '', image: ''),
         formateurs: [],
         totalPoints: 0,
         quizCount: 0,

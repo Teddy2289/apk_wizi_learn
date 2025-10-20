@@ -88,7 +88,7 @@ class GlobalRanking {
 
   static GlobalRanking empty() {
     return GlobalRanking(
-      stagiaire: Stagiaire(id: '0', prenom: 'Inconnu', image: ''),
+      stagiaire: Stagiaire(id: '0', prenom: 'Inconnu', nom: '', image: ''),
       formateurs: [], // Liste vide par défaut
       totalPoints: 0,
       quizCount: 0,
@@ -100,12 +100,14 @@ class GlobalRanking {
 class Formateur {
   final String id;
   final String prenom;
+  final String nom;
   final String telephone;
   final String? image;
 
   Formateur({
     required this.id,
     required this.prenom,
+    required this.nom,
     required this.telephone,
     required this.image,
   });
@@ -113,7 +115,8 @@ class Formateur {
   factory Formateur.fromJson(Map<String, dynamic> json) {
     return Formateur(
       id: QuizUtils.cleanString(json['id'], fallback: '0'),
-      prenom: QuizUtils.cleanString(json['prenom'], fallback: 'Formateur Inconnu'),
+      prenom: QuizUtils.cleanString(json['prenom'], fallback: 'Formateur'),
+      nom: QuizUtils.cleanString(json['nom'], fallback: 'Inconnu'),
       telephone: QuizUtils.cleanString(json['telephone'], fallback: ''),
       image: QuizUtils.cleanString(json['image']),
     );
@@ -122,14 +125,21 @@ class Formateur {
 class Stagiaire {
   final String id;
   final String prenom;
+  final String nom;
   final String image;
 
-  Stagiaire({required this.id, required this.prenom, required this.image});
+  Stagiaire({
+    required this.id,
+    required this.prenom,
+    required this.nom,
+    required this.image,
+  });
 
   factory Stagiaire.fromJson(Map<String, dynamic> json) {
     return Stagiaire(
       id: QuizUtils.cleanString(json['id'], fallback: '0'),
       prenom: QuizUtils.cleanString(json['prenom'], fallback: 'Inconnu'),
+      nom: QuizUtils.cleanString(json['nom'], fallback: ''),
       image: QuizUtils.cleanString(json['image']),
     );
   }
