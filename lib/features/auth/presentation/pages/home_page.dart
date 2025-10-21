@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/contact_model.dart';
 import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
@@ -48,8 +49,14 @@ class _HomePageState extends State<HomePage> {
   bool _hideStreakFor7Days = false;
   // Bienvenue: affichage une seule fois par jour
   bool _showWelcomeBlock = false;
+
+  // États pour le modal de succès d'inscription
+  bool _showInscriptionSuccessModal = false;
+  String _inscriptionSuccessMessage = '';
+  String _inscriptionFormationTitle = '';
+
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
@@ -78,6 +85,31 @@ class _HomePageState extends State<HomePage> {
       ),
       storage: const FlutterSecureStorage(),
     );
+  }
+
+  // Fonction pour afficher le modal de succès d'inscription
+  void _showInscriptionSuccess(String message, String formationTitle) {
+    setState(() {
+      _inscriptionSuccessMessage = message;
+      _inscriptionFormationTitle = formationTitle;
+      _showInscriptionSuccessModal = true;
+    });
+  }
+
+  // Fonction pour fermer le modal de succès d'inscription
+  void _closeInscriptionSuccessModal() {
+    setState(() {
+      _showInscriptionSuccessModal = false;
+      _inscriptionSuccessMessage = '';
+      _inscriptionFormationTitle = '';
+    });
+  }
+
+  // Fonction pour naviguer vers le catalogue après inscription
+  void _navigateToCatalogueAfterInscription() {
+    _closeInscriptionSuccessModal();
+    // Navigation vers le catalogue
+    Navigator.pushReplacementNamed(context, RouteConstants.dashboard);
   }
 
   // Pré-charge la valeur locale pour un affichage instantané au démarrage
@@ -125,8 +157,8 @@ class _HomePageState extends State<HomePage> {
       // 1) Préférer la valeur backend si disponible via un appel léger au profil
       // 2) Repli: SharedPreferences
       int loginStreak = await _fetchLoginStreakFromBackend().catchError((
-        _,
-      ) async {
+          _,
+          ) async {
         try {
           final prefs = await SharedPreferences.getInstance();
           return prefs.getInt('login_streak') ?? 0;
@@ -163,7 +195,7 @@ class _HomePageState extends State<HomePage> {
         // Plusieurs structures possibles: { stagiaire: { login_streak: N } } ou { login_streak: N }
         final stagiaire = data['stagiaire'];
         final dynamic val =
-            stagiaire is Map ? stagiaire['login_streak'] : data['login_streak'];
+        stagiaire is Map ? stagiaire['login_streak'] : data['login_streak'];
         int parsed;
         if (val is int) {
           parsed = val;
@@ -296,62 +328,63 @@ class _HomePageState extends State<HomePage> {
       children: [
         Scaffold(
           body:
-              (_isLoading || _isLoadingUser)
-                  ? const Center(child: CircularProgressIndicator())
-                  : RefreshIndicator(
+          (_isLoading || _isLoadingUser)
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+            onRefresh: _loadData,
+            color: theme.primaryColor,
+            child: CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                if (_showWelcomeBlock)
+                  SliverToBoxAdapter(
+                    child: _buildWelcomeSection(isTablet),
+                  ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(
+                  child: _buildPlatformPresentation(isTablet),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(
+                  child: _buildSectionTitle(
+                    context,
+                    title: 'Formations recommandées',
+                    icon: LucideIcons.bookOpen,
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: RandomFormationsWidget(
+                    formations: _randomFormations,
                     onRefresh: _loadData,
-                    color: theme.primaryColor,
-                    child: CustomScrollView(
-                      slivers: [
-                        const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                        if (_showWelcomeBlock)
-                          SliverToBoxAdapter(
-                            child: _buildWelcomeSection(isTablet),
-                          ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                        SliverToBoxAdapter(
-                          child: _buildPlatformPresentation(isTablet),
-                        ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                        SliverToBoxAdapter(
-                          child: _buildSectionTitle(
-                            context,
-                            title: 'Formations recommandées',
-                            icon: LucideIcons.bookOpen,
-                          ),
-                        ),
-                        SliverToBoxAdapter(
-                          child: RandomFormationsWidget(
-                            formations: _randomFormations,
-                            onRefresh: _loadData,
-                          ),
-                        ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                        SliverToBoxAdapter(
-                          child: _buildSectionWithButton(
-                            context,
-                            title: 'Mes contacts',
-                            icon: LucideIcons.user,
-                            onPressed:
-                                () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (context) =>
-                                            ContactPage(contacts: _contacts),
-                                  ),
-                                ),
-                          ),
-                        ),
-                        _buildContactsList(isTablet),
-                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                        SliverToBoxAdapter(
-                          child: _buildGameModesSection(isTablet),
-                        ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      ],
+                    onInscriptionSuccess: _showInscriptionSuccess, // Passer la callback
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(
+                  child: _buildSectionWithButton(
+                    context,
+                    title: 'Mes contacts',
+                    icon: LucideIcons.user,
+                    onPressed:
+                        () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) =>
+                            ContactPage(contacts: _contacts),
+                      ),
                     ),
                   ),
+                ),
+                _buildContactsList(isTablet),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(
+                  child: _buildGameModesSection(isTablet),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              ],
+            ),
+          ),
         ),
         // Streak full-screen modal (une fois par jour)
         if (_showStreakModal)
@@ -418,7 +451,7 @@ class _HomePageState extends State<HomePage> {
                             onChanged: (val) {
                               if (mounted) {
                                 setState(
-                                  () => _hideStreakFor7Days = val ?? false,
+                                      () => _hideStreakFor7Days = val ?? false,
                                 );
                               }
                             },
@@ -456,12 +489,22 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-        // if (_showHomeTutorial)
-        //   TutorialOverlay(...),
+        // Modal de succès pour l'inscription aux formations
+        if (_showInscriptionSuccessModal)
+          Positioned.fill(
+            child: _InscriptionSuccessModal(
+              isOpen: _showInscriptionSuccessModal,
+              onClose: _closeInscriptionSuccessModal,
+              onContinue: _navigateToCatalogueAfterInscription,
+              message: _inscriptionSuccessMessage,
+              formationTitle: _inscriptionFormationTitle,
+            ),
+          ),
       ],
     );
   }
 
+  // Le reste du code reste inchangé...
   Widget _buildWelcomeSection(bool isTablet) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
@@ -518,10 +561,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSectionTitle(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-  }) {
+      BuildContext context, {
+        required String title,
+        required IconData icon,
+      }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
@@ -557,11 +600,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSectionWithButton(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
+      BuildContext context, {
+        required String title,
+        required IconData icon,
+        required VoidCallback onPressed,
+      }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
@@ -642,71 +685,43 @@ class _HomePageState extends State<HomePage> {
 
     // 1. FORMATEURS
     final formateurs =
-        _contacts
-            .where(
-              (contact) => contact.type.toLowerCase().contains('formateur'),
-            )
-            .toList();
+    _contacts
+        .where(
+          (contact) => contact.type.toLowerCase().contains('formateur'),
+    )
+        .toList();
     orderedContacts.addAll(formateurs);
 
     // 2. PÔLE SAV
     final poleSav =
-        _contacts
-            .where(
-              (contact) =>
-                  contact.type.toLowerCase().contains('sav') ||
-                  contact.type.toLowerCase().contains('pole_sav'),
-            )
-            .toList();
+    _contacts
+        .where(
+          (contact) =>
+      contact.type.toLowerCase().contains('sav') ||
+          contact.type.toLowerCase().contains('pole_sav'),
+    )
+        .toList();
     orderedContacts.addAll(poleSav);
 
     // 3. COMMERCIAUX
     final commerciaux =
-        _contacts
-            .where(
-              (contact) => contact.type.toLowerCase().contains('commercial'),
-            )
-            .toList();
+    _contacts
+        .where(
+          (contact) => contact.type.toLowerCase().contains('commercial'),
+    )
+        .toList();
     orderedContacts.addAll(commerciaux);
 
     // 4. PÔLE RELATION CLIENTS
     final poleRelation =
-        _contacts
-            .where(
-              (contact) =>
-                  contact.type.toLowerCase().contains('relation') ||
-                  contact.type.toLowerCase().contains('pole_relation'),
-            )
-            .toList();
+    _contacts
+        .where(
+          (contact) =>
+      contact.type.toLowerCase().contains('relation') ||
+          contact.type.toLowerCase().contains('pole_relation'),
+    )
+        .toList();
     orderedContacts.addAll(poleRelation);
-
-    // Si vous voulez limiter à un contact par type (comme avant), décommentez ce code :
-    /*
-  final filteredContacts = <String, Contact>{};
-
-  // Prendre le premier contact de chaque type dans l'ordre
-  for (final contact in _contacts) {
-    final type = contact.type.toLowerCase();
-
-    if (type.contains('formateur') && !filteredContacts.containsKey('formateur')) {
-      filteredContacts['formateur'] = contact;
-    } else if ((type.contains('sav') || type.contains('pole_sav')) && !filteredContacts.containsKey('sav')) {
-      filteredContacts['sav'] = contact;
-    } else if (type.contains('commercial') && !filteredContacts.containsKey('commercial')) {
-      filteredContacts['commercial'] = contact;
-    } else if ((type.contains('relation') || type.contains('pole_relation')) && !filteredContacts.containsKey('relation')) {
-      filteredContacts['relation'] = contact;
-    }
-  }
-
-  // Ordonnancement dans l'ordre demandé
-  final orderedContacts = [
-    if (filteredContacts.containsKey('formateur')) filteredContacts['formateur']!,
-    if (filteredContacts.containsKey('sav')) filteredContacts['sav']!,
-    if (filteredContacts.containsKey('commercial')) filteredContacts['commercial']!,
-    if (filteredContacts.containsKey('relation')) filteredContacts['relation']!,
-  ];
-  */
 
     // On phones keep the presentation as a vertical list. On tablets use
     // a horizontal carousel to preserve the sliding principle.
@@ -721,7 +736,7 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
-            (context, index) => Padding(
+                (context, index) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: ContactCard(
                 contact: orderedContacts[index],
@@ -927,7 +942,7 @@ class _HomePageState extends State<HomePage> {
           icon: LucideIcons.target,
           title: 'Quiz Classique',
           description:
-              'Questions à choix multiples pour tester vos connaissances',
+          'Questions à choix multiples pour tester vos connaissances',
           color: Colors.green,
           isTablet: false,
         ),
@@ -959,7 +974,7 @@ class _HomePageState extends State<HomePage> {
             icon: LucideIcons.target,
             title: 'Quiz Classique',
             description:
-                'Questions à choix multiples pour tester vos connaissances',
+            'Questions à choix multiples pour tester vos connaissances',
             color: Colors.green,
             isTablet: true,
           ),
@@ -1040,6 +1055,249 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Composant Modal pour le succès de l'inscription
+class _InscriptionSuccessModal extends StatelessWidget {
+  final bool isOpen;
+  final VoidCallback onClose;
+  final VoidCallback onContinue;
+  final String message;
+  final String formationTitle;
+
+  const _InscriptionSuccessModal({
+    required this.isOpen,
+    required this.onClose,
+    required this.onContinue,
+    required this.message,
+    required this.formationTitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isOpen) return const SizedBox.shrink();
+
+    return Material(
+      color: Colors.black54,
+      child: GestureDetector(
+        onTap: onClose, // Fermer en tapant à l'extérieur
+        child: Center(
+          child: GestureDetector(
+            onTap: () {}, // Empêcher la fermeture en tapant à l'intérieur
+            child: Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              insetPadding: const EdgeInsets.all(20),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header avec icône et titre
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Icône de succès
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF9C4),
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: const Icon(
+                              Icons.check_circle,
+                              size: 24,
+                              color: Color(0xFFF57C00),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Titre
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Demande d\'inscription envoyée avec succès !',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                // Bouton fermeture aligné à droite
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: IconButton(
+                                    icon: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[200],
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.close,
+                                        size: 16,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    onPressed: onClose,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Contenu principal
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Votre demande d\'inscription a été envoyée pour la formation :',
+                            style: TextStyle(
+                              color: Colors.grey[700],
+                              fontSize: 14,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Nom de la formation
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.grey[200]!,
+                              ),
+                            ),
+                            child: Text(
+                              formationTitle,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Message de confirmation
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF8E1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFFFFECB3),
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                const Icon(
+                                  Icons.info_outline,
+                                  size: 20,
+                                  color: Color(0xFFF57C00),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  message,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xFF7D6608),
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Bouton d'action principal
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: onContinue,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 24,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.explore_outlined,
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Continuer à explorer',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Bouton secondaire
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: onClose,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: Text(
+                            'Rester sur cette page',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

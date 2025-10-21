@@ -638,12 +638,13 @@ class _TrainingPageState extends State<TrainingPage> {
 }
 
 String formatPrice(num price) {
-  final formatter = NumberFormat("#,##0", "fr_FR");
-  final formatterWithDecimals = NumberFormat("#,##0.00", "fr_FR");
+  final formatter = NumberFormat("#,##0.##", "fr_FR");
+  // Format classique avec séparateur français (souvent espace insécable)
+  String formatted = formatter.format(price);
+  // Remplace les espaces insécables (\u202F ou \u00A0) par un espace normal " "
+  formatted = formatted.replaceAll(RegExp(r'[\u202F\u00A0]'), ' ');
+  // Double l’espace pour qu’il soit visuellement bien marqué
+  formatted = formatted.replaceAll(' ', ' ');
 
-  if (price % 1 == 0) {
-    return formatter.format(price);
-  } else {
-    return formatterWithDecimals.format(price);
-  }
+  return "$formatted";
 }

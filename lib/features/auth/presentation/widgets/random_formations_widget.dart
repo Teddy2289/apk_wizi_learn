@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
@@ -15,95 +16,96 @@ import 'package:wizi_learn/features/auth/data/repositories/formation_repository.
 class RandomFormationsWidget extends StatelessWidget {
   final List<Formation> formations;
   final VoidCallback? onRefresh;
+  final Function(String message, String formationTitle)? onInscriptionSuccess; // Nouveau callback
 
   const RandomFormationsWidget({
     super.key,
     required this.formations,
     this.onRefresh,
+    this.onInscriptionSuccess, // Ajout du callback
   });
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isWide = screenWidth >= 600; // breakpoint for tablet/large screens
+    final isWide = screenWidth >= 600;
     final cardWidth =
-        screenWidth < 350
-            ? 160.0
-            : (screenWidth < 450 ? 180.0 : screenWidth / 2.5);
+    screenWidth < 350
+        ? 160.0
+        : (screenWidth < 450 ? 180.0 : screenWidth / 2.5);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         formations.isEmpty
             ? Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: Text(
-                  "Aucune formation disponible pour le moment.",
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-            )
-            : SizedBox(
-              child: Builder(
-                builder: (context) {
-                  final screenWidth = MediaQuery.of(context).size.width;
-                  final screenHeight = MediaQuery.of(context).size.height;
-                  // Compute responsive card height based on screen height
-                  double cardHeight;
-                  if (isWide) {
-                    cardHeight = screenHeight * 0.32;
-                    if (cardHeight < 320) cardHeight = 320;
-                    if (cardHeight > 520) cardHeight = 520;
-                  } else {
-                    cardHeight = screenHeight * 0.26;
-                    if (cardHeight < 240) cardHeight = 240;
-                    if (cardHeight > 360) cardHeight = 360;
-                  }
-
-                  final viewportFraction =
-                      isWide
-                          ? 0.45
-                          : (cardWidth / screenWidth).clamp(0.35, 0.75);
-                  final pageController = PageController(
-                    viewportFraction: viewportFraction,
-                  );
-
-                  return SizedBox(
-                    height: cardHeight,
-                    child: PageView.builder(
-                      controller: pageController,
-                      itemCount: formations.length,
-                      padEnds: false,
-                      physics: const BouncingScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        final itemWidth = screenWidth * viewportFraction;
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 8,
-                          ),
-                          child: SizedBox(
-                            width: itemWidth,
-                            height: cardHeight,
-                            child: _FormationCard(
-                              formation: formations[index],
-                              cardWidth: itemWidth,
-                              cardHeight: cardHeight,
-                              // show description on wider/tablet/landscape screens
-                              showDescription:
-                                  isWide ||
-                                  (screenWidth > 480 &&
-                                      screenWidth > screenHeight),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
+          padding: const EdgeInsets.all(16.0),
+          child: Center(
+            child: Text(
+              "Aucune formation disponible pour le moment.",
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
+          ),
+        )
+            : SizedBox(
+          child: Builder(
+            builder: (context) {
+              final screenWidth = MediaQuery.of(context).size.width;
+              final screenHeight = MediaQuery.of(context).size.height;
+              double cardHeight;
+              if (isWide) {
+                cardHeight = screenHeight * 0.32;
+                if (cardHeight < 320) cardHeight = 320;
+                if (cardHeight > 520) cardHeight = 520;
+              } else {
+                cardHeight = screenHeight * 0.26;
+                if (cardHeight < 240) cardHeight = 240;
+                if (cardHeight > 360) cardHeight = 360;
+              }
+
+              final viewportFraction =
+              isWide
+                  ? 0.45
+                  : (cardWidth / screenWidth).clamp(0.35, 0.75);
+              final pageController = PageController(
+                viewportFraction: viewportFraction,
+              );
+
+              return SizedBox(
+                height: cardHeight,
+                child: PageView.builder(
+                  controller: pageController,
+                  itemCount: formations.length,
+                  padEnds: false,
+                  physics: const BouncingScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    final itemWidth = screenWidth * viewportFraction;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
+                      child: SizedBox(
+                        width: itemWidth,
+                        height: cardHeight,
+                        child: _FormationCard(
+                          formation: formations[index],
+                          cardWidth: itemWidth,
+                          cardHeight: cardHeight,
+                          showDescription:
+                          isWide ||
+                              (screenWidth > 480 &&
+                                  screenWidth > screenHeight),
+                          onInscriptionSuccess: onInscriptionSuccess, // Passer le callback
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
       ],
     );
   }
@@ -114,12 +116,14 @@ class _FormationCard extends StatefulWidget {
   final double cardWidth;
   final double cardHeight;
   final bool showDescription;
+  final Function(String message, String formationTitle)? onInscriptionSuccess; // Nouveau callback
 
   const _FormationCard({
     required this.formation,
     required this.cardWidth,
     required this.cardHeight,
     this.showDescription = false,
+    this.onInscriptionSuccess, // Ajout du callback
   });
 
   @override
@@ -148,7 +152,6 @@ class _FormationCardState extends State<_FormationCard> {
       widget.formation.category.categorie,
     );
     final theme = Theme.of(context);
-    // scale header image height based on overall card height
     final imageHeight = math.min(
       math.max(widget.cardHeight * 0.28, 80.0),
       140.0,
@@ -193,35 +196,35 @@ class _FormationCardState extends State<_FormationCard> {
                     ),
                     child: ClipOval(
                       child:
-                          widget.formation.imageUrl != null
-                              ? CachedNetworkImage(
-                                imageUrl:
-                                    '${AppConstants.baseUrlImg}/${widget.formation.imageUrl}',
-                                fit: BoxFit.cover,
-                                placeholder:
-                                    (context, url) => Center(
-                                      child: Icon(
-                                        Icons.school,
-                                        color: categoryColor,
-                                        size: 30,
-                                      ),
-                                    ),
-                                errorWidget:
-                                    (context, url, error) => Center(
-                                      child: Icon(
-                                        Icons.school,
-                                        color: categoryColor,
-                                        size: 30,
-                                      ),
-                                    ),
-                              )
-                              : Center(
-                                child: Icon(
-                                  Icons.school,
-                                  color: categoryColor,
-                                  size: 30,
-                                ),
-                              ),
+                      widget.formation.imageUrl != null
+                          ? CachedNetworkImage(
+                        imageUrl:
+                        '${AppConstants.baseUrlImg}/${widget.formation.imageUrl}',
+                        fit: BoxFit.cover,
+                        placeholder:
+                            (context, url) => Center(
+                          child: Icon(
+                            Icons.school,
+                            color: categoryColor,
+                            size: 30,
+                          ),
+                        ),
+                        errorWidget:
+                            (context, url, error) => Center(
+                          child: Icon(
+                            Icons.school,
+                            color: categoryColor,
+                            size: 30,
+                          ),
+                        ),
+                      )
+                          : Center(
+                        child: Icon(
+                          Icons.school,
+                          color: categoryColor,
+                          size: 30,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -315,7 +318,7 @@ class _FormationCardState extends State<_FormationCard> {
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            '${widget.formation.tarif.toInt()} €',
+                            ('${formatPrice(widget.formation.tarif.toInt())} €'),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.amber.shade800,
@@ -364,26 +367,26 @@ class _FormationCardState extends State<_FormationCard> {
           elevation: 0,
         ),
         child:
-            _isLoading
-                ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-                : Text(
-                  _success
-                      ? "Inscrit"
-                      : _error
-                      ? "Erreur"
-                      : "S'inscrire",
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+        _isLoading
+            ? const SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(
+            color: Colors.white,
+            strokeWidth: 2,
+          ),
+        )
+            : Text(
+          _success
+              ? "Inscrit"
+              : _error
+              ? "Erreur"
+              : "S'inscrire",
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
@@ -437,9 +440,19 @@ class _FormationCardState extends State<_FormationCard> {
       setState(() {
         _success = true;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Inscription réussie !')));
+
+      // Appeler le callback de succès si fourni
+      if (widget.onInscriptionSuccess != null) {
+        widget.onInscriptionSuccess!(
+          'Inscription réussie, mails et notification envoyés.',
+          widget.formation.titre,
+        );
+      } else {
+        // Fallback: afficher le SnackBar si pas de callback
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Inscription réussie !')));
+      }
     } catch (e) {
       setState(() {
         _error = true;
@@ -469,6 +482,17 @@ class _FormationCardState extends State<_FormationCard> {
         context,
       ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
+  }
+
+  String formatPrice(num price) {
+    final formatter = NumberFormat("#,##0.##", "fr_FR");
+    // Format classique avec séparateur français (souvent espace insécable)
+    String formatted = formatter.format(price);
+    // Remplace les espaces insécables (\u202F ou \u00A0) par un espace normal " "
+    formatted = formatted.replaceAll(RegExp(r'[\u202F\u00A0]'), ' ');
+    // Double l'espace pour qu'il soit visuellement bien marqué
+    formatted = formatted.replaceAll(' ', ' ');
+    return "$formatted";
   }
 
   Color _getCategoryColor(String category) {
