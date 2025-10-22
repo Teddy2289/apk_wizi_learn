@@ -12,6 +12,7 @@ import 'package:wizi_learn/features/auth/presentation/components/contact_card.da
 import 'package:wizi_learn/features/auth/presentation/widgets/random_formations_widget.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:wizi_learn/features/home/presentation/widgets/how_to_play.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
