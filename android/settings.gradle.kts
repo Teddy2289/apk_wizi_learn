@@ -18,8 +18,8 @@
 
     plugins {
         id("dev.flutter.flutter-plugin-loader")
-        id("com.android.application") version "8.6.0" apply false
-        id("org.jetbrains.kotlin.android") version "1.9.20" apply false
+        id("com.android.application") version "8.11.0" apply false
+        id("org.jetbrains.kotlin.android") version "2.2.10" apply false
     }
 
     include(":app")
