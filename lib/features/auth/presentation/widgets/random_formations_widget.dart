@@ -100,6 +100,7 @@ class RandomFormationsWidget extends StatelessWidget {
                         ),
                       ),
                     );
+
                   },
                 ),
               );
@@ -444,7 +445,7 @@ class _FormationCardState extends State<_FormationCard> {
       // Appeler le callback de succès si fourni
       if (widget.onInscriptionSuccess != null) {
         widget.onInscriptionSuccess!(
-          'Inscription réussie, mails et notification envoyés.',
+          'Un mail de confirmation vous a été envoyé, votre conseiller va bientôt prendre contact avec vous.',
           widget.formation.titre,
         );
       } else {

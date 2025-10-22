@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
@@ -131,13 +132,31 @@ class FormationRepository {
     }
   }
 
-  Future<void> inscrireAFormation(int formationId) async {
-    final response = await apiClient.post(
-      '/stagiaire/inscription-catalogue-formation',
-      data: {'catalogue_formation_id': formationId},
-    );
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Erreur lors de l\'inscription');
+  Future<Map<String, dynamic>> inscrireAFormation(int formationId) async {
+    try {
+      print('🟡 DEBUG: Appel API vers /stagiaire/inscription-catalogue-formation');
+      print('🟡 DEBUG: Données envoyées: {"catalogue_formation_id": $formationId}');
+
+      final response = await apiClient.post(
+        '/stagiaire/inscription-catalogue-formation', // CORRIGÉ : même route que le backend
+        data: {'catalogue_formation_id': formationId},
+      );
+
+      print('🟢 DEBUG: Réponse reçue - Status: ${response.statusCode}');
+      print('🟢 DEBUG: Données de réponse: ${response.data}');
+
+      // Accepter les codes 200, 201
+      if (response.statusCode! >= 200 && response.statusCode! < 300) {
+        return response.data;
+      } else {
+        throw DioException(
+          requestOptions: response.requestOptions,
+          response: response,
+          type: DioExceptionType.badResponse,
+        );
+      }
+    } catch (e) {
+      print('🔴 DEBUG: Erreur dans inscrireAFormation: $e');
+      rethrow;
     }
-  }
-}
+  }}

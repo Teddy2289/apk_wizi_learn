@@ -46,40 +46,110 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
       _success = false;
       _error = false;
     });
+
     try {
-      // Simuler la réponse de l'API avec un message de succès
-      // Dans un cas réel, vous récupéreriez le message de l'API
-      await _repository.inscrireAFormation(widget.formationId);
-      setState(() {
-        _success = true;
-        _successMessage = 'Inscription réussie, mails et notification envoyés.';
-        _showSuccessModal = true;
-      });
+      print('🟡 DEBUG: Début de l\'inscription pour la formation ${widget.formationId}');
+      print('🟡 DEBUG: Formation ID: ${widget.formationId}');
+
+      // Appel à l'API d'inscription
+      final response = await _repository.inscrireAFormation(widget.formationId);
+
+      // DEBUG: Afficher la réponse de l'API
+      print('🟢 DEBUG: Réponse complète: $response');
+      print('🟢 DEBUG: Type de réponse: ${response.runtimeType}');
+
+      // Vérifier le succès dans la réponse
+      if (response['success'] == true) {
+        setState(() {
+          _success = true;
+          _successMessage = response['message'] ?? 'Inscription réussie, mails et notification envoyés.';
+          _showSuccessModal = true;
+        });
+        print('🟢 DEBUG: Inscription réussie - Modal affiché');
+      } else {
+        throw Exception(response['error'] ?? 'Erreur inconnue lors de l\'inscription');
+      }
+
     } catch (e) {
+      // DEBUG détaillé de l'erreur
+      print('🔴 DEBUG: ERREUR lors de l\'inscription:');
+      print('🔴 DEBUG: Type d\'erreur: ${e.runtimeType}');
+      print('🔴 DEBUG: Message d\'erreur: $e');
+
+      // Si c'est une erreur Dio, afficher plus de détails
+      if (e is DioException) {
+        print('🔴 DEBUG: Erreur Dio détectée:');
+        print('🔴 DEBUG: - Type: ${e.type}');
+        print('🔴 DEBUG: - Message: ${e.message}');
+        print('🔴 DEBUG: - Response: ${e.response}');
+        print('🔴 DEBUG: - Status Code: ${e.response?.statusCode}');
+        print('🔴 DEBUG: - Data: ${e.response?.data}');
+
+        // Extraire le message d'erreur de la réponse
+        final errorData = e.response?.data;
+        if (errorData is Map) {
+          final serverError = errorData['error'] ?? errorData['details'] ?? 'Erreur serveur';
+          final serverMessage = errorData['message'] ?? serverError;
+          _successMessage = serverMessage.toString();
+
+          print('🔴 DEBUG: Message d\'erreur du serveur: $_successMessage');
+        }
+
+        // Analyser le statut HTTP
+        if (e.response != null) {
+          final statusCode = e.response!.statusCode;
+          print('🔴 DEBUG: Status Code: $statusCode');
+
+          // Messages d'erreur spécifiques selon le statut
+          if (statusCode == 401) {
+            _successMessage = 'Erreur d\'authentification. Veuillez vous reconnecter.';
+          } else if (statusCode == 403) {
+            _successMessage = 'Accès refusé. Vous n\'avez pas les permissions nécessaires.';
+          } else if (statusCode == 404) {
+            _successMessage = 'Formation non trouvée.';
+          } else if (statusCode == 409) {
+            _successMessage = 'Vous êtes déjà inscrit à cette formation.';
+          } else if (statusCode == 422) {
+            _successMessage = 'Données invalides. Veuillez vérifier les informations.';
+          } else if (statusCode! >= 500) {
+            _successMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
+          }
+        }
+      } else if (e is Exception) {
+        _successMessage = e.toString();
+      }
+
       setState(() {
         _error = true;
       });
+
+      // Afficher un SnackBar avec le message d'erreur détaillé
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Erreur lors de l\'inscription. Veuillez réessayer.'),
+        SnackBar(
+          content: Text(
+            _successMessage.isNotEmpty
+                ? _successMessage
+                : 'Erreur lors de l\'inscription. Veuillez réessayer.',
+          ),
+          backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 5),
         ),
       );
     } finally {
       setState(() {
         _isLoading = false;
       });
+      print('🟡 DEBUG: Chargement terminé - isLoading: $_isLoading');
     }
   }
-
   void _closeSuccessModal() {
     setState(() {
       _showSuccessModal = false;
       _successMessage = '';
     });
-    // Optionnel : navigation vers le catalogue
-    // Navigator.pushReplacementNamed(context, '/catalogue');
   }
+
   void _navigateToCatalogue() {
     _closeSuccessModal();
     Navigator.pushReplacement(
@@ -87,7 +157,6 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
       MaterialPageRoute(builder: (context) => TrainingPage()),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -117,11 +186,14 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
           FutureBuilder<Formation>(
             future: _futureFormation,
             builder: (context, snapshot) {
+              // DEBUG du chargement des données de formation
               if (snapshot.connectionState == ConnectionState.waiting) {
+                print('🟡 DEBUG: Chargement des détails de la formation...');
                 return const Center(child: CircularProgressIndicator());
               }
 
               if (snapshot.hasError) {
+                print('🔴 DEBUG: Erreur lors du chargement des détails: ${snapshot.error}');
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -144,6 +216,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                       const SizedBox(height: 24),
                       ElevatedButton(
                         onPressed: () {
+                          print('🟡 DEBUG: Réessai du chargement des détails');
                           setState(() {
                             _futureFormation = _repository.getFormationDetail(
                               widget.formationId,
@@ -158,6 +231,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
               }
 
               if (!snapshot.hasData) {
+                print('🔴 DEBUG: Aucune donnée de formation disponible');
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -176,11 +250,14 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                   ),
                 );
               }
+
               final formation = snapshot.data!;
               _currentFormationTitle = formation.titre;
               final categoryColor = _getCategoryColor(
                 formation.category.categorie,
               );
+
+              print('🟢 DEBUG: Formation chargée - ${formation.titre}');
 
               return CustomScrollView(
                 slivers: [
@@ -196,30 +273,30 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                         tag: 'formation-${formation.id}',
                         child: CachedNetworkImage(
                           imageUrl:
-                              '${AppConstants.baseUrlImg}/${formation.imageUrl}',
+                          '${AppConstants.baseUrlImg}/${formation.imageUrl}',
                           fit: BoxFit.fitHeight,
                           placeholder:
                               (context, url) => Container(
+                            color: categoryColor,
+                            child: Center(
+                              child: Icon(
+                                Icons.school,
+                                size: 80,
                                 color: categoryColor,
-                                child: Center(
-                                  child: Icon(
-                                    Icons.school,
-                                    size: 80,
-                                    color: categoryColor,
-                                  ),
-                                ),
                               ),
+                            ),
+                          ),
                           errorWidget:
                               (context, url, error) => Container(
-                                color: categoryColor.withOpacity(0.1),
-                                child: Center(
-                                  child: Icon(
-                                    Icons.school,
-                                    size: 80,
-                                    color: categoryColor,
-                                  ),
-                                ),
+                            color: categoryColor.withOpacity(0.1),
+                            child: Center(
+                              child: Icon(
+                                Icons.school,
+                                size: 80,
+                                color: categoryColor,
                               ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -244,12 +321,12 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                       formation.titre,
                                       style: theme.textTheme.headlineSmall
                                           ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                isDarkMode
-                                                    ? Colors.white
-                                                    : Colors.black,
-                                          ),
+                                        fontWeight: FontWeight.bold,
+                                        color:
+                                        isDarkMode
+                                            ? Colors.white
+                                            : Colors.black,
+                                      ),
                                     ),
                                     const SizedBox(height: 8),
                                     Chip(
@@ -337,9 +414,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 height: 1.6,
                                 color:
-                                    isDarkMode
-                                        ? Colors.grey[300]
-                                        : Colors.grey[800],
+                                isDarkMode
+                                    ? Colors.grey[300]
+                                    : Colors.grey[800],
                               ),
                             ),
                           ),
@@ -354,9 +431,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                 style: theme.textTheme.bodyLarge?.copyWith(
                                   height: 1.6,
                                   color:
-                                      isDarkMode
-                                          ? Colors.grey[300]
-                                          : Colors.grey[800],
+                                  isDarkMode
+                                      ? Colors.grey[300]
+                                      : Colors.grey[800],
                                 ),
                               ),
                             ),
@@ -371,9 +448,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                   style: theme.textTheme.bodyLarge?.copyWith(
                                     height: 1.6,
                                     color:
-                                        isDarkMode
-                                            ? Colors.grey[300]
-                                            : Colors.grey[800],
+                                    isDarkMode
+                                        ? Colors.grey[300]
+                                        : Colors.grey[800],
                                   ),
                                 ),
                                 const SizedBox(height: 16),
@@ -397,11 +474,14 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                     onPressed: () async {
                                       final pdfUrl =
                                           '${AppConstants.baseUrlImg}/${formation.cursusPdf}';
+                                      print('🟡 DEBUG: Tentative d\'ouverture du PDF: $pdfUrl');
                                       if (await canLaunchUrl(
                                         Uri.parse(pdfUrl),
                                       )) {
                                         await launchUrl(Uri.parse(pdfUrl));
+                                        print('🟢 DEBUG: PDF ouvert avec succès');
                                       } else {
+                                        print('🔴 DEBUG: Impossible d\'ouvrir le PDF');
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
@@ -421,7 +501,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
 
                           const SizedBox(height: 40),
 
-                          // Bouton d'inscription
+                          // Bouton d'inscription avec état de debug
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
@@ -437,48 +517,81 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                 shadowColor: categoryColor.withOpacity(0.3),
                               ),
                               onPressed:
-                                  _isLoading ? null : _inscrireAFormation,
+                              _isLoading ? null : _inscrireAFormation,
                               child:
-                                  _isLoading
-                                      ? const SizedBox(
-                                        height: 24,
-                                        width: 24,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                      : Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          if (_success)
-                                            const Icon(
-                                              Icons.check_circle,
-                                              size: 20,
-                                            ),
-                                          if (_error)
-                                            const Icon(
-                                              Icons.error_outline,
-                                              size: 20,
-                                            ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            _success
-                                                ? "Demande d'inscription envoyée"
-                                                : _error
-                                                ? "Erreur, réessayer"
-                                                : "S'inscrire maintenant",
-                                            style: theme.textTheme.titleMedium
-                                                ?.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.white,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
+                              _isLoading
+                                  ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                                  : Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment.center,
+                                children: [
+                                  if (_success)
+                                    const Icon(
+                                      Icons.check_circle,
+                                      size: 20,
+                                    ),
+                                  if (_error)
+                                    const Icon(
+                                      Icons.error_outline,
+                                      size: 20,
+                                    ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _success
+                                        ? "Demande d'inscription envoyée"
+                                        : _error
+                                        ? "Erreur, réessayer"
+                                        : "S'inscrire maintenant",
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
+
+                          // Section de debug (optionnelle - à enlever en production)
+                          if (_error) ...[
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.red),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Informations de débogage:',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _successMessage,
+                                    style: const TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
 
                           const SizedBox(height: 20),
                         ],
@@ -817,6 +930,7 @@ class _SuccessModal extends StatelessWidget {
     );
   }
 }
+
 String formatPrice(num price) {
   final formatter = NumberFormat("#,##0.##", "fr_FR");
   // Format classique avec séparateur français (souvent espace insécable)

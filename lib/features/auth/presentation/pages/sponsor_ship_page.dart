@@ -257,7 +257,7 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Parlez de nos formations à votre entourage (famille, amis, collègues et connaissances) et gagnez 50 €',
+                  "Parrainez et gagnez une carte cadeau de 50 € pour toute formation validée grâce à vous !",
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFFFEB823),
@@ -265,7 +265,7 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  "Parrainez et gagnez une carte cadeau de 50€ pour toute formation validée grâce à vous !",
+                  'Parlez de nos formations à votre entourage (famille, amis, collègues et connaissances) et gagnez 50 €',
                   style: theme.textTheme.bodyLarge,
                 ),
                 const SizedBox(height: 30),
@@ -401,7 +401,7 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
             children: [
               Icon(
                 Icons.check_circle,
-                color: Colors.green,
+                color:  Color(0xFFFEB823),
                 size: 64,
               ),
               const SizedBox(height: 16),
@@ -409,7 +409,7 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
                 'Demande envoyée avec succès !',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.green,
+                  color: Color(0xFFFEB823),
                 ),
                 textAlign: TextAlign.center,
               ),
