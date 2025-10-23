@@ -163,7 +163,7 @@ class _FormationCardState extends State<_FormationCard> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       child: Card(
-        elevation: 4,
+        elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -236,7 +236,7 @@ class _FormationCardState extends State<_FormationCard> {
               // Contenu de la carte
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [

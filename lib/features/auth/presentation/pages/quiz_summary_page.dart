@@ -52,7 +52,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
   Timer? _countdownTimer;
 
   // MODIFICATION: 30 secondes pour regarder les résultats
-  int _viewResultsSeconds = 10;
+  int _viewResultsSeconds = 30;
   // MODIFICATION: 5 secondes pour le prochain quiz
   int _nextQuizSeconds = 5;
 
@@ -310,14 +310,14 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Temps pour consulter vos résultats',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.blue.shade800,
-                      fontSize: 14,
-                    ),
-                  ),
+                  // Text(
+                  //   'Temps pour consulter vos résultats',
+                  //   style: TextStyle(
+                  //     fontWeight: FontWeight.w600,
+                  //     color: Colors.blue.shade800,
+                  //     fontSize: 14,
+                  //   ),
+                  // ),
                   Text(
                     'Prochain quiz dans ${_viewResultsSeconds}s',
                     style: TextStyle(color: Colors.blue.shade600, fontSize: 13),
