@@ -1679,6 +1679,8 @@ class _QuizPageState extends State<QuizPage> {
         return const Color(0xFFFFC533);
       case 'création':
         return const Color(0xFF9392BE);
+      case 'IA':
+        return const Color(0xFFABDA96);
       default:
         return theme.colorScheme.primary;
     }

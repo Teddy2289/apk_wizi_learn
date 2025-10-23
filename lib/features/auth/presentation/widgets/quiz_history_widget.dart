@@ -126,7 +126,9 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
                                       ? theme.colorScheme.primary.withOpacity(
                                         0.1,
                                       )
-                                      : theme.colorScheme.surfaceContainerHighest
+                                      : theme
+                                          .colorScheme
+                                          .surfaceContainerHighest
                                           .withOpacity(0.3),
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -327,8 +329,7 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
                         color: _getLevelColor(history.quiz.niveau),
                       ),
                     ),
-                  if (history.quiz.niveau.isNotEmpty)
-                    const SizedBox(width: 8),
+                  if (history.quiz.niveau.isNotEmpty) const SizedBox(width: 8),
                   // Formation
                   if (history.quiz.formation.titre.isNotEmpty)
                     Expanded(
@@ -356,7 +357,8 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
     bool isSmallScreen, {
     Color? color,
   }) {
-    final chipColor = color ?? Theme.of(context).colorScheme.surfaceContainerHighest;
+    final chipColor =
+        color ?? Theme.of(context).colorScheme.surfaceContainerHighest;
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -416,9 +418,10 @@ class _QuizHistoryWidgetState extends State<QuizHistoryWidget> {
         return const Color(0xFFA55E6E);
       case 'internet':
         return const Color(0xFFFFC533);
-      case 'création':
       case 'creation':
         return const Color(0xFF9392BE);
+      case 'IA':
+        return const Color(0xFFABDA96);
       default:
         return theme.colorScheme.primary;
     }

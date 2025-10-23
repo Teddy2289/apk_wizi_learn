@@ -423,6 +423,8 @@ class _TrainingPageState extends State<TrainingPage> {
         return const Color(0xFFFFC533);
       case 'Création':
         return const Color(0xFF9392BE);
+      case 'IA':
+        return const Color(0xFFABDA96);
       default:
         return Colors.grey;
     }

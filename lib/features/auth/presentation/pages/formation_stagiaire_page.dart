@@ -44,6 +44,11 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
       'color': const Color(0xFFFFC533),
       'lightColor': const Color(0xFFFFF8E1),
     },
+    'IA': {
+      'icon': Icons.psychology,
+      'color': const Color(0xFFABDA96),
+      'lightColor': const Color.fromARGB(255, 241, 255, 225),
+    },
     'Création': {
       'icon': Icons.brush,
       'color': const Color(0xFF9392BE),

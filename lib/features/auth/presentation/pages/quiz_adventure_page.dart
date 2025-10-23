@@ -655,6 +655,9 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                         case 'internet':
                           categoryColor = const Color(0xFFFFC533);
                           break;
+                        case 'IA':
+                          categoryColor = const Color(0xFFABDA96);
+                          break;
                         case 'création':
                         case 'creation':
                           categoryColor = const Color(0xFF9392BE);

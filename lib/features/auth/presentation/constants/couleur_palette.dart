@@ -18,6 +18,9 @@ class AppColors {
   static const Color success = Color(0xFF10B981);
   static const Color error = Color(0xFFD32F2F);
 
+  // Category colors (web uses --cat-ia / Tailwind `ia`)
+  static const Color ia = Color(0xFFABDA96); // IA category color
+
   // On colors
   static const Color onPrimary = Color(0xFF000000);
   static const Color onSecondary = Color(0xFFFFFFFF);
