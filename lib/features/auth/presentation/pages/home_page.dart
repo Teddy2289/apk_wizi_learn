@@ -346,6 +346,51 @@ class _HomePageState extends State<HomePage> {
                           child: _buildPlatformPresentation(isTablet),
                         ),
                         const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        // Small helper row: 'Comment jouer' placed just above formations
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: kYellow,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    LucideIcons.gamepad2,
+                                    color: kOrangeDark,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Comment jouer',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: kBrown,
+                                    ),
+                                  ),
+                                ),
+                                // No click needed: HowToPlay will be rendered inline below
+                                const SizedBox(width: 8),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Inline HowToPlay section (affiché directement, pas besoin de cliquer)
+                        SliverToBoxAdapter(child: const HowToPlay()),
+                        const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
                         SliverToBoxAdapter(
                           child: _buildSectionTitle(
                             context,
@@ -383,9 +428,9 @@ class _HomePageState extends State<HomePage> {
                         SliverToBoxAdapter(
                           child: _buildGameModesSection(isTablet),
                         ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                        const SliverToBoxAdapter(child: HowToPlay()),
-                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        // const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        // const SliverToBoxAdapter(child: HowToPlay()),
+                        // const SliverToBoxAdapter(child: SizedBox(height: 24)),
                       ],
                     ),
                   ),
@@ -939,7 +984,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildMobileGameModes() {
+   Widget _buildMobileGameModes() {
     return Column(
       children: [
         _buildGameModeCard(
@@ -947,7 +992,7 @@ class _HomePageState extends State<HomePage> {
           title: 'Quiz Classique',
           description:
               'Questions à choix multiples pour tester vos connaissances',
-          color: Colors.green,
+          color: kOrange,
           isTablet: false,
         ),
         const SizedBox(height: 12),
@@ -955,7 +1000,7 @@ class _HomePageState extends State<HomePage> {
           icon: LucideIcons.crown,
           title: 'Quiz Aventure',
           description: 'Parcours gamifié avec récompenses et niveaux',
-          color: Colors.purple,
+          color: kYellow,
           isTablet: false,
         ),
         const SizedBox(height: 12),
@@ -963,7 +1008,7 @@ class _HomePageState extends State<HomePage> {
           icon: LucideIcons.clock,
           title: 'Défi Rapide',
           description: 'Quiz chronométrés pour des sessions express',
-          color: Colors.red,
+          color: kOrangeDark,
           isTablet: false,
         ),
       ],
@@ -979,7 +1024,7 @@ class _HomePageState extends State<HomePage> {
             title: 'Quiz Classique',
             description:
                 'Questions à choix multiples pour tester vos connaissances',
-            color: Colors.green,
+            color: kOrange,
             isTablet: true,
           ),
         ),
@@ -989,7 +1034,7 @@ class _HomePageState extends State<HomePage> {
             icon: LucideIcons.crown,
             title: 'Quiz Aventure',
             description: 'Parcours gamifié avec récompenses et niveaux',
-            color: Colors.purple,
+            color: kYellow,
             isTablet: true,
           ),
         ),
@@ -999,7 +1044,7 @@ class _HomePageState extends State<HomePage> {
             icon: LucideIcons.clock,
             title: 'Défi Rapide',
             description: 'Quiz chronométrés pour des sessions express',
-            color: Colors.red,
+            color: kOrangeDark,
             isTablet: true,
           ),
         ),
