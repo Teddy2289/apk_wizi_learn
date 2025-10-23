@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class HowToPlay extends StatelessWidget {
   const HowToPlay({super.key});
@@ -131,7 +131,7 @@ class _HowToPlayStep extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.semibold,
+                  fontWeight: FontWeight.w600,
                 ),
             textAlign: TextAlign.center,
           ),
