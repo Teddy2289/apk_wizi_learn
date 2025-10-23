@@ -471,142 +471,6 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                               ),
                             ),
 
-                          // Section Programme (prefer HTML from API, fallback to PDF)
-                          if (formation.programme != null &&
-                              formation.programme!.isNotEmpty)
-                            _buildSection(
-                              title: 'Programme détaillé',
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Html(
-                                    data: formation.programme!,
-                                    style: {
-                                      "body": Style(
-                                        fontSize: FontSize(16.0),
-                                        lineHeight: LineHeight(1.6),
-                                        color:
-                                            isDarkMode
-                                                ? Colors.grey[300]
-                                                : Colors.grey[800],
-                                      ),
-                                    },
-                                  ),
-                                  const SizedBox(height: 12),
-                                  if (formation.cursusPdf != null &&
-                                      formation.cursusPdf!.isNotEmpty)
-                                    OutlinedButton.icon(
-                                      icon: const Icon(Icons.picture_as_pdf),
-                                      label: const Text(
-                                        'Télécharger le programme',
-                                      ),
-                                      style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 24,
-                                          vertical: 12,
-                                        ),
-                                        side: BorderSide(color: categoryColor),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                      ),
-                                      onPressed: () async {
-                                        final pdfUrl =
-                                            '${AppConstants.baseUrlImg}/${formation.cursusPdf}';
-                                        if (await canLaunchUrl(
-                                          Uri.parse(pdfUrl),
-                                        )) {
-                                          await launchUrl(Uri.parse(pdfUrl));
-                                        } else {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Impossible d\'ouvrir le PDF.',
-                                              ),
-                                              behavior:
-                                                  SnackBarBehavior.floating,
-                                            ),
-                                          );
-                                        }
-                                      },
-                                    ),
-                                ],
-                              ),
-                            )
-                          else
-                            _buildSection(
-                              title: 'Programme détaillé',
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Cette formation couvre tous les aspects essentiels pour maîtriser le sujet. Le programme complet est disponible au format PDF.',
-                                    style: theme.textTheme.bodyLarge?.copyWith(
-                                      height: 1.6,
-                                      color:
-                                          isDarkMode
-                                              ? Colors.grey[300]
-                                              : Colors.grey[800],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  if (formation.cursusPdf != null &&
-                                      formation.cursusPdf!.isNotEmpty)
-                                    OutlinedButton.icon(
-                                      icon: const Icon(Icons.picture_as_pdf),
-                                      label: const Text(
-                                        'Télécharger le programme',
-                                      ),
-                                      style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 24,
-                                          vertical: 16,
-                                        ),
-                                        side: BorderSide(color: categoryColor),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                      ),
-                                      onPressed: () async {
-                                        final pdfUrl =
-                                            '${AppConstants.baseUrlImg}/${formation.cursusPdf}';
-                                        print(
-                                          '🟡 DEBUG: Tentative d\'ouverture du PDF: $pdfUrl',
-                                        );
-                                        if (await canLaunchUrl(
-                                          Uri.parse(pdfUrl),
-                                        )) {
-                                          await launchUrl(Uri.parse(pdfUrl));
-                                          print(
-                                            '🟢 DEBUG: PDF ouvert avec succès',
-                                          );
-                                        } else {
-                                          print(
-                                            '🔴 DEBUG: Impossible d\'ouvrir le PDF',
-                                          );
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Impossible d\'ouvrir le PDF.',
-                                              ),
-                                              behavior:
-                                                  SnackBarBehavior.floating,
-                                            ),
-                                          );
-                                        }
-                                      },
-                                    ),
-                                ],
-                              ),
-                            ),
-
                           // Modalités
                           if (formation.modalites != null &&
                               formation.modalites!.isNotEmpty)
@@ -754,45 +618,178 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                           ),
 
                           // Formateur(s)
-                          if (formation.formateur != null ||
-                              (formation.stagiaires != null &&
-                                  formation.stagiaires!.isNotEmpty))
+                          // if (formation.formateur != null ||
+                          //     (formation.stagiaires != null &&
+                          //         formation.stagiaires!.isNotEmpty))
+                          //   _buildSection(
+                          //     title: 'Équipe pédagogique',
+                          //     child: Column(
+                          //       crossAxisAlignment: CrossAxisAlignment.start,
+                          //       children: [
+                          //         if (formation.formateur != null)
+                          //           ListTile(
+                          //             contentPadding: EdgeInsets.zero,
+                          //             leading: CircleAvatar(
+                          //               backgroundColor: categoryColor
+                          //                   .withOpacity(0.15),
+                          //               child: Icon(
+                          //                 Icons.person,
+                          //                 color: categoryColor,
+                          //               ),
+                          //             ),
+                          //             title: Text(
+                          //               '${formation.formateur?.prenom ?? ''} ${formation.formateur?.nom ?? ''}',
+                          //             ),
+                          //             subtitle: Text(
+                          //               '${formation.formateur?.telephone ?? ''}',
+                          //             ),
+                          //           ),
+                          //         const SizedBox(height: 8),
+                          //         if (formation.stagiaires != null &&
+                          //             formation.stagiaires!.isNotEmpty)
+                          //           Text(
+                          //             'Participants inscrits: ${formation.stagiaires!.length}',
+                          //             style: theme.textTheme.bodyMedium,
+                          //           ),
+                          //       ],
+                          //     ),
+                          //   ),
+                          const SizedBox(height: 40),
+                          // Section Programme (prefer HTML from API, fallback to PDF)
+                          if (formation.programme != null &&
+                              formation.programme!.isNotEmpty)
                             _buildSection(
-                              title: 'Équipe pédagogique',
+                              title: 'Programme détaillé',
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  if (formation.formateur != null)
-                                    ListTile(
-                                      contentPadding: EdgeInsets.zero,
-                                      leading: CircleAvatar(
-                                        backgroundColor: categoryColor
-                                            .withOpacity(0.15),
-                                        child: Icon(
-                                          Icons.person,
-                                          color: categoryColor,
+                                  Html(
+                                    data: formation.programme!,
+                                    style: {
+                                      "body": Style(
+                                        fontSize: FontSize(16.0),
+                                        lineHeight: LineHeight(1.6),
+                                        color:
+                                            isDarkMode
+                                                ? Colors.grey[300]
+                                                : Colors.grey[800],
+                                      ),
+                                    },
+                                  ),
+                                  const SizedBox(height: 12),
+                                  if (formation.cursusPdf != null &&
+                                      formation.cursusPdf!.isNotEmpty)
+                                    OutlinedButton.icon(
+                                      icon: const Icon(Icons.picture_as_pdf),
+                                      label: const Text(
+                                        'Télécharger le programme',
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                          vertical: 12,
+                                        ),
+                                        side: BorderSide(color: categoryColor),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                         ),
                                       ),
-                                      title: Text(
-                                        '${formation.formateur?.prenom ?? ''} ${formation.formateur?.nom ?? ''}',
-                                      ),
-                                      subtitle: Text(
-                                        '${formation.formateur?.telephone ?? ''}',
-                                      ),
+                                      onPressed: () async {
+                                        final pdfUrl =
+                                            '${AppConstants.baseUrlImg}/${formation.cursusPdf}';
+                                        if (await canLaunchUrl(
+                                          Uri.parse(pdfUrl),
+                                        )) {
+                                          await launchUrl(Uri.parse(pdfUrl));
+                                        } else {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Impossible d\'ouvrir le PDF.',
+                                              ),
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                            ),
+                                          );
+                                        }
+                                      },
                                     ),
-                                  const SizedBox(height: 8),
-                                  if (formation.stagiaires != null &&
-                                      formation.stagiaires!.isNotEmpty)
-                                    Text(
-                                      'Participants inscrits: ${formation.stagiaires!.length}',
-                                      style: theme.textTheme.bodyMedium,
+                                ],
+                              ),
+                            )
+                          else
+                            _buildSection(
+                              title: 'Programme détaillé',
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'Cette formation couvre tous les aspects essentiels pour maîtriser le sujet. Le programme complet est disponible au format PDF.',
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      height: 1.6,
+                                      color:
+                                          isDarkMode
+                                              ? Colors.grey[300]
+                                              : Colors.grey[800],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  if (formation.cursusPdf != null &&
+                                      formation.cursusPdf!.isNotEmpty)
+                                    OutlinedButton.icon(
+                                      icon: const Icon(Icons.picture_as_pdf),
+                                      label: const Text(
+                                        'Télécharger le programme',
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                          vertical: 16,
+                                        ),
+                                        side: BorderSide(color: categoryColor),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () async {
+                                        final pdfUrl =
+                                            '${AppConstants.baseUrlImg}/${formation.cursusPdf}';
+                                        print(
+                                          '🟡 DEBUG: Tentative d\'ouverture du PDF: $pdfUrl',
+                                        );
+                                        if (await canLaunchUrl(
+                                          Uri.parse(pdfUrl),
+                                        )) {
+                                          await launchUrl(Uri.parse(pdfUrl));
+                                          print(
+                                            '🟢 DEBUG: PDF ouvert avec succès',
+                                          );
+                                        } else {
+                                          print(
+                                            '🔴 DEBUG: Impossible d\'ouvrir le PDF',
+                                          );
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Impossible d\'ouvrir le PDF.',
+                                              ),
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                            ),
+                                          );
+                                        }
+                                      },
                                     ),
                                 ],
                               ),
                             ),
-
-                          const SizedBox(height: 40),
-
                           // Bouton d'inscription avec état de debug
                           SizedBox(
                             width: double.infinity,

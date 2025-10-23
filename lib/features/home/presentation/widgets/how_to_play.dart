@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+const Color kYellowLight = Color(0xFFFFF9C4);
+const Color kYellow = Color(0xFFFFEB3B);
+const Color kOrange = Color(0xFFFF9800);
+const Color kOrangeDark = Color(0xFFF57C00);
+const Color kBrown = Color(0xFF8D6E63);
+
 class HowToPlay extends StatelessWidget {
   const HowToPlay({super.key});
 
@@ -9,20 +15,20 @@ class HowToPlay extends StatelessWidget {
     final steps = [
       {
         'icon': LucideIcons.gamepad2,
-        'color': Colors.orange.shade500,
+        'color': kOrange,
         'title': 'Choisissez un quiz',
         'description': 'Sélectionnez un quiz à découvrir.',
       },
       {
         'icon': LucideIcons.helpCircle,
-        'color': Colors.blue.shade500,
+        'color': kYellow,
         'title': 'Répondez aux questions',
         'description':
             'Testez vos connaissances en répondant à une série de questions.',
       },
       {
         'icon': LucideIcons.trophy,
-        'color': Colors.yellow.shade500,
+        'color': kOrangeDark,
         'title': 'Gagnez des points',
         'description':
             'Accumulez des points à chaque bonne réponse et montez dans le classement.',
@@ -49,38 +55,36 @@ class HowToPlay extends StatelessWidget {
                 // Desktop layout
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children:
-                      steps.map((step) {
-                        return Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8.0,
-                            ),
-                            child: _HowToPlayStep(
-                              icon: step['icon'] as IconData,
-                              color: step['color'] as Color,
-                              title: step['title'] as String,
-                              description: step['description'] as String,
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                  children: steps.map((step) {
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8.0,
+                        ),
+                        child: _HowToPlayStep(
+                          icon: step['icon'] as IconData,
+                          color: step['color'] as Color,
+                          title: step['title'] as String,
+                          description: step['description'] as String,
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 );
               } else {
                 // Mobile layout
                 return Column(
-                  children:
-                      steps.map((step) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: _HowToPlayStep(
-                            icon: step['icon'] as IconData,
-                            color: step['color'] as Color,
-                            title: step['title'] as String,
-                            description: step['description'] as String,
-                          ),
-                        );
-                      }).toList(),
+                  children: steps.map((step) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: _HowToPlayStep(
+                        icon: step['icon'] as IconData,
+                        color: step['color'] as Color,
+                        title: step['title'] as String,
+                        description: step['description'] as String,
+                      ),
+                    );
+                  }).toList(),
                 );
               }
             },
@@ -106,27 +110,19 @@ class _HowToPlayStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: isDarkMode ? Colors.grey[800] : Colors.white,
+        color: kYellowLight.withOpacity(0.7),
         borderRadius: BorderRadius.circular(12.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: kYellow.withOpacity(0.3), width: 0.5),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(12.0),
             decoration: BoxDecoration(
-              color: isDarkMode ? Colors.grey[700] : Colors.grey[100],
+              color: color.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 32.0, color: color),
@@ -136,15 +132,15 @@ class _HowToPlayStep extends StatelessWidget {
             title,
             style: Theme.of(
               context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600, color: kBrown),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8.0),
           Text(
             description,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: isDarkMode ? Colors.grey[300] : Colors.grey[600],
-            ),
+                  color: kBrown.withOpacity(0.7),
+                ),
             textAlign: TextAlign.center,
           ),
         ],
