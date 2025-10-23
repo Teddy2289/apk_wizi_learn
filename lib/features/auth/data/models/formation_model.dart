@@ -19,16 +19,29 @@ class Formation {
     if (value == null) return 0;
     return double.tryParse(value.toString()) ?? 0;
   }
+
   final int id;
   final String titre;
   final String description;
   final String? prerequis;
   final String? imageUrl;
   final String? cursusPdf;
+  final String? cursusPdfUrl;
   final double tarif;
   final String? certification;
   final int statut;
   final String duree;
+  final String? objectifs;
+  final String? programme;
+  final String? modalites;
+  final String? modalitesAccompagnement;
+  final String? moyensPedagogiques;
+  final String? modalitesSuivi;
+  final String? evaluation;
+  final String? lieu;
+  final String? niveau;
+  final String? publicCible;
+  final int? nombreParticipants;
   final FormationCategory category;
   final List<StagiaireModel>? stagiaires;
   final FormateurModel? formateur;
@@ -52,6 +65,18 @@ class Formation {
     this.formateur,
     this.dateDebut,
     this.dateFin,
+    this.objectifs,
+    this.programme,
+    this.modalites,
+    this.modalitesAccompagnement,
+    this.moyensPedagogiques,
+    this.modalitesSuivi,
+    this.evaluation,
+    this.lieu,
+    this.niveau,
+    this.publicCible,
+    this.nombreParticipants,
+    this.cursusPdfUrl,
   });
   factory Formation.fromJson(Map<String, dynamic> json) {
     // Sécuriser accès aux sous-objets
@@ -61,31 +86,54 @@ class Formation {
     return Formation(
       id: json['id'] is int ? json['id'] : 0,
       titre: _cleanString(json['titre'], fallback: 'Titre inconnu'),
-      description: _cleanString(json['description'], fallback: 'Description non disponible'),
+      description: _cleanString(
+        json['description'],
+        fallback: 'Description non disponible',
+      ),
       prerequis: _cleanNullableString(json['prerequis']),
       imageUrl: _cleanNullableString(json['image_url']),
       cursusPdf: _cleanNullableString(json['cursus_pdf']),
+      cursusPdfUrl: _cleanNullableString(
+        json['cursusPdfUrl'] ?? json['cursusPdfUrl'] ?? json['cursus_pdf_url'],
+      ),
       tarif: _parseDouble(json['tarif']),
       certification: _cleanNullableString(json['certification']),
       statut: json['statut'] is int ? json['statut'] : 0,
       duree: _cleanString(json['duree'], fallback: '0'),
+      objectifs: _cleanNullableString(json['objectifs']),
+      programme: _cleanNullableString(json['programme']),
+      modalites: _cleanNullableString(json['modalites']),
+      modalitesAccompagnement: _cleanNullableString(
+        json['modalites_accompagnement'],
+      ),
+      moyensPedagogiques: _cleanNullableString(json['moyens_pedagogiques']),
+      modalitesSuivi: _cleanNullableString(json['modalites_suivi']),
+      evaluation: _cleanNullableString(json['evaluation']),
+      lieu: _cleanNullableString(json['lieu']),
+      niveau: _cleanNullableString(json['niveau']),
+      publicCible: _cleanNullableString(json['public_cible']),
+      nombreParticipants:
+          json['nombre_participants'] is int
+              ? json['nombre_participants']
+              : (int.tryParse(json['nombre_participants']?.toString() ?? '') ??
+                  null),
       category: FormationCategory.fromJson(rawCategory),
-      stagiaires: rawStagiaires
-          .where((s) => s != null)
-          .map((s) => StagiaireModel.fromJson(s))
-          .toList(),
-      formateur: json['formateur'] != null && json['formateur'] is Map && json['formateur'].isNotEmpty
-          ? FormateurModel.fromJson(json['formateur'])
-          : null,
+      stagiaires:
+          rawStagiaires
+              .where((s) => s != null)
+              .map((s) => StagiaireModel.fromJson(s))
+              .toList(),
+      formateur:
+          json['formateur'] != null &&
+                  json['formateur'] is Map &&
+                  json['formateur'].isNotEmpty
+              ? FormateurModel.fromJson(json['formateur'])
+              : null,
       dateDebut: _cleanNullableString(json['date_debut']),
       dateFin: _cleanNullableString(json['date_fin']),
     );
   }
-
 }
-
-
-
 
 class FormationCategory {
   final int id;

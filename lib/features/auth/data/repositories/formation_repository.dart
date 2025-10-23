@@ -88,11 +88,35 @@ class FormationRepository {
                 prerequis: catalogue['prerequis'],
                 imageUrl: catalogue['image_url'],
                 cursusPdf: catalogue['cursus_pdf'],
+                cursusPdfUrl:
+                    catalogue['cursusPdfUrl'] ??
+                    catalogue['cursus_pdf'] ??
+                    null,
                 tarif:
                     double.tryParse(catalogue['tarif']?.toString() ?? '0') ?? 0,
                 certification: catalogue['certification'],
                 statut: formation['statut'] ?? 0,
                 duree: formation['duree']?.toString() ?? '0',
+                objectifs: catalogue['objectifs'] ?? formation['objectifs'],
+                programme: catalogue['programme'] ?? formation['programme'],
+                modalites: catalogue['modalites'] ?? formation['modalites'],
+                modalitesAccompagnement:
+                    catalogue['modalites_accompagnement'] ??
+                    formation['modalites_accompagnement'],
+                moyensPedagogiques:
+                    catalogue['moyens_pedagogiques'] ??
+                    formation['moyens_pedagogiques'],
+                modalitesSuivi:
+                    catalogue['modalites_suivi'] ??
+                    formation['modalites_suivi'],
+                evaluation: catalogue['evaluation'] ?? formation['evaluation'],
+                lieu: catalogue['lieu'] ?? formation['lieu'],
+                niveau: catalogue['niveau'] ?? formation['niveau'],
+                publicCible:
+                    catalogue['public_cible'] ?? formation['public_cible'],
+                nombreParticipants:
+                    catalogue['nombre_participants'] ??
+                    formation['nombre_participants'],
                 category: FormationCategory(
                   id: catalogue['id'] ?? formation['id'] ?? 0,
                   titre:
@@ -134,8 +158,12 @@ class FormationRepository {
 
   Future<Map<String, dynamic>> inscrireAFormation(int formationId) async {
     try {
-      print('🟡 DEBUG: Appel API vers /stagiaire/inscription-catalogue-formation');
-      print('🟡 DEBUG: Données envoyées: {"catalogue_formation_id": $formationId}');
+      print(
+        '🟡 DEBUG: Appel API vers /stagiaire/inscription-catalogue-formation',
+      );
+      print(
+        '🟡 DEBUG: Données envoyées: {"catalogue_formation_id": $formationId}',
+      );
 
       final response = await apiClient.post(
         '/stagiaire/inscription-catalogue-formation', // CORRIGÉ : même route que le backend
@@ -159,4 +187,5 @@ class FormationRepository {
       print('🔴 DEBUG: Erreur dans inscrireAFormation: $e');
       rethrow;
     }
-  }}
+  }
+}

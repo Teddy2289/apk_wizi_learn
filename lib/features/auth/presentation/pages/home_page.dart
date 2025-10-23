@@ -57,7 +57,7 @@ class _HomePageState extends State<HomePage> {
   String _inscriptionFormationTitle = '';
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
@@ -158,8 +158,8 @@ class _HomePageState extends State<HomePage> {
       // 1) Préférer la valeur backend si disponible via un appel léger au profil
       // 2) Repli: SharedPreferences
       int loginStreak = await _fetchLoginStreakFromBackend().catchError((
-          _,
-          ) async {
+        _,
+      ) async {
         try {
           final prefs = await SharedPreferences.getInstance();
           return prefs.getInt('login_streak') ?? 0;
@@ -196,7 +196,7 @@ class _HomePageState extends State<HomePage> {
         // Plusieurs structures possibles: { stagiaire: { login_streak: N } } ou { login_streak: N }
         final stagiaire = data['stagiaire'];
         final dynamic val =
-        stagiaire is Map ? stagiaire['login_streak'] : data['login_streak'];
+            stagiaire is Map ? stagiaire['login_streak'] : data['login_streak'];
         int parsed;
         if (val is int) {
           parsed = val;
@@ -329,63 +329,66 @@ class _HomePageState extends State<HomePage> {
       children: [
         Scaffold(
           body:
-          (_isLoading || _isLoadingUser)
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-            onRefresh: _loadData,
-            color: theme.primaryColor,
-            child: CustomScrollView(
-              slivers: [
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                if (_showWelcomeBlock)
-                  SliverToBoxAdapter(
-                    child: _buildWelcomeSection(isTablet),
-                  ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                SliverToBoxAdapter(
-                  child: _buildPlatformPresentation(isTablet),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                SliverToBoxAdapter(
-                  child: _buildSectionTitle(
-                    context,
-                    title: 'Formations recommandées',
-                    icon: LucideIcons.bookOpen,
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: RandomFormationsWidget(
-                    formations: _randomFormations,
+              (_isLoading || _isLoadingUser)
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
                     onRefresh: _loadData,
-                    onInscriptionSuccess: _showInscriptionSuccess, // Passer la callback
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                SliverToBoxAdapter(
-                  child: _buildSectionWithButton(
-                    context,
-                    title: 'Mes contacts',
-                    icon: LucideIcons.user,
-                    onPressed:
-                        () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) =>
-                            ContactPage(contacts: _contacts),
-                      ),
+                    color: theme.primaryColor,
+                    child: CustomScrollView(
+                      slivers: [
+                        const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                        if (_showWelcomeBlock)
+                          SliverToBoxAdapter(
+                            child: _buildWelcomeSection(isTablet),
+                          ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        SliverToBoxAdapter(
+                          child: _buildPlatformPresentation(isTablet),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        SliverToBoxAdapter(
+                          child: _buildSectionTitle(
+                            context,
+                            title: 'Formations recommandées',
+                            icon: LucideIcons.bookOpen,
+                          ),
+                        ),
+                        SliverToBoxAdapter(
+                          child: RandomFormationsWidget(
+                            formations: _randomFormations,
+                            onRefresh: _loadData,
+                            onInscriptionSuccess:
+                                _showInscriptionSuccess, // Passer la callback
+                          ),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        SliverToBoxAdapter(
+                          child: _buildSectionWithButton(
+                            context,
+                            title: 'Mes contacts',
+                            icon: LucideIcons.user,
+                            onPressed:
+                                () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) =>
+                                            ContactPage(contacts: _contacts),
+                                  ),
+                                ),
+                          ),
+                        ),
+                        _buildContactsList(isTablet),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        SliverToBoxAdapter(
+                          child: _buildGameModesSection(isTablet),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        const SliverToBoxAdapter(child: HowToPlay()),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                      ],
                     ),
                   ),
-                ),
-                _buildContactsList(isTablet),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                SliverToBoxAdapter(
-                  child: _buildGameModesSection(isTablet),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              ],
-            ),
-          ),
         ),
         // Streak full-screen modal (une fois par jour)
         if (_showStreakModal)
@@ -452,7 +455,7 @@ class _HomePageState extends State<HomePage> {
                             onChanged: (val) {
                               if (mounted) {
                                 setState(
-                                      () => _hideStreakFor7Days = val ?? false,
+                                  () => _hideStreakFor7Days = val ?? false,
                                 );
                               }
                             },
@@ -562,10 +565,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSectionTitle(
-      BuildContext context, {
-        required String title,
-        required IconData icon,
-      }) {
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
@@ -601,11 +604,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSectionWithButton(
-      BuildContext context, {
-        required String title,
-        required IconData icon,
-        required VoidCallback onPressed,
-      }) {
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
@@ -686,42 +689,42 @@ class _HomePageState extends State<HomePage> {
 
     // 1. FORMATEURS
     final formateurs =
-    _contacts
-        .where(
-          (contact) => contact.type.toLowerCase().contains('formateur'),
-    )
-        .toList();
+        _contacts
+            .where(
+              (contact) => contact.type.toLowerCase().contains('formateur'),
+            )
+            .toList();
     orderedContacts.addAll(formateurs);
 
     // 2. PÔLE SAV
     final poleSav =
-    _contacts
-        .where(
-          (contact) =>
-      contact.type.toLowerCase().contains('sav') ||
-          contact.type.toLowerCase().contains('pole_sav'),
-    )
-        .toList();
+        _contacts
+            .where(
+              (contact) =>
+                  contact.type.toLowerCase().contains('sav') ||
+                  contact.type.toLowerCase().contains('pole_sav'),
+            )
+            .toList();
     orderedContacts.addAll(poleSav);
 
     // 3. COMMERCIAUX
     final commerciaux =
-    _contacts
-        .where(
-          (contact) => contact.type.toLowerCase().contains('commercial'),
-    )
-        .toList();
+        _contacts
+            .where(
+              (contact) => contact.type.toLowerCase().contains('commercial'),
+            )
+            .toList();
     orderedContacts.addAll(commerciaux);
 
     // 4. PÔLE RELATION CLIENTS
     final poleRelation =
-    _contacts
-        .where(
-          (contact) =>
-      contact.type.toLowerCase().contains('relation') ||
-          contact.type.toLowerCase().contains('pole_relation'),
-    )
-        .toList();
+        _contacts
+            .where(
+              (contact) =>
+                  contact.type.toLowerCase().contains('relation') ||
+                  contact.type.toLowerCase().contains('pole_relation'),
+            )
+            .toList();
     orderedContacts.addAll(poleRelation);
 
     // On phones keep the presentation as a vertical list. On tablets use
@@ -737,7 +740,7 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
-                (context, index) => Padding(
+            (context, index) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: ContactCard(
                 contact: orderedContacts[index],
@@ -943,7 +946,7 @@ class _HomePageState extends State<HomePage> {
           icon: LucideIcons.target,
           title: 'Quiz Classique',
           description:
-          'Questions à choix multiples pour tester vos connaissances',
+              'Questions à choix multiples pour tester vos connaissances',
           color: Colors.green,
           isTablet: false,
         ),
@@ -975,7 +978,7 @@ class _HomePageState extends State<HomePage> {
             icon: LucideIcons.target,
             title: 'Quiz Classique',
             description:
-            'Questions à choix multiples pour tester vos connaissances',
+                'Questions à choix multiples pour tester vos connaissances',
             color: Colors.green,
             isTablet: true,
           ),
@@ -1183,9 +1186,7 @@ class _InscriptionSuccessModal extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: Colors.grey[50],
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.grey[200]!,
-                              ),
+                              border: Border.all(color: Colors.grey[200]!),
                             ),
                             child: Text(
                               formationTitle,
@@ -1256,10 +1257,7 @@ class _InscriptionSuccessModal extends StatelessWidget {
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.explore_outlined,
-                                size: 20,
-                              ),
+                              Icon(Icons.explore_outlined, size: 20),
                               SizedBox(width: 8),
                               Text(
                                 'Continuer à explorer',
