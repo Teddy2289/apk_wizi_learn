@@ -49,7 +49,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     });
 
     try {
-      print('🟡 DEBUG: Début de l\'inscription pour la formation ${widget.formationId}');
+      print(
+        '🟡 DEBUG: Début de l\'inscription pour la formation ${widget.formationId}',
+      );
       print('🟡 DEBUG: Formation ID: ${widget.formationId}');
 
       // Appel à l'API d'inscription
@@ -63,14 +65,17 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
       if (response['success'] == true) {
         setState(() {
           _success = true;
-          _successMessage = response['message'] ?? 'Inscription réussie, mails et notification envoyés.';
+          _successMessage =
+              response['message'] ??
+              'Inscription réussie, mails et notification envoyés.';
           _showSuccessModal = true;
         });
         print('🟢 DEBUG: Inscription réussie - Modal affiché');
       } else {
-        throw Exception(response['error'] ?? 'Erreur inconnue lors de l\'inscription');
+        throw Exception(
+          response['error'] ?? 'Erreur inconnue lors de l\'inscription',
+        );
       }
-
     } catch (e) {
       // DEBUG détaillé de l'erreur
       print('🔴 DEBUG: ERREUR lors de l\'inscription:');
@@ -89,7 +94,8 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
         // Extraire le message d'erreur de la réponse
         final errorData = e.response?.data;
         if (errorData is Map) {
-          final serverError = errorData['error'] ?? errorData['details'] ?? 'Erreur serveur';
+          final serverError =
+              errorData['error'] ?? errorData['details'] ?? 'Erreur serveur';
           final serverMessage = errorData['message'] ?? serverError;
           _successMessage = serverMessage.toString();
 
@@ -103,15 +109,18 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
 
           // Messages d'erreur spécifiques selon le statut
           if (statusCode == 401) {
-            _successMessage = 'Erreur d\'authentification. Veuillez vous reconnecter.';
+            _successMessage =
+                'Erreur d\'authentification. Veuillez vous reconnecter.';
           } else if (statusCode == 403) {
-            _successMessage = 'Accès refusé. Vous n\'avez pas les permissions nécessaires.';
+            _successMessage =
+                'Accès refusé. Vous n\'avez pas les permissions nécessaires.';
           } else if (statusCode == 404) {
             _successMessage = 'Formation non trouvée.';
           } else if (statusCode == 409) {
             _successMessage = 'Vous êtes déjà inscrit à cette formation.';
           } else if (statusCode == 422) {
-            _successMessage = 'Données invalides. Veuillez vérifier les informations.';
+            _successMessage =
+                'Données invalides. Veuillez vérifier les informations.';
           } else if (statusCode! >= 500) {
             _successMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
           }
@@ -144,6 +153,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
       print('🟡 DEBUG: Chargement terminé - isLoading: $_isLoading');
     }
   }
+
   void _closeSuccessModal() {
     setState(() {
       _showSuccessModal = false;
@@ -194,7 +204,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
               }
 
               if (snapshot.hasError) {
-                print('🔴 DEBUG: Erreur lors du chargement des détails: ${snapshot.error}');
+                print(
+                  '🔴 DEBUG: Erreur lors du chargement des détails: ${snapshot.error}',
+                );
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -274,30 +286,30 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                         tag: 'formation-${formation.id}',
                         child: CachedNetworkImage(
                           imageUrl:
-                          '${AppConstants.baseUrlImg}/${formation.imageUrl}',
+                              '${AppConstants.baseUrlImg}/${formation.imageUrl}',
                           fit: BoxFit.fitHeight,
                           placeholder:
                               (context, url) => Container(
-                            color: categoryColor,
-                            child: Center(
-                              child: Icon(
-                                Icons.school,
-                                size: 80,
                                 color: categoryColor,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.school,
+                                    size: 80,
+                                    color: categoryColor,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
                           errorWidget:
                               (context, url, error) => Container(
-                            color: categoryColor.withOpacity(0.1),
-                            child: Center(
-                              child: Icon(
-                                Icons.school,
-                                size: 80,
-                                color: categoryColor,
+                                color: categoryColor.withOpacity(0.1),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.school,
+                                    size: 80,
+                                    color: categoryColor,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
                         ),
                       ),
                     ),
@@ -322,12 +334,12 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                       formation.titre,
                                       style: theme.textTheme.headlineSmall
                                           ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color:
-                                        isDarkMode
-                                            ? Colors.white
-                                            : Colors.black,
-                                      ),
+                                            fontWeight: FontWeight.bold,
+                                            color:
+                                                isDarkMode
+                                                    ? Colors.white
+                                                    : Colors.black,
+                                          ),
                                     ),
                                     const SizedBox(height: 8),
                                     Chip(
@@ -413,7 +425,10 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                 "body": Style(
                                   fontSize: FontSize(16.0),
                                   lineHeight: LineHeight(1.6),
-                                  color: isDarkMode ? Colors.grey[300] : Colors.grey[800],
+                                  color:
+                                      isDarkMode
+                                          ? Colors.grey[300]
+                                          : Colors.grey[800],
                                 ),
                               },
                             ),
@@ -429,73 +444,352 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                 style: theme.textTheme.bodyLarge?.copyWith(
                                   height: 1.6,
                                   color:
-                                  isDarkMode
-                                      ? Colors.grey[300]
-                                      : Colors.grey[800],
+                                      isDarkMode
+                                          ? Colors.grey[300]
+                                          : Colors.grey[800],
                                 ),
                               ),
                             ),
 
-                          // Section Programme
-                          _buildSection(
-                            title: 'Programme détaillé',
-                            child: Column(
-                              children: [
-                                Text(
-                                  'Cette formation couvre tous les aspects essentiels pour maîtriser le sujet. Le programme complet est disponible au format PDF.',
-                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                    height: 1.6,
+                          // Section Objectifs (HTML)
+                          if (formation.objectifs != null &&
+                              formation.objectifs!.isNotEmpty)
+                            _buildSection(
+                              title: 'Objectifs',
+                              child: Html(
+                                data: formation.objectifs!,
+                                style: {
+                                  "body": Style(
+                                    fontSize: FontSize(16.0),
+                                    lineHeight: LineHeight(1.6),
                                     color:
-                                    isDarkMode
-                                        ? Colors.grey[300]
-                                        : Colors.grey[800],
+                                        isDarkMode
+                                            ? Colors.grey[300]
+                                            : Colors.grey[800],
                                   ),
-                                ),
-                                const SizedBox(height: 16),
-                                if (formation.cursusPdf != null &&
-                                    formation.cursusPdf!.isNotEmpty)
-                                  OutlinedButton.icon(
-                                    icon: const Icon(Icons.picture_as_pdf),
-                                    label: const Text(
-                                      'Télécharger le programme',
-                                    ),
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 24,
-                                        vertical: 16,
+                                },
+                              ),
+                            ),
+
+                          // Section Programme (prefer HTML from API, fallback to PDF)
+                          if (formation.programme != null &&
+                              formation.programme!.isNotEmpty)
+                            _buildSection(
+                              title: 'Programme détaillé',
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Html(
+                                    data: formation.programme!,
+                                    style: {
+                                      "body": Style(
+                                        fontSize: FontSize(16.0),
+                                        lineHeight: LineHeight(1.6),
+                                        color:
+                                            isDarkMode
+                                                ? Colors.grey[300]
+                                                : Colors.grey[800],
                                       ),
-                                      side: BorderSide(color: categoryColor),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    onPressed: () async {
-                                      final pdfUrl =
-                                          '${AppConstants.baseUrlImg}/${formation.cursusPdf}';
-                                      print('🟡 DEBUG: Tentative d\'ouverture du PDF: $pdfUrl');
-                                      if (await canLaunchUrl(
-                                        Uri.parse(pdfUrl),
-                                      )) {
-                                        await launchUrl(Uri.parse(pdfUrl));
-                                        print('🟢 DEBUG: PDF ouvert avec succès');
-                                      } else {
-                                        print('🔴 DEBUG: Impossible d\'ouvrir le PDF');
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Impossible d\'ouvrir le PDF.',
-                                            ),
-                                            behavior: SnackBarBehavior.floating,
-                                          ),
-                                        );
-                                      }
                                     },
                                   ),
+                                  const SizedBox(height: 12),
+                                  if (formation.cursusPdf != null &&
+                                      formation.cursusPdf!.isNotEmpty)
+                                    OutlinedButton.icon(
+                                      icon: const Icon(Icons.picture_as_pdf),
+                                      label: const Text(
+                                        'Télécharger le programme',
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                          vertical: 12,
+                                        ),
+                                        side: BorderSide(color: categoryColor),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () async {
+                                        final pdfUrl =
+                                            '${AppConstants.baseUrlImg}/${formation.cursusPdf}';
+                                        if (await canLaunchUrl(
+                                          Uri.parse(pdfUrl),
+                                        )) {
+                                          await launchUrl(Uri.parse(pdfUrl));
+                                        } else {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Impossible d\'ouvrir le PDF.',
+                                              ),
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                ],
+                              ),
+                            )
+                          else
+                            _buildSection(
+                              title: 'Programme détaillé',
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'Cette formation couvre tous les aspects essentiels pour maîtriser le sujet. Le programme complet est disponible au format PDF.',
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      height: 1.6,
+                                      color:
+                                          isDarkMode
+                                              ? Colors.grey[300]
+                                              : Colors.grey[800],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  if (formation.cursusPdf != null &&
+                                      formation.cursusPdf!.isNotEmpty)
+                                    OutlinedButton.icon(
+                                      icon: const Icon(Icons.picture_as_pdf),
+                                      label: const Text(
+                                        'Télécharger le programme',
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                          vertical: 16,
+                                        ),
+                                        side: BorderSide(color: categoryColor),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () async {
+                                        final pdfUrl =
+                                            '${AppConstants.baseUrlImg}/${formation.cursusPdf}';
+                                        print(
+                                          '🟡 DEBUG: Tentative d\'ouverture du PDF: $pdfUrl',
+                                        );
+                                        if (await canLaunchUrl(
+                                          Uri.parse(pdfUrl),
+                                        )) {
+                                          await launchUrl(Uri.parse(pdfUrl));
+                                          print(
+                                            '🟢 DEBUG: PDF ouvert avec succès',
+                                          );
+                                        } else {
+                                          print(
+                                            '🔴 DEBUG: Impossible d\'ouvrir le PDF',
+                                          );
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Impossible d\'ouvrir le PDF.',
+                                              ),
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                ],
+                              ),
+                            ),
+
+                          // Modalités
+                          if (formation.modalites != null &&
+                              formation.modalites!.isNotEmpty)
+                            _buildSection(
+                              title: 'Modalités',
+                              child: Html(
+                                data: formation.modalites!,
+                                style: {
+                                  "body": Style(
+                                    fontSize: FontSize(16.0),
+                                    lineHeight: LineHeight(1.6),
+                                    color:
+                                        isDarkMode
+                                            ? Colors.grey[300]
+                                            : Colors.grey[800],
+                                  ),
+                                },
+                              ),
+                            ),
+
+                          // Modalités d'accompagnement
+                          if (formation.modalitesAccompagnement != null &&
+                              formation.modalitesAccompagnement!.isNotEmpty)
+                            _buildSection(
+                              title: 'Modalités d\'accompagnement',
+                              child: Html(
+                                data: formation.modalitesAccompagnement!,
+                                style: {
+                                  "body": Style(
+                                    fontSize: FontSize(16.0),
+                                    lineHeight: LineHeight(1.6),
+                                    color:
+                                        isDarkMode
+                                            ? Colors.grey[300]
+                                            : Colors.grey[800],
+                                  ),
+                                },
+                              ),
+                            ),
+
+                          // Moyens pédagogiques
+                          if (formation.moyensPedagogiques != null &&
+                              formation.moyensPedagogiques!.isNotEmpty)
+                            _buildSection(
+                              title: 'Moyens pédagogiques',
+                              child: Html(
+                                data: formation.moyensPedagogiques!,
+                                style: {
+                                  "body": Style(
+                                    fontSize: FontSize(16.0),
+                                    lineHeight: LineHeight(1.6),
+                                    color:
+                                        isDarkMode
+                                            ? Colors.grey[300]
+                                            : Colors.grey[800],
+                                  ),
+                                },
+                              ),
+                            ),
+
+                          // Modalités de suivi
+                          if (formation.modalitesSuivi != null &&
+                              formation.modalitesSuivi!.isNotEmpty)
+                            _buildSection(
+                              title: 'Modalités de suivi',
+                              child: Html(
+                                data: formation.modalitesSuivi!,
+                                style: {
+                                  "body": Style(
+                                    fontSize: FontSize(16.0),
+                                    lineHeight: LineHeight(1.6),
+                                    color:
+                                        isDarkMode
+                                            ? Colors.grey[300]
+                                            : Colors.grey[800],
+                                  ),
+                                },
+                              ),
+                            ),
+
+                          // Évaluation
+                          if (formation.evaluation != null &&
+                              formation.evaluation!.isNotEmpty)
+                            _buildSection(
+                              title: 'Évaluation',
+                              child: Text(
+                                formation.evaluation!,
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  height: 1.6,
+                                  color:
+                                      isDarkMode
+                                          ? Colors.grey[300]
+                                          : Colors.grey[800],
+                                ),
+                              ),
+                            ),
+
+                          // Infos complémentaires (lieu, niveau, public cible, nombre participants)
+                          _buildSection(
+                            title: 'Informations pratiques',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Wrap(
+                                  spacing: 12,
+                                  runSpacing: 12,
+                                  children: [
+                                    if (formation.lieu != null &&
+                                        formation.lieu!.isNotEmpty)
+                                      _buildInfoTile(
+                                        icon: Icons.location_on_outlined,
+                                        label: 'Lieu',
+                                        value: formation.lieu!,
+                                        color: categoryColor,
+                                      ),
+                                    if (formation.niveau != null &&
+                                        formation.niveau!.isNotEmpty)
+                                      _buildInfoTile(
+                                        icon: Icons.school_outlined,
+                                        label: 'Niveau',
+                                        value: formation.niveau!,
+                                        color: categoryColor,
+                                      ),
+                                    if (formation.publicCible != null &&
+                                        formation.publicCible!.isNotEmpty)
+                                      _buildInfoTile(
+                                        icon: Icons.group_outlined,
+                                        label: 'Public cible',
+                                        value: formation.publicCible!,
+                                        color: categoryColor,
+                                      ),
+                                    if (formation.nombreParticipants != null)
+                                      _buildInfoTile(
+                                        icon: Icons.people_alt_outlined,
+                                        label: 'Participants',
+                                        value:
+                                            formation.nombreParticipants
+                                                .toString(),
+                                        color: categoryColor,
+                                      ),
+                                  ],
+                                ),
                               ],
                             ),
                           ),
+
+                          // Formateur(s)
+                          if (formation.formateur != null ||
+                              (formation.stagiaires != null &&
+                                  formation.stagiaires!.isNotEmpty))
+                            _buildSection(
+                              title: 'Équipe pédagogique',
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (formation.formateur != null)
+                                    ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      leading: CircleAvatar(
+                                        backgroundColor: categoryColor
+                                            .withOpacity(0.15),
+                                        child: Icon(
+                                          Icons.person,
+                                          color: categoryColor,
+                                        ),
+                                      ),
+                                      title: Text(
+                                        '${formation.formateur?.prenom ?? ''} ${formation.formateur?.nom ?? ''}',
+                                      ),
+                                      subtitle: Text(
+                                        '${formation.formateur?.telephone ?? ''}',
+                                      ),
+                                    ),
+                                  const SizedBox(height: 8),
+                                  if (formation.stagiaires != null &&
+                                      formation.stagiaires!.isNotEmpty)
+                                    Text(
+                                      'Participants inscrits: ${formation.stagiaires!.length}',
+                                      style: theme.textTheme.bodyMedium,
+                                    ),
+                                ],
+                              ),
+                            ),
 
                           const SizedBox(height: 40),
 
@@ -515,46 +809,46 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                 shadowColor: categoryColor.withOpacity(0.3),
                               ),
                               onPressed:
-                              _isLoading ? null : _inscrireAFormation,
+                                  _isLoading ? null : _inscrireAFormation,
                               child:
-                              _isLoading
-                                  ? const SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                                  : Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.center,
-                                children: [
-                                  if (_success)
-                                    const Icon(
-                                      Icons.check_circle,
-                                      size: 20,
-                                    ),
-                                  if (_error)
-                                    const Icon(
-                                      Icons.error_outline,
-                                      size: 20,
-                                    ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _success
-                                        ? "Demande d'inscription envoyée"
-                                        : _error
-                                        ? "Erreur, réessayer"
-                                        : "S'inscrire maintenant",
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                  _isLoading
+                                      ? const SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                      : Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          if (_success)
+                                            const Icon(
+                                              Icons.check_circle,
+                                              size: 20,
+                                            ),
+                                          if (_error)
+                                            const Icon(
+                                              Icons.error_outline,
+                                              size: 20,
+                                            ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            _success
+                                                ? "Demande d'inscription envoyée"
+                                                : _error
+                                                ? "Erreur, réessayer"
+                                                : "S'inscrire maintenant",
+                                            style: theme.textTheme.titleMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
                             ),
                           ),
 
@@ -678,6 +972,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     // Palette de couleurs harmonieuses
     final colors = {
       'Bureautique': const Color(0xFF3D9BE9),
+      'IA': const Color(0xFFABDA96),
       'Langues': const Color(0xFFA55E6E),
       'Internet': const Color(0xFFFFC533),
       'Création': const Color(0xFF9392BE),
@@ -808,9 +1103,7 @@ class _SuccessModal extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: Colors.grey[50],
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.grey[200]!,
-                              ),
+                              border: Border.all(color: Colors.grey[200]!),
                             ),
                             child: Text(
                               formationTitle,
@@ -881,10 +1174,7 @@ class _SuccessModal extends StatelessWidget {
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.explore_outlined,
-                                size: 20,
-                              ),
+                              Icon(Icons.explore_outlined, size: 20),
                               SizedBox(width: 8),
                               Text(
                                 'Continuer à explorer',
