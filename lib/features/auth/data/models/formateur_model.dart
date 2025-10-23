@@ -15,11 +15,14 @@ class FormateurModel {
 
   factory FormateurModel.fromJson(Map<String, dynamic> json) {
     return FormateurModel(
-      id: json['id'],
-      prenom: json['prenom'],
-      nom: json['nom'],
-      email: json['email'],
-      telephone: json['telephone'],
+      id:
+          json['id'] is int
+              ? json['id']
+              : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      prenom: json['prenom']?.toString() ?? '',
+      nom: json['nom']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      telephone: json['telephone']?.toString() ?? '',
     );
   }
 }

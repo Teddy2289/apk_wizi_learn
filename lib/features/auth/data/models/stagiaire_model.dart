@@ -36,20 +36,29 @@ class StagiaireModel extends Equatable {
 
   factory StagiaireModel.fromJson(Map<String, dynamic> json) {
     return StagiaireModel(
-      id: json['id'],
-      prenom: json['prenom'],
-      civilite: json['civilite'],
-      telephone: json['telephone'],
-      adresse: json['adresse'],
-      dateNaissance: json['date_naissance'],
-      ville: json['ville'],
-      codePostal: json['code_postal'],
-      dateDebutFormation: json['date_debut_formation'],
-      dateFinFormation: json['date_fin_formation'] ?? '',
-      dateInscription: json['date_inscription'],
-      role: json['role'],
-      statut: json['statut'],
-      userId: json['user_id'],
+      id:
+          json['id'] is int
+              ? json['id']
+              : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      prenom: json['prenom']?.toString() ?? '',
+      civilite: json['civilite']?.toString() ?? '',
+      telephone: json['telephone']?.toString() ?? '',
+      adresse: json['adresse']?.toString() ?? '',
+      dateNaissance: json['date_naissance']?.toString() ?? '',
+      ville: json['ville']?.toString() ?? '',
+      codePostal: json['code_postal']?.toString() ?? '',
+      dateDebutFormation: json['date_debut_formation']?.toString() ?? '',
+      dateFinFormation: json['date_fin_formation']?.toString() ?? '',
+      dateInscription: json['date_inscription']?.toString() ?? '',
+      role: json['role']?.toString() ?? '',
+      statut:
+          json['statut'] is int
+              ? json['statut']
+              : int.tryParse(json['statut']?.toString() ?? '') ?? 0,
+      userId:
+          json['user_id'] is int
+              ? json['user_id']
+              : int.tryParse(json['user_id']?.toString() ?? '') ?? 0,
     );
   }
 

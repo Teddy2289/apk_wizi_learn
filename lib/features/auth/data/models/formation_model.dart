@@ -80,11 +80,20 @@ class Formation {
   });
   factory Formation.fromJson(Map<String, dynamic> json) {
     // Sécuriser accès aux sous-objets
-    final rawCategory = json['formation'] ?? {};
-    final rawStagiaires = (json['stagiaires'] as List?) ?? [];
+    final rawCategory =
+        (json['formation'] is Map)
+            ? (json['formation'] as Map<String, dynamic>)
+            : <String, dynamic>{};
+    final rawStagiaires =
+        (json['stagiaires'] is List)
+            ? (json['stagiaires'] as List)
+            : <dynamic>[];
 
     return Formation(
-      id: json['id'] is int ? json['id'] : 0,
+      id:
+          json['id'] is int
+              ? json['id']
+              : int.tryParse(json['id']?.toString() ?? '') ?? 0,
       titre: _cleanString(json['titre'], fallback: 'Titre inconnu'),
       description: _cleanString(
         json['description'],
@@ -94,11 +103,14 @@ class Formation {
       imageUrl: _cleanNullableString(json['image_url']),
       cursusPdf: _cleanNullableString(json['cursus_pdf']),
       cursusPdfUrl: _cleanNullableString(
-        json['cursusPdfUrl'] ?? json['cursusPdfUrl'] ?? json['cursus_pdf_url'],
+        json['cursusPdfUrl'] ?? json['cursus_pdf'] ?? json['cursusPdfUrl'],
       ),
       tarif: _parseDouble(json['tarif']),
       certification: _cleanNullableString(json['certification']),
-      statut: json['statut'] is int ? json['statut'] : 0,
+      statut:
+          json['statut'] is int
+              ? json['statut']
+              : int.tryParse(json['statut']?.toString() ?? '') ?? 0,
       duree: _cleanString(json['duree'], fallback: '0'),
       objectifs: _cleanNullableString(json['objectifs']),
       programme: _cleanNullableString(json['programme']),
@@ -120,14 +132,17 @@ class Formation {
       category: FormationCategory.fromJson(rawCategory),
       stagiaires:
           rawStagiaires
-              .where((s) => s != null)
-              .map((s) => StagiaireModel.fromJson(s))
+              .where((s) => s != null && s is Map)
+              .map(
+                (s) =>
+                    StagiaireModel.fromJson((s ?? {}) as Map<String, dynamic>),
+              )
               .toList(),
       formateur:
-          json['formateur'] != null &&
-                  json['formateur'] is Map &&
-                  json['formateur'].isNotEmpty
-              ? FormateurModel.fromJson(json['formateur'])
+          json['formateur'] is Map && (json['formateur'] as Map).isNotEmpty
+              ? FormateurModel.fromJson(
+                (json['formateur'] as Map).cast<String, dynamic>(),
+              )
               : null,
       dateDebut: _cleanNullableString(json['date_debut']),
       dateFin: _cleanNullableString(json['date_fin']),
@@ -148,9 +163,12 @@ class FormationCategory {
 
   factory FormationCategory.fromJson(Map<String, dynamic> json) {
     return FormationCategory(
-      id: json['id'],
-      titre: json['titre'],
-      categorie: json['categorie'],
+      id:
+          json['id'] is int
+              ? json['id']
+              : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      titre: json['titre']?.toString() ?? 'Titre inconnu',
+      categorie: json['categorie']?.toString() ?? 'Autre',
     );
   }
 

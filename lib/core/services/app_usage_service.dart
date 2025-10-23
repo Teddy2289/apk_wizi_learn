@@ -1,8 +1,9 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:wizi_learn/core/network/api_client.dart';
 
 class AppUsageService {
@@ -18,25 +19,41 @@ class AppUsageService {
       if (since < _minInterval) return;
     }
 
-    final String platform = Platform.isAndroid ? 'android' : 'ios';
-
     final packageInfo = await PackageInfo.fromPlatform();
     final deviceInfo = DeviceInfoPlugin();
 
+    String platform;
     String appVersion = packageInfo.version;
     String deviceModel = '';
     String osVersion = '';
 
-    if (Platform.isAndroid) {
+    // Determine platform and collect device info in a web-safe way.
+    if (kIsWeb) {
+      platform = 'web';
+      final info = await deviceInfo.webBrowserInfo;
+      deviceModel = '${info.browserName} ${info.userAgent ?? ''}'.trim();
+      osVersion = info.userAgent ?? '';
+    } else if (defaultTargetPlatform == TargetPlatform.android) {
+      platform = 'android';
       final info = await deviceInfo.androidInfo;
-      final manufacturer = info.manufacturer?.trim() ?? '';
-      final model = info.model?.trim() ?? '';
+      final manufacturer = info.manufacturer.trim();
+      final model = info.model.trim();
       deviceModel = (manufacturer + ' ' + model).trim();
-      osVersion = info.version.release ?? '';
-    } else {
+      osVersion = info.version.release;
+    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+      platform = 'ios';
       final info = await deviceInfo.iosInfo;
-      deviceModel = info.utsname.machine ?? '';
-      osVersion = info.systemVersion ?? '';
+      deviceModel = info.utsname.machine;
+      osVersion = info.systemVersion;
+    } else {
+      platform = 'unknown';
+      // Try best-effort: attempt to read generic fields if available
+      try {
+        final info = await deviceInfo.deviceInfo;
+        deviceModel = info.toMap().toString();
+      } catch (_) {
+        // ignore
+      }
     }
 
     try {
