@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -406,18 +407,15 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                           // Section Description
                           _buildSection(
                             title: 'Description',
-                            child: Text(
-                              formation.description.replaceAll(
-                                RegExp(r'<[^>]*>'),
-                                '',
-                              ),
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                height: 1.6,
-                                color:
-                                isDarkMode
-                                    ? Colors.grey[300]
-                                    : Colors.grey[800],
-                              ),
+                            child: Html(
+                              data: formation.description,
+                              style: {
+                                "body": Style(
+                                  fontSize: FontSize(16.0),
+                                  lineHeight: LineHeight(1.6),
+                                  color: isDarkMode ? Colors.grey[300] : Colors.grey[800],
+                                ),
+                              },
                             ),
                           ),
 
