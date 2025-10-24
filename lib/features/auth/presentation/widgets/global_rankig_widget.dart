@@ -20,6 +20,8 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
   late final AuthRepository _authRepository;
   int? _connectedStagiaireId;
   bool _isLoadingUser = true;
+  // Afficher le classement en mode liste (sans podium)
+  bool _showList = false;
 
   @override
   void initState() {
@@ -94,12 +96,79 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
     final myIndex = widget.rankings.indexWhere(
       (r) => int.tryParse(r.stagiaire.id.toString()) == _connectedStagiaireId,
     );
-    final isCurrentUserInPodium = myIndex >= 0 && myIndex < 3;
     final isCurrentUserInRest = myIndex >= 3;
 
     // Responsive layout: single column on small screens, two-column on wider screens
     final screenWidth = MediaQuery.of(context).size.width;
     final isWide = screenWidth >= 800;
+
+    // If user requested list view, render full list (no podium)
+    if (_showList) {
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.leaderboard,
+                    color: Theme.of(context).primaryColor,
+                    size: isSmallScreen ? 24 : 28,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Classement Global',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: isSmallScreen ? 18 : 22,
+                      ),
+                    ),
+                  ),
+                  // Switch pour basculer l'affichage
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_showList ? 'Liste' : 'Podium'),
+                      const SizedBox(width: 8),
+                      Switch(
+                        value: _showList,
+                        onChanged: (v) => setState(() => _showList = v),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildHeader(context, isSmallScreen),
+              const SizedBox(height: 8),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: widget.rankings.length,
+                separatorBuilder: (_, __) => const Divider(height: 8),
+                itemBuilder: (_, index) {
+                  final ranking = widget.rankings[index];
+                  final isCurrentUser =
+                      int.tryParse(ranking.stagiaire.id.toString()) ==
+                      _connectedStagiaireId;
+                  return _buildRankingItem(
+                    context,
+                    ranking,
+                    isSmallScreen,
+                    isCurrentUser: isCurrentUser,
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     if (!isWide) {
       return Padding(
@@ -192,13 +261,27 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                       size: 28,
                     ),
                     const SizedBox(width: 12),
-                    Text(
-                      'Classement Global',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Theme.of(context).primaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 22,
+                    Expanded(
+                      child: Text(
+                        'Classement Global',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Theme.of(context).primaryColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                        ),
                       ),
+                    ),
+                    // Switch pour basculer l'affichage
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(_showList ? 'Liste' : 'Podium'),
+                        const SizedBox(width: 8),
+                        Switch(
+                          value: _showList,
+                          onChanged: (v) => setState(() => _showList = v),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -536,7 +619,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
           if (!isSmallScreen)
             Expanded(
               child: Text(
-                'Quiz complétés',
+                'Quiz joués',
                 style: _headerTextStyle,
                 textAlign: TextAlign.center,
               ),
@@ -686,7 +769,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
               ),
             ),
 
-            // Quiz complétés (seulement sur grand écran)
+            // Quiz joués (seulement sur grand écran)
             if (!isSmallScreen)
               Expanded(
                 child: Center(
