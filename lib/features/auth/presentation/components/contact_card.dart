@@ -338,11 +338,7 @@ class ContactCard extends StatelessWidget {
       nomComplet = 'Inconnu';
     }
 
-    // Ajouter la civilité si disponible
-    if (contact.civilite != null && contact.civilite!.isNotEmpty) {
-      return '${contact.civilite} $nomComplet';
-    }
-
+    // Ne pas afficher la civilité à côté du nom/prénom dans la card
     return nomComplet;
   }
 
@@ -351,19 +347,40 @@ class ContactCard extends StatelessWidget {
     // Priorité au rôle, sinon utiliser le type
     final roleOrType = contact.role ?? contact.type;
     final lowerRole = roleOrType.toLowerCase();
-    final civilite = contact.civilite?.toLowerCase() ?? '';
+    final civiliteRaw = contact.civilite?.toLowerCase() ?? '';
 
-    // Détection du genre basé sur la civilité
-    final isFeminin =
-        civilite.contains('M.') ||
-        civilite.contains('Mme.') ||
-        civilite.contains('Mlle.');
+    // Détection du genre basé sur la civilité — plus robuste
+    // Normaliser la civilité en tokens (ex: 'Mme', 'Madame', 'Mlle', 'F', 'Féminin', ...)
+    String normalized = civiliteRaw.replaceAll(
+      RegExp(r"[^a-z0-9éèêàçù-]"),
+      ' ',
+    );
+    final tokens =
+        normalized.split(RegExp(r"\s+")).where((t) => t.isNotEmpty).toList();
+    final feminineTokens = {
+      'mme',
+      'mme.',
+      'madame',
+      'mlle',
+      'mlle.',
+      'mademoiselle',
+      'f',
+      'féminin',
+      'feminin',
+    };
 
-    if (lowerRole.contains('formateur')) {
+    final isFeminin = tokens.any((t) => feminineTokens.contains(t));
+
+    // Si le rôle indique explicitement 'formatrice' nous considérons aussi le genre féminin
+    if (lowerRole.contains('formatrice') || lowerRole.contains('formateur')) {
       return isFeminin ? 'Formatrice' : 'Formateur';
     } else if (lowerRole.contains('commercial')) {
       return isFeminin ? 'Commerciale' : 'Commercial';
-    } else if (lowerRole.contains('sav') || lowerRole.contains('pole_sav')) {
+    } else if (lowerRole.contains('sav') ||
+        lowerRole.contains('pole_sav') ||
+        lowerRole.contains('responsable pôle formateur') ||
+        lowerRole.contains('assistante adv') ||
+        lowerRole.contains('adv')) {
       return 'Pôle SAV';
     } else if (lowerRole.contains('relation') ||
         lowerRole.contains('pole_relation')) {
@@ -380,6 +397,6 @@ class ContactCard extends StatelessWidget {
   bool _isFormateur() {
     final roleOrType = contact.role ?? contact.type;
     final lowerRole = roleOrType.toLowerCase();
-    return lowerRole.contains('formateur');
+    return lowerRole.contains('formateur') || lowerRole.contains('formatrice');
   }
 }
