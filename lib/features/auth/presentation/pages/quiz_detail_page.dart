@@ -129,27 +129,16 @@ class QuizDetailPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          Text(
-            'Questions jouées (${playedQuestions.length})',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (playedQuestions.isNotEmpty)
-            ...playedQuestions.map((q) => _buildQuestionFeedback(q, theme))
-          else
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Aucune question jouée disponible',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
+          if (playedQuestions.length > 0)
+            Text(
+              'Questions jouées (${playedQuestions.length})',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
             ),
+          const SizedBox(height: 12),
+          if (playedQuestions.isNotEmpty || playedQuestions.length > 0)
+            ...playedQuestions.map((q) => _buildQuestionFeedback(q, theme)),
           const SizedBox(height: 24),
           _buildAdviceSection(theme, percent),
         ],
