@@ -137,9 +137,7 @@ class QuizDetailPage extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           if (playedQuestions.isNotEmpty)
-            ...playedQuestions
-                .map((q) => _buildQuestionFeedback(q, theme))
-                
+            ...playedQuestions.map((q) => _buildQuestionFeedback(q, theme))
           else
             Card(
               child: Padding(
