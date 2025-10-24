@@ -67,7 +67,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
           _success = true;
           _successMessage =
               response['message'] ??
-              'Inscription réussie, mails et notification envoyés.';
+                  'Inscription réussie, mails et notification envoyés.';
           _showSuccessModal = true;
         });
         print('🟢 DEBUG: Inscription réussie - Modal affiché');
@@ -110,17 +110,17 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
           // Messages d'erreur spécifiques selon le statut
           if (statusCode == 401) {
             _successMessage =
-                'Erreur d\'authentification. Veuillez vous reconnecter.';
+            'Erreur d\'authentification. Veuillez vous reconnecter.';
           } else if (statusCode == 403) {
             _successMessage =
-                'Accès refusé. Vous n\'avez pas les permissions nécessaires.';
+            'Accès refusé. Vous n\'avez pas les permissions nécessaires.';
           } else if (statusCode == 404) {
             _successMessage = 'Formation non trouvée.';
           } else if (statusCode == 409) {
             _successMessage = 'Vous êtes déjà inscrit à cette formation.';
           } else if (statusCode == 422) {
             _successMessage =
-                'Données invalides. Veuillez vérifier les informations.';
+            'Données invalides. Veuillez vérifier les informations.';
           } else if (statusCode! >= 500) {
             _successMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
           }
@@ -286,30 +286,30 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                         tag: 'formation-${formation.id}',
                         child: CachedNetworkImage(
                           imageUrl:
-                              '${AppConstants.baseUrlImg}/${formation.imageUrl}',
+                          '${AppConstants.baseUrlImg}/${formation.imageUrl}',
                           fit: BoxFit.fitHeight,
                           placeholder:
                               (context, url) => Container(
+                            color: categoryColor,
+                            child: Center(
+                              child: Icon(
+                                Icons.school,
+                                size: 80,
                                 color: categoryColor,
-                                child: Center(
-                                  child: Icon(
-                                    Icons.school,
-                                    size: 80,
-                                    color: categoryColor,
-                                  ),
-                                ),
                               ),
+                            ),
+                          ),
                           errorWidget:
                               (context, url, error) => Container(
-                                color: categoryColor.withOpacity(0.1),
-                                child: Center(
-                                  child: Icon(
-                                    Icons.school,
-                                    size: 80,
-                                    color: categoryColor,
-                                  ),
-                                ),
+                            color: categoryColor.withOpacity(0.1),
+                            child: Center(
+                              child: Icon(
+                                Icons.school,
+                                size: 80,
+                                color: categoryColor,
                               ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -334,12 +334,12 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                       formation.titre,
                                       style: theme.textTheme.headlineSmall
                                           ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                isDarkMode
-                                                    ? Colors.white
-                                                    : Colors.black,
-                                          ),
+                                        fontWeight: FontWeight.bold,
+                                        color:
+                                        isDarkMode
+                                            ? Colors.white
+                                            : Colors.black,
+                                      ),
                                     ),
                                     const SizedBox(height: 8),
                                     Chip(
@@ -399,18 +399,13 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                   value: formation.certification!,
                                   color: categoryColor,
                                 ),
-                              _buildInfoTile(
-                                icon: Icons.calendar_today_outlined,
-                                label: 'Début',
-                                value: 'À tout moment',
-                                color: categoryColor,
-                              ),
-                              _buildInfoTile(
-                                icon: Icons.people_outline,
-                                label: 'Format',
-                                value: 'En ligne',
-                                color: categoryColor,
-                              ),
+                              // Bouton de téléchargement PDF remplaçant les deux _buildInfoTile
+                              if (formation.cursusPdf != null &&
+                                  formation.cursusPdf!.isNotEmpty)
+                                _buildPdfDownloadButton(
+                                  categoryColor: categoryColor,
+                                  formation: formation,
+                                ),
                             ],
                           ),
 
@@ -426,9 +421,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                   fontSize: FontSize(16.0),
                                   lineHeight: LineHeight(1.6),
                                   color:
-                                      isDarkMode
-                                          ? Colors.grey[300]
-                                          : Colors.grey[800],
+                                  isDarkMode
+                                      ? Colors.grey[300]
+                                      : Colors.grey[800],
                                 ),
                               },
                             ),
@@ -444,9 +439,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                 style: theme.textTheme.bodyLarge?.copyWith(
                                   height: 1.6,
                                   color:
-                                      isDarkMode
-                                          ? Colors.grey[300]
-                                          : Colors.grey[800],
+                                  isDarkMode
+                                      ? Colors.grey[300]
+                                      : Colors.grey[800],
                                 ),
                               ),
                             ),
@@ -463,9 +458,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                     fontSize: FontSize(16.0),
                                     lineHeight: LineHeight(1.6),
                                     color:
-                                        isDarkMode
-                                            ? Colors.grey[300]
-                                            : Colors.grey[800],
+                                    isDarkMode
+                                        ? Colors.grey[300]
+                                        : Colors.grey[800],
                                   ),
                                 },
                               ),
@@ -483,9 +478,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                     fontSize: FontSize(16.0),
                                     lineHeight: LineHeight(1.6),
                                     color:
-                                        isDarkMode
-                                            ? Colors.grey[300]
-                                            : Colors.grey[800],
+                                    isDarkMode
+                                        ? Colors.grey[300]
+                                        : Colors.grey[800],
                                   ),
                                 },
                               ),
@@ -503,9 +498,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                     fontSize: FontSize(16.0),
                                     lineHeight: LineHeight(1.6),
                                     color:
-                                        isDarkMode
-                                            ? Colors.grey[300]
-                                            : Colors.grey[800],
+                                    isDarkMode
+                                        ? Colors.grey[300]
+                                        : Colors.grey[800],
                                   ),
                                 },
                               ),
@@ -523,9 +518,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                     fontSize: FontSize(16.0),
                                     lineHeight: LineHeight(1.6),
                                     color:
-                                        isDarkMode
-                                            ? Colors.grey[300]
-                                            : Colors.grey[800],
+                                    isDarkMode
+                                        ? Colors.grey[300]
+                                        : Colors.grey[800],
                                   ),
                                 },
                               ),
@@ -543,9 +538,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                     fontSize: FontSize(16.0),
                                     lineHeight: LineHeight(1.6),
                                     color:
-                                        isDarkMode
-                                            ? Colors.grey[300]
-                                            : Colors.grey[800],
+                                    isDarkMode
+                                        ? Colors.grey[300]
+                                        : Colors.grey[800],
                                   ),
                                 },
                               ),
@@ -561,9 +556,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                 style: theme.textTheme.bodyLarge?.copyWith(
                                   height: 1.6,
                                   color:
-                                      isDarkMode
-                                          ? Colors.grey[300]
-                                          : Colors.grey[800],
+                                  isDarkMode
+                                      ? Colors.grey[300]
+                                      : Colors.grey[800],
                                 ),
                               ),
                             ),
@@ -607,8 +602,8 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                         icon: Icons.people_alt_outlined,
                                         label: 'Participants',
                                         value:
-                                            formation.nombreParticipants
-                                                .toString(),
+                                        formation.nombreParticipants
+                                            .toString(),
                                         color: categoryColor,
                                       ),
                                   ],
@@ -617,43 +612,6 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                             ),
                           ),
 
-                          // Formateur(s)
-                          // if (formation.formateur != null ||
-                          //     (formation.stagiaires != null &&
-                          //         formation.stagiaires!.isNotEmpty))
-                          //   _buildSection(
-                          //     title: 'Équipe pédagogique',
-                          //     child: Column(
-                          //       crossAxisAlignment: CrossAxisAlignment.start,
-                          //       children: [
-                          //         if (formation.formateur != null)
-                          //           ListTile(
-                          //             contentPadding: EdgeInsets.zero,
-                          //             leading: CircleAvatar(
-                          //               backgroundColor: categoryColor
-                          //                   .withOpacity(0.15),
-                          //               child: Icon(
-                          //                 Icons.person,
-                          //                 color: categoryColor,
-                          //               ),
-                          //             ),
-                          //             title: Text(
-                          //               '${formation.formateur?.prenom ?? ''} ${formation.formateur?.nom ?? ''}',
-                          //             ),
-                          //             subtitle: Text(
-                          //               '${formation.formateur?.telephone ?? ''}',
-                          //             ),
-                          //           ),
-                          //         const SizedBox(height: 8),
-                          //         if (formation.stagiaires != null &&
-                          //             formation.stagiaires!.isNotEmpty)
-                          //           Text(
-                          //             'Participants inscrits: ${formation.stagiaires!.length}',
-                          //             style: theme.textTheme.bodyMedium,
-                          //           ),
-                          //       ],
-                          //     ),
-                          //   ),
                           const SizedBox(height: 40),
                           // Section Programme (prefer HTML from API, fallback to PDF)
                           if (formation.programme != null &&
@@ -670,54 +628,13 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                         fontSize: FontSize(16.0),
                                         lineHeight: LineHeight(1.6),
                                         color:
-                                            isDarkMode
-                                                ? Colors.grey[300]
-                                                : Colors.grey[800],
+                                        isDarkMode
+                                            ? Colors.grey[300]
+                                            : Colors.grey[800],
                                       ),
                                     },
                                   ),
                                   const SizedBox(height: 12),
-                                  if (formation.cursusPdf != null &&
-                                      formation.cursusPdf!.isNotEmpty)
-                                    OutlinedButton.icon(
-                                      icon: const Icon(Icons.picture_as_pdf),
-                                      label: const Text(
-                                        'Télécharger le programme',
-                                      ),
-                                      style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 24,
-                                          vertical: 12,
-                                        ),
-                                        side: BorderSide(color: categoryColor),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                      ),
-                                      onPressed: () async {
-                                        final pdfUrl =
-                                            '${AppConstants.baseUrlImg}/${formation.cursusPdf}';
-                                        if (await canLaunchUrl(
-                                          Uri.parse(pdfUrl),
-                                        )) {
-                                          await launchUrl(Uri.parse(pdfUrl));
-                                        } else {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Impossible d\'ouvrir le PDF.',
-                                              ),
-                                              behavior:
-                                                  SnackBarBehavior.floating,
-                                            ),
-                                          );
-                                        }
-                                      },
-                                    ),
                                 ],
                               ),
                             )
@@ -731,9 +648,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                     style: theme.textTheme.bodyLarge?.copyWith(
                                       height: 1.6,
                                       color:
-                                          isDarkMode
-                                              ? Colors.grey[300]
-                                              : Colors.grey[800],
+                                      isDarkMode
+                                          ? Colors.grey[300]
+                                          : Colors.grey[800],
                                     ),
                                   ),
                                   const SizedBox(height: 16),
@@ -781,7 +698,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                                 'Impossible d\'ouvrir le PDF.',
                                               ),
                                               behavior:
-                                                  SnackBarBehavior.floating,
+                                              SnackBarBehavior.floating,
                                             ),
                                           );
                                         }
@@ -806,46 +723,46 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                 shadowColor: categoryColor.withOpacity(0.3),
                               ),
                               onPressed:
-                                  _isLoading ? null : _inscrireAFormation,
+                              _isLoading ? null : _inscrireAFormation,
                               child:
-                                  _isLoading
-                                      ? const SizedBox(
-                                        height: 24,
-                                        width: 24,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                      : Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          if (_success)
-                                            const Icon(
-                                              Icons.check_circle,
-                                              size: 20,
-                                            ),
-                                          if (_error)
-                                            const Icon(
-                                              Icons.error_outline,
-                                              size: 20,
-                                            ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            _success
-                                                ? "Demande d'inscription envoyée"
-                                                : _error
-                                                ? "Erreur, réessayer"
-                                                : "S'inscrire maintenant",
-                                            style: theme.textTheme.titleMedium
-                                                ?.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.white,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
+                              _isLoading
+                                  ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                                  : Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment.center,
+                                children: [
+                                  if (_success)
+                                    const Icon(
+                                      Icons.check_circle,
+                                      size: 20,
+                                    ),
+                                  if (_error)
+                                    const Icon(
+                                      Icons.error_outline,
+                                      size: 20,
+                                    ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _success
+                                        ? "Demande d'inscription envoyée"
+                                        : _error
+                                        ? "Erreur, réessayer"
+                                        : "S'inscrire maintenant",
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
 
@@ -961,6 +878,60 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPdfDownloadButton({
+    required Color categoryColor,
+    required Formation formation,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: categoryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: () async {
+          final pdfUrl = '${AppConstants.baseUrlImg}/${formation.cursusPdf}';
+          print('🟡 DEBUG: Tentative d\'ouverture du PDF: $pdfUrl');
+          if (await canLaunchUrl(Uri.parse(pdfUrl))) {
+            await launchUrl(Uri.parse(pdfUrl));
+            print('🟢 DEBUG: PDF ouvert avec succès');
+          } else {
+            print('🔴 DEBUG: Impossible d\'ouvrir le PDF');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Impossible d\'ouvrir le PDF.'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.picture_as_pdf, size: 20, color: categoryColor),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Programme',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                Text(
+                  'Télécharger le programme',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: categoryColor,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
