@@ -607,7 +607,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
               children: [
                 Text('Participant', style: _headerTextStyle),
                 Text(
-                  'Formateur(s)',
+                  'Formateur',
                   style: _headerTextStyle.copyWith(
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
@@ -750,7 +750,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                             if (ranking.formateurs.isNotEmpty) ...[
                               const SizedBox(height: 2),
                               Text(
-                                'Formateur: ${ranking.formateurs.map((f) => '${f.prenom} ${f.nom.toUpperCase()}').join(', ')}',
+                                '${ranking.formateurs.map((f) => '${f.prenom} ${f.nom.toUpperCase()}').join(', ')}',
                                 style: TextStyle(
                                   fontSize: isSmallScreen ? 10 : 12,
                                   color: Colors.grey.shade600,
