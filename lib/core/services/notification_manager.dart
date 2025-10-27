@@ -1,7 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_app_badger/flutter_app_badger.dart';
 import 'package:wizi_learn/core/services/navigation_service.dart';
+import 'package:wizi_learn/core/services/badge_counter.dart';
 import 'package:wizi_learn/features/auth/data/models/notification_model.dart';
 import 'package:wizi_learn/core/services/firebase_notification_service.dart';
 
@@ -19,10 +21,11 @@ class NotificationManager {
   Function(NotificationModel)? onNotificationReceived;
   Function(int)? onUnreadCountChanged;
 
-  int _unreadCount = 0;
+  // Use a small BadgeCounter to encapsulate unread logic (testable)
+  final BadgeCounter _badgeCounter = BadgeCounter();
   List<NotificationModel> _notifications = [];
 
-  int get unreadCount => _unreadCount;
+  int get unreadCount => _badgeCounter.count;
   List<NotificationModel> get notifications =>
       List.unmodifiable(_notifications);
 
@@ -37,6 +40,12 @@ class NotificationManager {
 
       // Initialiser les notifications locales
       await _initializeLocalNotifications();
+
+      // Propager les changements de compteur vers le UI et badge
+      _badgeCounter.onChanged = (count) {
+        if (onUnreadCountChanged != null) onUnreadCountChanged!(count);
+        _updateAppBadge();
+      };
 
       print('NotificationManager initialisé avec succès');
     } catch (e) {
@@ -81,12 +90,9 @@ class NotificationManager {
     // Ajouter la notification à la liste
     _notifications.insert(0, notification);
 
-    // Mettre à jour le compteur
+    // Mettre à jour le compteur (utilise BadgeCounter pour la logique)
     if (!notification.read) {
-      _unreadCount++;
-      if (onUnreadCountChanged != null) {
-        onUnreadCountChanged!(_unreadCount);
-      }
+      _badgeCounter.increment();
     }
 
     // Appeler le callback
@@ -99,25 +105,24 @@ class NotificationManager {
   }
 
   Future<void> _showLocalNotification(NotificationModel notification) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-          'high_importance_channel',
-          'Notifications importantes',
-          channelDescription: 'Canal pour les notifications importantes',
-          importance: Importance.max,
-          priority: Priority.high,
-          showWhen: false,
-        );
+    final AndroidNotificationDetails
+    androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'high_importance_channel',
+      'Notifications importantes',
+      channelDescription: 'Canal pour les notifications importantes',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: false,
+      // Some Android launchers use the 'number' field to show a badge count on the app icon
+      number: _badgeCounter.count,
+    );
 
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+    final NotificationDetails platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
     );
 
     // Use a JSON payload so the tap handler can parse and navigate
-    final payload = {
-      'type': notification.type,
-      'id': notification.id,
-    };
+    final payload = {'type': notification.type, 'id': notification.id};
 
     await _localNotifications.show(
       notification.hashCode,
@@ -147,7 +152,10 @@ class NotificationManager {
         if (data.containsKey('type')) {
           final type = data['type'];
           if (type == 'quiz' && data.containsKey('id')) {
-            navigatorKey.currentState?.pushNamed('/quiz', arguments: {'id': data['id']});
+            navigatorKey.currentState?.pushNamed(
+              '/quiz',
+              arguments: {'id': data['id']},
+            );
           }
         } else if (data.containsKey('link')) {
           final String link = data['link'].toString();
@@ -162,10 +170,7 @@ class NotificationManager {
   // Méthodes publiques
   void setNotifications(List<NotificationModel> notifications) {
     _notifications = notifications;
-    _unreadCount = notifications.where((n) => !n.read).length;
-    if (onUnreadCountChanged != null) {
-      onUnreadCountChanged!(_unreadCount);
-    }
+    _badgeCounter.setCount(notifications.where((n) => !n.read).length);
   }
 
   void markAsRead(int notificationId) {
@@ -179,10 +184,8 @@ class NotificationManager {
         createdAt: _notifications[index].createdAt,
         type: _notifications[index].type,
       );
-      _unreadCount = _unreadCount > 0 ? _unreadCount - 1 : 0;
-      if (onUnreadCountChanged != null) {
-        onUnreadCountChanged!(_unreadCount);
-      }
+      // decrement via BadgeCounter - it will call onUnreadCountChanged and update badge
+      _badgeCounter.decrement();
     }
   }
 
@@ -199,10 +202,8 @@ class NotificationManager {
         );
       }
     }
-    _unreadCount = 0;
-    if (onUnreadCountChanged != null) {
-      onUnreadCountChanged!(_unreadCount);
-    }
+    // reset counter via BadgeCounter
+    _badgeCounter.reset();
   }
 
   void deleteNotification(int notificationId) {
@@ -210,25 +211,55 @@ class NotificationManager {
     if (index != -1) {
       final wasUnread = !_notifications[index].read;
       _notifications.removeAt(index);
-      if (wasUnread && _unreadCount > 0) {
-        _unreadCount--;
-        if (onUnreadCountChanged != null) {
-          onUnreadCountChanged!(_unreadCount);
-        }
+      if (wasUnread && _badgeCounter.count > 0) {
+        _badgeCounter.decrement();
       }
     }
   }
 
   void deleteAllNotifications() {
     _notifications.clear();
-    _unreadCount = 0;
-    if (onUnreadCountChanged != null) {
-      onUnreadCountChanged!(_unreadCount);
+    _badgeCounter.reset();
+  }
+
+  void _updateAppBadge() {
+    try {
+      final count = _badgeCounter.count;
+      if (count > 0) {
+        FlutterAppBadger.updateBadgeCount(count);
+      } else {
+        // remove badge if there are no unread notifications
+        FlutterAppBadger.removeBadge();
+      }
+    } catch (e) {
+      // Some launchers/platforms may not support badges — ignore errors
+      print('Erreur lors de la mise à jour du badge: $e');
     }
   }
 
   Future<String?> getFcmToken() async {
     return await _firebaseService.getToken();
+  }
+
+  // Public helpers for debugging / external control
+  /// Simulate receiving a notification (useful for debug UI)
+  void simulateIncomingNotification(NotificationModel notification) {
+    _handleNewNotification(notification);
+  }
+
+  /// Increment unread count (public API)
+  void incrementUnread() {
+    _badgeCounter.increment();
+  }
+
+  /// Decrement unread count (public API)
+  void decrementUnread() {
+    _badgeCounter.decrement();
+  }
+
+  /// Force-set unread count
+  void setUnreadCount(int count) {
+    _badgeCounter.setCount(count);
   }
 
   Future<void> subscribeToTopic(String topic) async {

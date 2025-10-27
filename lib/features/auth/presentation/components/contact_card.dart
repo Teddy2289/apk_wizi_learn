@@ -378,6 +378,8 @@ class ContactCard extends StatelessWidget {
       return isFeminin ? 'Commerciale' : 'Commercial';
     } else if (lowerRole.contains('sav') ||
         lowerRole.contains('pole_sav') ||
+        lowerRole.contains('Chargée Administration des Ventes') ||
+        lowerRole.contains('Responsable suivi formation & SAV & Parrainage') ||
         lowerRole.contains('responsable pôle formateur') ||
         lowerRole.contains('assistante adv') ||
         lowerRole.contains('adv')) {
