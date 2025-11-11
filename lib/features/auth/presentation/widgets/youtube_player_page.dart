@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:wizi_learn/core/video/video_fullscreen_helper.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
@@ -240,6 +241,8 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
     _controller.pause();
     _controller.removeListener(_onPlayerStateChange);
     _controller.dispose();
+    // Ensure orientation is restored when leaving the player
+    VideoFullscreenHelper.exitLandscape();
     super.dispose();
   }
 
@@ -275,6 +278,17 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
         ],
       ),
       builder: (context, player) {
+        // Ensure orientation helper runs after each build so we can
+        // enter/exit landscape mode when the UI switches to fullscreen.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          if (MediaQuery.of(context).orientation == Orientation.landscape) {
+            VideoFullscreenHelper.enterLandscape();
+          } else {
+            VideoFullscreenHelper.exitLandscape();
+          }
+        });
+
         // En mode paysage, on ne montre que le lecteur vidéo (plein écran)
         if (MediaQuery.of(context).orientation == Orientation.landscape) {
           return Scaffold(

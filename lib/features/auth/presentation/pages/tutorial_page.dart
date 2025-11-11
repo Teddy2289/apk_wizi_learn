@@ -17,6 +17,7 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wizi_learn/core/video/video_fullscreen_helper.dart';
 
 String normalizeYoutubeUrl(String url) {
   final shortsReg = RegExp(r'youtube\.com/shorts/([\w-]+)');
@@ -1003,6 +1004,15 @@ class _TutorialPageState extends State<TutorialPage> {
     List<Media> medias,
     ThemeData theme,
   ) {
+    // Ensure orientation helper updates whenever this player builds.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (MediaQuery.of(context).orientation == Orientation.landscape) {
+        VideoFullscreenHelper.enterLandscape();
+      } else {
+        VideoFullscreenHelper.exitLandscape();
+      }
+    });
     return Column(
       children: [
         // Titre de la vidéo
