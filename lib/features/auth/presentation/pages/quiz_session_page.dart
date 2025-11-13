@@ -56,9 +56,6 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     );
     _sessionManager.startSession();
     _sessionManager.currentQuestionIndex.addListener(_syncPageController);
-
-    // Démarrer les tutoriels de glissement
-    // _startSwipeTutorials();
   }
 
   void _goToNextQuestionOnTimerEnd() {
@@ -66,7 +63,6 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     if (current < widget.questions.length - 1) {
       _sessionManager.goToQuestion(current + 1);
     }
-    // Si besoin, gérer la fin du quiz ici
   }
 
   void _syncPageController() {
@@ -93,6 +89,147 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     _sessionManager.goToQuestion(index);
   }
 
+  void _showQuitConfirmationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        final theme = Theme.of(context);
+        final isDarkMode = theme.brightness == Brightness.dark;
+
+        return Dialog(
+          backgroundColor: isDarkMode ? theme.cardColor : Colors.white,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icône d'avertissement
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.error.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.warning_rounded,
+                    size: 32,
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Titre
+                Text(
+                  'Quitter le quiz ?',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+
+                // Description
+                Text(
+                  'Votre progression actuelle sera perdue. Êtes-vous sûr de vouloir quitter ?',
+                  style: TextStyle(
+                    fontSize: 15,
+                    height: 1.4,
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+
+                // Boutons
+                Row(
+                  children: [
+                    // Bouton Annuler
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          side: BorderSide(
+                            color: theme.colorScheme.outline.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Text(
+                          'Continuer le quiz',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: isDarkMode ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+
+                    // Bouton Quitter
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _quitQuiz,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.error,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Quitter',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _quitQuiz() {
+    // Fermer la modal
+    Navigator.of(context).pop();
+
+    // Arrêter le timer et nettoyer les ressources
+    _sessionManager.dispose();
+
+    // Rediriger vers la liste des quiz
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DashboardPage(
+          initialIndex: 2,
+          arguments: {
+            'selectedTabIndex': 2,
+            'fromNotification': true,
+            'useCustomScaffold': true,
+          },
+        ),
+      ),
+          (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -101,15 +238,15 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
 
     return WillPopScope(
       onWillPop: () async {
-        // Empêcher de quitter 1pendant le quiz
+        _showQuitConfirmationDialog();
         return false;
       },
       child: CustomScaffold(
         body: Column(
           children: [
-            // Custom AppBar replacement
+            // En-tête amélioré
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               decoration: BoxDecoration(
                 color: isDarkMode ? theme.cardColor : Colors.white,
                 border: Border(
@@ -118,37 +255,102 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                     width: 1,
                   ),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
-                  Text(
-                    widget.quiz.titre,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.3,
-                      color: isDarkMode ? Colors.white : Colors.black87,
+                  // Bouton Quitter amélioré
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDarkMode
+                          ? Colors.grey[800]
+                          : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.arrow_back_ios_rounded,
+                        size: 18,
+                        color: isDarkMode ? Colors.white70 : Colors.black54,
+                      ),
+                      onPressed: _showQuitConfirmationDialog,
+                      tooltip: 'Quitter le quiz',
+                      padding: const EdgeInsets.all(12),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 12),
+
+                  // Informations du quiz
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.quiz.titre,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        const SizedBox(height: 2),
+                        ValueListenableBuilder<int>(
+                          valueListenable: _sessionManager.currentQuestionIndex,
+                          builder: (_, index, __) {
+                            return Text(
+                              'Question ${index + 1} sur ${widget.questions.length}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isDarkMode ? Colors.white60 : Colors.black54,
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Badge de progression
                   ValueListenableBuilder<int>(
                     valueListenable: _sessionManager.currentQuestionIndex,
                     builder: (_, index, __) {
                       return Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
+                          horizontal: 12,
+                          vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
+                          gradient: LinearGradient(
+                            colors: [
+                              colorScheme.primary,
+                              colorScheme.primary.withOpacity(0.8),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colorScheme.primary.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Text(
                           '${index + 1}/${widget.questions.length}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.primary,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
                           ),
                         ),
                       );
@@ -158,11 +360,13 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
               ),
             ),
 
-            // Progress header
+            // Section de progression
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isDarkMode ? theme.cardColor : Colors.grey[50],
+                color: isDarkMode
+                    ? theme.cardColor.withOpacity(0.5)
+                    : Colors.grey[50],
                 border: Border(
                   bottom: BorderSide(
                     color: theme.dividerColor.withOpacity(0.05),
@@ -172,65 +376,103 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
               ),
               child: Column(
                 children: [
+                  // Barre de progression
                   QuizProgressBar(sessionManager: _sessionManager),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
+
+                  // Informations de progression et timer
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      // Progression textuelle
                       ValueListenableBuilder<int>(
                         valueListenable: _sessionManager.currentQuestionIndex,
                         builder: (_, index, __) {
+                          final progress = ((index + 1) / widget.questions.length * 100).round();
                           return Text(
-                            'Question ${index + 1}/${widget.questions.length}',
+                            '$progress% complété',
                             style: TextStyle(
                               fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: theme.colorScheme.onSurface.withOpacity(
-                                0.7,
-                              ),
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.primary,
                             ),
                           );
                         },
                       ),
-                      QuizTimerDisplay(sessionManager: _sessionManager),
+
+                      // Timer avec style amélioré
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? Colors.grey[800]
+                              : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: QuizTimerDisplay(sessionManager: _sessionManager),
+                      ),
                     ],
                   ),
                 ],
               ),
             ),
 
-            // Question area
+            // Zone des questions
             Expanded(
-              child: Stack(
-                children: [
-                  PageView.builder(
-                    controller: _pageController,
-                    physics: const BouncingScrollPhysics(),
-                    onPageChanged: _handlePageChanged,
-                    itemCount: widget.questions.length,
-                    itemBuilder: (context, pageIndex) {
-                      return QuestionTypePage(
-                        key: ValueKey(widget.questions[pageIndex].id),
-                        onAnswer: _sessionManager.handleAnswer,
-                        question: widget.questions[pageIndex],
-                      );
-                    },
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: isDarkMode
+                      ? LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      theme.scaffoldBackgroundColor,
+                      theme.scaffoldBackgroundColor.withOpacity(0.95),
+                    ],
+                  )
+                      : LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.grey[50]!,
+                      Colors.grey[100]!,
+                    ],
                   ),
-                ],
+                ),
+                child: PageView.builder(
+                  controller: _pageController,
+                  physics: const BouncingScrollPhysics(),
+                  onPageChanged: _handlePageChanged,
+                  itemCount: widget.questions.length,
+                  itemBuilder: (context, pageIndex) {
+                    return QuestionTypePage(
+                      key: ValueKey(widget.questions[pageIndex].id),
+                      onAnswer: _sessionManager.handleAnswer,
+                      question: widget.questions[pageIndex],
+                    );
+                  },
+                ),
               ),
             ),
 
-            // Navigation controls
+            // Contrôles de navigation
             Container(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               decoration: BoxDecoration(
-                color: isDarkMode ? theme.cardColor : Colors.grey[50],
+                color: isDarkMode ? theme.cardColor : Colors.white,
                 border: Border(
                   top: BorderSide(
-                    color: theme.dividerColor.withOpacity(0.05),
+                    color: theme.dividerColor.withOpacity(0.1),
                     width: 1,
                   ),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 12,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
               ),
               child: QuizNavigationControls(
                 sessionManager: _sessionManager,
@@ -243,17 +485,14 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
         currentIndex: 2,
         onTabSelected: (index) {
           if (index != 2) {
-            // If quiz adventure is enabled, redirect to adventure page instead of dashboard
             if (widget.quizAdventureEnabled) {
               Navigator.pushReplacement(
                 context,
                 PageRouteBuilder(
-                  pageBuilder:
-                      (_, __, ___) =>
-                          QuizAdventurePage(quizAdventureEnabled: true),
-                  transitionsBuilder:
-                      (_, animation, __, child) =>
-                          FadeTransition(opacity: animation, child: child),
+                  pageBuilder: (_, __, ___) =>
+                      QuizAdventurePage(quizAdventureEnabled: true),
+                  transitionsBuilder: (_, animation, __, child) =>
+                      FadeTransition(opacity: animation, child: child),
                   transitionDuration: const Duration(milliseconds: 250),
                 ),
               );
@@ -267,12 +506,9 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
           }
         },
         showBanner: false,
-        // Désactivez le banner si nécessaire
-        showBottomNavigationBar:
-            false,
+        showBottomNavigationBar: false,
         showHomeAndQuizIcons: true,
         onHomePressed: () {
-          // Navigation vers l'accueil
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
@@ -289,7 +525,6 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
           );
         },
         onQuizListPressed: () {
-          // Navigation vers la liste des quiz
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
@@ -304,7 +539,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
             ),
                 (route) => false,
           );
-        },// Cache la barre de navigation pendant le quiz
+        },
       ),
     );
   }

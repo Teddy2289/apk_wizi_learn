@@ -416,7 +416,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
           TargetContent(
             align: ContentAlign.top,
             child: const Text(
-              'Clique sur un quiz débloqué pour commencer à jouer.',
+              'Clique sur un quiz débloqué pour commencer à participer.',
               style: TextStyle(color: Colors.white, fontSize: 18),
             ),
           ),
@@ -467,7 +467,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
             onPressed:
                 () => showStandardHelpDialog(
                   context,
-                  title: 'Comment jouer ?',
+                  title: 'Comment participer ?',
                   steps: const [
                     '1. Choisissez une formation',
                     '2. Touchez un quiz débloqué pour commencer',
@@ -704,8 +704,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                               questions: questions,
                                               quizAdventureEnabled:
                                                   widget.quizAdventureEnabled,
-                                                playedQuizIds:_playedQuizIds
-
+                                              playedQuizIds: _playedQuizIds,
                                             ),
                                       ),
                                     );
@@ -1416,7 +1415,7 @@ class DailyMissionsSection extends StatelessWidget {
                   MissionCard(
                     mission: Mission(
                       id: 4,
-                      title: 'Jouer un quiz difficile',
+                      title: 'participer un quiz difficile',
                       description: 'Termine un quiz de niveau avancé.',
                       type: 'daily',
                       goal: 1,

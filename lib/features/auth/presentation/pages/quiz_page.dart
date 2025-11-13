@@ -743,7 +743,7 @@ class _QuizPageState extends State<QuizPage> {
           const SizedBox(height: 16),
         ],
         if (played.isNotEmpty) ...[
-          _buildSectionTitle('Historique de vos quiz déjà jouer', theme),
+          _buildSectionTitle('Historique de vos quiz déjà terminé', theme),
           if (isTablet)
             _buildQuizGrid(displayedPlayed, theme, isPlayed: true)
           else
@@ -925,7 +925,7 @@ class _QuizPageState extends State<QuizPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Jouer',
+                        'Participer',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 9,
@@ -1066,7 +1066,7 @@ class _QuizPageState extends State<QuizPage> {
                     const SizedBox(width: 3),
                     Expanded(
                       child: Text(
-                        'Rejouer',
+                        'Refaire le quiz',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: categoryColor,
                           fontWeight: FontWeight.w500,
@@ -1333,7 +1333,7 @@ class _QuizPageState extends State<QuizPage> {
                           ),
                           onPressed: () => _startQuiz(quiz),
                           child: const Text(
-                            'REJOUER CE QUIZ',
+                            'Refaire ce quiz',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.5,
@@ -1606,7 +1606,7 @@ class _QuizPageState extends State<QuizPage> {
                       ),
                       onPressed: () => _startQuiz(quiz),
                       child: const Text(
-                        'COMMENCER LE QUIZ',
+                        'Commencer le quiz',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.5,

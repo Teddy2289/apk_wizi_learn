@@ -17,10 +17,23 @@ class TrainingPage extends StatefulWidget {
   State<TrainingPage> createState() => _TrainingPageState();
 }
 
+enum SortOption {
+  nameAsc,
+  nameDesc,
+  priceAsc,
+  priceDesc,
+  durationAsc,
+  durationDesc,
+}
+
 class _TrainingPageState extends State<TrainingPage> {
   late final FormationRepository _repository;
   late Future<List<Formation>> _futureFormations;
   String? _selectedCategory;
+  SortOption _selectedSort = SortOption.nameAsc;
+  int _currentPage = 1;
+  final int _itemsPerPage = 6;
+  bool _isLoadingMore = false;
 
   // Map des icônes pour chaque catégorie
   final Map<String, IconData> _categoryIcons = {
@@ -28,7 +41,10 @@ class _TrainingPageState extends State<TrainingPage> {
     'Langues': Icons.language,
     'Internet': Icons.public,
     'Création': Icons.brush,
+    'IA': Icons.smart_toy,
   };
+
+  // Options de tri
 
   @override
   void initState() {
@@ -41,9 +57,67 @@ class _TrainingPageState extends State<TrainingPage> {
     _futureFormations = _repository.getFormations();
   }
 
+  // Fonction pour trier les formations
+  List<Formation> _sortFormations(List<Formation> formations) {
+    switch (_selectedSort) {
+      case SortOption.nameAsc:
+        formations.sort((a, b) => a.titre.compareTo(b.titre));
+        break;
+      case SortOption.nameDesc:
+        formations.sort((a, b) => b.titre.compareTo(a.titre));
+        break;
+      case SortOption.priceAsc:
+        formations.sort((a, b) => a.tarif.compareTo(b.tarif));
+        break;
+      case SortOption.priceDesc:
+        formations.sort((a, b) => b.tarif.compareTo(a.tarif));
+        break;
+      case SortOption.durationAsc:
+        formations.sort((a, b) => a.duree.compareTo(b.duree));
+        break;
+      case SortOption.durationDesc:
+        formations.sort((a, b) => b.duree.compareTo(a.duree));
+        break;
+    }
+    return formations;
+  }
+
+  // Fonction pour paginer les formations
+  List<Formation> _paginateFormations(List<Formation> formations) {
+    final startIndex = (_currentPage - 1) * _itemsPerPage;
+    final endIndex = startIndex + _itemsPerPage;
+    return formations.sublist(
+      0,
+      endIndex > formations.length ? formations.length : endIndex,
+    );
+  }
+
+  // Charger plus d'éléments
+  void _loadMore() {
+    if (!_isLoadingMore) {
+      setState(() {
+        _isLoadingMore = true;
+        _currentPage++;
+      });
+      Future.delayed(const Duration(milliseconds: 500), () {
+        setState(() {
+          _isLoadingMore = false;
+        });
+      });
+    }
+  }
+
+  // Réinitialiser la pagination
+  void _resetPagination() {
+    setState(() {
+      _currentPage = 1;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -66,9 +140,9 @@ class _TrainingPageState extends State<TrainingPage> {
                   context,
                   steps: const [
                     '1. Sélectionnez une catégorie en haut.',
-                    '2. Parcourez les formations de la catégorie.',
-                    '3. Touchez une formation pour voir les détails.',
-                    '4. Utilisez la liste pour comparer et choisir.',
+                    '2. Utilisez les filtres pour trier les formations.',
+                    '3. Parcourez les formations avec la pagination.',
+                    '4. Touchez une formation pour voir les détails.',
                   ],
                 ),
           ),
@@ -78,83 +152,15 @@ class _TrainingPageState extends State<TrainingPage> {
           child: Container(height: 1, color: Colors.grey.shade200),
         ),
       ),
-          body: FutureBuilder<List<Formation>>(
+      body: FutureBuilder<List<Formation>>(
         future: _futureFormations,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: SingleChildScrollView(
-                physics: const NeverScrollableScrollPhysics(),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Chargement en cours...',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
-            );
+            return _buildLoadingState();
           } else if (snapshot.hasError) {
-            return Center(
-              child: SingleChildScrollView(
-                physics: const NeverScrollableScrollPhysics(),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: Colors.red.shade400,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Une erreur est survenue',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.red.shade600,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${snapshot.error}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
+            return _buildErrorState(snapshot.error.toString());
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: SingleChildScrollView(
-                physics: const NeverScrollableScrollPhysics(),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.search_off, size: 48, color: Colors.grey.shade400),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Aucune formation disponible',
-                      style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-                    ),
-                  ],
-                ),
-              ),
-            );
+            return _buildEmptyState();
           }
 
           final formations = snapshot.data!;
@@ -166,246 +172,785 @@ class _TrainingPageState extends State<TrainingPage> {
 
           return Column(
             children: [
-              // Section Catégories
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 16,
-                ),
-                child: SizedBox(
-                  height: 80,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: categories.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (context, index) {
-                      final category = categories[index];
-                      final isSelected = _selectedCategory == category;
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedCategory = category;
-                          });
-                        },
-                        child: Container(
-                          width: 80,
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? _getCategoryColor(category)
-                                    : Colors.grey.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color:
-                                  isSelected
-                                      ? _getCategoryColor(category)
-                                      : Colors.grey.shade200,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                _categoryIcons[category] ?? Icons.category,
-                                size: 24,
-                                color:
-                                    isSelected
-                                        ? Colors.white
-                                        : _getCategoryColor(category),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                category,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color:
-                                      isSelected
-                                          ? Colors.white
-                                          : Colors.grey.shade800,
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
+              // Section Catégories avec design amélioré
+              _buildCategorySection(categories),
 
-              // Nombre de formations
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  children: [
-                    FutureBuilder<List<Formation>>(
-                      future: _repository.getFormationsByCategory(
-                        _selectedCategory!,
-                      ),
-                      builder: (context, categorySnapshot) {
-                        if (categorySnapshot.hasData) {
-                          return RichText(
-                            text: TextSpan(
-                              text: '${categorySnapshot.data?.length ?? 0} ',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade800,
-                              ),
-                              children: const [
-                                TextSpan(
-                                  text: 'formations disponibles',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.normal,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                        return const SizedBox();
-                      },
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: Icon(
-                        Icons.filter_list_rounded,
-                        size: 20,
-                        color: Colors.grey.shade600,
-                      ),
-                      onPressed: () {},
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
+              // Section Filtres et informations
+              _buildFilterSection(formations),
 
-              // Liste des formations
-              Expanded(
-                child:
-                    _selectedCategory == null
-                        ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.category,
-                                size: 48,
-                                color: Colors.grey.shade400,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Sélectionnez une catégorie',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                        : FutureBuilder<List<Formation>>(
-                          future: _repository.getFormationsByCategory(
-                            _selectedCategory!,
-                          ),
-                          builder: (context, categorySnapshot) {
-                            if (categorySnapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              );
-                            } else if (categorySnapshot.hasError) {
-                              return Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.error_outline,
-                                      size: 48,
-                                      color: Colors.red.shade400,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'Erreur: ${categorySnapshot.error}',
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            } else if (!categorySnapshot.hasData ||
-                                categorySnapshot.data!.isEmpty) {
-                              return Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.search_off,
-                                      size: 48,
-                                      color: Colors.grey.shade400,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'Aucune formation dans cette catégorie',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
-
-                            final categoryFormations = categorySnapshot.data!;
-
-                            // Responsive: use Grid on wide screens, List on narrow
-                            return LayoutBuilder(builder: (context, constraints) {
-                              final width = constraints.maxWidth;
-                              final isWide = width >= 800;
-
-                              if (!isWide) {
-                                return ListView.separated(
-                                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                                  itemCount: categoryFormations.length,
-                                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                                  itemBuilder: (context, index) {
-                                    final formation = categoryFormations[index];
-                                    return _buildFormationListCard(context, formation);
-                                  },
-                                );
-                              }
-
-                              // Grid for wide screens: compute columns based on width
-                              final crossAxisCount = (width / 340).floor().clamp(2, 4);
-                              return GridView.builder(
-                                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: crossAxisCount,
-                                  crossAxisSpacing: 12,
-                                  mainAxisSpacing: 12,
-                                  childAspectRatio: 3.2,
-                                ),
-                                itemCount: categoryFormations.length,
-                                itemBuilder: (context, index) {
-                                  final formation = categoryFormations[index];
-                                  return _buildFormationGridCard(context, formation);
-                                },
-                              );
-                            });
-                          },
-                        ),
-              ),
+              // Liste des formations avec pagination
+              _buildFormationsList(formations),
             ],
           );
         },
       ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Chargement en cours...',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: Colors.red.shade400),
+              const SizedBox(height: 16),
+              Text(
+                'Une erreur est survenue',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.red.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error,
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _futureFormations = _repository.getFormations();
+                  });
+                },
+                child: const Text('Réessayer'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 48, color: Colors.grey.shade400),
+            const SizedBox(height: 16),
+            Text(
+              'Aucune formation disponible',
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategorySection(List<String> categories) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: SizedBox(
+        height: 90,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: categories.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemBuilder: (context, index) {
+            final category = categories[index];
+            final isSelected = _selectedCategory == category;
+            final categoryColor = _getCategoryColor(category);
+
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedCategory = category;
+                  _resetPagination();
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 80,
+                decoration: BoxDecoration(
+                  gradient:
+                      isSelected
+                          ? LinearGradient(
+                            colors: [
+                              categoryColor,
+                              categoryColor.withOpacity(0.8),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                          : null,
+                  color: isSelected ? null : Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected ? categoryColor : Colors.grey.shade300,
+                    width: isSelected ? 2 : 1,
+                  ),
+                  boxShadow:
+                      isSelected
+                          ? [
+                            BoxShadow(
+                              color: categoryColor.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                          : [
+                            BoxShadow(
+                              color: Colors.grey.shade200,
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      _categoryIcons[category] ?? Icons.category,
+                      size: 24,
+                      color: isSelected ? Colors.white : categoryColor,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      category,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected ? Colors.white : Colors.grey.shade800,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterSection(List<Formation> formations) {
+    final categoryFormations =
+        formations
+            .where(
+              (formation) => formation.category.categorie == _selectedCategory,
+            )
+            .toList();
+    final sortedFormations = _sortFormations(categoryFormations);
+    final totalItems = sortedFormations.length;
+    final totalPages = (totalItems / _itemsPerPage).ceil();
+    final displayedItems = _paginateFormations(sortedFormations);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.shade200, width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Compteur de formations
+          RichText(
+            text: TextSpan(
+              text: '${displayedItems.length} ',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade800,
+              ),
+              children: [
+                TextSpan(
+                  text: 'sur $totalItems formations',
+                  style: TextStyle(
+                    fontWeight: FontWeight.normal,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+
+          // Pagination
+          if (totalPages > 1) ...[
+            Row(
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.chevron_left,
+                    color:
+                        _currentPage > 1 ? Colors.blue : Colors.grey.shade400,
+                  ),
+                  onPressed:
+                      _currentPage > 1
+                          ? () {
+                            setState(() {
+                              _currentPage--;
+                            });
+                          }
+                          : null,
+                ),
+                Text(
+                  '$_currentPage/$totalPages',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade700,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.chevron_right,
+                    color:
+                        _currentPage < totalPages
+                            ? Colors.blue
+                            : Colors.grey.shade400,
+                  ),
+                  onPressed:
+                      _currentPage < totalPages
+                          ? () {
+                            setState(() {
+                              _currentPage++;
+                            });
+                          }
+                          : null,
+                ),
+              ],
+            ),
+            const SizedBox(width: 16),
+          ],
+
+          // Menu de tri
+          PopupMenuButton<SortOption>(
+            icon: Icon(Icons.sort, color: Colors.grey.shade700),
+            onSelected: (SortOption value) {
+              setState(() {
+                _selectedSort = value;
+                _resetPagination();
+              });
+            },
+            itemBuilder:
+                (BuildContext context) => [
+                  const PopupMenuItem(
+                    value: SortOption.nameAsc,
+                    child: Text('Nom (A-Z)'),
+                  ),
+                  const PopupMenuItem(
+                    value: SortOption.nameDesc,
+                    child: Text('Nom (Z-A)'),
+                  ),
+                  const PopupMenuItem(
+                    value: SortOption.priceAsc,
+                    child: Text('Prix (Croissant)'),
+                  ),
+                  const PopupMenuItem(
+                    value: SortOption.priceDesc,
+                    child: Text('Prix (Décroissant)'),
+                  ),
+                  const PopupMenuItem(
+                    value: SortOption.durationAsc,
+                    child: Text('Durée (Croissante)'),
+                  ),
+                  const PopupMenuItem(
+                    value: SortOption.durationDesc,
+                    child: Text('Durée (Décroissante)'),
+                  ),
+                ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormationsList(List<Formation> formations) {
+    final categoryFormations =
+        formations
+            .where(
+              (formation) => formation.category.categorie == _selectedCategory,
+            )
+            .toList();
+    final sortedFormations = _sortFormations(categoryFormations);
+    final displayedFormations = _paginateFormations(sortedFormations);
+    final hasMore = displayedFormations.length < sortedFormations.length;
+
+    if (_selectedCategory == null) {
+      return Expanded(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.category, size: 48, color: Colors.grey.shade400),
+              const SizedBox(height: 16),
+              Text(
+                'Sélectionnez une catégorie',
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (displayedFormations.isEmpty) {
+      return Expanded(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.search_off, size: 48, color: Colors.grey.shade400),
+              const SizedBox(height: 16),
+              Text(
+                'Aucune formation dans cette catégorie',
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Expanded(
+      child: Column(
+        children: [
+          // Liste des formations
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth;
+                final isWide = width >= 800;
+                final crossAxisCount = (width / 400).floor().clamp(1, 3);
+
+                if (!isWide) {
+                  return ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    itemCount: displayedFormations.length + (hasMore ? 1 : 0),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      if (index == displayedFormations.length && hasMore) {
+                        return _buildLoadMoreButton();
+                      }
+                      final formation = displayedFormations[index];
+                      return _buildFormationCard(context, formation, false);
+                    },
+                  );
+                }
+
+                return GridView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1.6,
+                  ),
+                  itemCount: displayedFormations.length + (hasMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == displayedFormations.length && hasMore) {
+                      return _buildLoadMoreButton();
+                    }
+                    final formation = displayedFormations[index];
+                    return _buildFormationCard(context, formation, true);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child:
+            _isLoadingMore
+                ? const CircularProgressIndicator(strokeWidth: 2)
+                : ElevatedButton(
+                  onPressed: _loadMore,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: const Text('Charger plus de formations'),
+                ),
+      ),
+    );
+  }
+
+  Widget _buildFormationCard(
+    BuildContext context,
+    Formation formation,
+    bool isGrid,
+  ) {
+    final categoryColor = _getCategoryColor(formation.category.categorie);
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => FormationDetailPage(formationId: formation.id),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child:
+              isGrid
+                  ? _buildGridLayout(formation, categoryColor)
+                  : _buildListLayout(formation, categoryColor),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListLayout(Formation formation, Color categoryColor) {
+    return Row(
+      children: [
+        // Image avec effet moderne
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [
+                categoryColor.withOpacity(0.1),
+                categoryColor.withOpacity(0.3),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(color: categoryColor.withOpacity(0.3), width: 2),
+          ),
+          child: ClipOval(
+            child:
+                formation.imageUrl != null
+                    ? CachedNetworkImage(
+                      imageUrl:
+                          '${AppConstants.baseUrlImg}/${formation.imageUrl}',
+                      fit: BoxFit.cover,
+                      placeholder:
+                          (context, url) => Center(
+                            child: Icon(
+                              _categoryIcons[formation.category.categorie] ??
+                                  Icons.school,
+                              color: categoryColor,
+                              size: 32,
+                            ),
+                          ),
+                      errorWidget:
+                          (context, url, error) => Center(
+                            child: Icon(
+                              _categoryIcons[formation.category.categorie] ??
+                                  Icons.school,
+                              color: categoryColor,
+                              size: 32,
+                            ),
+                          ),
+                    )
+                    : Center(
+                      child: Icon(
+                        _categoryIcons[formation.category.categorie] ??
+                            Icons.school,
+                        color: categoryColor,
+                        size: 32,
+                      ),
+                    ),
+          ),
+        ),
+        const SizedBox(width: 16),
+
+        // Contenu
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                formation.titre.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                formation.description.replaceAll(RegExp(r'<[^>]*>'), ''),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade700,
+                  height: 1.4,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  // Durée
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.schedule,
+                          size: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${formation.duree}h',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  // Prix
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.orange.shade500,
+                          Colors.orange.shade700,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${formatPrice(formation.tarif.toInt())} €',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGridLayout(Formation formation, Color categoryColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // En-tête avec image et titre
+        Row(
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    categoryColor.withOpacity(0.1),
+                    categoryColor.withOpacity(0.3),
+                  ],
+                ),
+                border: Border.all(
+                  color: categoryColor.withOpacity(0.3),
+                  width: 2,
+                ),
+              ),
+              child: ClipOval(
+                child:
+                    formation.imageUrl != null
+                        ? CachedNetworkImage(
+                          imageUrl:
+                              '${AppConstants.baseUrlImg}/${formation.imageUrl}',
+                          fit: BoxFit.cover,
+                          placeholder:
+                              (context, url) => Center(
+                                child: Icon(
+                                  _categoryIcons[formation
+                                          .category
+                                          .categorie] ??
+                                      Icons.school,
+                                  color: categoryColor,
+                                  size: 24,
+                                ),
+                              ),
+                          errorWidget:
+                              (context, url, error) => Center(
+                                child: Icon(
+                                  _categoryIcons[formation
+                                          .category
+                                          .categorie] ??
+                                      Icons.school,
+                                  color: categoryColor,
+                                  size: 24,
+                                ),
+                              ),
+                        )
+                        : Center(
+                          child: Icon(
+                            _categoryIcons[formation.category.categorie] ??
+                                Icons.school,
+                            color: categoryColor,
+                            size: 24,
+                          ),
+                        ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                formation.titre,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Description
+        Expanded(
+          child: Text(
+            formation.description.replaceAll(RegExp(r'<[^>]*>'), ''),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade700,
+              height: 1.4,
+            ),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Pied de carte
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.schedule, size: 12, color: Colors.grey.shade600),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${formation.duree}h',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.orange.shade500, Colors.orange.shade700],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '${formatPrice(formation.tarif.toInt())} €',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -428,225 +973,13 @@ class _TrainingPageState extends State<TrainingPage> {
       default:
         return Colors.grey;
     }
-    }
-
-    // Helper: list-style card (existing look)
-  Widget _buildFormationListCard(BuildContext context, Formation formation) {
-    final categoryColor = _getCategoryColor(formation.category.categorie);
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: Colors.grey.shade200,
-          width: 1,
-        ),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => FormationDetailPage(
-                formationId: formation.id,
-              ),
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              // Image arrondie
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: categoryColor.withOpacity(0.3),
-                    width: 2,
-                  ),
-                ),
-                child: ClipOval(
-                  child: formation.imageUrl != null
-                      ? CachedNetworkImage(
-                          imageUrl: '${AppConstants.baseUrlImg}/${formation.imageUrl}',
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Center(
-                            child: Icon(
-                              _categoryIcons[formation.category.categorie] ?? Icons.school,
-                              color: categoryColor,
-                              size: 32,
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Center(
-                            child: Icon(
-                              _categoryIcons[formation.category.categorie] ?? Icons.school,
-                              color: categoryColor,
-                              size: 32,
-                            ),
-                          ),
-                        )
-                      : Center(
-                          child: Icon(
-                            _categoryIcons[formation.category.categorie] ?? Icons.school,
-                            color: categoryColor,
-                            size: 32,
-                          ),
-                        ),
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              // Détails
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      formation.titre.toUpperCase(),
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      formation.description.replaceAll(RegExp(r'<[^>]*>'), ''),
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.schedule, size: 14, color: Colors.grey.shade600),
-                              const SizedBox(width: 4),
-                              Text('${formation.duree}h', style: TextStyle(fontSize: 12, color: Colors.grey.shade800)),
-                            ],
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '${formatPrice(formation.tarif.toInt())} €',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange.shade700),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
-
-  // Helper: grid-style card for wide layouts (compact horizontal layout)
-  Widget _buildFormationGridCard(BuildContext context, Formation formation) {
-    final categoryColor = _getCategoryColor(formation.category.categorie);
-    return Material(
-      color: Theme.of(context).cardColor,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => FormationDetailPage(formationId: formation.id),
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Container(
-                width: 84,
-                height: 84,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: categoryColor.withOpacity(0.25), width: 2),
-                ),
-                child: ClipOval(
-                  child: formation.imageUrl != null
-                      ? CachedNetworkImage(
-                          imageUrl: '${AppConstants.baseUrlImg}/${formation.imageUrl}',
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Center(
-                            child: Icon(_categoryIcons[formation.category.categorie] ?? Icons.school, color: categoryColor, size: 36),
-                          ),
-                          errorWidget: (context, url, error) => Center(
-                            child: Icon(_categoryIcons[formation.category.categorie] ?? Icons.school, color: categoryColor, size: 36),
-                          ),
-                        )
-                      : Center(
-                          child: Icon(_categoryIcons[formation.category.categorie] ?? Icons.school, color: categoryColor, size: 36),
-                        ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      formation.titre,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      formation.description.replaceAll(RegExp(r'<[^>]*>'), ''),
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(4)),
-                          child: Row(children: [Icon(Icons.schedule, size: 13, color: Colors.grey.shade600), const SizedBox(width: 4), Text('${formation.duree}h', style: TextStyle(fontSize: 11, color: Colors.grey.shade800))]),
-                        ),
-                        const Spacer(),
-                        Text('${formatPrice(formation.tarif.toInt())} €', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange.shade700)),
-                      ],
-                    )
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
 }
 
 String formatPrice(num price) {
   final formatter = NumberFormat("#,##0.##", "fr_FR");
-  // Format classique avec séparateur français (souvent espace insécable)
   String formatted = formatter.format(price);
-  // Remplace les espaces insécables (\u202F ou \u00A0) par un espace normal " "
   formatted = formatted.replaceAll(RegExp(r'[\u202F\u00A0]'), ' ');
-  // Double l’espace pour qu’il soit visuellement bien marqué
   formatted = formatted.replaceAll(' ', ' ');
-
-  return "$formatted";
+  return formatted;
 }

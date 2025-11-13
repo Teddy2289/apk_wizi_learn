@@ -9,6 +9,7 @@ import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_sourc
 import 'package:wizi_learn/features/auth/data/models/achievement_model.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 import 'package:wizi_learn/features/auth/data/models/quiz_model.dart';
+import 'package:wizi_learn/features/auth/data/models/stats_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/achievement_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/quiz_repository.dart';
@@ -51,9 +52,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
   Timer? _nextQuizTimer;
   Timer? _countdownTimer;
 
-  // MODIFICATION: 30 secondes pour regarder les résultats
-  int _viewResultsSeconds = 30;
-  // MODIFICATION: 5 secondes pour le prochain quiz
+  int _viewResultsSeconds = 60;
   int _nextQuizSeconds = 5;
 
   bool _showViewResultsCountdown = true;
@@ -79,13 +78,9 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
       });
     }
 
-    // Charger les quizzes disponibles et sélectionner le prochain
     _loadNextQuiz();
-
-    // MODIFICATION: Démarrer le décompte pour regarder les résultats (30s)
     _startViewResultsTimer();
 
-    // If backend returned new achievements in quizResult, show them immediately
     final serverNew =
         (widget.quizResult?['newAchievements'] as List?) ??
         (widget.quizResult?['new_achievements'] as List?) ??
@@ -101,7 +96,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
     } else {
       _fetchNewAchievements();
     }
-    // Attempt to report this completion to the Challenge API (non-blocking)
+
     (() async {
       try {
         final dio = Dio();
@@ -111,7 +106,6 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
 
         final config = await challengeRepo.fetchConfig();
         if (config != null && config.id != 0) {
-          // Attempt to flush any queued submissions first
           await challengeRepo.flushQueue();
           final posted = await challengeRepo.submitEntryWithQueue(
             challengeId: config.id,
@@ -125,6 +119,56 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
         debugPrint('Challenge reporting failed (non-blocking): $e');
       }
     })();
+  }
+
+  // [Les autres méthodes _filterQuizzesByPoints, _loadNextQuiz, _preloadNextQuizQuestions, etc. restent identiques]
+  List<Quiz> _filterQuizzesByPoints(List<Quiz> allQuizzes, int userPoints) {
+    if (allQuizzes.isEmpty) return [];
+
+    String normalizeLevel(String? level) {
+      if (level == null) return 'débutant';
+      final lvl = level.toLowerCase().trim();
+      if (lvl.contains('inter') || lvl.contains('moyen')) {
+        return 'intermédiaire';
+      }
+      if (lvl.contains('avancé') || lvl.contains('expert')) return 'avancé';
+      return 'débutant';
+    }
+
+    final debutant =
+        allQuizzes
+            .where((q) => normalizeLevel(q.niveau) == 'débutant')
+            .toList();
+    final intermediaire =
+        allQuizzes
+            .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
+            .toList();
+    final avance =
+        allQuizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
+
+    List<Quiz> result;
+
+    if (userPoints < 10) {
+      result = debutant.take(2).toList();
+    } else if (userPoints < 20) {
+      result = debutant.take(4).toList();
+    } else if (userPoints < 40) {
+      result = [...debutant, ...intermediaire.take(2)];
+    } else if (userPoints < 60) {
+      result = [...debutant, ...intermediaire];
+    } else if (userPoints < 80) {
+      result = [...debutant, ...intermediaire, ...avance.take(2)];
+    } else if (userPoints < 100) {
+      result = [...debutant, ...intermediaire, ...avance.take(4)];
+    } else {
+      result = [...debutant, ...intermediaire, ...avance];
+    }
+
+    if (result.isEmpty && allQuizzes.isNotEmpty) {
+      result = allQuizzes.take(2).toList();
+    }
+
+    return result;
   }
 
   Future<void> _loadNextQuiz() async {
@@ -141,27 +185,117 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
         storage: storage,
       );
 
-      // Récupérer l'utilisateur connecté
       final user = await authRepository.getMe();
       final stagiaireId = user.stagiaire?.id;
 
-      if (stagiaireId == null) return;
+      if (stagiaireId == null) {
+        debugPrint('❌ Aucun stagiaire ID trouvé');
+        return;
+      }
 
-      // Charger tous les quizzes
       final allQuizzes = await quizRepository.getQuizzesForStagiaire(
         stagiaireId: stagiaireId,
       );
 
-      // Charger l'historique pour obtenir les IDs joués
+      debugPrint('✅ ${allQuizzes.length} quizzes chargés');
+
       final statsRepository = StatsRepository(apiClient: apiClient);
       final history = await statsRepository.getQuizHistory();
       final playedQuizIds = history.map((h) => h.quiz.id.toString()).toSet();
 
-      // Filtrer pour obtenir seulement les quizzes non joués
-      final unplayedQuizzes =
-          allQuizzes
+      debugPrint('📊 ${playedQuizIds.length} quizzes déjà joués');
+
+      final rankings = await statsRepository.getGlobalRanking();
+      final userRanking = rankings.firstWhere(
+        (r) => r.stagiaire.id == stagiaireId.toString(),
+        orElse: () => GlobalRanking.empty(),
+      );
+      final userPoints = userRanking.totalPoints;
+
+      debugPrint('⭐ Points utilisateur: $userPoints');
+
+      final filteredQuizzes = _filterQuizzesByPoints(allQuizzes, userPoints);
+      debugPrint(
+        '🎯 ${filteredQuizzes.length} quizzes après filtrage par points',
+      );
+
+      final currentQuizId = widget.quizResult?['quizId']?.toString();
+      Quiz? currentQuiz;
+
+      if (currentQuizId != null) {
+        currentQuiz = allQuizzes.firstWhere(
+          (q) => q.id.toString() == currentQuizId,
+          orElse:
+              () =>
+                  filteredQuizzes.isNotEmpty
+                      ? filteredQuizzes.first
+                      : allQuizzes.first,
+        );
+        debugPrint(
+          '🎯 Quiz actuel: ${currentQuiz.titre} (${currentQuiz.niveau} - ${currentQuiz.formation.titre})',
+        );
+      }
+
+      List<Quiz> unplayedQuizzes =
+          filteredQuizzes
               .where((quiz) => !playedQuizIds.contains(quiz.id.toString()))
               .toList();
+
+      debugPrint(
+        '🆕 ${unplayedQuizzes.length} quizzes non joués après filtrage',
+      );
+
+      if (unplayedQuizzes.isEmpty) {
+        debugPrint('⚠️ Aucun quiz non joué, on prend tous les quizzes filtrés');
+        unplayedQuizzes = filteredQuizzes;
+      }
+
+      if (currentQuiz != null && unplayedQuizzes.isNotEmpty) {
+        final sameLevelAndFormation =
+            unplayedQuizzes
+                .where(
+                  (quiz) =>
+                      quiz.niveau == currentQuiz!.niveau &&
+                      quiz.formation.titre == currentQuiz!.formation.titre,
+                )
+                .toList();
+
+        if (sameLevelAndFormation.isNotEmpty) {
+          debugPrint(
+            '🎯 ${sameLevelAndFormation.length} quizzes de même niveau et formation',
+          );
+          unplayedQuizzes = sameLevelAndFormation;
+        } else {
+          final sameLevel =
+              unplayedQuizzes
+                  .where((quiz) => quiz.niveau == currentQuiz!.niveau)
+                  .toList();
+
+          if (sameLevel.isNotEmpty) {
+            debugPrint('🎯 ${sameLevel.length} quizzes de même niveau');
+            unplayedQuizzes = sameLevel;
+          } else {
+            final sameFormation =
+                unplayedQuizzes
+                    .where(
+                      (quiz) =>
+                          quiz.formation.titre == currentQuiz!.formation.titre,
+                    )
+                    .toList();
+
+            if (sameFormation.isNotEmpty) {
+              debugPrint(
+                '🎯 ${sameFormation.length} quizzes de même formation',
+              );
+              unplayedQuizzes = sameFormation;
+            }
+          }
+        }
+      }
+
+      unplayedQuizzes.shuffle();
+
+      debugPrint('🎲 ${unplayedQuizzes.length} quizzes disponibles après tri');
 
       if (unplayedQuizzes.isNotEmpty) {
         setState(() {
@@ -169,16 +303,32 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
           _nextQuiz = unplayedQuizzes.first;
         });
 
-        // Précharger les questions du prochain quiz
+        debugPrint(
+          '➡️ Prochain quiz: ${_nextQuiz!.titre} (${_nextQuiz!.niveau} - ${_nextQuiz!.formation.titre})',
+        );
+
         _preloadNextQuizQuestions();
+      } else {
+        debugPrint('❌ Aucun quiz disponible après tout le traitement');
+        setState(() {
+          _nextQuiz = null;
+          _availableQuizzes = [];
+        });
       }
     } catch (e) {
-      debugPrint('Erreur chargement prochain quiz: $e');
+      debugPrint('❌ Erreur chargement prochain quiz: $e');
+      setState(() {
+        _nextQuiz = null;
+        _availableQuizzes = [];
+      });
     }
   }
 
   Future<void> _preloadNextQuizQuestions() async {
-    if (_nextQuiz == null) return;
+    if (_nextQuiz == null) {
+      debugPrint('❌ _nextQuiz est null dans _preloadNextQuizQuestions');
+      return;
+    }
 
     try {
       final dio = Dio();
@@ -195,7 +345,6 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
     }
   }
 
-  // MODIFICATION: Timer de 30 secondes pour regarder les résultats
   void _startViewResultsTimer() {
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_viewResultsSeconds > 0) {
@@ -209,7 +358,6 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
     });
   }
 
-  // MODIFICATION: Timer de 5 secondes pour le prochain quiz
   void _startNextQuizCountdown() {
     setState(() {
       _showViewResultsCountdown = false;
@@ -229,13 +377,9 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
     });
   }
 
-  // MODIFICATION SUPPRIMÉE: _startNextQuizTimer n'est plus utilisé
-
   List<String> _getPlayedQuizIds() {
-    // Récupérer l'ID du quiz actuel depuis quizResult
     final currentQuizId = widget.quizResult?['quizId']?.toString();
 
-    // Si on a la liste des quizzes disponibles, on peut construire la liste des IDs joués
     if (_availableQuizzes != null && currentQuizId != null) {
       final allQuizIds =
           _availableQuizzes!.map((q) => q.id.toString()).toList();
@@ -243,34 +387,21 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
       return playedIds;
     }
 
-    // Fallback: retourner une liste vide ou avec l'ID actuel
     return currentQuizId != null ? [currentQuizId] : [];
   }
 
   void _navigateToNextQuiz() {
-    // Annuler les timers pour éviter les actions multiples
     _nextQuizTimer?.cancel();
     _countdownTimer?.cancel();
 
-    // Si on a chargé le prochain quiz et ses questions, naviguer directement
-    if (_nextQuiz != null &&
-        _nextQuizQuestions != null &&
-        _nextQuizQuestions!.isNotEmpty) {
-      final playedQuizIds = _getPlayedQuizIds();
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder:
-              (context) => QuizSessionPage(
-                quiz: _nextQuiz!,
-                questions: _nextQuizQuestions!,
-                quizAdventureEnabled: false,
-                playedQuizIds: playedQuizIds,
-              ),
-        ),
-      );
-    } else {
-      // Fallback: retourner à la liste des quiz
+    debugPrint('🔄 Tentative de navigation vers le prochain quiz...');
+    debugPrint('📊 _nextQuiz: ${_nextQuiz?.titre}');
+    debugPrint(
+      '📊 _nextQuizQuestions: ${_nextQuizQuestions?.length} questions',
+    );
+
+    if (_nextQuiz == null) {
+      debugPrint('❌ Aucun quiz disponible, retour à la liste');
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
@@ -287,128 +418,201 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
         ),
         (route) => false,
       );
+      return;
+    }
+
+    if (_nextQuizQuestions == null || _nextQuizQuestions!.isEmpty) {
+      debugPrint(
+        '⚠️ Questions non chargées, tentative de chargement immédiat...',
+      );
+      _loadQuestionsAndNavigate();
+      return;
+    }
+
+    final playedQuizIds = _getPlayedQuizIds();
+    debugPrint(
+      '✅ Navigation vers QuizSessionPage avec ${_nextQuizQuestions!.length} questions',
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => QuizSessionPage(
+              quiz: _nextQuiz!,
+              questions: _nextQuizQuestions!,
+              quizAdventureEnabled: false,
+              playedQuizIds: playedQuizIds,
+            ),
+      ),
+    );
+  }
+
+  Future<void> _loadQuestionsAndNavigate() async {
+    if (_nextQuiz == null) return;
+
+    try {
+      final dio = Dio();
+      final storage = const FlutterSecureStorage();
+      final apiClient = ApiClient(dio: dio, storage: storage);
+      final quizRepository = QuizRepository(apiClient: apiClient);
+
+      final questions = await quizRepository.getQuizQuestions(_nextQuiz!.id);
+
+      if (questions.isNotEmpty) {
+        debugPrint('✅ Questions chargées avec succès: ${questions.length}');
+
+        final playedQuizIds = _getPlayedQuizIds();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => QuizSessionPage(
+                  quiz: _nextQuiz!,
+                  questions: questions,
+                  quizAdventureEnabled: false,
+                  playedQuizIds: playedQuizIds,
+                ),
+          ),
+        );
+      } else {
+        debugPrint('❌ Aucune question chargée, retour à la liste');
+        _navigateToQuizList();
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur lors du chargement immédiat: $e');
+      _navigateToQuizList();
     }
   }
 
-  // MODIFICATION: Nouvelle méthode pour afficher les deux décomptes
+  void _navigateToQuizList() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => DashboardPage(
+              initialIndex: 2,
+              arguments: {
+                'selectedTabIndex': 2,
+                'fromNotification': true,
+                'useCustomScaffold': true,
+                'scrollToPlayed': false,
+              },
+            ),
+      ),
+      (route) => false,
+    );
+  }
+
+  // NOUVELLE MÉTHODE : Widget de décompte amélioré
   Widget _buildCountdownInfo() {
-    if (_showViewResultsCountdown) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.blue.withOpacity(0.1),
-          border: Border(
-            bottom: BorderSide(color: Colors.blue.withOpacity(0.2)),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.visibility, color: Colors.blue, size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Text(
-                  //   'Temps pour consulter vos résultats',
-                  //   style: TextStyle(
-                  //     fontWeight: FontWeight.w600,
-                  //     color: Colors.blue.shade800,
-                  //     fontSize: 14,
-                  //   ),
-                  // ),
-                  Text(
-                    'Prochain quiz dans ${_viewResultsSeconds}s',
-                    style: TextStyle(color: Colors.blue.shade600, fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                '${_viewResultsSeconds}s',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
 
     if (_showNextQuizCountdown) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.green.withOpacity(0.1),
+          gradient: LinearGradient(
+            colors: [Colors.green.shade50, Colors.green.shade100],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           border: Border(
-            bottom: BorderSide(color: Colors.green.withOpacity(0.2)),
+            bottom: BorderSide(color: Colors.green.shade200, width: 1),
           ),
         ),
         child: Row(
           children: [
-            Icon(Icons.quiz, color: Colors.green, size: 20),
-            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.green,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.quiz, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Prochain quiz: ${_nextQuiz?.titre ?? "Chargement..."}',
+                    'Quiz suivant',
                     style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.green.shade800,
-                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.green.shade900,
+                      fontSize: 15,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
-                    'Démarrage dans ${_nextQuizSeconds}s',
+                    _nextQuiz?.titre ?? 'Chargement...',
+                    style: TextStyle(
+                      color: Colors.green.shade700,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    'Démarre dans $_nextQuizSeconds secondes',
                     style: TextStyle(
                       color: Colors.green.shade600,
-                      fontSize: 13,
+                      fontSize: 12,
                     ),
                   ),
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.green,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                '${_nextQuizSeconds}s',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+            Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    '$_nextQuizSeconds s',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            TextButton(
-              onPressed: _navigateToNextQuiz,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-              ),
-              child: Text(
-                'Commencer',
-                style: TextStyle(
-                  color: Colors.green.shade700,
-                  fontWeight: FontWeight.w600,
+                const SizedBox(height: 4),
+                TextButton(
+                  onPressed: _navigateToNextQuiz,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                  ),
+                  child: Text(
+                    'Commencer',
+                    style: TextStyle(
+                      color: Colors.green.shade800,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -417,8 +621,6 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
 
     return const SizedBox.shrink();
   }
-
-  // MODIFICATION: Supprimer l'ancienne méthode _buildNextQuizInfo
 
   Future<void> _fetchNewAchievements() async {
     final dio = Dio();
@@ -458,20 +660,58 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
       builder: (context) {
         return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.amber.shade50, Colors.orange.shade50],
+              ),
+              borderRadius: BorderRadius.circular(24),
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.emoji_events, color: Colors.amber, size: 48),
-                const SizedBox(height: 16),
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.amber,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.amber.withOpacity(0.5),
+                        blurRadius: 15,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.emoji_events,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(height: 20),
                 Text(
                   'Nouveau badge débloqué !',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange.shade900,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                Text(
+                  'Félicitations pour votre accomplissement !',
+                  style: TextStyle(color: Colors.orange.shade700, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
                 ...badges.map(
                   (badge) => Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -481,18 +721,51 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.emoji_events),
-                  label: const Text('Voir mes badges'),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const AchievementPage(),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text('Continuer'),
                       ),
-                    );
-                  },
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const AchievementPage(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.emoji_events, size: 18),
+                            const SizedBox(width: 6),
+                            Text('Voir'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -507,46 +780,83 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.star, color: Colors.amber, size: 60),
-              const SizedBox(height: 20),
-              Text(
-                'Félicitations !',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
+          child: Container(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.green.shade50, Colors.lightGreen.shade50],
               ),
-              const SizedBox(height: 10),
-              const Text(
-                'Vous avez répondu correctement à toutes les questions !',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withOpacity(0.4),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+                  child: Icon(Icons.star, color: Colors.white, size: 50),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Parfait ! 🎉',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade900,
                   ),
                 ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Continuer'),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Text(
+                  'Vous avez répondu correctement à toutes les questions !',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.green.shade700,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      elevation: 4,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      'Continuer vers les résultats',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -563,78 +873,49 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
     final answeredQuestions =
         widget.questions.where((q) => q.selectedAnswers != null).toList();
-
     final calculatedScore =
         widget.questions.where((q) => q.isCorrect == true).length * 2;
     final calculatedCorrectAnswers =
         widget.questions.where((q) => q.isCorrect == true).length;
 
     return Scaffold(
+      backgroundColor:
+          isDarkMode ? theme.scaffoldBackgroundColor : Colors.grey[50],
       appBar: AppBar(
-        title: const Text("Récapitulatif du Quiz"),
+        title: Text(
+          "Résultats du Quiz",
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+        ),
         centerTitle: true,
+        backgroundColor:
+            isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
+        elevation: 2,
+        shadowColor: Colors.black.withOpacity(0.1),
         actions: [
-          // MODIFICATION: Afficher le décompte actuel dans l'AppBar
-          if (_showViewResultsCountdown || _showNextQuizCountdown)
+          if (widget.quizResult?['isLocal'] == true)
             Container(
-              margin: const EdgeInsets.only(right: 8),
+              margin: const EdgeInsets.only(right: 12),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color:
-                    _showViewResultsCountdown
-                        ? Colors.blue.withOpacity(0.1)
-                        : Colors.green.withOpacity(0.1),
+                color: Colors.orange.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: _showViewResultsCountdown ? Colors.blue : Colors.green,
-                  width: 1,
-                ),
+                border: Border.all(color: Colors.orange, width: 1.5),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    _showViewResultsCountdown ? Icons.visibility : Icons.quiz,
+                    Icons.warning_amber_rounded,
                     size: 16,
-                    color:
-                        _showViewResultsCountdown ? Colors.blue : Colors.green,
+                    color: Colors.orange,
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    _showViewResultsCountdown
-                        ? '${_viewResultsSeconds}s'
-                        : '${_nextQuizSeconds}s',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color:
-                          _showViewResultsCountdown
-                              ? Colors.blue
-                              : Colors.green,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          // Indicateur pour les résultats locaux
-          if (widget.quizResult?['isLocal'] == true)
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange, width: 1),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.warning, size: 16, color: Colors.orange),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Local',
+                    'Résultats locaux',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.orange,
@@ -645,8 +926,8 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
               ),
             ),
           IconButton(
-            icon: const Icon(Icons.list),
-            tooltip: 'Retour à la liste des quiz',
+            icon: Icon(Icons.home, color: theme.colorScheme.primary),
+            tooltip: 'Retour à l\'accueil',
             onPressed:
                 () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
@@ -656,9 +937,10 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
         children: [
           Column(
             children: [
-              // MODIFICATION: Utiliser le nouveau widget de décompte
+              // Section décompte améliorée
               _buildCountdownInfo(),
 
+              // En-tête des scores
               QuizScoreHeader(
                 score: calculatedScore,
                 correctAnswers: calculatedCorrectAnswers,
@@ -669,51 +951,135 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
               // Message d'information pour les résultats locaux
               if (widget.quizResult?['isLocal'] == true)
                 Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.orange.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.orange.withOpacity(0.3)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: Colors.orange, size: 20),
-                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.info_outline_rounded,
+                        color: Colors.orange,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
-                          'Ces résultats sont calculés localement car la soumission au serveur a échoué. '
-                          'Ils ne sont pas sauvegardés.',
-                          style: TextStyle(
-                            color: Colors.orange.shade800,
-                            fontSize: 13,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Résultats calculés localement',
+                              style: TextStyle(
+                                color: Colors.orange.shade800,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Ces résultats ne sont pas sauvegardés sur le serveur.',
+                              style: TextStyle(
+                                color: Colors.orange.shade600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(8),
-                  itemCount: widget.questions.length,
-                  itemBuilder: (context, index) {
-                    final question = widget.questions[index];
-                    final isCorrect = question.isCorrect ?? false;
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: QuizQuestionCard(
-                        question: question,
-                        isCorrect: isCorrect,
-                        index: index,
+              // En-tête de la liste des questions
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: isDarkMode ? theme.cardColor : Colors.white,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: theme.dividerColor.withOpacity(0.1),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.list_alt_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Détail des questions',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: isDarkMode ? Colors.white : Colors.black87,
+                        fontSize: 16,
                       ),
-                    );
-                  },
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${calculatedCorrectAnswers}/${answeredQuestions.length} correctes',
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Liste des questions
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient:
+                        isDarkMode
+                            ? LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                theme.scaffoldBackgroundColor,
+                                theme.scaffoldBackgroundColor.withOpacity(0.95),
+                              ],
+                            )
+                            : LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Colors.grey[50]!, Colors.grey[100]!],
+                            ),
+                  ),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: widget.questions.length,
+                    itemBuilder: (context, index) {
+                      final question = widget.questions[index];
+                      final isCorrect = question.isCorrect ?? false;
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: QuizQuestionCard(
+                          question: question,
+                          isCorrect: isCorrect,
+                          index: index,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
           ),
+
+          // Confetti
           if (_showConfetti)
             Align(
               alignment: Alignment.topCenter,
@@ -733,73 +1099,82 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
             ),
         ],
       ),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          // NOUVEAU: Bouton Accueil
-          FloatingActionButton(
-            heroTag: 'home_button',
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (context) => DashboardPage(
-                        initialIndex: 0, // Index pour la page d'accueil
-                        arguments: {
-                          'selectedTabIndex': 0,
-                          'fromNotification': true,
-                          'useCustomScaffold': true,
-                        },
-                      ),
-                ),
-                (route) => false,
-              );
-            },
-            tooltip: 'Retour à l\'accueil',
-            child: const Icon(Icons.home),
-          ),
-          const SizedBox(width: 16),
-          // Bouton Retour aux quiz (existant)
-          FloatingActionButton(
-            heroTag: 'restart_quiz',
-            onPressed: () {
-              debugPrint(
-                'Quiz ID to scroll to: ${widget.quizResult?['quizId']}',
-              );
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (context) => DashboardPage(
-                        initialIndex: 2,
-                        arguments: {
-                          'selectedTabIndex': 2,
-                          'scrollToQuizId':
-                              widget.quizResult?['quizId']?.toString(),
-                          'fromNotification': true,
-                          'useCustomScaffold': true,
-                          'scrollToPlayed': true,
-                        },
-                      ),
-                ),
-                (route) => false,
-              );
-            },
-            tooltip: 'Retour aux quiz',
-            child: const Icon(Icons.refresh),
-          ),
-          const SizedBox(width: 16),
-          // Bouton Rejouer ce quiz (existant)
-          if (widget.onRestartQuiz != null)
+
+      // Boutons d'action améliorés
+      floatingActionButton: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Bouton Accueil
             FloatingActionButton(
-              heroTag: 'replay_quiz',
-              onPressed: widget.onRestartQuiz,
-              tooltip: 'Rejouer ce quiz',
-              child: const Icon(Icons.replay),
+              heroTag: 'home_button',
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => DashboardPage(
+                          initialIndex: 0,
+                          arguments: {
+                            'selectedTabIndex': 0,
+                            'fromNotification': true,
+                            'useCustomScaffold': true,
+                          },
+                        ),
+                  ),
+                  (route) => false,
+                );
+              },
+              tooltip: 'Retour à l\'accueil',
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+              child: const Icon(Icons.home_rounded),
             ),
-        ],
+
+            // Bouton Liste des quiz
+            FloatingActionButton(
+              heroTag: 'quiz_list_button',
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => DashboardPage(
+                          initialIndex: 2,
+                          arguments: {
+                            'selectedTabIndex': 2,
+                            'scrollToQuizId':
+                                widget.quizResult?['quizId']?.toString(),
+                            'fromNotification': true,
+                            'useCustomScaffold': true,
+                            'scrollToPlayed': true,
+                          },
+                        ),
+                  ),
+                  (route) => false,
+                );
+              },
+              tooltip: 'Liste des quiz',
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              child: const Icon(Icons.quiz_rounded),
+            ),
+
+            // Bouton Rejouer
+            if (widget.onRestartQuiz != null)
+              FloatingActionButton(
+                heroTag: 'replay_button',
+                onPressed: widget.onRestartQuiz,
+                tooltip: 'Refaire ce quiz',
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                child: const Icon(Icons.replay_rounded),
+              ),
+          ],
+        ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 

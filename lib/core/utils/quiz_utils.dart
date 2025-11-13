@@ -57,7 +57,6 @@ class QuizUtils {
     }
   }
 
-
   static bool isAnswerCorrect(Question question, dynamic userAnswer) {
     if (userAnswer == null) return false;
 
@@ -78,7 +77,7 @@ class QuizUtils {
         }
         return false;
       case "correspondance":
-      // Vérifier d'abord meta.isCorrect
+        // Vérifier d'abord meta.isCorrect
         if (question.meta?.isCorrect != null) {
           return question.meta!.isCorrect!;
         }
@@ -92,7 +91,7 @@ class QuizUtils {
 
             // Find the corresponding answer text for the ID
             final answer = question.answers.firstWhere(
-                  (a) => a.id.toString() == answerId,
+              (a) => a.id.toString() == answerId,
               orElse: () => Answer(id: '-1', text: '', correct: false),
             );
 
@@ -111,12 +110,13 @@ class QuizUtils {
         }
         // Compare with correct answers
         if (question.correctAnswers is Map) {
-          final correctAnswers = Map<String, String>.from(question.correctAnswers as Map);
+          final correctAnswers = Map<String, String>.from(
+            question.correctAnswers as Map,
+          );
           return mapsEqual(userAnswerMap, correctAnswers);
         }
 
         return false;
-
 
       case "rearrangement":
         if (userAnswer is! List) return false;
@@ -183,5 +183,4 @@ class QuizUtils {
     if (value == null) return fallback;
     return int.tryParse(value.toString()) ?? fallback;
   }
-
 }

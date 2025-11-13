@@ -248,12 +248,12 @@ class _RankingPageState extends State<RankingPage>
                   ],
                 ),
           ),
-          IconButton(
-            icon: const Icon(Icons.emoji_events_outlined),
-            tooltip: 'Mode Challenge',
-            onPressed:
-                () => Navigator.pushNamed(context, RouteConstants.challenge),
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.emoji_events_outlined),
+          //   tooltip: 'Mode Challenge',
+          //   onPressed:
+          //       () => Navigator.pushNamed(context, RouteConstants.challenge),
+          // ),
         ],
       ),
       body:

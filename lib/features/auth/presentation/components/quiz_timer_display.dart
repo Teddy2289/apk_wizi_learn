@@ -10,7 +10,7 @@ class QuizTimerDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<int>(
       valueListenable: sessionManager.remainingSeconds,
-      builder: (_, seconds, __) {
+      builder: (_, seconds, _) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(

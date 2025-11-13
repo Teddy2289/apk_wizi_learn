@@ -25,6 +25,8 @@ class CustomScaffold extends StatefulWidget {
   final bool? showHomeAndQuizIcons;
   final VoidCallback? onHomePressed;
   final VoidCallback? onQuizListPressed;
+  final String? appBarTitle;
+  final bool showLogo;
 
   const CustomScaffold({
     super.key,
@@ -38,6 +40,8 @@ class CustomScaffold extends StatefulWidget {
     this.showHomeAndQuizIcons = false,
     this.onHomePressed,
     this.onQuizListPressed,
+    this.appBarTitle,
+    this.showLogo = true,
   });
 
   @override
@@ -117,19 +121,14 @@ class _CustomScaffoldState extends State<CustomScaffold> {
 
     return Scaffold(
       appBar: CustomAppBar(
-        backgroundColor: theme.colorScheme.primary,
+        backgroundColor: Colors.white,
         foregroundColor: theme.colorScheme.onPrimary,
         actions: [
-          // IconButton(
-          //   icon: const Icon(Icons.mail_rounded),
-          //   tooltip: 'Contact',
-          //   onPressed:
-          //       () => Navigator.pushNamed(context, RouteConstants.contact),
-          // ),
           _buildUserPointsAndNotifications(context),
-          
           ...?widget.actions,
         ],
+        title: widget.appBarTitle,
+        showLogo: widget.showLogo,
       ),
       drawer: const CustomDrawer(),
       body: Column(
@@ -160,7 +159,8 @@ class _CustomScaffoldState extends State<CustomScaffold> {
         children: [
           // Points utilisateur (temps réel)
           GestureDetector(
-            onTap: () => Navigator.pushNamed(context, RouteConstants.achievement),
+            onTap:
+                () => Navigator.pushNamed(context, RouteConstants.achievement),
             child: _buildPointsBadge(_currentPoints, context),
           ),
           const SizedBox(width: 8),
@@ -168,59 +168,29 @@ class _CustomScaffoldState extends State<CustomScaffold> {
           // NOUVEAU: Afficher les icônes d'accueil et quiz OU les notifications normales
           if (widget.showHomeAndQuizIcons == true) ...[
             // Icône Accueil
-            IconButton(
-              icon: const Icon(Icons.home),
+            _buildActionButton(
+              icon: Icons.home_rounded,
               tooltip: 'Retour à l\'accueil',
-              onPressed: widget.onHomePressed ?? () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DashboardPage(
-                      initialIndex: 0,
-                      arguments: {
-                        'selectedTabIndex': 0,
-                        'fromNotification': true,
-                        'useCustomScaffold': true,
-                      },
-                    ),
-                  ),
-                      (route) => false,
-                );
-              },
+              onPressed: widget.onHomePressed ?? () => _navigateToHome(context),
             ),
             const SizedBox(width: 4),
             // Icône Liste des quiz
-            IconButton(
-              icon: const Icon(Icons.quiz),
+            _buildActionButton(
+              icon: Icons.quiz_rounded,
               tooltip: 'Liste des quiz',
-              onPressed: widget.onQuizListPressed ?? () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DashboardPage(
-                      initialIndex: 2,
-                      arguments: {
-                        'selectedTabIndex': 2,
-                        'fromNotification': true,
-                        'useCustomScaffold': true,
-                      },
-                    ),
-                  ),
-                      (route) => false,
-                );
-              },
+              onPressed:
+                  widget.onQuizListPressed ??
+                  () => _navigateToQuizList(context),
             ),
           ] else ...[
             // Notifications normales (comportement par défaut)
             Consumer<NotificationProvider>(
               builder: (context, notifProvider, _) {
                 final unreadCount = notifProvider.unreadCount;
-                return IconButton(
-                  icon: Badge(
-                    label: unreadCount > 0 ? Text('$unreadCount') : null,
-                    isLabelVisible: unreadCount > 0,
-                    child: const Icon(Icons.notifications),
-                  ),
+                return _buildActionButton(
+                  icon: Icons.notifications_rounded,
+                  tooltip: 'Notifications',
+                  badgeCount: unreadCount,
                   onPressed: () async {
                     await Navigator.pushNamed(
                       context,
@@ -236,33 +206,126 @@ class _CustomScaffoldState extends State<CustomScaffold> {
       ),
     );
   }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+    int badgeCount = 0,
+  }) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        shape: BoxShape.circle,
+      ),
+      child: Stack(
+        children: [
+          Center(
+            child: IconButton(
+              icon: Icon(icon, size: 20),
+              tooltip: tooltip,
+              onPressed: onPressed,
+              padding: EdgeInsets.zero,
+            ),
+          ),
+          if (badgeCount > 0)
+            Positioned(
+              top: 6,
+              right: 6,
+              child: Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: Center(
+                  child: Text(
+                    badgeCount > 9 ? '9+' : '$badgeCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToHome(BuildContext context) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => DashboardPage(
+              initialIndex: 0,
+              arguments: {
+                'selectedTabIndex': 0,
+                'fromNotification': true,
+                'useCustomScaffold': true,
+              },
+            ),
+      ),
+      (route) => false,
+    );
+  }
+
+  void _navigateToQuizList(BuildContext context) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => DashboardPage(
+              initialIndex: 2,
+              arguments: {
+                'selectedTabIndex': 2,
+                'fromNotification': true,
+                'useCustomScaffold': true,
+              },
+            ),
+      ),
+      (route) => false,
+    );
+  }
+
   Widget _buildPointsBadge(int points, BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.amber.shade100, Colors.amber.shade200],
+          colors: [Colors.amber.shade400, Colors.orange.shade400],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.orange.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
+        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.star_rounded, size: 18, color: Colors.amber.shade800),
+          Icon(Icons.star_rounded, size: 16, color: Colors.white),
           const SizedBox(width: 6),
           Text(
             '$points pts',
-            style: TextStyle(
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.amber.shade900,
-              fontSize: 14,
+              color: Colors.white,
+              fontSize: 13,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -279,22 +342,36 @@ class _CustomScaffoldState extends State<CustomScaffold> {
         margin: const EdgeInsets.all(12),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: theme.colorScheme.primary,
-          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.primary,
+              theme.colorScheme.primary.withOpacity(0.8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black12,
-              blurRadius: 6,
-              offset: const Offset(0, 3),
+              color: theme.colorScheme.primary.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.card_giftcard,
-              size: 30,
-              color: theme.colorScheme.onPrimary,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.card_giftcard_rounded,
+                size: 24,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -302,9 +379,10 @@ class _CustomScaffoldState extends State<CustomScaffold> {
                 textAlign: TextAlign.center,
                 text: TextSpan(
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: theme.colorScheme.onPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: Colors.white,
+                    height: 1.3,
                   ),
                   children: [
                     const TextSpan(text: 'Je parraine et je gagne '),
@@ -312,21 +390,29 @@ class _CustomScaffoldState extends State<CustomScaffold> {
                       alignment: PlaceholderAlignment.middle,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.amber,
-                          borderRadius: BorderRadius.circular(4),
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.red.withOpacity(0.4),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        margin: const EdgeInsets.only(bottom: 4),
+                        margin: const EdgeInsets.only(bottom: 2),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
+                          horizontal: 8,
+                          vertical: 4,
                         ),
                         child: const Text(
-                          '50 € ',
+                          '50 €',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
-                            fontSize: 25,
+                            fontSize: 18,
                             fontFamily: 'Montserrat',
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),

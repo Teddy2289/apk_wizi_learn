@@ -42,14 +42,14 @@ class _WordBankState extends State<WordBankQuestion> {
     });
 
     // Envoyer les textes des mots sélectionnés
-    final selectedTexts = _selectedWords.map((id) {
-      return widget.question.answers
-          .firstWhere((a) => a.id == id)
-          .text;
-    }).toList();
+    final selectedTexts =
+        _selectedWords.map((id) {
+          return widget.question.answers.firstWhere((a) => a.id == id).text;
+        }).toList();
 
     widget.onAnswer(selectedTexts);
   }
+
   bool? _isWordCorrect(String wordId) {
     if (!widget.showFeedback) return null;
 
@@ -71,6 +71,24 @@ class _WordBankState extends State<WordBankQuestion> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // CORRECTION: Afficher la question réelle
+            if (widget.question.text != null &&
+                widget.question.text!.isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.question.text!,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+
+            // Instructions
             Text(
               'Sélectionnez les réponses correctes:',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -81,6 +99,8 @@ class _WordBankState extends State<WordBankQuestion> {
               ),
             ),
             const SizedBox(height: 8),
+
+            // Mots à sélectionner
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -142,15 +162,20 @@ class _WordBankState extends State<WordBankQuestion> {
                     );
                   }).toList(),
             ),
+
+            // Section de feedback (seulement en mode correction)
             if (widget.showFeedback) ...[
               const SizedBox(height: 16),
               Divider(height: 1, color: Theme.of(context).dividerColor),
               const SizedBox(height: 16),
               Text(
                 'Réponses correctes:',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.8),
+                ),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -158,10 +183,7 @@ class _WordBankState extends State<WordBankQuestion> {
                 runSpacing: 8,
                 children:
                     (widget.question.answers ?? [])
-                        .where(
-                          (answer) =>
-                              (answer.correct ?? answer.correct) ?? false,
-                        )
+                        .where((answer) => (answer.correct ?? false))
                         .map((answer) {
                           final wasSelected = _selectedWords.contains(
                             answer.id,
@@ -178,6 +200,10 @@ class _WordBankState extends State<WordBankQuestion> {
                                   wasSelected
                                       ? Colors.green[800]
                                       : Colors.grey[800],
+                              fontWeight:
+                                  wasSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
                             ),
                             side: BorderSide.none,
                             shape: RoundedRectangleBorder(
