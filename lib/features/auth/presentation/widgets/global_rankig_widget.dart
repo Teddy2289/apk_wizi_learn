@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:wizi_learn/features/auth/data/models/extended_formateur_model.dart';
 import 'package:wizi_learn/features/auth/data/models/stats_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/formateur_formations_modal.dart';
 
 class GlobalRankingWidget extends StatefulWidget {
   final List<GlobalRanking> rankings;
@@ -374,6 +376,13 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
       const Color(0xFFCD7F32), // Bronze
     ];
 
+    // Fonction pour formater les noms
+    String formatName(String prenom, String nom) {
+      if (nom.isEmpty) return prenom;
+      final nomAbrege = nom[0].toUpperCase();
+      return '$nomAbrege. $prenom';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
@@ -515,41 +524,53 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    // Nom du participant
-                    Text(
-                      '${ranking.stagiaire.prenom} ${ranking.stagiaire.nom.toUpperCase()}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color:
-                            isCurrentUser
-                                ? Theme.of(context).primaryColor
-                                : Theme.of(context).colorScheme.onSurface,
-                        fontSize: isSmallScreen ? 13 : 15,
+                    // Nom du stagiaire - FORMATÉ
+                    Tooltip(
+                      message:
+                          '${ranking.stagiaire.prenom} ${ranking.stagiaire.nom.toUpperCase()}',
+                      child: Text(
+                        formatName(
+                          ranking.stagiaire.prenom,
+                          ranking.stagiaire.nom,
+                        ),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color:
+                              isCurrentUser
+                                  ? Theme.of(context).primaryColor
+                                  : Theme.of(context).colorScheme.onSurface,
+                          fontSize: isSmallScreen ? 13 : 15,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    // Formateurs
+                    // Formateurs - FORMATÉS
                     if (ranking.formateurs.isNotEmpty) ...[
                       const SizedBox(height: 2),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 2,
-                        ),
-                        child: Text(
-                          ranking.formateurs
-                              .map((f) => '${f.prenom} ${f.nom.toUpperCase()}')
-                              .join(', '),
-                          style: TextStyle(
-                            fontSize: isSmallScreen ? 9 : 11,
-                            color: Colors.grey.shade600,
-                            fontWeight: FontWeight.w500,
+                      Tooltip(
+                        message: ranking.formateurs
+                            .map((f) => '${f.prenom} ${f.nom.toUpperCase()}')
+                            .join(', '),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
                           ),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          child: Text(
+                            ranking.formateurs
+                                .map((f) => formatName(f.prenom, f.nom))
+                                .join(', '),
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 9 : 11,
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
                     ],
@@ -636,6 +657,18 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
     );
   }
 
+  // Dans votre GlobalRankingWidget, ajoutez cette méthode :
+  void _showFormateurFormations(
+    BuildContext context,
+    ExtendedFormateur formateur,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => FormateurFormationsModal(formateur: formateur),
+    );
+  }
+
+  // Modifiez la méthode _buildRankingItem pour ajouter le bouton :
   Widget _buildRankingItem(
     BuildContext context,
     GlobalRanking ranking,
@@ -746,19 +779,90 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            // Formateurs
+                            // Formateurs avec bouton - PARTIE CORRIGÉE
                             if (ranking.formateurs.isNotEmpty) ...[
                               const SizedBox(height: 2),
-                              Text(
-                                '${ranking.formateurs.map((f) => '${f.prenom} ${f.nom.toUpperCase()}').join(', ')}',
-                                style: TextStyle(
-                                  fontSize: isSmallScreen ? 10 : 12,
-                                  color: Colors.grey.shade600,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                              ...ranking.formateurs.map((formateur) {
+                                // Formater le nom : première lettre du nom + prénom complet
+                                final nomAbrege =
+                                    formateur.nom.isNotEmpty
+                                        ? '${formateur.nom[0]}. '
+                                        : '';
+                                final nomComplet =
+                                    '$nomAbrege${formateur.prenom}';
+                                final nomCompletTooltip =
+                                    '${formateur.prenom} ${formateur.nom.toUpperCase()}';
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 2),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Tooltip(
+                                          message: nomCompletTooltip,
+                                          child: Text(
+                                            nomComplet,
+                                            style: TextStyle(
+                                              fontSize: isSmallScreen ? 10 : 12,
+                                              color: Colors.grey.shade600,
+                                              fontStyle: FontStyle.italic,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      // Bouton Voir formations - COMPACT AVEC TOOLTIP
+                                      Tooltip(
+                                        message:
+                                            'Voir les formations de ${formateur.prenom} ${formateur.nom}',
+                                        child: GestureDetector(
+                                          onTap:
+                                              () => _showFormateurFormations(
+                                                context,
+                                                formateur,
+                                              ),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 3,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.blue.shade50,
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                              border: Border.all(
+                                                color: Colors.blue.shade200,
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons.school_outlined,
+                                                  size: 10,
+                                                  color: Colors.blue.shade600,
+                                                ),
+                                                const SizedBox(width: 2),
+                                                Text(
+                                                  'Voir',
+                                                  style: TextStyle(
+                                                    fontSize: 9,
+                                                    color: Colors.blue.shade600,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
                             ],
                           ],
                         ),

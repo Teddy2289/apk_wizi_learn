@@ -1933,10 +1933,10 @@ class _QuizPageState extends State<QuizPage> {
       context,
       title: 'Comment jouer ?',
       steps: const [
-        '1. Choisissez une formation',
-        '2. Touchez un quiz débloqué pour commencer',
-        '3. Répondez aux questions et validez',
-        '4. Consultez votre historique et vos badges',
+        'Choisissez une formation',
+        'Touchez un quiz débloqué pour commencer',
+        'Répondez aux questions et validez',
+        'Consultez votre historique et vos badges',
       ],
     );
   }

@@ -139,10 +139,10 @@ class _TrainingPageState extends State<TrainingPage> {
                 () => showStandardHelpDialog(
                   context,
                   steps: const [
-                    '1. Sélectionnez une catégorie en haut.',
-                    '2. Utilisez les filtres pour trier les formations.',
-                    '3. Parcourez les formations avec la pagination.',
-                    '4. Touchez une formation pour voir les détails.',
+                    'Sélectionnez une catégorie en haut.',
+                    'Utilisez les filtres pour trier les formations.',
+                    'Parcourez les formations avec la pagination.',
+                    'Touchez une formation pour voir les détails.',
                   ],
                 ),
           ),

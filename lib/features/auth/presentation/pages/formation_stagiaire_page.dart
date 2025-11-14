@@ -9,6 +9,7 @@ import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart'
 import 'package:wizi_learn/features/auth/data/repositories/formation_repository.dart';
 import 'package:intl/intl.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
+import 'package:flutter_html/flutter_html.dart';
 
 class FormationStagiairePage extends StatefulWidget {
   const FormationStagiairePage({super.key});
@@ -137,7 +138,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
               .toList();
 
       setState(() {
-        _formations = validFormations;
+        _formations = validFormations.cast<Formation>();
         _isLoading = false;
       });
     } catch (e) {
@@ -367,16 +368,16 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                   'Prix: ${NumberFormat('#,##0', 'fr_FR').format(formation.tarif)} €',
                   theme,
                 ),
-                if (formation.certification != null &&
-                    formation.certification!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  _buildInfoRow(
-                    Icons.verified,
-                    formation.certification!,
-                    theme,
-                    color: Colors.green,
-                  ),
-                ],
+                // if (formation.certification != null &&
+                //     formation.certification!.isNotEmpty) ...[
+                //   const SizedBox(height: 8),
+                //   _buildInfoRow(
+                //     Icons.verified,
+                //     formation.certification!,
+                //     theme,
+                //     color: Colors.green,
+                //   ),
+                // ],
                 if (formation.formateur != null) ...[
                   const SizedBox(height: 8),
                   _buildInfoRow(
@@ -394,7 +395,39 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(formation.description, style: theme.textTheme.bodyMedium),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Html(
+                    data: formation.description,
+                    style: {
+                      'body': Style(
+                        margin: Margins.zero,
+                        padding: HtmlPaddings.zero,
+                        fontSize: FontSize(14),
+                        color: Colors.grey.shade700,
+                      ),
+                      'ul': Style(
+                        margin: Margins.only(bottom: 8),
+                        padding: HtmlPaddings.zero,
+                      ),
+                      'li': Style(
+                        margin: Margins.only(bottom: 4),
+                        padding: HtmlPaddings.zero,
+                      ),
+                      'p': Style(
+                        margin: Margins.only(bottom: 8),
+                        padding: HtmlPaddings.zero,
+                      ),
+                      'strong': Style(fontWeight: FontWeight.bold),
+                      'em': Style(fontStyle: FontStyle.italic),
+                    },
+                  ),
+                ),
               ],
             ],
           ),

@@ -1,6 +1,7 @@
 import 'package:wizi_learn/core/utils/quiz_utils.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 import 'package:wizi_learn/features/auth/data/models/quiz_model.dart';
+import 'package:wizi_learn/features/auth/data/models/extended_formateur_model.dart'; // ← Ajoutez cette importation
 
 class QuizHistory {
   List<Question> get questions => quiz.questions;
@@ -37,7 +38,8 @@ class QuizHistory {
 
 class GlobalRanking {
   final Stagiaire stagiaire;
-  final List<Formateur> formateurs; // Ajout de la liste des formateurs
+  final List<ExtendedFormateur>
+  formateurs; // ← Changez Formateur en ExtendedFormateur
   final int totalPoints;
   final int quizCount;
   final double averageScore;
@@ -45,7 +47,7 @@ class GlobalRanking {
 
   GlobalRanking({
     required this.stagiaire,
-    required this.formateurs, // Ajout du paramètre
+    required this.formateurs,
     required this.totalPoints,
     required this.quizCount,
     required this.averageScore,
@@ -62,12 +64,14 @@ class GlobalRanking {
       }
       return parsed;
     }
-    
+
     double safeDouble(dynamic value, {double fallback = 0, String field = ''}) {
       if (value == null) return fallback;
       final parsed = double.tryParse(value.toString());
       if (parsed == null) {
-        print('GlobalRanking: champ "$field" non convertible en double: $value');
+        print(
+          'GlobalRanking: champ "$field" non convertible en double: $value',
+        );
         return fallback;
       }
       return parsed;
@@ -75,10 +79,11 @@ class GlobalRanking {
 
     return GlobalRanking(
       stagiaire: Stagiaire.fromJson(json['stagiaire'] ?? {}),
-      formateurs: (json['formateurs'] as List? ?? [])
-          .where((e) => e != null)
-          .map((e) => Formateur.fromJson(e))
-          .toList(),
+      formateurs:
+          (json['formateurs'] as List? ?? [])
+              .where((e) => e != null)
+              .map((e) => ExtendedFormateur.fromJson(e)) // ← Changez ici
+              .toList(),
       totalPoints: safeInt(json['totalPoints'], field: 'totalPoints'),
       quizCount: safeInt(json['quizCount'], field: 'quizCount'),
       averageScore: safeDouble(json['averageScore'], field: 'averageScore'),
@@ -89,7 +94,7 @@ class GlobalRanking {
   static GlobalRanking empty() {
     return GlobalRanking(
       stagiaire: Stagiaire(id: '0', prenom: 'Inconnu', nom: '', image: ''),
-      formateurs: [], // Liste vide par défaut
+      formateurs: [],
       totalPoints: 0,
       quizCount: 0,
       averageScore: 0,
@@ -97,31 +102,34 @@ class GlobalRanking {
     );
   }
 }
-class Formateur {
-  final String id;
-  final String prenom;
-  final String nom;
-  final String telephone;
-  final String? image;
 
-  Formateur({
-    required this.id,
-    required this.prenom,
-    required this.nom,
-    required this.telephone,
-    required this.image,
-  });
+// ↓↓↓ SUPPRIMEZ la classe Formateur existante - elle est remplacée par ExtendedFormateur ↓↓↓
+// class Formateur {
+//   final String id;
+//   final String prenom;
+//   final String nom;
+//   final String telephone;
+//   final String? image;
+//
+//   Formateur({
+//     required this.id,
+//     required this.prenom,
+//     required this.nom,
+//     required this.telephone,
+//     required this.image,
+//   });
+//
+//   factory Formateur.fromJson(Map<String, dynamic> json) {
+//     return Formateur(
+//       id: QuizUtils.cleanString(json['id'], fallback: '0'),
+//       prenom: QuizUtils.cleanString(json['prenom'], fallback: 'Formateur'),
+//       nom: QuizUtils.cleanString(json['nom'], fallback: 'Inconnu'),
+//       telephone: QuizUtils.cleanString(json['telephone'], fallback: ''),
+//       image: QuizUtils.cleanString(json['image']),
+//     );
+//   }
+// }
 
-  factory Formateur.fromJson(Map<String, dynamic> json) {
-    return Formateur(
-      id: QuizUtils.cleanString(json['id'], fallback: '0'),
-      prenom: QuizUtils.cleanString(json['prenom'], fallback: 'Formateur'),
-      nom: QuizUtils.cleanString(json['nom'], fallback: 'Inconnu'),
-      telephone: QuizUtils.cleanString(json['telephone'], fallback: ''),
-      image: QuizUtils.cleanString(json['image']),
-    );
-  }
-}
 class Stagiaire {
   final String id;
   final String prenom;
@@ -170,6 +178,7 @@ class QuizStats {
       }
       return parsed;
     }
+
     double safeDouble(dynamic value, {double fallback = 0, String field = ''}) {
       if (value == null) return fallback;
       final parsed = double.tryParse(value.toString());
@@ -179,6 +188,7 @@ class QuizStats {
       }
       return parsed;
     }
+
     return QuizStats(
       totalQuizzes: safeInt(json['totalQuizzes'], field: 'totalQuizzes'),
       averageScore: safeDouble(json['averageScore'], field: 'averageScore'),
@@ -214,6 +224,7 @@ class CategoryStat {
       }
       return parsed;
     }
+
     double safeDouble(dynamic value, {double fallback = 0, String field = ''}) {
       if (value == null) return fallback;
       final parsed = double.tryParse(value.toString());
@@ -223,6 +234,7 @@ class CategoryStat {
       }
       return parsed;
     }
+
     return CategoryStat(
       category: QuizUtils.cleanString(json['category'], fallback: 'Autre'),
       quizCount: safeInt(json['quizCount'], field: 'quizCount'),
@@ -267,7 +279,12 @@ class LevelData {
       }
       return parsed;
     }
-    double? safeDouble(dynamic value, {double? fallback = 0, String field = ''}) {
+
+    double? safeDouble(
+      dynamic value, {
+      double? fallback = 0,
+      String field = '',
+    }) {
       if (value == null) return fallback;
       final parsed = double.tryParse(value.toString());
       if (parsed == null) {
@@ -276,6 +293,7 @@ class LevelData {
       }
       return parsed;
     }
+
     return LevelData(
       completed: safeInt(json['completed'], field: 'completed'),
       averageScore:
