@@ -79,15 +79,15 @@ class _LoginPageState extends State<LoginPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            // NS Conseil Logo
-                            Image.asset(
-                              'assets/images/logons.jpg',
-                              height: 40,
-                              fit: BoxFit.contain,
-                            ),
                             // Wizi Learn Logo
                             Image.asset(
                               'assets/images/logo1.png',
+                              height: 40,
+                              fit: BoxFit.contain,
+                            ),
+                            // NS Conseil Logo
+                            Image.asset(
+                              'assets/images/logons.png',
                               height: 40,
                               fit: BoxFit.contain,
                             ),
