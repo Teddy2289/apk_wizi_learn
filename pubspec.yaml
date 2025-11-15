@@ -101,6 +101,7 @@ flutter:
     - assets/images/avatars/
     - assets/images/
     - assets/audio/success.mp3
+    - assets/images/logons.png
     - assets/audio/fail.mp3
     - assets/audio/click.mp3
   #   - images/a_dot_ham.jpeg

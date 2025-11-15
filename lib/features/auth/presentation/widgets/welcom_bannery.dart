@@ -1,27 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
 
-// Palette de couleurs Flutter harmonieuse
-const Color kPrimaryBlue = Color(0xFF3D9BE9);
-const Color kPrimaryBlueLight = Color(0xFFE8F4FE);
-const Color kPrimaryBlueDark = Color(0xFF2A7BC8);
-
-const Color kSuccessGreen = Color(0xFFABDA96);
-const Color kSuccessGreenLight = Color(0xFFF0F9ED);
-const Color kSuccessGreenDark = Color(0xFF7BBF5E);
-
-const Color kAccentPurple = Color(0xFF9392BE);
-const Color kAccentPurpleLight = Color(0xFFF5F4FF);
-const Color kAccentPurpleDark = Color(0xFF6A6896);
-
-const Color kWarningOrange = Color(0xFFFFC533);
-const Color kWarningOrangeLight = Color(0xFFFFF8E8);
-const Color kWarningOrangeDark = Color(0xFFE6A400);
-
-const Color kNeutralWhite = Colors.white;
-const Color kNeutralGrey = Color(0xFFF8F9FA);
+// Local neutral tokens mapped to the shared AppColors palette
+const Color kNeutralWhite = AppColors.surface;
+const Color kNeutralGrey = AppColors.background;
 const Color kNeutralGreyDark = Color(0xFF6C757D);
-const Color kNeutralBlack = Color(0xFF212529);
+const Color kNeutralBlack = AppColors.onSurface;
 
 class WelcomeBanner extends StatefulWidget {
   final bool showDismissOption;
@@ -134,13 +119,13 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: kPrimaryBlueLight,
+                    color: AppColors.catBureautiqueLight,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     LucideIcons.megaphone,
                     size: 16,
-                    color: kPrimaryBlue,
+                    color: AppColors.catBureautique,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -186,9 +171,13 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [kPrimaryBlueLight, kNeutralWhite, kSuccessGreenLight],
+            colors: [
+              AppColors.catBureautiqueLight,
+              kNeutralWhite,
+              AppColors.iaLight,
+            ],
           ),
-          border: Border.all(color: kPrimaryBlue.withOpacity(0.1)),
+          border: Border.all(color: AppColors.catBureautique.withOpacity(0.1)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -203,12 +192,15 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
             Positioned(
               top: 16,
               right: 80,
-              child: _buildAnimatedDot(kPrimaryBlue.withOpacity(0.3), 0),
+              child: _buildAnimatedDot(
+                AppColors.catBureautique.withOpacity(0.3),
+                0,
+              ),
             ),
             Positioned(
               bottom: 32,
               left: 64,
-              child: _buildAnimatedDot(kSuccessGreen.withOpacity(0.4), 1000),
+              child: _buildAnimatedDot(AppColors.ia.withOpacity(0.4), 1000),
             ),
             Padding(
               padding: const EdgeInsets.all(20),
@@ -228,11 +220,14 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [kPrimaryBlue, kPrimaryBlueDark],
+                            colors: [
+                              AppColors.catBureautique,
+                              AppColors.catBureautiqueDark,
+                            ],
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: kPrimaryBlue.withOpacity(0.3),
+                              color: AppColors.catBureautique.withOpacity(0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -262,7 +257,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: kPrimaryBlueDark,
+                                color: AppColors.catBureautiqueDark,
                               ),
                             ),
                           ],
@@ -288,7 +283,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                     child: ElevatedButton(
                       onPressed: _handleDiscover,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: kPrimaryBlue,
+                        backgroundColor: AppColors.catBureautique,
                         foregroundColor: kNeutralWhite,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
@@ -340,17 +335,17 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
       {
         'icon': LucideIcons.bookOpen,
         'text': 'Formations interactives',
-        'color': kPrimaryBlue,
+        'color': AppColors.catBureautique,
       },
       {
         'icon': LucideIcons.zap,
         'text': 'Quiz évaluatifs',
-        'color': kSuccessGreen,
+        'color': AppColors.ia,
       },
       {
         'icon': LucideIcons.star,
         'text': 'Suivi de progression',
-        'color': kWarningOrange,
+        'color': AppColors.catInternet,
       },
     ];
 
@@ -364,9 +359,13 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [kPrimaryBlueLight, kNeutralWhite, kSuccessGreenLight],
+            colors: [
+              AppColors.catBureautiqueLight,
+              kNeutralWhite,
+              AppColors.iaLight,
+            ],
           ),
-          border: Border.all(color: kPrimaryBlue.withOpacity(0.1)),
+          border: Border.all(color: AppColors.catBureautique.withOpacity(0.1)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -385,7 +384,10 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                   gradient: RadialGradient(
                     center: Alignment.topLeft,
                     radius: 1.0,
-                    colors: [kPrimaryBlue.withOpacity(0.1), Colors.transparent],
+                    colors: [
+                      AppColors.catBureautique.withOpacity(0.1),
+                      Colors.transparent,
+                    ],
                   ),
                 ),
               ),
@@ -394,17 +396,23 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
             Positioned(
               top: 20,
               right: 100,
-              child: _buildAnimatedDot(kPrimaryBlue.withOpacity(0.3), 0),
+              child: _buildAnimatedDot(
+                AppColors.catBureautique.withOpacity(0.3),
+                0,
+              ),
             ),
             Positioned(
               bottom: 40,
               left: 80,
-              child: _buildAnimatedDot(kSuccessGreen.withOpacity(0.4), 1000),
+              child: _buildAnimatedDot(AppColors.ia.withOpacity(0.4), 1000),
             ),
             Positioned(
               top: 60,
               right: 40,
-              child: _buildAnimatedDot(kAccentPurple.withOpacity(0.2), 2000),
+              child: _buildAnimatedDot(
+                AppColors.catCreation.withOpacity(0.2),
+                2000,
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(20),
@@ -424,11 +432,14 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [kPrimaryBlue, kPrimaryBlueDark],
+                            colors: [
+                              AppColors.catBureautique,
+                              AppColors.catBureautiqueDark,
+                            ],
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: kPrimaryBlue.withOpacity(0.4),
+                              color: AppColors.catBureautique.withOpacity(0.4),
                               blurRadius: 10,
                               offset: const Offset(0, 6),
                             ),
@@ -459,7 +470,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: kPrimaryBlueDark,
+                                color: AppColors.catBureautiqueDark,
                               ),
                             ),
                           ],
@@ -562,17 +573,17 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
       {
         'icon': LucideIcons.bookOpen,
         'text': 'Formations interactives',
-        'color': kPrimaryBlue,
+        'color': AppColors.catBureautique,
       },
       {
         'icon': LucideIcons.zap,
         'text': 'Quiz évaluatifs',
-        'color': kSuccessGreen,
+        'color': AppColors.ia,
       },
       {
         'icon': LucideIcons.star,
         'text': 'Suivi de progression',
-        'color': kWarningOrange,
+        'color': AppColors.catInternet,
       },
     ];
 
@@ -586,9 +597,13 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [kPrimaryBlueLight, kNeutralWhite, kSuccessGreenLight],
+            colors: [
+              AppColors.catBureautiqueLight,
+              kNeutralWhite,
+              AppColors.iaLight,
+            ],
           ),
-          border: Border.all(color: kPrimaryBlue.withOpacity(0.1)),
+          border: Border.all(color: AppColors.catBureautique.withOpacity(0.1)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.15),
@@ -609,7 +624,9 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                     center: const Alignment(0.3, 0.2),
                     radius: 1.0,
                     colors: [
-                      kPrimaryBlue.withOpacity(_isHovered ? 0.15 : 0.1),
+                      AppColors.catBureautique.withOpacity(
+                        _isHovered ? 0.15 : 0.1,
+                      ),
                       Colors.transparent,
                     ],
                   ),
@@ -620,17 +637,23 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
             Positioned(
               top: 30,
               right: 160,
-              child: _buildAnimatedDot(kPrimaryBlue.withOpacity(0.3), 0),
+              child: _buildAnimatedDot(
+                AppColors.catBureautique.withOpacity(0.3),
+                0,
+              ),
             ),
             Positioned(
               bottom: 60,
               left: 120,
-              child: _buildAnimatedDot(kSuccessGreen.withOpacity(0.4), 1000),
+              child: _buildAnimatedDot(AppColors.ia.withOpacity(0.4), 1000),
             ),
             Positioned(
               top: 80,
               right: 60,
-              child: _buildAnimatedDot(kAccentPurple.withOpacity(0.2), 2000),
+              child: _buildAnimatedDot(
+                AppColors.catCreation.withOpacity(0.2),
+                2000,
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(32),
@@ -651,11 +674,14 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [kPrimaryBlue, kPrimaryBlueDark],
+                            colors: [
+                              AppColors.catBureautique,
+                              AppColors.catBureautiqueDark,
+                            ],
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: kPrimaryBlue.withOpacity(0.4),
+                              color: AppColors.catBureautique.withOpacity(0.4),
                               blurRadius: 15,
                               offset: const Offset(0, 6),
                             ),
@@ -711,7 +737,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
-                                color: kPrimaryBlueDark,
+                                color: AppColors.catBureautiqueDark,
                               ),
                             ),
                           ],
@@ -811,7 +837,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: kWarningOrange,
+                    color: AppColors.catInternet,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
