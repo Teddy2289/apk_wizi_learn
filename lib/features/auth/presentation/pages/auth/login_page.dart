@@ -75,11 +75,23 @@ class _LoginPageState extends State<LoginPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Logo
-                        Image.asset(
-                          'assets/images/logo1.png',
-                          height: 80,
-                          fit: BoxFit.contain,
+                        // Logos Section
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            // Wizi Learn Logo
+                            Image.asset(
+                              'assets/images/logo1.png',
+                              height: 40,
+                              fit: BoxFit.contain,
+                            ),
+                            // NS Conseil Logo
+                            Image.asset(
+                              'assets/images/logons.png',
+                              height: 40,
+                              fit: BoxFit.contain,
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 24),
                         // Titre

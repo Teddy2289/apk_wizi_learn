@@ -153,6 +153,28 @@ class _OnSplashPage extends State<SplashPage> {
         child: SafeArea(
           child: Column(
             children: [
+              // Logos Section (Wizi Learn and NS Conseil)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // Wizi Learn Logo
+                    Image.asset(
+                      'assets/images/logo1.png',
+                      height: 50,
+                      fit: BoxFit.contain,
+                    ),
+                    // NS Conseil Logo
+                    Image.asset(
+                      'assets/images/logons.png',
+                      height: 50,
+                      fit: BoxFit.contain,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
               // Skip Button (top right)
               Align(
                 alignment: Alignment.topRight,
@@ -205,8 +227,8 @@ class _OnSplashPage extends State<SplashPage> {
                                 borderRadius: BorderRadius.circular(20),
                                 child: Image.asset(
                                   item['imageAsset']!,
-                                  width: size.width * 0.8,
-                                  height: size.height * 0.4,
+                                  width: size.width * 0.4,
+                                  height: size.height * 0.2,
                                   fit: BoxFit.cover,
                                 ),
                               ),
