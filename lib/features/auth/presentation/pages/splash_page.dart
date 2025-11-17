@@ -159,16 +159,16 @@ class _OnSplashPage extends State<SplashPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    // Wizi Learn Logo
-                    Image.asset(
-                      'assets/images/logo1.png',
-                      height: 50,
-                      fit: BoxFit.contain,
-                    ),
                     // NS Conseil Logo
                     Image.asset(
                       'assets/images/logons.png',
-                      height: 50,
+                      height: 100,
+                      fit: BoxFit.contain,
+                    ),
+                    // Wizi Learn Logo
+                    Image.asset(
+                      'assets/images/logo1.png',
+                      height: 100,
                       fit: BoxFit.contain,
                     ),
                   ],
@@ -176,19 +176,19 @@ class _OnSplashPage extends State<SplashPage> {
               ),
               const SizedBox(height: 8),
               // Skip Button (top right)
-              Align(
-                alignment: Alignment.topRight,
-                child: TextButton(
-                  onPressed: _skipOnboarding,
-                  child: Text(
-                    'Passer',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.orange,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
+              // Align(
+              //   alignment: Alignment.topRight,
+              //   child: TextButton(
+              //     onPressed: _skipOnboarding,
+              //     child: Text(
+              //       'Passer',
+              //       style: theme.textTheme.bodyLarge?.copyWith(
+              //         color: Colors.orange,
+              //         fontWeight: FontWeight.w600,
+              //       ),
+              //     ),
+              //   ),
+              // ),
 
               // Page View Content
               Expanded(
@@ -227,8 +227,8 @@ class _OnSplashPage extends State<SplashPage> {
                                 borderRadius: BorderRadius.circular(20),
                                 child: Image.asset(
                                   item['imageAsset']!,
-                                  width: size.width * 0.4,
-                                  height: size.height * 0.2,
+                                  width: size.width * 0.6,
+                                  height: size.height * 0.3,
                                   fit: BoxFit.cover,
                                 ),
                               ),

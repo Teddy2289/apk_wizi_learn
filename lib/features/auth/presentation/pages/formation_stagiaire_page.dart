@@ -347,27 +347,27 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                 const SizedBox(height: 8),
                 _buildInfoRow(
                   Icons.schedule,
-                  'Durée: ${formation.duree} heures',
+                  'Durée: à partir de  ${formation.duree} heures',
                   theme,
                 ),
                 const SizedBox(height: 8),
                 _buildInfoRow(
                   Icons.calendar_today,
-                  'Début: ${_formatDate(formation.dateDebut)}',
+                  'Début de formation: ${_formatDate(formation.dateDebut)}',
                   theme,
                 ),
                 const SizedBox(height: 8),
                 _buildInfoRow(
                   Icons.calendar_month,
-                  'Fin: ${_formatDate(formation.dateFin)}',
+                  'Fin de formation: ${_formatDate(formation.dateFin)}',
                   theme,
                 ),
                 const SizedBox(height: 8),
-                _buildInfoRow(
-                  Icons.euro_symbol,
-                  'Prix: ${NumberFormat('#,##0', 'fr_FR').format(formation.tarif)} €',
-                  theme,
-                ),
+                // _buildInfoRow(
+                //   Icons.euro_symbol,
+                //   'Prix: ${NumberFormat('#,##0', 'fr_FR').format(formation.tarif)} €',
+                //   theme,
+                // ),
                 // if (formation.certification != null &&
                 //     formation.certification!.isNotEmpty) ...[
                 //   const SizedBox(height: 8),
