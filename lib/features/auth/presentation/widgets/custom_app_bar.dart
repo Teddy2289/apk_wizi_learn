@@ -36,7 +36,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.toolbarHeight,
     this.bottom,
     this.showLogo = true,
-    this.logoAssetPath = 'assets/images/logons.png',
+    this.logoAssetPath = 'assets/images/logo1.png',
     this.logoSize,
   });
 
