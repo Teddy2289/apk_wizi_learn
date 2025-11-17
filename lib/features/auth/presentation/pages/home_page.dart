@@ -588,30 +588,30 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Bonjour, ${_prenom ?? 'Utilisateur'} ${_nom ?? ''} !',
-                    style: TextStyle(
-                      fontSize: isTablet ? 22 : 18,
-                      fontWeight: FontWeight.bold,
-                      color: kPrimaryBlueDark,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Prêt pour une nouvelle journée d\'apprentissage ?',
-                    style: TextStyle(
-                      fontSize: isTablet ? 15 : 13,
-                      color: kNeutralGreyDark,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            // Expanded(
+            //   child: Column(
+            //     crossAxisAlignment: CrossAxisAlignment.start,
+            //     children: [
+            //       Text(
+            //         'Bonjour, ${_prenom ?? 'Utilisateur'} ${_nom ?? ''} !',
+            //         style: TextStyle(
+            //           fontSize: isTablet ? 22 : 18,
+            //           fontWeight: FontWeight.bold,
+            //           color: kPrimaryBlueDark,
+            //         ),
+            //       ),
+            //       const SizedBox(height: 4),
+            //       Text(
+            //         'Prêt pour une nouvelle journée d\'apprentissage ?',
+            //         style: TextStyle(
+            //           fontSize: isTablet ? 15 : 13,
+            //           color: kNeutralGreyDark,
+            //           height: 1.4,
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
           ],
         ),
       ),

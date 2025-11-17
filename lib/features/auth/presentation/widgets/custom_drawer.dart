@@ -196,6 +196,17 @@ class CustomDrawer extends StatelessWidget {
                             ],
                           ),
                         ),
+                        _buildDrawerItem(
+                          context,
+                          icon: Icons.logout,
+                          label: 'Déconnexion',
+                          iconColor: Colors.red,
+                          onTap: () {
+                            context.read<AuthBloc>().add(LogoutEvent());
+                            Navigator.pushReplacementNamed(context, RouteConstants.login);
+                          },
+                        ),
+                        
                       ],
                     ),
                   ),
@@ -333,24 +344,24 @@ class CustomDrawer extends StatelessWidget {
           ),
 
           // Bouton de déconnexion
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: theme.dividerColor.withOpacity(0.3)),
-              ),
-            ),
-            child: _buildDrawerItem(
-              context,
-              icon: Icons.logout,
-              label: 'Déconnexion',
-              iconColor: Colors.red,
-              onTap: () {
-                context.read<AuthBloc>().add(LogoutEvent());
-                Navigator.pushReplacementNamed(context, RouteConstants.login);
-              },
-            ),
-          ),
+          // Container(
+          //   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          //   decoration: BoxDecoration(
+          //     border: Border(
+          //       top: BorderSide(color: theme.dividerColor.withOpacity(0.3)),
+          //     ),
+          //   ),
+          //   child: _buildDrawerItem(
+          //     context,
+          //     icon: Icons.logout,
+          //     label: 'Déconnexion',
+          //     iconColor: Colors.red,
+          //     onTap: () {
+          //       context.read<AuthBloc>().add(LogoutEvent());
+          //       Navigator.pushReplacementNamed(context, RouteConstants.login);
+          //     },
+          //   ),
+          // ),
         ],
       ),
     );
