@@ -332,7 +332,6 @@ class _HomePageState extends State<HomePage> {
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: WelcomeBanner(
-                              // Removed unsupported onHide parameter
                               showDismissOption: true,
                               variant: 'default',
                             ),
@@ -341,26 +340,18 @@ class _HomePageState extends State<HomePage> {
                         const SliverToBoxAdapter(child: SizedBox(height: 24)),
                         if (_showWelcomeBlock)
                           SliverToBoxAdapter(
-                            child: _buildWelcomeSection(isTablet),
+                            child: _buildSectionTitle(
+                              context,
+                              title: 'Comment participer ?',
+                              icon: LucideIcons.gamepad2,
+                            ),
                           ),
-                        // const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                        // SliverToBoxAdapter(
-                        //   child: _buildPlatformPresentation(isTablet),
-                        // ),
-                        // const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                        SliverToBoxAdapter(
-                          child: _buildSectionTitle(
-                            context,
-                            title: 'Comment participer ?',
-                            icon: LucideIcons.gamepad2,
-                          ),
-                        ),
                         SliverToBoxAdapter(child: const HowToPlay()),
                         const SliverToBoxAdapter(child: SizedBox(height: 12)),
                         SliverToBoxAdapter(
                           child: _buildSectionTitle(
                             context,
-                            title: 'Formations recommandées',
+                            title: 'Boostez vos compétences dès aujourd\'hui !',
                             icon: LucideIcons.bookOpen,
                           ),
                         ),
@@ -588,30 +579,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(width: 16),
-            // Expanded(
-            //   child: Column(
-            //     crossAxisAlignment: CrossAxisAlignment.start,
-            //     children: [
-            //       Text(
-            //         'Bonjour, ${_prenom ?? 'Utilisateur'} ${_nom ?? ''} !',
-            //         style: TextStyle(
-            //           fontSize: isTablet ? 22 : 18,
-            //           fontWeight: FontWeight.bold,
-            //           color: kPrimaryBlueDark,
-            //         ),
-            //       ),
-            //       const SizedBox(height: 4),
-            //       Text(
-            //         'Prêt pour une nouvelle journée d\'apprentissage ?',
-            //         style: TextStyle(
-            //           fontSize: isTablet ? 15 : 13,
-            //           color: kNeutralGreyDark,
-            //           height: 1.4,
-            //         ),
-            //       ),
-            //     ],
-            //   ),
-            // ),
           ],
         ),
       ),
@@ -772,8 +739,11 @@ class _HomePageState extends State<HomePage> {
                   contact.type.toLowerCase().contains('sav') ||
                   contact.type.toLowerCase().contains('pole_sav'),
             )
-            .toList();
-    orderedContacts.addAll(poleSav);
+            .firstOrNull;
+
+    if (poleSav != null) {
+      orderedContacts.add(poleSav);
+    }
 
     final commerciaux =
         _contacts
@@ -850,103 +820,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  // Widget _buildPlatformPresentation(bool isTablet) {
-  //   return Padding(
-  //     padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
-  //     child: Container(
-  //       padding: const EdgeInsets.all(20),
-  //       decoration: BoxDecoration(
-  //         gradient: LinearGradient(
-  //           colors: [kPrimaryBlueLight, kAccentPurpleLight],
-  //           begin: Alignment.topLeft,
-  //           end: Alignment.bottomRight,
-  //         ),
-  //         borderRadius: BorderRadius.circular(20),
-  //         boxShadow: [
-  //           BoxShadow(
-  //             color: kPrimaryBlue.withOpacity(0.1),
-  //             blurRadius: 15,
-  //             offset: const Offset(0, 5),
-  //           ),
-  //         ],
-  //       ),
-  //       child: Column(
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           Row(
-  //             children: [
-  //               Container(
-  //                 width: isTablet ? 50 : 40,
-  //                 height: isTablet ? 50 : 40,
-  //                 decoration: BoxDecoration(
-  //                   gradient: LinearGradient(
-  //                     colors: [kpOrange, kpOrange],
-  //                     begin: Alignment.topLeft,
-  //                     end: Alignment.bottomRight,
-  //                   ),
-  //                   shape: BoxShape.circle,
-  //                   boxShadow: [
-  //                     BoxShadow(
-  //                       color: kpOrange.withOpacity(0.3),
-  //                       blurRadius: 8,
-  //                       offset: const Offset(0, 3),
-  //                     ),
-  //                   ],
-  //                 ),
-  //                 child: Icon(
-  //                   LucideIcons.rocket,
-  //                   color: kNeutralWhite,
-  //                   size: isTablet ? 24 : 18,
-  //                 ),
-  //               ),
-  //               const SizedBox(width: 16),
-  //               Expanded(
-  //                 child: Text(
-  //                   'Wizi Learn',
-  //                   style: TextStyle(
-  //                     fontSize: isTablet ? 24 : 20,
-  //                     fontWeight: FontWeight.bold,
-  //                     color: kpOrange,
-  //                   ),
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //           const SizedBox(height: 16),
-  //           Text(
-  //             'Votre plateforme d\'apprentissage intelligente',
-  //             style: TextStyle(
-  //               fontSize: isTablet ? 18 : 16,
-  //               fontWeight: FontWeight.w600,
-  //               color: kPrimaryBlueDark,
-  //             ),
-  //           ),
-  //           const SizedBox(height: 12),
-  //           Text(
-  //             'Découvrez des formations personnalisées, des quiz interactifs et des défis gamifiés pour progresser à votre rythme. Apprenez, jouez et excellez !',
-  //             style: TextStyle(
-  //               fontSize: isTablet ? 15 : 13,
-  //               color: kNeutralGreyDark,
-  //               height: 1.5,
-  //             ),
-  //           ),
-  //           const SizedBox(height: 16),
-  //           Wrap(
-  //             spacing: 8,
-  //             runSpacing: 8,
-  //             children: [
-  //               _buildFeatureChip('🎯 Personnalisé', isTablet),
-  //               _buildFeatureChip('🏆 Gamifié', isTablet),
-  //               _buildFeatureChip('📱 Mobile', isTablet),
-  //               _buildFeatureChip('🚀 Progressif', isTablet),
-  //             ],
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _buildFeatureChip(String text, bool isTablet) {
     return Container(
@@ -1039,40 +912,31 @@ class _InscriptionSuccessModal extends StatelessWidget {
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Demande d\'inscription envoyée !',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: kPrimaryBlueDark,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: IconButton(
-                                    icon: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: kNeutralGrey,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        Icons.close,
-                                        size: 16,
-                                        color: kNeutralGreyDark,
-                                      ),
-                                    ),
-                                    onPressed: onClose,
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              'Demande d\'inscription envoyée !',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: kPrimaryBlueDark,
+                              ),
                             ),
+                          ),
+                          IconButton(
+                            icon: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: kNeutralGrey,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.close,
+                                size: 16,
+                                color: kNeutralGreyDark,
+                              ),
+                            ),
+                            onPressed: onClose,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
                           ),
                         ],
                       ),
