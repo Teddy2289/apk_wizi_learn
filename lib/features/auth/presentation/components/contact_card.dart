@@ -373,7 +373,7 @@ class ContactCard extends StatelessWidget {
         // Bouton d'appel
         _buildActionButton(
           icon: Icons.phone_in_talk_rounded,
-          color: kPrimaryBlue,
+          color: const Color.fromARGB(255, 233, 161, 61),
           onPressed: () => _launchPhone(context),
           tooltip: 'Appeler',
           isSmallScreen: isSmallScreen,
@@ -399,7 +399,7 @@ class ContactCard extends StatelessWidget {
       children: [
         _buildActionButton(
           icon: Icons.phone_rounded,
-          color: kPrimaryBlue,
+          color: const Color.fromARGB(255, 233, 161, 61),
           onPressed: () => _launchPhone(context),
           tooltip: 'Appeler',
           isSmallScreen: true,
