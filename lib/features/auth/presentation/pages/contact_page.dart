@@ -115,23 +115,25 @@ class _ContactPageState extends State<ContactPage> {
             ),
             child: const Icon(Icons.arrow_back, color: Colors.white),
           ),
-          onPressed: () => Navigator.pushReplacementNamed(
-            context,
-            RouteConstants.dashboard,
-          ),
+          onPressed:
+              () => Navigator.pushReplacementNamed(
+                context,
+                RouteConstants.dashboard,
+              ),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),
             tooltip: 'Voir le tutoriel',
-            onPressed: () => showStandardHelpDialog(
-              context,
-              steps: const [
-                '1. Consultez vos contacts utiles listés.',
-                '2. Touchez un contact pour voir plus d’options.',
-                '3. Retrouvez aussi les contacts du partenaire.',
-              ],
-            ),
+            onPressed:
+                () => showStandardHelpDialog(
+                  context,
+                  steps: const [
+                    'Consultez vos contacts utiles listés.',
+                    'Touchez un contact pour voir plus d’options.',
+                    'Retrouvez aussi les contacts du partenaire.',
+                  ],
+                ),
           ),
         ],
       ),
@@ -143,116 +145,124 @@ class _ContactPageState extends State<ContactPage> {
             child: Text(
               "Retrouvez ici les contacts utiles mis à votre disposition dans le cadre de votre formation.",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.brown.shade700,
-                    fontWeight: FontWeight.w500,
-                  ),
+                color: Colors.brown.shade700,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           Expanded(
-            child: LayoutBuilder(builder: (context, constraints) {
-              final isWide = constraints.maxWidth > 600;
-              final partnerContacts = _partner?.toContactList() ?? [];
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 600;
+                final partnerContacts = _partner?.toContactList() ?? [];
 
-              return ListView(
-                children: [
-                  if (_isLoadingContacts)
-                    const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: LinearProgressIndicator(),
-                    ),
-                  if (_isLoadingPartner) ...[
-                    const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: LinearProgressIndicator(),
-                    ),
-                  ],
-                  if (_partner != null) ...[
-                    _PartnerHeader(partner: _partner!),
-                    const SizedBox(height: 12),
-                    if (partnerContacts.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 8.0,
-                        ),
-                        child: Text(
-                          'Contacts du partenaire',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
+                return ListView(
+                  children: [
+                    if (_isLoadingContacts)
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: LinearProgressIndicator(),
                       ),
-                      isWide
-                          ? _buildContactsGrid(partnerContacts)
-                          : Column(
-                              children: partnerContacts
-                                  .map((c) => ContactCard(contact: c))
-                                  .toList(),
-                            ),
-                      const SizedBox(height: 16),
+                    if (_isLoadingPartner) ...[
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: LinearProgressIndicator(),
+                      ),
                     ],
-                  ],
-                  if (_contacts.isEmpty && !_isLoadingContacts)
-                    const Center(child: Text('Aucun contact disponible'))
-                  else
-                    isWide
-                        ? _buildContactsGrid(_contacts)
-                        : Column(
-                            children: _contacts
-                                .map((contact) => ContactCard(contact: contact))
-                                .toList(),
+                    if (_partner != null) ...[
+                      _PartnerHeader(partner: _partner!),
+                      const SizedBox(height: 12),
+                      if (partnerContacts.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 8.0,
                           ),
-                  const SizedBox(height: 24),
-                  if (_showFormationsWidget)
-                    Stack(
-                      children: [
-                        FutureBuilder<List<Formation>>(
-                          future: _formationsFuture,
-                          builder: (context, snapshot) {
-                            if (_formationsFuture == null ||
-                                snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                              return const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(16.0),
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                            }
-                            if (snapshot.hasError) {
-                              return Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Text(
-                                  'Erreur lors du chargement des formations :  [200B]${snapshot.error}',
-                                ),
-                              );
-                            }
-                            final formations = snapshot.data ?? [];
-                            if (formations.isEmpty) {
-                              return const Padding(
-                                padding: EdgeInsets.all(16.0),
-                                child: Text('Aucune formation trouvée.'),
-                              );
-                            }
-                            return RandomFormationsWidget(
-                                formations: formations);
-                          },
+                          child: Text(
+                            'Contacts du partenaire',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
                         ),
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () {
-                              setState(() {
-                                _showFormationsWidget = false;
-                              });
+                        isWide
+                            ? _buildContactsGrid(partnerContacts)
+                            : Column(
+                              children:
+                                  partnerContacts
+                                      .map((c) => ContactCard(contact: c))
+                                      .toList(),
+                            ),
+                        const SizedBox(height: 16),
+                      ],
+                    ],
+                    if (_contacts.isEmpty && !_isLoadingContacts)
+                      const Center(child: Text('Aucun contact disponible'))
+                    else
+                      isWide
+                          ? _buildContactsGrid(_contacts)
+                          : Column(
+                            children:
+                                _contacts
+                                    .map(
+                                      (contact) =>
+                                          ContactCard(contact: contact),
+                                    )
+                                    .toList(),
+                          ),
+                    const SizedBox(height: 24),
+                    if (_showFormationsWidget)
+                      Stack(
+                        children: [
+                          FutureBuilder<List<Formation>>(
+                            future: _formationsFuture,
+                            builder: (context, snapshot) {
+                              if (_formationsFuture == null ||
+                                  snapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(16.0),
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              }
+                              if (snapshot.hasError) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Text(
+                                    'Erreur lors du chargement des formations :  [200B]${snapshot.error}',
+                                  ),
+                                );
+                              }
+                              final formations = snapshot.data ?? [];
+                              if (formations.isEmpty) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Text('Aucune formation trouvée.'),
+                                );
+                              }
+                              return RandomFormationsWidget(
+                                formations: formations,
+                              );
                             },
                           ),
-                        ),
-                      ],
-                    ),
-                ],
-              );
-            }),
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () {
+                                setState(() {
+                                  _showFormationsWidget = false;
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -262,18 +272,23 @@ class _ContactPageState extends State<ContactPage> {
   Widget _buildContactsGrid(List<Contact> contacts) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: LayoutBuilder(builder: (context, constraints) {
-        return Wrap(
-          spacing: 8, // horizontal spacing
-          runSpacing: 8, // vertical spacing
-          children: contacts.map((contact) {
-            return SizedBox(
-              width: (constraints.maxWidth / 2) - 4, // 2 columns, considering spacing
-              child: ContactCard(contact: contact),
-            );
-          }).toList(),
-        );
-      }),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Wrap(
+            spacing: 8, // horizontal spacing
+            runSpacing: 8, // vertical spacing
+            children:
+                contacts.map((contact) {
+                  return SizedBox(
+                    width:
+                        (constraints.maxWidth / 2) -
+                        4, // 2 columns, considering spacing
+                    child: ContactCard(contact: contact),
+                  );
+                }).toList(),
+          );
+        },
+      ),
     );
   }
 }
