@@ -350,9 +350,22 @@ class _HomePageState extends State<HomePage> {
                         const SliverToBoxAdapter(child: SizedBox(height: 12)),
                         SliverToBoxAdapter(
                           child: _buildSectionTitle(
-                            context,
-                            title: 'Boostez vos compétences dès aujourd\'hui !',
-                            icon: LucideIcons.bookOpen,
+                          context,
+                          title: 'Boostez vos compétences dès aujourd\'hui !',
+                          icon: LucideIcons.bookOpen,
+                          ),
+                        ),
+                        SliverToBoxAdapter(
+                          child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 8.0),
+                          child: Text(
+                            'Des formations certifiantes adaptées à vos besoins.',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: kNeutralGreyDark,
+                              fontWeight: FontWeight.w600,
+                              ),
+                          ),
                           ),
                         ),
                         SliverToBoxAdapter(
