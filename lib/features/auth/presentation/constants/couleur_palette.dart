@@ -30,7 +30,7 @@ class AppColors {
 
   static const Color catLangues = Color(0xFFA55E6E);
 
-  static const Color catInternet = Color(0xFFFFC533);
+  static const Color catInternet = Color(0xFFFEB823);
   static const Color catInternetLight = Color(0xFFFFF8E8);
   static const Color catInternetDark = Color(0xFFE6A400);
 

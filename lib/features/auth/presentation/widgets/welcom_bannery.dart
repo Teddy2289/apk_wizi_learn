@@ -119,13 +119,13 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: AppColors.catBureautiqueLight,
+                    color: AppColors.catInternetLight,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     LucideIcons.megaphone,
                     size: 16,
-                    color: AppColors.catBureautique,
+                    color: AppColors.catInternet,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -172,12 +172,12 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.catBureautiqueLight,
               kNeutralWhite,
-              AppColors.iaLight,
+              kNeutralWhite,
+              kNeutralWhite,
             ],
           ),
-          border: Border.all(color: AppColors.catBureautique.withOpacity(0.1)),
+          border: Border.all(color: AppColors.catInternet.withOpacity(0.1)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -193,14 +193,17 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
               top: 16,
               right: 80,
               child: _buildAnimatedDot(
-                AppColors.catBureautique.withOpacity(0.3),
+                AppColors.catInternet.withOpacity(0.3),
                 0,
               ),
             ),
             Positioned(
               bottom: 32,
               left: 64,
-              child: _buildAnimatedDot(AppColors.ia.withOpacity(0.4), 1000),
+              child: _buildAnimatedDot(
+                AppColors.catInternet.withOpacity(0.4),
+                1000,
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(20),
@@ -221,13 +224,13 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              AppColors.catBureautique,
-                              AppColors.catBureautiqueDark,
+                              AppColors.catInternet,
+                              AppColors.catInternetDark,
                             ],
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.catBureautique.withOpacity(0.3),
+                              color: AppColors.catInternet.withOpacity(0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -257,7 +260,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.catBureautiqueDark,
+                                color: AppColors.catInternetDark,
                               ),
                             ),
                           ],
@@ -283,7 +286,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                     child: ElevatedButton(
                       onPressed: _handleDiscover,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.catBureautique,
+                        backgroundColor: AppColors.catInternet,
                         foregroundColor: kNeutralWhite,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
@@ -345,7 +348,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
       {
         'icon': LucideIcons.star,
         'text': 'Suivi de progression',
-        'color': AppColors.catInternet,
+        'color': AppColors.catCreation,
       },
     ];
 
@@ -360,12 +363,12 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.catBureautiqueLight,
               kNeutralWhite,
-              AppColors.iaLight,
+              kNeutralWhite,
+              kNeutralWhite,
             ],
           ),
-          border: Border.all(color: AppColors.catBureautique.withOpacity(0.1)),
+          border: Border.all(color: AppColors.catInternet.withOpacity(0.1)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -385,7 +388,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                     center: Alignment.topLeft,
                     radius: 1.0,
                     colors: [
-                      AppColors.catBureautique.withOpacity(0.1),
+                      AppColors.catInternet.withOpacity(0.1),
                       Colors.transparent,
                     ],
                   ),
@@ -397,14 +400,17 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
               top: 20,
               right: 100,
               child: _buildAnimatedDot(
-                AppColors.catBureautique.withOpacity(0.3),
+                AppColors.catInternet.withOpacity(0.3),
                 0,
               ),
             ),
             Positioned(
               bottom: 40,
               left: 80,
-              child: _buildAnimatedDot(AppColors.ia.withOpacity(0.4), 1000),
+              child: _buildAnimatedDot(
+                AppColors.catInternet.withOpacity(0.4),
+                1000,
+              ),
             ),
             Positioned(
               top: 60,
@@ -433,13 +439,13 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              AppColors.catBureautique,
-                              AppColors.catBureautiqueDark,
+                              AppColors.catInternet,
+                              AppColors.catInternetDark,
                             ],
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.catBureautique.withOpacity(0.4),
+                              color: AppColors.catInternet.withOpacity(0.4),
                               blurRadius: 10,
                               offset: const Offset(0, 6),
                             ),
@@ -470,7 +476,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.catBureautiqueDark,
+                                color: AppColors.catInternetDark,
                               ),
                             ),
                           ],
@@ -583,7 +589,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
       {
         'icon': LucideIcons.star,
         'text': 'Suivi de progression',
-        'color': AppColors.catInternet,
+        'color': AppColors.catCreation,
       },
     ];
 
@@ -598,12 +604,12 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.catBureautiqueLight,
               kNeutralWhite,
-              AppColors.iaLight,
+              kNeutralWhite,
+              kNeutralWhite,
             ],
           ),
-          border: Border.all(color: AppColors.catBureautique.withOpacity(0.1)),
+          border: Border.all(color: AppColors.catInternet.withOpacity(0.1)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.15),
@@ -624,7 +630,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                     center: const Alignment(0.3, 0.2),
                     radius: 1.0,
                     colors: [
-                      AppColors.catBureautique.withOpacity(
+                      AppColors.catInternet.withOpacity(
                         _isHovered ? 0.15 : 0.1,
                       ),
                       Colors.transparent,
@@ -638,14 +644,17 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
               top: 30,
               right: 160,
               child: _buildAnimatedDot(
-                AppColors.catBureautique.withOpacity(0.3),
+                AppColors.catInternet.withOpacity(0.3),
                 0,
               ),
             ),
             Positioned(
               bottom: 60,
               left: 120,
-              child: _buildAnimatedDot(AppColors.ia.withOpacity(0.4), 1000),
+              child: _buildAnimatedDot(
+                AppColors.catInternet.withOpacity(0.4),
+                1000,
+              ),
             ),
             Positioned(
               top: 80,
@@ -675,13 +684,13 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              AppColors.catBureautique,
-                              AppColors.catBureautiqueDark,
+                              AppColors.catInternet,
+                              AppColors.catInternetDark,
                             ],
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.catBureautique.withOpacity(0.4),
+                              color: AppColors.catInternet.withOpacity(0.4),
                               blurRadius: 15,
                               offset: const Offset(0, 6),
                             ),
@@ -737,7 +746,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.catBureautiqueDark,
+                                color: AppColors.catInternetDark,
                               ),
                             ),
                           ],
