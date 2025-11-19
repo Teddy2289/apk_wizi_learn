@@ -9,6 +9,7 @@ class CustomBottomNavBar extends StatelessWidget {
   final Color backgroundColor;
   final Color selectedColor;
   final Color unselectedColor;
+  final bool isLandscape;
 
   const CustomBottomNavBar({
     super.key,
@@ -17,6 +18,7 @@ class CustomBottomNavBar extends StatelessWidget {
     required this.backgroundColor,
     required this.selectedColor,
     required this.unselectedColor,
+    this.isLandscape = false,
   });
 
   @override
@@ -24,31 +26,34 @@ class CustomBottomNavBar extends StatelessWidget {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
     final safeAreaBottom = mediaQuery.padding.bottom;
-    final isCompact = mediaQuery.size.width < 600;
 
-    // Responsive values
-    final double fabSize = isCompact ? 68.0 : 80.0;
-    final double iconSize = isCompact ? 22.0 : 26.0;
-    final double labelFontSize = isCompact ? 10.0 : 12.0;
-    final double navBarHeight = isCompact ? 75.0 : 85.0;
-    final double fabIconSize = isCompact ? 30.0 : 38.0;
+    // Détection tablette basée sur la taille d'écran
+    final bool isTablet = mediaQuery.size.shortestSide >= 600;
+    final bool isCompact = mediaQuery.size.width < 600;
+
+    // Valeurs responsive adaptées pour tablette
+    final double fabSize = _getFabSize(isTablet, isLandscape, isCompact);
+    final double iconSize = _getIconSize(isTablet, isLandscape, isCompact);
+    final double labelFontSize = _getLabelFontSize(isTablet, isLandscape, isCompact);
+    final double navBarHeight = _getNavBarHeight(isTablet, isLandscape, isCompact, safeAreaBottom);
+    final double fabIconSize = _getFabIconSize(isTablet, isLandscape, isCompact);
 
     return SizedBox(
-      height: navBarHeight + safeAreaBottom,
+      height: navBarHeight,
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.bottomCenter,
         children: [
-          // Fond avec effet de verre (glassmorphism)
-          _buildGlassBackground(theme, navBarHeight),
+          // Fond avec effet de verre
+          _buildGlassBackground(theme, navBarHeight, isLandscape, isTablet),
 
           // Effet de lumière derrière le FAB
-          _buildFabGlow(fabSize),
+          if (!isLandscape) _buildFabGlow(fabSize, isTablet),
 
           // Bouton central FAB
           Positioned(
-            top: -fabSize * 0.35,
-            child: _buildQuizFab(fabSize, fabIconSize),
+            top: _getFabPosition(isTablet, isLandscape, fabSize),
+            child: _buildQuizFab(fabSize, fabIconSize, isLandscape, isTablet),
           ),
 
           // Items de navigation
@@ -59,20 +64,69 @@ class CustomBottomNavBar extends StatelessWidget {
             iconSize,
             labelFontSize,
             safeAreaBottom,
+            isLandscape,
+            isTablet,
           ),
         ],
       ),
     );
   }
 
+  // Méthodes pour calculer les dimensions responsive
+  double _getFabSize(bool isTablet, bool isLandscape, bool isCompact) {
+    if (isTablet) {
+      return isLandscape ? 60.0 : 70.0; // Taille réduite sur tablette
+    }
+    return isLandscape ? (isCompact ? 56.0 : 64.0) : (isCompact ? 68.0 : 80.0);
+  }
+
+  double _getIconSize(bool isTablet, bool isLandscape, bool isCompact) {
+    if (isTablet) {
+      return isLandscape ? 22.0 : 24.0; // Icônes légèrement plus grandes sur tablette
+    }
+    return isLandscape ? (isCompact ? 18.0 : 20.0) : (isCompact ? 22.0 : 26.0);
+  }
+
+  double _getLabelFontSize(bool isTablet, bool isLandscape, bool isCompact) {
+    if (isTablet) {
+      return isLandscape ? 10.0 : 11.0; // Texte plus lisible sur tablette
+    }
+    return isLandscape ? (isCompact ? 8.0 : 9.0) : (isCompact ? 10.0 : 12.0);
+  }
+
+  double _getNavBarHeight(bool isTablet, bool isLandscape, bool isCompact, double safeAreaBottom) {
+    if (isTablet) {
+      return (isLandscape ? 65.0 : 75.0) + safeAreaBottom; // Barre plus compacte
+    }
+    return (isLandscape ? (isCompact ? 60.0 : 70.0) : (isCompact ? 75.0 : 85.0)) + safeAreaBottom;
+  }
+
+  double _getFabIconSize(bool isTablet, bool isLandscape, bool isCompact) {
+    if (isTablet) {
+      return isLandscape ? 26.0 : 28.0; // Icône FAB adaptée tablette
+    }
+    return isLandscape ? (isCompact ? 24.0 : 28.0) : (isCompact ? 30.0 : 38.0);
+  }
+
+  double _getFabPosition(bool isTablet, bool isLandscape, double fabSize) {
+    if (isTablet) {
+      return isLandscape ? -fabSize * 0.2 : -fabSize * 0.3; // Position plus compacte
+    }
+    return isLandscape ? -fabSize * 0.25 : -fabSize * 0.35;
+  }
+
   Widget _buildNavItems(
-    ThemeData theme,
-    double navBarHeight,
-    double fabSize,
-    double iconSize,
-    double labelFontSize,
-    double safeAreaBottom,
-  ) {
+      ThemeData theme,
+      double navBarHeight,
+      double fabSize,
+      double iconSize,
+      double labelFontSize,
+      double safeAreaBottom,
+      bool isLandscape,
+      bool isTablet,
+      ) {
+    final double fabSpace = _getFabSpace(isTablet, isLandscape, fabSize);
+
     final navItems = [
       _buildNavItem(
         icon: LucideIcons.home,
@@ -80,6 +134,8 @@ class CustomBottomNavBar extends StatelessWidget {
         index: 0,
         iconSize: iconSize,
         labelFontSize: labelFontSize,
+        isLandscape: isLandscape,
+        isTablet: isTablet,
       ),
       _buildNavItem(
         icon: LucideIcons.bookOpen,
@@ -87,30 +143,65 @@ class CustomBottomNavBar extends StatelessWidget {
         index: 1,
         iconSize: iconSize,
         labelFontSize: labelFontSize,
+        isLandscape: isLandscape,
+        isTablet: isTablet,
       ),
-      SizedBox(width: fabSize * 1.3), // Espace pour le FAB central
+      SizedBox(width: fabSpace),
       _buildNavItem(
         icon: LucideIcons.trophy,
         label: "Classement",
         index: 3,
         iconSize: iconSize,
         labelFontSize: labelFontSize,
+        isLandscape: isLandscape,
+        isTablet: isTablet,
       ),
       _buildNavItem(
         icon: LucideIcons.video,
-        label: "Tutoriel",
+        label: _getTutorialLabel(isTablet, isLandscape),
         index: 4,
         iconSize: iconSize,
         labelFontSize: labelFontSize,
+        isLandscape: isLandscape,
+        isTablet: isTablet,
       ),
     ];
 
     return Padding(
-      padding: EdgeInsets.only(left: 20, right: 20, bottom: safeAreaBottom + 4),
+      padding: _getNavPadding(isTablet, isLandscape, safeAreaBottom),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: navItems,
       ),
+    );
+  }
+
+  double _getFabSpace(bool isTablet, bool isLandscape, double fabSize) {
+    if (isTablet) {
+      return isLandscape ? fabSize * 0.7 : fabSize * 1.1; // Espace optimisé tablette
+    }
+    return isLandscape ? fabSize * 0.8 : fabSize * 1.3;
+  }
+
+  String _getTutorialLabel(bool isTablet, bool isLandscape) {
+    if (isTablet) {
+      return isLandscape ? "Tuto" : "Tutoriel";
+    }
+    return isLandscape ? "Tuto" : "Tutoriel";
+  }
+
+  EdgeInsets _getNavPadding(bool isTablet, bool isLandscape, double safeAreaBottom) {
+    if (isTablet) {
+      return EdgeInsets.only(
+        left: isLandscape ? 16 : 24,
+        right: isLandscape ? 16 : 24,
+        bottom: safeAreaBottom + (isLandscape ? 4 : 6),
+      );
+    }
+    return EdgeInsets.only(
+      left: isLandscape ? 12 : 20,
+      right: isLandscape ? 12 : 20,
+      bottom: safeAreaBottom + (isLandscape ? 2 : 4),
     );
   }
 
@@ -120,6 +211,8 @@ class CustomBottomNavBar extends StatelessWidget {
     required int index,
     required double iconSize,
     required double labelFontSize,
+    required bool isLandscape,
+    required bool isTablet,
   }) {
     final isActive = index == currentIndex;
 
@@ -134,49 +227,37 @@ class CustomBottomNavBar extends StatelessWidget {
           },
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            margin: _getNavItemMargin(isTablet, isLandscape),
+            padding: _getNavItemPadding(isTablet, isLandscape),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              color:
-                  isActive
-                      ? selectedColor.withOpacity(0.1)
-                      : Colors.transparent,
+              color: isActive ? selectedColor.withOpacity(0.1) : Colors.transparent,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Icone avec animation subtile
+                // Icone
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
-                  padding: const EdgeInsets.all(6),
+                  padding: _getIconPadding(isTablet, isLandscape),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color:
-                        isActive
-                            ? selectedColor.withOpacity(0.15)
-                            : Colors.transparent,
+                    color: isActive ? selectedColor.withOpacity(0.15) : Colors.transparent,
                   ),
                   child: Icon(
                     icon,
                     size: iconSize,
-                    color:
-                        isActive
-                            ? selectedColor
-                            : unselectedColor.withOpacity(0.7),
+                    color: isActive ? selectedColor : unselectedColor.withOpacity(0.7),
                   ),
                 ),
-                const SizedBox(height: 4),
-                // Label avec animation
+                SizedBox(height: _getLabelSpacing(isTablet, isLandscape)),
+                // Label
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 300),
                   style: TextStyle(
                     fontSize: labelFontSize,
                     fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                    color:
-                        isActive
-                            ? selectedColor
-                            : unselectedColor.withOpacity(0.8),
+                    color: isActive ? selectedColor : unselectedColor.withOpacity(0.8),
                     letterSpacing: isActive ? 0.5 : 0.0,
                   ),
                   child: Text(
@@ -193,22 +274,65 @@ class CustomBottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildGlassBackground(ThemeData theme, double navBarHeight) {
+  EdgeInsets _getNavItemMargin(bool isTablet, bool isLandscape) {
+    if (isTablet) {
+      return EdgeInsets.symmetric(horizontal: isLandscape ? 4 : 6);
+    }
+    return EdgeInsets.symmetric(horizontal: isLandscape ? 2 : 4);
+  }
+
+  EdgeInsets _getNavItemPadding(bool isTablet, bool isLandscape) {
+    if (isTablet) {
+      return EdgeInsets.symmetric(
+        vertical: isLandscape ? 8 : 10,
+        horizontal: isLandscape ? 4 : 6,
+      );
+    }
+    return EdgeInsets.symmetric(
+      vertical: isLandscape ? 6 : 8,
+      horizontal: isLandscape ? 2 : 4,
+    );
+  }
+
+  EdgeInsets _getIconPadding(bool isTablet, bool isLandscape) {
+    if (isTablet) {
+      return EdgeInsets.all(isLandscape ? 6 : 8);
+    }
+    return EdgeInsets.all(isLandscape ? 4 : 6);
+  }
+
+  double _getLabelSpacing(bool isTablet, bool isLandscape) {
+    if (isTablet) {
+      return isLandscape ? 3 : 5;
+    }
+    return isLandscape ? 2 : 4;
+  }
+
+  Widget _buildGlassBackground(
+      ThemeData theme,
+      double navBarHeight,
+      bool isLandscape,
+      bool isTablet,
+      ) {
     return ClipPath(
       clipper: BottomNavBarClipper(),
       child: Container(
         height: navBarHeight,
         decoration: BoxDecoration(
-          color: theme.cardColor.withOpacity(0.95),
+          color: theme.cardColor.withOpacity(
+            isTablet ? 0.98 : (isLandscape ? 0.98 : 0.95),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 20,
+              color: Colors.black.withOpacity(isTablet ? 0.08 : (isLandscape ? 0.1 : 0.15)),
+              blurRadius: isTablet ? 12 : (isLandscape ? 15 : 20),
               offset: const Offset(0, -4),
             ),
           ],
         ),
-        child: BackdropFilter(
+        child: (isTablet || isLandscape)
+            ? Container()
+            : BackdropFilter(
           filter: ColorFilter.mode(
             Colors.white.withOpacity(0.1),
             BlendMode.srcOver,
@@ -230,18 +354,18 @@ class CustomBottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildFabGlow(double fabSize) {
+  Widget _buildFabGlow(double fabSize, bool isTablet) {
     return Positioned(
-      top: -fabSize * 0.2,
+      top: -fabSize * (isTablet ? 0.15 : 0.2),
       child: Container(
-        width: fabSize * 1.4,
-        height: fabSize * 1.4,
+        width: fabSize * (isTablet ? 1.3 : 1.4),
+        height: fabSize * (isTablet ? 1.3 : 1.4),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: RadialGradient(
             colors: [
-              selectedColor.withOpacity(0.3),
-              selectedColor.withOpacity(0.1),
+              selectedColor.withOpacity(isTablet ? 0.2 : 0.3),
+              selectedColor.withOpacity(isTablet ? 0.08 : 0.1),
               Colors.transparent,
             ],
             stops: const [0.1, 0.5, 1.0],
@@ -251,7 +375,7 @@ class CustomBottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildQuizFab(double size, double iconSize) {
+  Widget _buildQuizFab(double size, double iconSize, bool isLandscape, bool isTablet) {
     final isQuizActive = currentIndex == 2;
 
     return AnimatedContainer(
@@ -261,30 +385,30 @@ class CustomBottomNavBar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
-          colors:
-              isQuizActive
-                  ? [selectedColor, selectedColor.withOpacity(0.8)]
-                  : [const Color(0xFF667eea), const Color(0xFF764ba2)],
+          colors: isQuizActive
+              ? [selectedColor, selectedColor.withOpacity(0.8)]
+              : [const Color(0xFF667eea), const Color(0xFF764ba2)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color:
-                isQuizActive
-                    ? selectedColor.withOpacity(0.5)
-                    : const Color(0xFF667eea).withOpacity(0.5),
-            blurRadius: 25,
-            spreadRadius: 3,
+            color: (isQuizActive ? selectedColor : const Color(0xFF667eea))
+                .withOpacity(isTablet ? 0.2 : (isLandscape ? 0.3 : 0.5)),
+            blurRadius: isTablet ? 12 : (isLandscape ? 15 : 25),
+            spreadRadius: isTablet ? 1 : (isLandscape ? 1 : 3),
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(isTablet ? 0.08 : (isLandscape ? 0.1 : 0.15)),
+            blurRadius: isTablet ? 4 : (isLandscape ? 6 : 10),
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+        border: Border.all(
+          color: Colors.white.withOpacity(isTablet ? 0.15 : (isLandscape ? 0.2 : 0.3)),
+          width: isTablet ? 1.5 : (isLandscape ? 1 : 2),
+        ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -296,14 +420,8 @@ class CustomBottomNavBar extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Effet de pulsation pour le bouton actif
-              if (isQuizActive) _buildPulseAnimation(size),
-
-              // Image de l'icône Quiz
-              _buildQuizIcon(iconSize, isQuizActive),
-
-              // Badge de notification (optionnel)
-              // _buildNotificationBadge(),
+              if (isQuizActive && !isLandscape && !isTablet) _buildPulseAnimation(size),
+              _buildQuizIcon(iconSize, isQuizActive, isLandscape, isTablet),
             ],
           ),
         ),
@@ -311,61 +429,61 @@ class CustomBottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildQuizIcon(double iconSize, bool isActive) {
+  Widget _buildQuizIcon(double iconSize, bool isActive, bool isLandscape, bool isTablet) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      transform: Matrix4.identity()..scale(isActive ? 1.1 : 1.0),
+      transform: Matrix4.identity()..scale(isActive && !isLandscape && !isTablet ? 1.1 : 1.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Option 1: Utiliser une image depuis les assets
-          // Image.asset(
-          //   'assets/images/quiz_icon.png',
-          //   width: iconSize,
-          //   height: iconSize,
-          //   color: Colors.white,
-          // ),
-
-          // Option 2: Utiliser une image réseau (exemple)
-          // CachedNetworkImage(
-          //   imageUrl: 'https://example.com/quiz-icon.png',
-          //   width: iconSize,
-          //   height: iconSize,
-          //   color: Colors.white,
-          //   placeholder: (context, url) => Icon(
-          //     Icons.quiz_rounded,
-          //     size: iconSize,
-          //     color: Colors.white,
-          //   ),
-          // ),
-
-          // Option 3: Icone personnalisé avec effet (fallback)
           Container(
-            padding: const EdgeInsets.all(4),
+            padding: _getQuizIconPadding(isTablet, isLandscape),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withOpacity(isTablet ? 0.12 : (isLandscape ? 0.15 : 0.2)),
             ),
             child: Icon(
               Icons.quiz_rounded,
-              size: iconSize * 0.8,
+              size: iconSize * _getQuizIconScale(isTablet, isLandscape),
               color: Colors.white,
             ),
           ),
-
-          const SizedBox(height: 2),
-          Text(
-            'Quiz',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: iconSize * 0.3,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
+          if (!isLandscape)
+            SizedBox(height: isTablet ? 3 : 2),
+          if (!isLandscape)
+            Text(
+              'Quiz',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: iconSize * _getQuizTextScale(isTablet, isLandscape),
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+              ),
             ),
-          ),
         ],
       ),
     );
+  }
+
+  EdgeInsets _getQuizIconPadding(bool isTablet, bool isLandscape) {
+    if (isTablet) {
+      return EdgeInsets.all(isLandscape ? 4 : 5);
+    }
+    return EdgeInsets.all(isLandscape ? 3 : 4);
+  }
+
+  double _getQuizIconScale(bool isTablet, bool isLandscape) {
+    if (isTablet) {
+      return isLandscape ? 0.65 : 0.75;
+    }
+    return isLandscape ? 0.7 : 0.8;
+  }
+
+  double _getQuizTextScale(bool isTablet, bool isLandscape) {
+    if (isTablet) {
+      return isLandscape ? 0.18 : 0.25;
+    }
+    return isLandscape ? 0.2 : 0.3;
   }
 
   Widget _buildPulseAnimation(double size) {
@@ -378,150 +496,6 @@ class CustomBottomNavBar extends StatelessWidget {
         color: selectedColor.withOpacity(0.3),
       ),
       child: const SizedBox(),
-    );
-  }
-
-  Widget _buildNotificationBadge() {
-    // Exemple de badge de notification (à personnaliser selon vos besoins)
-    return Positioned(
-      top: 8,
-      right: 8,
-      child: Container(
-        width: 16,
-        height: 16,
-        decoration: BoxDecoration(
-          color: const Color(0xFFFF4757),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 2),
-        ),
-        child: const Center(
-          child: Text(
-            '3',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 8,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Version alternative avec un design plus minimaliste
-class ModernBottomNavBar extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
-  final Color selectedColor;
-
-  const ModernBottomNavBar({
-    super.key,
-    required this.currentIndex,
-    required this.onTap,
-    required this.selectedColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 80 + MediaQuery.of(context).padding.bottom,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
-        child: Row(
-          children: [
-            _buildNavItem(Icons.home_rounded, 'Accueil', 0),
-            _buildNavItem(Icons.school_rounded, 'Formation', 1),
-            _buildQuizItem(),
-            _buildNavItem(Icons.leaderboard_rounded, 'Classement', 3),
-            _buildNavItem(Icons.video_library_rounded, 'Tutoriel', 4),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, int index) {
-    final isActive = index == currentIndex;
-
-    return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => onTap(index),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color: isActive ? selectedColor : Colors.grey,
-                size: 24,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isActive ? selectedColor : Colors.grey,
-                  fontSize: 10,
-                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuizItem() {
-    final isActive = 2 == currentIndex;
-
-    return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors:
-                    isActive
-                        ? [selectedColor, selectedColor.withOpacity(0.8)]
-                        : [const Color(0xFF667eea), const Color(0xFF764ba2)],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: (isActive ? selectedColor : const Color(0xFF667eea))
-                      .withOpacity(0.3),
-                  blurRadius: 10,
-                ),
-              ],
-            ),
-            child: Icon(Icons.quiz_rounded, color: Colors.white, size: 24),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Quiz',
-            style: TextStyle(
-              color: isActive ? selectedColor : Colors.grey,
-              fontSize: 10,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

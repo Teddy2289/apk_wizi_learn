@@ -38,8 +38,6 @@ class _RankingPageState extends State<RankingPage>
   final GlobalKey _keyPodium = GlobalKey();
   final GlobalKey _keyMyRank = GlobalKey();
   final GlobalKey _keyShare = GlobalKey();
-  // TutorialCoachMark instance is created on demand in _showTutorial to avoid
-  // keeping an unused field that triggers analyzer warnings.
 
   @override
   void initState() {
@@ -181,62 +179,199 @@ class _RankingPageState extends State<RankingPage>
 
   @override
   Widget build(BuildContext context) {
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Classement et Statistiques',
-          key: _keyTitle,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        backgroundColor: AppColors.background,
-        automaticallyImplyLeading: false,
-        elevation: 1,
-        centerTitle: true,
-        bottom: TabBar(
-          key: _keyTabBar,
-          controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.leaderboard), text: 'Classement'),
-            Tab(icon: Icon(Icons.assessment), text: 'Statistiques'),
-            Tab(icon: Icon(Icons.history), text: 'Historique'),
+      appBar: isLandscape ? _buildLandscapeAppBar() : _buildPortraitAppBar(),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _hasError
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Erreur: $_errorMessage',
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _loadAllData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Réessayer'),
+            ),
           ],
-          labelColor: AppColors.accent,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: AppColors.accent,
         ),
-        actions: [
-          IconButton(
-            key: _keyShare,
-            icon: const Icon(Icons.share),
-            tooltip: 'Partager mon classement',
-            onPressed: () async {
-              // Récupère le rang et les points de l'utilisateur
-              final rankings = await _rankingFuture;
-              final stats = await _statsFuture;
-              if (rankings != null && stats != null) {
-                final myRanking = rankings.firstWhere(
-                  (r) =>
-                      r.stagiaire.id ==
-                      stats.levelProgress.debutant.completed.toString(),
-                  orElse: () => rankings.first,
-                );
-                final rang = myRanking.rang;
-                final points = myRanking.totalPoints;
-                final msg =
-                    "Je suis classé $rang${rang == 1 ? 'er' : 'e'} avec $points points sur Wizi Learn ! 🏆\nRejoins-moi pour progresser !";
-                await Share.share(msg);
-              }
-            },
+      )
+          : TabBarView(
+        controller: _tabController,
+        children: [
+          _buildRankingTab(isLandscape),
+          _buildStatsTab(isLandscape),
+          _buildHistoryTab(isLandscape),
+        ],
+      ),
+    );
+  }
+
+  AppBar _buildPortraitAppBar() {
+    return AppBar(
+      title: Text(
+        'Classement et Statistiques',
+        key: _keyTitle,
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: Colors.black87,
+        ),
+      ),
+      backgroundColor: AppColors.background,
+      automaticallyImplyLeading: false,
+      elevation: 1,
+      centerTitle: true,
+      bottom: TabBar(
+        key: _keyTabBar,
+        controller: _tabController,
+        tabs: const [
+          Tab(icon: Icon(Icons.leaderboard), text: 'Classement'),
+          Tab(icon: Icon(Icons.assessment), text: 'Statistiques'),
+          Tab(icon: Icon(Icons.history), text: 'Historique'),
+        ],
+        labelColor: AppColors.accent,
+        unselectedLabelColor: Colors.grey,
+        indicatorColor: AppColors.accent,
+      ),
+      actions: [
+        IconButton(
+          key: _keyShare,
+          icon: const Icon(Icons.share),
+          tooltip: 'Partager mon classement',
+          onPressed: () async {
+            final rankings = await _rankingFuture;
+            final stats = await _statsFuture;
+            if (rankings != null && stats != null) {
+              final myRanking = rankings.firstWhere(
+                    (r) =>
+                r.stagiaire.id ==
+                    stats.levelProgress.debutant.completed.toString(),
+                orElse: () => rankings.first,
+              );
+              final rang = myRanking.rang;
+              final points = myRanking.totalPoints;
+              final msg =
+                  "Je suis classé $rang${rang == 1 ? 'er' : 'e'} avec $points points sur Wizi Learn ! 🏆\nRejoins-moi pour progresser !";
+              await Share.share(msg);
+            }
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.help_outline),
+          tooltip: 'Voir le tutoriel',
+          onPressed: () => showStandardHelpDialog(
+            context,
+            title: 'Comment utiliser cette page ?',
+            steps: const [
+              'Naviguez entre Classement, Statistiques et Historique via les onglets.',
+              'Consultez le podium et votre position dans la liste.',
+              'Dans Statistiques, explorez vos performances et votre progression.',
+              'Dans Historique, retrouvez vos quiz passés.',
+              'Utilisez le bouton Partager pour défier vos amis.',
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            tooltip: 'Voir le tutoriel',
-            onPressed:
-                () => showStandardHelpDialog(
+        ),
+      ],
+    );
+  }
+
+  AppBar _buildLandscapeAppBar() {
+    return AppBar(
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Titre compact
+          Text(
+            'Classement',
+            key: _keyTitle,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+
+          // Tabs horizontales compactes
+          Expanded(
+            child: Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: TabBar(
+                  key: _keyTabBar,
+                  controller: _tabController,
+                  isScrollable: true,
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  indicator: BoxDecoration(
+                    borderRadius: BorderRadius.circular(25),
+                    color: AppColors.accent,
+                  ),
+                  tabs: const [
+                    Tab(
+                      icon: Icon(Icons.leaderboard, size: 16),
+                      text: 'Classement',
+                    ),
+                    Tab(
+                      icon: Icon(Icons.assessment, size: 16),
+                      text: 'Stats',
+                    ),
+                    Tab(
+                      icon: Icon(Icons.history, size: 16),
+                      text: 'Historique',
+                    ),
+                  ],
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.grey.shade700,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                ),
+              ),
+            ),
+          ),
+
+          // Actions compactes
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                key: _keyShare,
+                icon: const Icon(Icons.share, size: 18),
+                tooltip: 'Partager mon classement',
+                onPressed: () async {
+                  final rankings = await _rankingFuture;
+                  final stats = await _statsFuture;
+                  if (rankings != null && stats != null) {
+                    final myRanking = rankings.firstWhere(
+                          (r) =>
+                      r.stagiaire.id ==
+                          stats.levelProgress.debutant.completed.toString(),
+                      orElse: () => rankings.first,
+                    );
+                    final rang = myRanking.rang;
+                    final points = myRanking.totalPoints;
+                    final msg =
+                        "Je suis classé $rang${rang == 1 ? 'er' : 'e'} avec $points points sur Wizi Learn ! 🏆\nRejoins-moi pour progresser !";
+                    await Share.share(msg);
+                  }
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.help_outline, size: 18),
+                tooltip: 'Voir le tutoriel',
+                onPressed: () => showStandardHelpDialog(
                   context,
                   title: 'Comment utiliser cette page ?',
                   steps: const [
@@ -247,54 +382,20 @@ class _RankingPageState extends State<RankingPage>
                     'Utilisez le bouton Partager pour défier vos amis.',
                   ],
                 ),
+              ),
+            ],
           ),
-          // IconButton(
-          //   icon: const Icon(Icons.emoji_events_outlined),
-          //   tooltip: 'Mode Challenge',
-          //   onPressed:
-          //       () => Navigator.pushNamed(context, RouteConstants.challenge),
-          // ),
         ],
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _hasError
-              ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Erreur: $_errorMessage',
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _loadAllData,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Réessayer'),
-                    ),
-                  ],
-                ),
-              )
-              : TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildRankingTab(),
-                  _buildStatsTab(),
-                  _buildHistoryTab(),
-                ],
-              ),
+      backgroundColor: AppColors.background,
+      automaticallyImplyLeading: false,
+      elevation: 1,
     );
   }
 
-  Widget _buildStatsTab() {
+  Widget _buildStatsTab(bool isLandscape) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isLandscape ? 8 : 16),
       child: FutureBuilder<QuizStats>(
         future: _statsFuture,
         builder: (context, snapshot) {
@@ -307,10 +408,10 @@ class _RankingPageState extends State<RankingPage>
             );
           }
           return Card(
-            margin: EdgeInsets.zero, // Supprime la marge interne du Card
+            margin: EdgeInsets.zero,
             elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(isLandscape ? 12 : 16),
             ),
             child: QuizStatsWidget(stats: snapshot.data!),
           );
@@ -319,9 +420,9 @@ class _RankingPageState extends State<RankingPage>
     );
   }
 
-  Widget _buildRankingTab() {
+  Widget _buildRankingTab(bool isLandscape) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isLandscape ? 8 : 16),
       child: FutureBuilder<List<GlobalRanking>>(
         future: _rankingFuture,
         builder: (context, snapshot) {
@@ -337,7 +438,7 @@ class _RankingPageState extends State<RankingPage>
             margin: EdgeInsets.zero,
             elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(isLandscape ? 12 : 16),
             ),
             child: GlobalRankingWidget(rankings: snapshot.data!),
           );
@@ -346,9 +447,9 @@ class _RankingPageState extends State<RankingPage>
     );
   }
 
-  Widget _buildHistoryTab() {
+  Widget _buildHistoryTab(bool isLandscape) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isLandscape ? 8 : 16),
       child: FutureBuilder<List<QuizHistory>>(
         future: _historyFuture,
         builder: (context, snapshot) {
@@ -364,7 +465,7 @@ class _RankingPageState extends State<RankingPage>
             margin: EdgeInsets.zero,
             elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(isLandscape ? 12 : 16),
             ),
             child: QuizHistoryWidget(history: snapshot.data!),
           );

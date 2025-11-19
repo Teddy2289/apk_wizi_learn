@@ -44,8 +44,6 @@ class _TrainingPageState extends State<TrainingPage> {
     'IA': Icons.smart_toy,
   };
 
-  // Options de tri
-
   @override
   void initState() {
     super.initState();
@@ -116,13 +114,19 @@ class _TrainingPageState extends State<TrainingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
+      appBar: isLandscape
+          ? null // Masquer l'AppBar en mode paysage pour gagner de la place
+          : AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text(
+        title: Text(
           'Notre catalogue de formations',
           style: TextStyle(
             fontSize: 20,
@@ -133,18 +137,21 @@ class _TrainingPageState extends State<TrainingPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.help_outline, color: Colors.black87),
+            icon: Icon(
+              Icons.help_outline,
+              color: Colors.black87,
+              size: 24,
+            ),
             tooltip: 'Voir le tutoriel',
-            onPressed:
-                () => showStandardHelpDialog(
-                  context,
-                  steps: const [
-                    'Sélectionnez une catégorie en haut.',
-                    'Utilisez les filtres pour trier les formations.',
-                    'Parcourez les formations avec la pagination.',
-                    'Touchez une formation pour voir les détails.',
-                  ],
-                ),
+            onPressed: () => showStandardHelpDialog(
+              context,
+              steps: const [
+                'Sélectionnez une catégorie en haut.',
+                'Utilisez les filtres pour trier les formations.',
+                'Parcourez les formations avec la pagination.',
+                'Touchez une formation pour voir les détails.',
+              ],
+            ),
           ),
         ],
         bottom: PreferredSize(
@@ -156,11 +163,11 @@ class _TrainingPageState extends State<TrainingPage> {
         future: _futureFormations,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return _buildLoadingState();
+            return _buildLoadingState(isLandscape);
           } else if (snapshot.hasError) {
-            return _buildErrorState(snapshot.error.toString());
+            return _buildErrorState(snapshot.error.toString(), isLandscape);
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return _buildEmptyState();
+            return _buildEmptyState(isLandscape);
           }
 
           final formations = snapshot.data!;
@@ -170,24 +177,594 @@ class _TrainingPageState extends State<TrainingPage> {
             _selectedCategory = categories.first;
           }
 
-          return Column(
-            children: [
-              // Section Catégories avec design amélioré
-              _buildCategorySection(categories),
+          // En mode paysage, on utilise un layout plus compact
+          if (isLandscape) {
+            return _buildLandscapeLayout(formations, categories, screenHeight);
+          }
 
-              // Section Filtres et informations
-              _buildFilterSection(formations),
-
-              // Liste des formations avec pagination
-              _buildFormationsList(formations),
-            ],
-          );
+          return _buildPortraitLayout(formations, categories);
         },
       ),
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildLandscapeLayout(
+      List<Formation> formations, List<String> categories, double screenHeight) {
+    return Column(
+      children: [
+        // En-tête compact pour le paysage - TOUTE LA LIGNE EN HAUT
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+          ),
+          child: Row(
+            children: [
+              // Titre compact
+              Text(
+                'Formations',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              const Spacer(),
+
+              // Compteur et pagination SUR LA MÊME LIGNE
+              _buildLandscapeCounterAndPagination(formations),
+
+              const SizedBox(width: 8),
+
+              // Menu de tri compact
+              PopupMenuButton<SortOption>(
+                icon: Icon(Icons.sort, color: Colors.grey.shade700, size: 18),
+                onSelected: (SortOption value) {
+                  setState(() {
+                    _selectedSort = value;
+                    _resetPagination();
+                  });
+                },
+                itemBuilder: (BuildContext context) => [
+                  const PopupMenuItem(value: SortOption.nameAsc, child: Text('Nom (A-Z)')),
+                  const PopupMenuItem(value: SortOption.nameDesc, child: Text('Nom (Z-A)')),
+                  const PopupMenuItem(value: SortOption.priceAsc, child: Text('Prix (Croissant)')),
+                  const PopupMenuItem(value: SortOption.priceDesc, child: Text('Prix (Décroissant)')),
+                  const PopupMenuItem(value: SortOption.durationAsc, child: Text('Durée (Croissante)')),
+                  const PopupMenuItem(value: SortOption.durationDesc, child: Text('Durée (Décroissante)')),
+                ],
+              ),
+
+              const SizedBox(width: 4),
+
+              // Bouton aide
+              IconButton(
+                icon: Icon(Icons.help_outline, size: 18, color: Colors.black87),
+                onPressed: () => showStandardHelpDialog(
+                  context,
+                  steps: const [
+                    'Sélectionnez une catégorie en haut.',
+                    'Utilisez les filtres pour trier les formations.',
+                    'Parcourez les formations avec la pagination.',
+                    'Touchez une formation pour voir les détails.',
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Section catégories compacte
+        _buildCompactCategorySection(categories),
+
+        // Liste des formations avec hauteur adaptative
+        Expanded(
+          child: _buildCompactFormationsList(formations, screenHeight),
+        ),
+      ],
+    );
+  }
+
+  String _getShortCategoryName(String category) {
+    switch (category) {
+      case 'Bureautique':
+        return 'Bureau';
+      case 'Langues':
+        return 'Langues';
+      case 'Internet':
+        return 'Web';
+      case 'Création':
+        return 'Créa';
+      case 'IA':
+        return 'IA';
+      default:
+        return category.length > 6 ? category.substring(0, 6) : category;
+    }
+  }
+  Widget _buildLandscapeCounterAndPagination(List<Formation> formations) {
+    final categoryFormations = formations
+        .where((formation) => formation.category.categorie == _selectedCategory)
+        .toList();
+    final sortedFormations = _sortFormations(categoryFormations);
+    final totalItems = sortedFormations.length;
+    final totalPages = (totalItems / _itemsPerPage).ceil();
+    final displayedItems = _paginateFormations(sortedFormations);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Compteur compact
+        Text(
+          '${displayedItems.length}/$totalItems',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey.shade700,
+          ),
+        ),
+
+        // Pagination compacte
+        if (totalPages > 1) ...[
+          const SizedBox(width: 8),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.chevron_left,
+                  size: 16,
+                  color: _currentPage > 1 ? Colors.blue : Colors.grey.shade400,
+                ),
+                onPressed: _currentPage > 1
+                    ? () {
+                  setState(() {
+                    _currentPage--;
+                  });
+                }
+                    : null,
+              ),
+              Text(
+                '$_currentPage/$totalPages',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  Icons.chevron_right,
+                  size: 16,
+                  color: _currentPage < totalPages ? Colors.blue : Colors.grey.shade400,
+                ),
+                onPressed: _currentPage < totalPages
+                    ? () {
+                  setState(() {
+                    _currentPage++;
+                  });
+                }
+                    : null,
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+  Widget _buildCompactCategorySection(List<String> categories) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 2)],
+      ),
+      child: SizedBox(
+        height: 50, // Hauteur encore plus réduite
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          itemCount: categories.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 6),
+          itemBuilder: (context, index) {
+            final category = categories[index];
+            final isSelected = _selectedCategory == category;
+            final categoryColor = _getCategoryColor(category);
+
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedCategory = category;
+                  _resetPagination();
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 55, // Largeur réduite
+                decoration: BoxDecoration(
+                  gradient: isSelected
+                      ? LinearGradient(
+                    colors: [categoryColor, categoryColor.withOpacity(0.8)],
+                  )
+                      : null,
+                  color: isSelected ? null : Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected ? categoryColor : Colors.grey.shade300,
+                    width: isSelected ? 1.5 : 1,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      _categoryIcons[category] ?? Icons.category,
+                      size: 16, // Icône plus petite
+                      color: isSelected ? Colors.white : categoryColor,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _getShortCategoryName(category),
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected ? Colors.white : Colors.grey.shade800,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+  Widget _buildPortraitLayout(List<Formation> formations, List<String> categories) {
+    return Column(
+      children: [
+        // Section Catégories normale
+        _buildCategorySection(categories, false),
+
+        // Section Filtres et informations
+        _buildFilterSection(formations, false),
+
+        // Liste des formations
+        _buildFormationsList(formations, false),
+      ],
+    );
+  }
+
+  Widget _buildCompactFilterSection(List<Formation> formations) {
+    final categoryFormations = formations
+        .where((formation) => formation.category.categorie == _selectedCategory)
+        .toList();
+    final sortedFormations = _sortFormations(categoryFormations);
+    final totalItems = sortedFormations.length;
+    final totalPages = (totalItems / _itemsPerPage).ceil();
+    final displayedItems = _paginateFormations(sortedFormations);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+      ),
+      child: Row(
+        children: [
+          // Compteur compact
+          Text(
+            '${displayedItems.length}/$totalItems',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const Spacer(),
+
+          // Pagination compacte
+          if (totalPages > 1) ...[
+            Row(
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.chevron_left,
+                    size: 18,
+                    color: _currentPage > 1 ? Colors.blue : Colors.grey.shade400,
+                  ),
+                  onPressed: _currentPage > 1
+                      ? () {
+                    setState(() {
+                      _currentPage--;
+                    });
+                  }
+                      : null,
+                ),
+                Text(
+                  '$_currentPage/$totalPages',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.chevron_right,
+                    size: 18,
+                    color: _currentPage < totalPages ? Colors.blue : Colors.grey.shade400,
+                  ),
+                  onPressed: _currentPage < totalPages
+                      ? () {
+                    setState(() {
+                      _currentPage++;
+                    });
+                  }
+                      : null,
+                ),
+              ],
+            ),
+            const SizedBox(width: 8),
+          ],
+
+          // Menu de tri compact
+          PopupMenuButton<SortOption>(
+            icon: Icon(Icons.sort, color: Colors.grey.shade700, size: 18),
+            onSelected: (SortOption value) {
+              setState(() {
+                _selectedSort = value;
+                _resetPagination();
+              });
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem(value: SortOption.nameAsc, child: Text('Nom (A-Z)')),
+              const PopupMenuItem(value: SortOption.nameDesc, child: Text('Nom (Z-A)')),
+              const PopupMenuItem(value: SortOption.priceAsc, child: Text('Prix (Croissant)')),
+              const PopupMenuItem(value: SortOption.priceDesc, child: Text('Prix (Décroissant)')),
+              const PopupMenuItem(value: SortOption.durationAsc, child: Text('Durée (Croissante)')),
+              const PopupMenuItem(value: SortOption.durationDesc, child: Text('Durée (Décroissante)')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  Widget _buildLandscapeContent(List<Formation> formations, double screenHeight) {
+    return Expanded(
+      child: _buildCompactFormationsList(formations, screenHeight),
+    );
+  }
+
+  Widget _buildCompactFormationsList(List<Formation> formations, double screenHeight) {
+    final categoryFormations = formations
+        .where((formation) => formation.category.categorie == _selectedCategory)
+        .toList();
+    final sortedFormations = _sortFormations(categoryFormations);
+    final displayedFormations = _paginateFormations(sortedFormations);
+    final hasMore = displayedFormations.length < sortedFormations.length;
+
+    if (_selectedCategory == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.category, size: 32, color: Colors.grey.shade400),
+            const SizedBox(height: 8),
+            Text(
+              'Sélectionnez une catégorie',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (displayedFormations.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 32, color: Colors.grey.shade400),
+            const SizedBox(height: 8),
+            Text(
+              'Aucune formation dans cette catégorie',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(12),
+      itemCount: displayedFormations.length + (hasMore ? 1 : 0),
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        if (index == displayedFormations.length && hasMore) {
+          return _buildCompactLoadMoreButton();
+        }
+        final formation = displayedFormations[index];
+        return _buildCompactFormationCard(context, formation);
+      },
+    );
+  }
+
+  Widget _buildCompactFormationCard(BuildContext context, Formation formation) {
+    final categoryColor = _getCategoryColor(formation.category.categorie);
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      margin: EdgeInsets.zero,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FormationDetailPage(formationId: formation.id),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Row(
+            children: [
+              // Image compacte
+              Container(
+                width: 35,
+                height: 35,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      categoryColor.withOpacity(0.1),
+                      categoryColor.withOpacity(0.3),
+                    ],
+                  ),
+                  border: Border.all(color: categoryColor.withOpacity(0.3), width: 1),
+                ),
+                child: ClipOval(
+                  child: formation.imageUrl != null
+                      ? CachedNetworkImage(
+                    imageUrl: '${AppConstants.baseUrlImg}/${formation.imageUrl}',
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Center(
+                      child: Icon(
+                        _categoryIcons[formation.category.categorie] ?? Icons.school,
+                        color: categoryColor,
+                        size: 14,
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Center(
+                      child: Icon(
+                        _categoryIcons[formation.category.categorie] ?? Icons.school,
+                        color: categoryColor,
+                        size: 14,
+                      ),
+                    ),
+                  )
+                      : Center(
+                    child: Icon(
+                      _categoryIcons[formation.category.categorie] ?? Icons.school,
+                      color: categoryColor,
+                      size: 14,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+
+              // Contenu compact
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      formation.titre,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      formation.description.replaceAll(RegExp(r'<[^>]*>'), ''),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey.shade700,
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+
+              // Métadonnées compactes
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.schedule, size: 9, color: Colors.grey.shade600),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${formation.duree}h',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.orange.shade500, Colors.orange.shade700],
+                      ),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${formatPrice(formation.tarif.toInt())} €',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactLoadMoreButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Center(
+        child: _isLoadingMore
+            ? const CircularProgressIndicator(strokeWidth: 2)
+            : ElevatedButton(
+          onPressed: _loadMore,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+          ),
+          child: const Text(
+            'Charger plus',
+            style: TextStyle(fontSize: 12),
+          ),
+        ),
+      ),
+    );
+  }  Widget _buildLoadingState(bool isLandscape) {
     return Center(
       child: SingleChildScrollView(
         physics: const NeverScrollableScrollPhysics(),
@@ -209,7 +786,7 @@ class _TrainingPageState extends State<TrainingPage> {
     );
   }
 
-  Widget _buildErrorState(String error) {
+  Widget _buildErrorState(String error, bool isLandscape) {
     return Center(
       child: SingleChildScrollView(
         physics: const NeverScrollableScrollPhysics(),
@@ -250,7 +827,7 @@ class _TrainingPageState extends State<TrainingPage> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool isLandscape) {
     return Center(
       child: SingleChildScrollView(
         physics: const NeverScrollableScrollPhysics(),
@@ -269,9 +846,9 @@ class _TrainingPageState extends State<TrainingPage> {
     );
   }
 
-  Widget _buildCategorySection(List<String> categories) {
+  Widget _buildCategorySection(List<String> categories, bool isLandscape) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: EdgeInsets.symmetric(vertical: isLandscape ? 12 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -283,12 +860,12 @@ class _TrainingPageState extends State<TrainingPage> {
         ],
       ),
       child: SizedBox(
-        height: 90,
+        height: isLandscape ? 70 : 90, // Hauteur réduite en paysage
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(horizontal: isLandscape ? 12 : 16),
           itemCount: categories.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          separatorBuilder: (_, __) => SizedBox(width: isLandscape ? 8 : 12),
           itemBuilder: (context, index) {
             final category = categories[index];
             final isSelected = _selectedCategory == category;
@@ -303,7 +880,7 @@ class _TrainingPageState extends State<TrainingPage> {
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                width: 80,
+                width: isLandscape ? 70 : 80, // Largeur réduite en paysage
                 decoration: BoxDecoration(
                   gradient:
                       isSelected
@@ -344,14 +921,14 @@ class _TrainingPageState extends State<TrainingPage> {
                   children: [
                     Icon(
                       _categoryIcons[category] ?? Icons.category,
-                      size: 24,
+                      size: isLandscape ? 20 : 24, // Icône plus petite
                       color: isSelected ? Colors.white : categoryColor,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: isLandscape ? 6 : 8),
                     Text(
                       category,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: isLandscape ? 10 : 11, // Texte plus petit
                         fontWeight: FontWeight.w600,
                         color: isSelected ? Colors.white : Colors.grey.shade800,
                       ),
@@ -369,7 +946,7 @@ class _TrainingPageState extends State<TrainingPage> {
     );
   }
 
-  Widget _buildFilterSection(List<Formation> formations) {
+  Widget _buildFilterSection(List<Formation> formations, bool isLandscape) {
     final categoryFormations =
         formations
             .where(
@@ -382,7 +959,10 @@ class _TrainingPageState extends State<TrainingPage> {
     final displayedItems = _paginateFormations(sortedFormations);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: isLandscape ? 12 : 16,
+        vertical: isLandscape ? 8 : 12,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -391,12 +971,12 @@ class _TrainingPageState extends State<TrainingPage> {
       ),
       child: Row(
         children: [
-          // Compteur de formations
+          // Compteur de formations avec texte adaptatif
           RichText(
             text: TextSpan(
               text: '${displayedItems.length} ',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: isLandscape ? 12 : 14,
                 fontWeight: FontWeight.bold,
                 color: Colors.grey.shade800,
               ),
@@ -406,6 +986,7 @@ class _TrainingPageState extends State<TrainingPage> {
                   style: TextStyle(
                     fontWeight: FontWeight.normal,
                     color: Colors.grey.shade600,
+                    fontSize: isLandscape ? 12 : 14,
                   ),
                 ),
               ],
@@ -420,6 +1001,7 @@ class _TrainingPageState extends State<TrainingPage> {
                 IconButton(
                   icon: Icon(
                     Icons.chevron_left,
+                    size: isLandscape ? 20 : 24,
                     color:
                         _currentPage > 1 ? Colors.blue : Colors.grey.shade400,
                   ),
@@ -435,7 +1017,7 @@ class _TrainingPageState extends State<TrainingPage> {
                 Text(
                   '$_currentPage/$totalPages',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: isLandscape ? 12 : 14,
                     color: Colors.grey.shade700,
                     fontWeight: FontWeight.w500,
                   ),
@@ -443,6 +1025,7 @@ class _TrainingPageState extends State<TrainingPage> {
                 IconButton(
                   icon: Icon(
                     Icons.chevron_right,
+                    size: isLandscape ? 20 : 24,
                     color:
                         _currentPage < totalPages
                             ? Colors.blue
@@ -459,12 +1042,16 @@ class _TrainingPageState extends State<TrainingPage> {
                 ),
               ],
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: isLandscape ? 12 : 16),
           ],
 
           // Menu de tri
           PopupMenuButton<SortOption>(
-            icon: Icon(Icons.sort, color: Colors.grey.shade700),
+            icon: Icon(
+              Icons.sort,
+              color: Colors.grey.shade700,
+              size: isLandscape ? 20 : 24,
+            ),
             onSelected: (SortOption value) {
               setState(() {
                 _selectedSort = value;
@@ -504,7 +1091,7 @@ class _TrainingPageState extends State<TrainingPage> {
     );
   }
 
-  Widget _buildFormationsList(List<Formation> formations) {
+  Widget _buildFormationsList(List<Formation> formations, bool isLandscape) {
     final categoryFormations =
         formations
             .where(
@@ -559,39 +1146,72 @@ class _TrainingPageState extends State<TrainingPage> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final width = constraints.maxWidth;
-                final isWide = width >= 800;
-                final crossAxisCount = (width / 400).floor().clamp(1, 3);
+                final height = constraints.maxHeight;
 
-                if (!isWide) {
+                // Calcul dynamique adapté à l'orientation
+                final crossAxisCount =
+                    isLandscape
+                        ? (width / 350).floor().clamp(
+                          2,
+                          4,
+                        ) // Plus de colonnes en paysage
+                        : (width / 400).floor().clamp(1, 2);
+
+                // Utiliser GridView uniquement si l'écran est assez large
+                final useGridView = width > 600;
+
+                if (!useGridView) {
                   return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    padding: EdgeInsets.fromLTRB(
+                      isLandscape ? 12 : 16,
+                      8,
+                      isLandscape ? 12 : 16,
+                      isLandscape ? 12 : 16,
+                    ),
                     itemCount: displayedFormations.length + (hasMore ? 1 : 0),
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder:
+                        (_, __) => SizedBox(height: isLandscape ? 8 : 12),
                     itemBuilder: (context, index) {
                       if (index == displayedFormations.length && hasMore) {
-                        return _buildLoadMoreButton();
+                        return _buildLoadMoreButton(isLandscape);
                       }
                       final formation = displayedFormations[index];
-                      return _buildFormationCard(context, formation, false);
+                      return _buildFormationCard(
+                        context,
+                        formation,
+                        false,
+                        isLandscape,
+                      );
                     },
                   );
                 }
 
                 return GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  padding: EdgeInsets.fromLTRB(
+                    isLandscape ? 12 : 16,
+                    8,
+                    isLandscape ? 12 : 16,
+                    isLandscape ? 12 : 16,
+                  ),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.6,
+                    crossAxisSpacing: isLandscape ? 12 : 16,
+                    mainAxisSpacing: isLandscape ? 12 : 16,
+                    childAspectRatio:
+                        isLandscape ? 1.4 : 1.6, // Aspect ratio adaptatif
                   ),
                   itemCount: displayedFormations.length + (hasMore ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index == displayedFormations.length && hasMore) {
-                      return _buildLoadMoreButton();
+                      return _buildLoadMoreButton(isLandscape);
                     }
                     final formation = displayedFormations[index];
-                    return _buildFormationCard(context, formation, true);
+                    return _buildFormationCard(
+                      context,
+                      formation,
+                      true,
+                      isLandscape,
+                    );
                   },
                 );
               },
@@ -602,9 +1222,9 @@ class _TrainingPageState extends State<TrainingPage> {
     );
   }
 
-  Widget _buildLoadMoreButton() {
+  Widget _buildLoadMoreButton(bool isLandscape) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: EdgeInsets.symmetric(vertical: isLandscape ? 12 : 16),
       child: Center(
         child:
             _isLoadingMore
@@ -617,12 +1237,15 @@ class _TrainingPageState extends State<TrainingPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 12,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isLandscape ? 24 : 32,
+                      vertical: isLandscape ? 10 : 12,
                     ),
                   ),
-                  child: const Text('Charger plus de formations'),
+                  child: Text(
+                    'Charger plus de formations',
+                    style: TextStyle(fontSize: isLandscape ? 14 : 16),
+                  ),
                 ),
       ),
     );
@@ -632,12 +1255,14 @@ class _TrainingPageState extends State<TrainingPage> {
     BuildContext context,
     Formation formation,
     bool isGrid,
+    bool isLandscape,
   ) {
     final categoryColor = _getCategoryColor(formation.category.categorie);
 
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: isLandscape ? const EdgeInsets.all(4) : const EdgeInsets.all(0),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () {
@@ -650,23 +1275,27 @@ class _TrainingPageState extends State<TrainingPage> {
           );
         },
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(isLandscape ? 12 : 16),
           child:
               isGrid
-                  ? _buildGridLayout(formation, categoryColor)
-                  : _buildListLayout(formation, categoryColor),
+                  ? _buildGridLayout(formation, categoryColor, isLandscape)
+                  : _buildListLayout(formation, categoryColor, isLandscape),
         ),
       ),
     );
   }
 
-  Widget _buildListLayout(Formation formation, Color categoryColor) {
+  Widget _buildListLayout(
+    Formation formation,
+    Color categoryColor,
+    bool isLandscape,
+  ) {
     return Row(
       children: [
-        // Image avec effet moderne
+        // Image avec taille adaptative
         Container(
-          width: 80,
-          height: 80,
+          width: isLandscape ? 60 : 80,
+          height: isLandscape ? 60 : 80,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
@@ -692,7 +1321,7 @@ class _TrainingPageState extends State<TrainingPage> {
                               _categoryIcons[formation.category.categorie] ??
                                   Icons.school,
                               color: categoryColor,
-                              size: 32,
+                              size: isLandscape ? 24 : 32,
                             ),
                           ),
                       errorWidget:
@@ -701,7 +1330,7 @@ class _TrainingPageState extends State<TrainingPage> {
                               _categoryIcons[formation.category.categorie] ??
                                   Icons.school,
                               color: categoryColor,
-                              size: 32,
+                              size: isLandscape ? 24 : 32,
                             ),
                           ),
                     )
@@ -710,47 +1339,47 @@ class _TrainingPageState extends State<TrainingPage> {
                         _categoryIcons[formation.category.categorie] ??
                             Icons.school,
                         color: categoryColor,
-                        size: 32,
+                        size: isLandscape ? 24 : 32,
                       ),
                     ),
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: isLandscape ? 12 : 16),
 
-        // Contenu
+        // Contenu avec texte adaptatif
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 formation.titre.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 16,
+                style: TextStyle(
+                  fontSize: isLandscape ? 14 : 16,
                   fontWeight: FontWeight.w700,
                   color: Colors.black87,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: isLandscape ? 4 : 6),
               Text(
                 formation.description.replaceAll(RegExp(r'<[^>]*>'), ''),
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: isLandscape ? 12 : 13,
                   color: Colors.grey.shade700,
                   height: 1.4,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: isLandscape ? 8 : 12),
               Row(
                 children: [
                   // Durée
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isLandscape ? 6 : 8,
+                      vertical: isLandscape ? 3 : 4,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade100,
@@ -760,14 +1389,14 @@ class _TrainingPageState extends State<TrainingPage> {
                       children: [
                         Icon(
                           Icons.schedule,
-                          size: 14,
+                          size: isLandscape ? 12 : 14,
                           color: Colors.grey.shade600,
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: isLandscape ? 3 : 4),
                         Text(
                           '${formation.duree}h',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: isLandscape ? 11 : 12,
                             fontWeight: FontWeight.w500,
                             color: Colors.grey.shade800,
                           ),
@@ -778,9 +1407,9 @@ class _TrainingPageState extends State<TrainingPage> {
                   const Spacer(),
                   // Prix
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isLandscape ? 10 : 12,
+                      vertical: isLandscape ? 4 : 6,
                     ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -795,8 +1424,8 @@ class _TrainingPageState extends State<TrainingPage> {
                     ),
                     child: Text(
                       '${formatPrice(formation.tarif.toInt())} €',
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: TextStyle(
+                        fontSize: isLandscape ? 14 : 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
@@ -811,7 +1440,11 @@ class _TrainingPageState extends State<TrainingPage> {
     );
   }
 
-  Widget _buildGridLayout(Formation formation, Color categoryColor) {
+  Widget _buildGridLayout(
+    Formation formation,
+    Color categoryColor,
+    bool isLandscape,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -819,8 +1452,8 @@ class _TrainingPageState extends State<TrainingPage> {
         Row(
           children: [
             Container(
-              width: 60,
-              height: 60,
+              width: isLandscape ? 50 : 60,
+              height: isLandscape ? 50 : 60,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
@@ -849,7 +1482,7 @@ class _TrainingPageState extends State<TrainingPage> {
                                           .categorie] ??
                                       Icons.school,
                                   color: categoryColor,
-                                  size: 24,
+                                  size: isLandscape ? 20 : 24,
                                 ),
                               ),
                           errorWidget:
@@ -860,7 +1493,7 @@ class _TrainingPageState extends State<TrainingPage> {
                                           .categorie] ??
                                       Icons.school,
                                   color: categoryColor,
-                                  size: 24,
+                                  size: isLandscape ? 20 : 24,
                                 ),
                               ),
                         )
@@ -869,17 +1502,17 @@ class _TrainingPageState extends State<TrainingPage> {
                             _categoryIcons[formation.category.categorie] ??
                                 Icons.school,
                             color: categoryColor,
-                            size: 24,
+                            size: isLandscape ? 20 : 24,
                           ),
                         ),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: isLandscape ? 8 : 12),
             Expanded(
               child: Text(
                 formation.titre,
-                style: const TextStyle(
-                  fontSize: 15,
+                style: TextStyle(
+                  fontSize: isLandscape ? 13 : 15,
                   fontWeight: FontWeight.w700,
                   height: 1.2,
                 ),
@@ -889,40 +1522,47 @@ class _TrainingPageState extends State<TrainingPage> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: isLandscape ? 8 : 12),
 
         // Description
         Expanded(
           child: Text(
             formation.description.replaceAll(RegExp(r'<[^>]*>'), ''),
             style: TextStyle(
-              fontSize: 12,
+              fontSize: isLandscape ? 11 : 12,
               color: Colors.grey.shade700,
               height: 1.4,
             ),
-            maxLines: 3,
+            maxLines: isLandscape ? 2 : 3, // Moins de lignes en paysage
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: isLandscape ? 8 : 12),
 
         // Pied de carte
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: EdgeInsets.symmetric(
+                horizontal: isLandscape ? 6 : 8,
+                vertical: isLandscape ? 3 : 4,
+              ),
               decoration: BoxDecoration(
                 color: Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.schedule, size: 12, color: Colors.grey.shade600),
-                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.schedule,
+                    size: isLandscape ? 10 : 12,
+                    color: Colors.grey.shade600,
+                  ),
+                  SizedBox(width: isLandscape ? 3 : 4),
                   Text(
                     '${formation.duree}h',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: isLandscape ? 10 : 11,
                       fontWeight: FontWeight.w500,
                       color: Colors.grey.shade800,
                     ),
@@ -932,7 +1572,10 @@ class _TrainingPageState extends State<TrainingPage> {
             ),
             const Spacer(),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: EdgeInsets.symmetric(
+                horizontal: isLandscape ? 8 : 10,
+                vertical: isLandscape ? 4 : 5,
+              ),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Colors.orange.shade500, Colors.orange.shade700],
@@ -941,8 +1584,8 @@ class _TrainingPageState extends State<TrainingPage> {
               ),
               child: Text(
                 '${formatPrice(formation.tarif.toInt())} €',
-                style: const TextStyle(
-                  fontSize: 14,
+                style: TextStyle(
+                  fontSize: isLandscape ? 12 : 14,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),

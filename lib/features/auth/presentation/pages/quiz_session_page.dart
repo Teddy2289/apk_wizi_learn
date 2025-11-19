@@ -235,6 +235,8 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return WillPopScope(
       onWillPop: () async {
@@ -244,9 +246,12 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
       child: CustomScaffold(
         body: Column(
           children: [
-            // En-tête amélioré
+            // En-tête COMPACT en paysage
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: EdgeInsets.symmetric(
+                  horizontal: isLandscape ? 12 : 16,
+                  vertical: isLandscape ? 10 : 16
+              ),
               decoration: BoxDecoration(
                 color: isDarkMode ? theme.cardColor : Colors.white,
                 border: Border(
@@ -265,28 +270,28 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
               ),
               child: Row(
                 children: [
-                  // Bouton Quitter amélioré
+                  // Bouton Quitter compact
                   Container(
                     decoration: BoxDecoration(
                       color: isDarkMode
                           ? Colors.grey[800]
                           : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: IconButton(
                       icon: Icon(
                         Icons.arrow_back_ios_rounded,
-                        size: 18,
+                        size: isLandscape ? 16 : 18,
                         color: isDarkMode ? Colors.white70 : Colors.black54,
                       ),
                       onPressed: _showQuitConfirmationDialog,
                       tooltip: 'Quitter le quiz',
-                      padding: const EdgeInsets.all(12),
+                      padding: EdgeInsets.all(isLandscape ? 8 : 12),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: isLandscape ? 8 : 12),
 
-                  // Informations du quiz
+                  // Informations du quiz compactes
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,21 +299,21 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                         Text(
                           widget.quiz.titre,
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: isLandscape ? 14 : 16,
                             fontWeight: FontWeight.w600,
                             color: isDarkMode ? Colors.white : Colors.black87,
                           ),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: isLandscape ? 1 : 2),
                         ValueListenableBuilder<int>(
                           valueListenable: _sessionManager.currentQuestionIndex,
                           builder: (_, index, __) {
                             return Text(
                               'Question ${index + 1} sur ${widget.questions.length}',
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: isLandscape ? 11 : 13,
                                 color: isDarkMode ? Colors.white60 : Colors.black54,
                               ),
                             );
@@ -318,14 +323,14 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                     ),
                   ),
 
-                  // Badge de progression
+                  // Badge de progression compact
                   ValueListenableBuilder<int>(
                     valueListenable: _sessionManager.currentQuestionIndex,
                     builder: (_, index, __) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isLandscape ? 8 : 12,
+                          vertical: isLandscape ? 4 : 6,
                         ),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -336,7 +341,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(isLandscape ? 8 : 12),
                           boxShadow: [
                             BoxShadow(
                               color: colorScheme.primary.withOpacity(0.3),
@@ -347,8 +352,8 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                         ),
                         child: Text(
                           '${index + 1}/${widget.questions.length}',
-                          style: const TextStyle(
-                            fontSize: 14,
+                          style: TextStyle(
+                            fontSize: isLandscape ? 12 : 14,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
                           ),
@@ -360,9 +365,12 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
               ),
             ),
 
-            // Section de progression
+            // Section progression COMPACT en paysage
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: EdgeInsets.symmetric(
+                  horizontal: isLandscape ? 12 : 16,
+                  vertical: isLandscape ? 6 : 12
+              ),
               decoration: BoxDecoration(
                 color: isDarkMode
                     ? theme.cardColor.withOpacity(0.5)
@@ -378,7 +386,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                 children: [
                   // Barre de progression
                   QuizProgressBar(sessionManager: _sessionManager),
-                  const SizedBox(height: 8),
+                  SizedBox(height: isLandscape ? 4 : 8),
 
                   // Informations de progression et timer
                   Row(
@@ -392,7 +400,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                           return Text(
                             '$progress% complété',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: isLandscape ? 11 : 13,
                               fontWeight: FontWeight.w600,
                               color: colorScheme.primary,
                             ),
@@ -400,14 +408,17 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                         },
                       ),
 
-                      // Timer avec style amélioré
+                      // Timer compact
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: isLandscape ? 6 : 10,
+                            vertical: isLandscape ? 2 : 4
+                        ),
                         decoration: BoxDecoration(
                           color: isDarkMode
                               ? Colors.grey[800]
                               : Colors.grey[200],
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(isLandscape ? 6 : 8),
                         ),
                         child: QuizTimerDisplay(sessionManager: _sessionManager),
                       ),
@@ -417,7 +428,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
               ),
             ),
 
-            // Zone des questions
+            // Zone des questions AVEC ESPACE GARANTI pour les contrôles
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -445,41 +456,23 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                   onPageChanged: _handlePageChanged,
                   itemCount: widget.questions.length,
                   itemBuilder: (context, pageIndex) {
-                    return QuestionTypePage(
-                      key: ValueKey(widget.questions[pageIndex].id),
-                      onAnswer: _sessionManager.handleAnswer,
-                      question: widget.questions[pageIndex],
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        bottom: isLandscape ? 60 : 80, // ESPACE RÉSERVÉ pour les contrôles
+                      ),
+                      child: QuestionTypePage(
+                        key: ValueKey(widget.questions[pageIndex].id),
+                        onAnswer: _sessionManager.handleAnswer,
+                        question: widget.questions[pageIndex],
+                      ),
                     );
                   },
                 ),
               ),
             ),
 
-            // Contrôles de navigation
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              decoration: BoxDecoration(
-                color: isDarkMode ? theme.cardColor : Colors.white,
-                border: Border(
-                  top: BorderSide(
-                    color: theme.dividerColor.withOpacity(0.1),
-                    width: 1,
-                  ),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 12,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: QuizNavigationControls(
-                sessionManager: _sessionManager,
-                questions: widget.questions,
-                playedQuizIds: widget.playedQuizIds,
-              ),
-            ),
+            // Contrôles de navigation FIXES - TOUJOURS VISIBLES
+            _buildStickyNavigationControls(isLandscape, theme),
           ],
         ),
         currentIndex: 2,
@@ -540,6 +533,38 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                 (route) => false,
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildStickyNavigationControls(bool isLandscape, ThemeData theme) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: isLandscape ? 12 : 16,
+        vertical: isLandscape ? 8 : 12,
+      ),
+      decoration: BoxDecoration(
+        color: theme.brightness == Brightness.dark ? theme.cardColor : Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: theme.dividerColor.withOpacity(0.1),
+            width: 1,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: QuizNavigationControls(
+        sessionManager: _sessionManager,
+        questions: widget.questions,
+        playedQuizIds: widget.playedQuizIds,
+        isCompact: isLandscape, // Mode compact en paysage
       ),
     );
   }

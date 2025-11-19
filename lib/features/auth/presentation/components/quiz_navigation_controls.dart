@@ -7,33 +7,135 @@ class QuizNavigationControls extends StatelessWidget {
   final QuizSessionManager sessionManager;
   final List<Question> questions;
   final List<String> playedQuizIds;
+  final bool isCompact;
 
   const QuizNavigationControls({
     super.key,
     required this.sessionManager,
     required this.questions,
-    required this.playedQuizIds
+    required this.playedQuizIds,
+    this.isCompact = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return ValueListenableBuilder<int>(
       valueListenable: sessionManager.currentQuestionIndex,
       builder: (_, index, __) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
+        // Dimensions adaptatives
+        final buttonHeight = isCompact ? 42.0 : 50.0;
+        final fontSize = isCompact ? 14.0 : 16.0;
+        final iconSize = isCompact ? 18.0 : 22.0;
+        final borderRadius = isCompact ? 10.0 : 12.0;
+
+        return Container(
+          height: buttonHeight,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              // ElevatedButton(
-              //   onPressed:
-              //       index > 0 ? sessionManager.goToPreviousQuestion : null,
-              //   child: const Text('Précédent'),
-              // ),
-              ElevatedButton(
-                onPressed: () => _handleNextOrComplete(context, index),
-                child: Text(
-                  index < questions.length - 1 ? 'Suivant' : 'Terminer',
+              // Bouton précédent - visible seulement si ce n'est pas la première question
+              if (index > 0)
+                Expanded(
+                  flex: isCompact ? 2 : 3,
+                  child: Container(
+                    margin: EdgeInsets.only(right: isCompact ? 6 : 8),
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: theme.colorScheme.onSurface,
+                        side: BorderSide(
+                          color: theme.colorScheme.outline.withOpacity(0.3),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(borderRadius),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isCompact ? 12 : 16,
+                        ),
+                      ),
+                      onPressed: sessionManager.goToPreviousQuestion,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.arrow_back_ios_rounded,
+                            size: iconSize - 4,
+                          ),
+                          SizedBox(width: isCompact ? 4 : 6),
+                          Text(
+                            'Précédent',
+                            style: TextStyle(
+                              fontSize: fontSize,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              else
+                const SizedBox.shrink(),
+
+              // Indicateur de progression en mode compact
+              if (isCompact && index > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    '${index + 1}/${questions.length}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                  ),
+                ),
+
+              // Bouton suivant/terminer - toujours présent
+              Expanded(
+                flex: isCompact ? 3 : 4,
+                child: Container(
+                  margin: EdgeInsets.only(left: (index > 0 && isCompact) ? 6 : 0),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(borderRadius),
+                      ),
+                      elevation: 2,
+                      shadowColor: theme.colorScheme.primary.withOpacity(0.3),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isCompact ? 12 : 16,
+                      ),
+                    ),
+                    onPressed: () => _handleNextOrComplete(context, index),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          index < questions.length - 1 ? 'Suivant' : 'Terminer',
+                          style: TextStyle(
+                            fontSize: fontSize,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (index < questions.length - 1) ...[
+                          SizedBox(width: isCompact ? 4 : 6),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: iconSize - 4,
+                          ),
+                        ] else ...[
+                          SizedBox(width: isCompact ? 4 : 6),
+                          Icon(
+                            Icons.check_rounded,
+                            size: iconSize,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -43,7 +145,6 @@ class QuizNavigationControls extends StatelessWidget {
     );
   }
 
-  // Dans quiz_navigation_controls.dart
   void _handleNextOrComplete(BuildContext context, int index) async {
     try {
       if (index < questions.length - 1) {
@@ -69,20 +170,20 @@ class QuizNavigationControls extends StatelessWidget {
             MaterialPageRoute(
               builder:
                   (context) => QuizSummaryPage(
-                    questions:
-                        (results['questions'] as List)
-                            .map((q) => Question.fromJson(q))
-                            .toList(),
-                    score: results['score'] ?? 0,
-                    correctAnswers: results['correctAnswers'] ?? 0,
-                    totalQuestions:
-                        results['totalQuestions'] ?? questions.length,
-                    timeSpent: results['timeSpent'] ?? 0,
-                    quizResult: {
-                      ...results,
-                      'playedQuizIds': playedQuizIds,
-                    },
-                  ),
+                questions:
+                (results['questions'] as List)
+                    .map((q) => Question.fromJson(q))
+                    .toList(),
+                score: results['score'] ?? 0,
+                correctAnswers: results['correctAnswers'] ?? 0,
+                totalQuestions:
+                results['totalQuestions'] ?? questions.length,
+                timeSpent: results['timeSpent'] ?? 0,
+                quizResult: {
+                  ...results,
+                  'playedQuizIds': playedQuizIds,
+                },
+              ),
             ),
           );
         } catch (e) {
@@ -98,28 +199,28 @@ class QuizNavigationControls extends StatelessWidget {
             context: context,
             builder:
                 (context) => AlertDialog(
-                  title: const Text('Erreur de soumission'),
-                  content: Text(
-                    'Impossible de soumettre le quiz en ce moment.\n\n'
+              title: const Text('Erreur de soumission'),
+              content: Text(
+                'Impossible de soumettre le quiz en ce moment.\n\n'
                     'Voulez-vous voir vos résultats localement ou réessayer la soumission ?',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _showLocalResults(context);
-                      },
-                      child: const Text('Voir résultats'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _handleNextOrComplete(context, index);
-                      },
-                      child: const Text('Réessayer'),
-                    ),
-                  ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _showLocalResults(context);
+                  },
+                  child: const Text('Voir résultats'),
                 ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _handleNextOrComplete(context, index);
+                  },
+                  child: const Text('Réessayer'),
+                ),
+              ],
+            ),
           );
         }
       }
@@ -134,7 +235,7 @@ class QuizNavigationControls extends StatelessWidget {
       if (e.toString().contains('Exception') ||
           e.toString().contains('Failed')) {
         userFriendlyMessage =
-            'Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.';
+        'Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.';
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -159,8 +260,7 @@ class QuizNavigationControls extends StatelessWidget {
     int totalQuestions = questions.length;
 
     // Simuler un calcul de score basique
-    // Dans un vrai cas, vous devriez comparer avec les bonnes réponses
-    correctAnswers = (userAnswers.length * 0.7).round(); // Simulation
+    correctAnswers = (userAnswers.length * 0.7).round();
 
     final localResults = {
       'questions': questions.map((q) => q.toJson()).toList(),
@@ -177,14 +277,14 @@ class QuizNavigationControls extends StatelessWidget {
       MaterialPageRoute(
         builder:
             (context) => QuizSummaryPage(
-              questions: questions,
-              score: (localResults['score'] as int?) ?? 0,
-              correctAnswers: (localResults['correctAnswers'] as int?) ?? 0,
-              totalQuestions:
-                  (localResults['totalQuestions'] as int?) ?? questions.length,
-              timeSpent: (localResults['timeSpent'] as int?) ?? 0,
-              quizResult: localResults,
-            ),
+          questions: questions,
+          score: (localResults['score'] as int?) ?? 0,
+          correctAnswers: (localResults['correctAnswers'] as int?) ?? 0,
+          totalQuestions:
+          (localResults['totalQuestions'] as int?) ?? questions.length,
+          timeSpent: (localResults['timeSpent'] as int?) ?? 0,
+          quizResult: localResults,
+        ),
       ),
     );
   }

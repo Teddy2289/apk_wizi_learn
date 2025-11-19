@@ -118,13 +118,15 @@ class _CustomScaffoldState extends State<CustomScaffold> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Scaffold(
       appBar: CustomAppBar(
         backgroundColor: Colors.white,
         foregroundColor: theme.colorScheme.onPrimary,
         actions: [
-          _buildUserPointsAndNotifications(context),
+          _buildUserPointsAndNotifications(context, isLandscape),
           ...?widget.actions,
         ],
         title: widget.appBarTitle,
@@ -133,7 +135,7 @@ class _CustomScaffoldState extends State<CustomScaffold> {
       drawer: const CustomDrawer(),
       body: Column(
         children: [
-          if (widget.showBanner) _buildSponsorshipBanner(context),
+          if (widget.showBanner) _buildSponsorshipBanner(context, isLandscape),
           Expanded(child: widget.body),
         ],
       ),
@@ -147,24 +149,32 @@ class _CustomScaffoldState extends State<CustomScaffold> {
                 backgroundColor: Theme.of(context).colorScheme.surface,
                 selectedColor: Theme.of(context).colorScheme.primary,
                 unselectedColor: Colors.grey.shade600,
+                isLandscape: isLandscape, // Nouveau paramètre
               )
               : null,
     );
   }
 
-  Widget _buildUserPointsAndNotifications(BuildContext context) {
+  Widget _buildUserPointsAndNotifications(
+    BuildContext context,
+    bool isLandscape,
+  ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: isLandscape ? 4 : 8, // Réduit l'espacement en paysage
+      ),
       child: Row(
         children: [
-          // Points utilisateur (temps réel)
+          // Points utilisateur (temps réel) - version compacte en paysage
           GestureDetector(
             onTap:
                 () => Navigator.pushNamed(context, RouteConstants.achievement),
-            child: _buildPointsBadge(_currentPoints, context),
+            child:
+                isLandscape
+                    ? _buildCompactPointsBadge(_currentPoints, context)
+                    : _buildPointsBadge(_currentPoints, context),
           ),
-          const SizedBox(width: 8),
-
+          SizedBox(width: isLandscape ? 4 : 8), // Espacement réduit
           // NOUVEAU: Afficher les icônes d'accueil et quiz OU les notifications normales
           if (widget.showHomeAndQuizIcons == true) ...[
             // Icône Accueil
@@ -172,8 +182,9 @@ class _CustomScaffoldState extends State<CustomScaffold> {
               icon: Icons.home_rounded,
               tooltip: 'Retour à l\'accueil',
               onPressed: widget.onHomePressed ?? () => _navigateToHome(context),
+              isLandscape: isLandscape,
             ),
-            const SizedBox(width: 4),
+            SizedBox(width: isLandscape ? 2 : 4), // Espacement réduit
             // Icône Liste des quiz
             _buildActionButton(
               icon: Icons.quiz_rounded,
@@ -181,6 +192,7 @@ class _CustomScaffoldState extends State<CustomScaffold> {
               onPressed:
                   widget.onQuizListPressed ??
                   () => _navigateToQuizList(context),
+              isLandscape: isLandscape,
             ),
           ] else ...[
             // Notifications normales (comportement par défaut)
@@ -198,6 +210,7 @@ class _CustomScaffoldState extends State<CustomScaffold> {
                     );
                     refreshData();
                   },
+                  isLandscape: isLandscape,
                 );
               },
             ),
@@ -212,10 +225,14 @@ class _CustomScaffoldState extends State<CustomScaffold> {
     required String tooltip,
     required VoidCallback onPressed,
     int badgeCount = 0,
+    required bool isLandscape,
   }) {
+    final buttonSize = isLandscape ? 36.0 : 40.0; // Taille réduite en paysage
+    final iconSize = isLandscape ? 18.0 : 20.0;
+
     return Container(
-      width: 40,
-      height: 40,
+      width: buttonSize,
+      height: buttonSize,
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.2),
         shape: BoxShape.circle,
@@ -224,7 +241,7 @@ class _CustomScaffoldState extends State<CustomScaffold> {
         children: [
           Center(
             child: IconButton(
-              icon: Icon(icon, size: 20),
+              icon: Icon(icon, size: iconSize),
               tooltip: tooltip,
               onPressed: onPressed,
               padding: EdgeInsets.zero,
@@ -232,22 +249,25 @@ class _CustomScaffoldState extends State<CustomScaffold> {
           ),
           if (badgeCount > 0)
             Positioned(
-              top: 6,
-              right: 6,
+              top: isLandscape ? 4 : 6,
+              right: isLandscape ? 4 : 6,
               child: Container(
-                width: 16,
-                height: 16,
+                width: isLandscape ? 14 : 16,
+                height: isLandscape ? 14 : 16,
                 decoration: BoxDecoration(
                   color: Colors.red,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(
+                    color: Colors.white,
+                    width: isLandscape ? 1 : 2,
+                  ),
                 ),
                 child: Center(
                   child: Text(
                     badgeCount > 9 ? '9+' : '$badgeCount',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
-                      fontSize: 8,
+                      fontSize: isLandscape ? 7 : 8,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -333,14 +353,57 @@ class _CustomScaffoldState extends State<CustomScaffold> {
     );
   }
 
-  Widget _buildSponsorshipBanner(BuildContext context) {
+  // Nouvelle version compacte pour le mode paysage
+  Widget _buildCompactPointsBadge(int points, BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.amber.shade400, Colors.orange.shade400],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withOpacity(0.3),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.star_rounded, size: 12, color: Colors.white),
+          const SizedBox(width: 4),
+          Text(
+            '$points',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSponsorshipBanner(BuildContext context, bool isLandscape) {
     final theme = Theme.of(context);
 
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, RouteConstants.sponsorship),
       child: Container(
-        margin: const EdgeInsets.all(12),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        margin: EdgeInsets.all(
+          isLandscape ? 8 : 12,
+        ), // Marge réduite en paysage
+        padding: EdgeInsets.symmetric(
+          vertical: isLandscape ? 8 : 12,
+          horizontal: isLandscape ? 12 : 16,
+        ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -350,11 +413,11 @@ class _CustomScaffoldState extends State<CustomScaffold> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(isLandscape ? 12 : 16),
           boxShadow: [
             BoxShadow(
               color: theme.colorScheme.primary.withOpacity(0.3),
-              blurRadius: 12,
+              blurRadius: isLandscape ? 8 : 12,
               offset: const Offset(0, 4),
             ),
           ],
@@ -362,25 +425,26 @@ class _CustomScaffoldState extends State<CustomScaffold> {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(isLandscape ? 6 : 8),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.card_giftcard_rounded,
-                size: 24,
+                size: isLandscape ? 20 : 24,
                 color: Colors.white,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: isLandscape ? 8 : 12),
             Expanded(
               child: RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    fontSize: 15,
+                    fontSize:
+                        isLandscape ? 13 : 15, // Texte plus petit en paysage
                     color: Colors.white,
                     height: 1.3,
                   ),
@@ -391,26 +455,28 @@ class _CustomScaffoldState extends State<CustomScaffold> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.red,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(
+                            isLandscape ? 6 : 8,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.red.withOpacity(0.4),
-                              blurRadius: 6,
+                              blurRadius: isLandscape ? 4 : 6,
                               offset: const Offset(0, 2),
                             ),
                           ],
                         ),
                         margin: const EdgeInsets.only(bottom: 2),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isLandscape ? 6 : 8,
+                          vertical: isLandscape ? 2 : 4,
                         ),
-                        child: const Text(
+                        child: Text(
                           '50 €',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
-                            fontSize: 18,
+                            fontSize: isLandscape ? 16 : 18, // Taille réduite
                             fontFamily: 'Montserrat',
                             letterSpacing: 0.5,
                           ),
