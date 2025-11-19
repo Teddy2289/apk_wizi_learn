@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wizi_learn/core/video/video_fullscreen_helper.dart';
+import 'package:wizi_learn/core/video/video_cache_manager.dart';
+import 'package:wizi_learn/core/video/fullscreen_video_player.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
@@ -31,26 +33,34 @@ class YoutubePlayerPage extends StatefulWidget {
 
 String _filterTitle(String title) {
   // Supprimer le mot Microsoft (insensible à la casse)
-  return title.replaceAll(RegExp(r'microsoft', caseSensitive: false), '').trim();
+  return title
+      .replaceAll(RegExp(r'microsoft', caseSensitive: false), '')
+      .trim();
 }
 
 String _getRandomThumbnailUrl(String youtubeUrl) {
-  final videoId = YoutubePlayer.convertUrlToId(normalizeYoutubeUrl(youtubeUrl));
+  final cacheManager = VideoCacheManager();
 
-  if (videoId == null) {
-    return YoutubePlayer.getThumbnail(
-      videoId: '',
-      quality: ThumbnailQuality.medium,
+  return cacheManager.getThumbnailUrl(youtubeUrl, () {
+    final videoId = YoutubePlayer.convertUrlToId(
+      normalizeYoutubeUrl(youtubeUrl),
     );
-  }
 
-  // Générer un timestamp aléatoire entre 30 secondes et 8 minutes
-  // pour éviter les thumbnails du début
-  final random = Random();
-  final randomTimestamp = 30 + random.nextInt(450); // 30s à 480s (8min)
+    if (videoId == null) {
+      return YoutubePlayer.getThumbnail(
+        videoId: '',
+        quality: ThumbnailQuality.medium,
+      );
+    }
 
-  // Utiliser l'URL avec timestamp pour un extrait aléatoire
-  return 'https://img.youtube.com/vi/$videoId/mqdefault.jpg?t=${randomTimestamp}s';
+    // Générer un timestamp aléatoire entre 30 secondes et 8 minutes
+    // pour éviter les thumbnails du début
+    final random = Random();
+    final randomTimestamp = 30 + random.nextInt(450); // 30s à 480s (8min)
+
+    // Utiliser l'URL avec timestamp pour un extrait aléatoire
+    return 'https://img.youtube.com/vi/$videoId/mqdefault.jpg?t=${randomTimestamp}s';
+  });
 }
 
 class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
@@ -61,18 +71,21 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
   bool _isLoadingFormations = true;
   Set<int> _watchedMediaIds = {};
   late MediaRepository _mediaRepository;
+  late VideoCacheManager _cacheManager;
 
   @override
   void initState() {
     super.initState();
     currentVideo = widget.video;
+    _cacheManager = VideoCacheManager();
     _initYoutubeController(currentVideo.url);
 
     // Initialiser le repository
     final dio = Dio();
     const storage = FlutterSecureStorage();
-    _mediaRepository =
-        MediaRepository(apiClient: ApiClient(dio: dio, storage: storage));
+    _mediaRepository = MediaRepository(
+      apiClient: ApiClient(dio: dio, storage: storage),
+    );
 
     // Délayer les opérations non critiques
     Future.microtask(() {
@@ -86,13 +99,20 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
 
   Future<void> _preloadThumbnails(List<Media> videos) async {
     for (final video in videos) {
-      final videoId = YoutubePlayer.convertUrlToId(normalizeYoutubeUrl(video.url));
+      final videoId = YoutubePlayer.convertUrlToId(
+        normalizeYoutubeUrl(video.url),
+      );
       if (videoId != null) {
-        final thumbnailUrl = YoutubePlayer.getThumbnail(
-          videoId: videoId,
-          quality: ThumbnailQuality.medium,
-        );
-        precacheImage(NetworkImage(thumbnailUrl), context);
+        final thumbnailUrl = _getRandomThumbnailUrl(video.url);
+        final imageProvider = NetworkImage(thumbnailUrl);
+
+        // Cache l'image pour un chargement rapide ultérieur
+        _cacheManager.cacheImage(thumbnailUrl, imageProvider);
+
+        // Précache aussi l'image dans le système Flutter
+        if (mounted) {
+          precacheImage(imageProvider, context);
+        }
       }
     }
   }
@@ -120,7 +140,9 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
 
   Future<void> _markVideoAsWatched() async {
     try {
-      final success = await _mediaRepository.markMediaAsWatched(currentVideo.id);
+      final success = await _mediaRepository.markMediaAsWatched(
+        currentVideo.id,
+      );
       if (success && mounted) {
         setState(() {
           _watchedMediaIds.add(currentVideo.id);
@@ -199,7 +221,9 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Erreur de lecture: ${_controller.value.errorCode}'),
+              content: Text(
+                'Erreur de lecture: ${_controller.value.errorCode}',
+              ),
             ),
           );
         }
@@ -208,7 +232,8 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
   }
 
   void _switchVideo(Media media) {
-    if (currentVideo.id == media.id) return; // Ne rien faire si c'est la même vidéo
+    if (currentVideo.id == media.id)
+      return; // Ne rien faire si c'est la même vidéo
 
     final normalizedUrl = normalizeYoutubeUrl(media.url);
     final videoId = YoutubePlayer.convertUrlToId(normalizedUrl);
@@ -229,6 +254,7 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
       // Le `load` démarre la lecture automatiquement avec autoPlay:true
     });
   }
+
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final minutes = twoDigits(duration.inMinutes.remainder(60));
@@ -253,9 +279,10 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
     final textTheme = theme.textTheme;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    final relatedVideos = widget.videosInSameCategory
-        .where((v) => v.id != currentVideo.id)
-        .toList();
+    final relatedVideos =
+        widget.videosInSameCategory
+            .where((v) => v.id != currentVideo.id)
+            .toList();
 
     // Utilisation de YoutubePlayerBuilder pour gérer automatiquement le plein écran
     return YoutubePlayerBuilder(
@@ -267,13 +294,26 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
           playedColor: colorScheme.primary,
           handleColor: colorScheme.primary,
         ),
+        // Contrôles personnalisés avec meilleure visibilité
         bottomActions: [
           CurrentPosition(),
-          ProgressBar(isExpanded: true),
+          ProgressBar(
+            isExpanded: true,
+            colors: ProgressBarColors(
+              playedColor: colorScheme.primary,
+              handleColor: colorScheme.primary,
+              bufferedColor: Colors.white24,
+              backgroundColor: Colors.white10,
+            ),
+          ),
           RemainingDuration(),
-          FullScreenButton(
-            controller: _controller,
-            color: colorScheme.primary,
+          // Bouton fullscreen avec taille augmentée
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            child: FullScreenButton(
+              controller: _controller,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
@@ -289,10 +329,11 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
           }
         });
 
-        // En mode paysage, on ne montre que le lecteur vidéo (plein écran)
+        // En mode paysage, on utilise le lecteur fullscreen avec zoom
         if (MediaQuery.of(context).orientation == Orientation.landscape) {
-          return Scaffold(
-            body: Center(child: player),
+          return FullscreenVideoPlayer(
+            controller: _controller,
+            playerWidget: player,
           );
         }
 
@@ -339,7 +380,8 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
                       icon: Icon(
                         showPlaylist ? Icons.expand_less : Icons.expand_more,
                       ),
-                      onPressed: () => setState(() => showPlaylist = !showPlaylist),
+                      onPressed:
+                          () => setState(() => showPlaylist = !showPlaylist),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
@@ -347,14 +389,15 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
                 ),
               ),
               Expanded(
-                child: showPlaylist
-                    ? _buildPlaylist(
-                  relatedVideos,
-                  colorScheme,
-                  textTheme,
-                  screenWidth,
-                )
-                    : _buildDescription(context, colorScheme, textTheme),
+                child:
+                    showPlaylist
+                        ? _buildPlaylist(
+                          relatedVideos,
+                          colorScheme,
+                          textTheme,
+                          screenWidth,
+                        )
+                        : _buildDescription(context, colorScheme, textTheme),
               ),
             ],
           ),
@@ -364,11 +407,11 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
   }
 
   Widget _buildPlaylist(
-      List<Media> relatedVideos,
-      ColorScheme colorScheme,
-      TextTheme textTheme,
-      double screenWidth,
-      ) {
+    List<Media> relatedVideos,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+    double screenWidth,
+  ) {
     return ListView.separated(
       padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
       physics: const BouncingScrollPhysics(),
@@ -384,16 +427,18 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
 
         return Card(
           elevation: isSelected ? 4 : 1,
-          color: isSelected
-              ? colorScheme.primary.withOpacity(0.08)
-              : isWatched
-              ? colorScheme.surfaceContainerHighest.withOpacity(0.5)
-              : null,
+          color:
+              isSelected
+                  ? colorScheme.primary.withOpacity(0.08)
+                  : isWatched
+                  ? colorScheme.surfaceContainerHighest.withOpacity(0.5)
+                  : null,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: isSelected
-                ? BorderSide(color: colorScheme.primary, width: 2)
-                : BorderSide.none,
+            side:
+                isSelected
+                    ? BorderSide(color: colorScheme.primary, width: 2)
+                    : BorderSide.none,
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(10),
@@ -422,9 +467,10 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
                           child: Icon(
                             Icons.play_circle_fill,
                             size: screenWidth * 0.07,
-                            color: isWatched
-                                ? colorScheme.primary
-                                : Colors.white.withOpacity(0.9),
+                            color:
+                                isWatched
+                                    ? colorScheme.primary
+                                    : Colors.white.withOpacity(0.9),
                           ),
                         ),
                       ),
@@ -456,14 +502,16 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
                           filteredTitle, // Utiliser le titre filtré
                           style: textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w500,
-                            color: isSelected
-                                ? colorScheme.primary
-                                : isWatched
-                                ? colorScheme.onSurface.withOpacity(0.7)
-                                : null,
-                            decoration: isWatched && !isSelected
-                                ? TextDecoration.underline
-                                : null,
+                            color:
+                                isSelected
+                                    ? colorScheme.primary
+                                    : isWatched
+                                    ? colorScheme.onSurface.withOpacity(0.7)
+                                    : null,
+                            decoration:
+                                isWatched && !isSelected
+                                    ? TextDecoration.underline
+                                    : null,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -502,10 +550,10 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
   }
 
   Widget _buildDescription(
-      BuildContext context,
-      ColorScheme colorScheme,
-      TextTheme textTheme,
-      ) {
+    BuildContext context,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+  ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
       child: Column(
@@ -536,10 +584,7 @@ class _ExpandableDescription extends StatefulWidget {
   final String htmlDescription;
   final TextStyle? textStyle;
 
-  const _ExpandableDescription({
-    required this.htmlDescription,
-    this.textStyle,
-  });
+  const _ExpandableDescription({required this.htmlDescription, this.textStyle});
 
   @override
   State<_ExpandableDescription> createState() => _ExpandableDescriptionState();
@@ -577,7 +622,7 @@ class _ExpandableDescriptionState extends State<_ExpandableDescription> {
             },
           ),
           crossFadeState:
-          expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+              expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 200),
         ),
         Align(

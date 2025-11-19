@@ -22,9 +22,10 @@ class CustomDrawer extends StatelessWidget {
 
     return Drawer(
       backgroundColor: isDarkMode ? Colors.grey.shade900 : Colors.white,
-      width: MediaQuery.of(context).size.width > 600
-          ? MediaQuery.of(context).size.width * 0.45
-          : MediaQuery.of(context).size.width * 0.85,
+      width:
+          MediaQuery.of(context).size.width > 600
+              ? MediaQuery.of(context).size.width * 0.45
+              : MediaQuery.of(context).size.width * 0.85,
       child: Column(
         children: [
           // Header avec photo et infos utilisateur - Hauteur réduite
@@ -198,15 +199,18 @@ class CustomDrawer extends StatelessWidget {
                         ),
                         _buildDrawerItem(
                           context,
-                          icon: Icons.logout,
+
                           label: 'Déconnexion',
-                          iconColor: Colors.red,
+                          icon: Icons.logout,
+                          iconColor: Colors.black,
                           onTap: () {
                             context.read<AuthBloc>().add(LogoutEvent());
-                            Navigator.pushReplacementNamed(context, RouteConstants.login);
+                            Navigator.pushReplacementNamed(
+                              context,
+                              RouteConstants.login,
+                            );
                           },
                         ),
-                        
                       ],
                     ),
                   ),

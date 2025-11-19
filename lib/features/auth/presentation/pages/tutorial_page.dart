@@ -1038,31 +1038,36 @@ class _TutorialPageState extends State<TutorialPage> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: YoutubePlayer(
-                key: ValueKey(media.id),
-                controller: _getYoutubeController(videoId, media.id),
-                showVideoProgressIndicator: true,
-                progressIndicatorColor: Colors.amber,
-                progressColors: const ProgressBarColors(
-                  playedColor: Colors.amber,
-                  handleColor: Colors.amberAccent,
-                  bufferedColor: Colors.grey,
-                ),
-                bottomActions: [
-                  CurrentPosition(),
-                  ProgressBar(isExpanded: true),
-                  RemainingDuration(),
-                  FullScreenButton(
-                    controller: _getYoutubeController(videoId, media.id),
+              child: InteractiveViewer(
+                panEnabled: true,
+                minScale: 1.0,
+                maxScale: 4.0,
+                child: YoutubePlayer(
+                  key: ValueKey(media.id),
+                  controller: _getYoutubeController(videoId, media.id),
+                  showVideoProgressIndicator: true,
+                  progressIndicatorColor: Colors.amber,
+                  progressColors: const ProgressBarColors(
+                    playedColor: Colors.amber,
+                    handleColor: Colors.amberAccent,
+                    bufferedColor: Colors.grey,
                   ),
-                ],
-                onReady: () {
-                  debugPrint('Lecteur YouTube prêt pour: ${media.titre}');
-                },
-                onEnded: (data) {
-                  _markMediaAsWatched(media);
-                  debugPrint('Vidéo terminée: ${media.titre}');
-                },
+                  bottomActions: [
+                    CurrentPosition(),
+                    ProgressBar(isExpanded: true),
+                    RemainingDuration(),
+                    FullScreenButton(
+                      controller: _getYoutubeController(videoId, media.id),
+                    ),
+                  ],
+                  onReady: () {
+                    debugPrint('Lecteur YouTube prêt pour: ${media.titre}');
+                  },
+                  onEnded: (data) {
+                    _markMediaAsWatched(media);
+                    debugPrint('Vidéo terminée: ${media.titre}');
+                  },
+                ),
               ),
             ),
           ),
