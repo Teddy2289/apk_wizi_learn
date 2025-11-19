@@ -39,6 +39,23 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // NS Conseil Logo
+                  Image.asset(
+                    'assets/images/logons.jpg',
+                    height: 40,
+                    fit: BoxFit.contain,
+                  ),
+                  // Wizi Learn Logo
+                  Image.asset(
+                    'assets/images/logo1.png',
+                    height: 40,
+                    fit: BoxFit.contain,
+                  ),
+                ],
+              ),
               const SizedBox(height: 32),
               const Text(
                 'Réinitialisation du mot de passe',

@@ -23,7 +23,7 @@ class CustomDrawer extends StatelessWidget {
     return Drawer(
       backgroundColor: isDarkMode ? Colors.grey.shade900 : Colors.white,
       width: MediaQuery.of(context).size.width > 600
-          ? MediaQuery.of(context).size.width * 0.25
+          ? MediaQuery.of(context).size.width * 0.45
           : MediaQuery.of(context).size.width * 0.85,
       child: Column(
         children: [
@@ -196,6 +196,17 @@ class CustomDrawer extends StatelessWidget {
                             ],
                           ),
                         ),
+                        _buildDrawerItem(
+                          context,
+                          icon: Icons.logout,
+                          label: 'Déconnexion',
+                          iconColor: Colors.red,
+                          onTap: () {
+                            context.read<AuthBloc>().add(LogoutEvent());
+                            Navigator.pushReplacementNamed(context, RouteConstants.login);
+                          },
+                        ),
+                        
                       ],
                     ),
                   ),
@@ -333,24 +344,24 @@ class CustomDrawer extends StatelessWidget {
           ),
 
           // Bouton de déconnexion
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: theme.dividerColor.withOpacity(0.3)),
-              ),
-            ),
-            child: _buildDrawerItem(
-              context,
-              icon: Icons.logout,
-              label: 'Déconnexion',
-              iconColor: Colors.red,
-              onTap: () {
-                context.read<AuthBloc>().add(LogoutEvent());
-                Navigator.pushReplacementNamed(context, RouteConstants.login);
-              },
-            ),
-          ),
+          // Container(
+          //   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          //   decoration: BoxDecoration(
+          //     border: Border(
+          //       top: BorderSide(color: theme.dividerColor.withOpacity(0.3)),
+          //     ),
+          //   ),
+          //   child: _buildDrawerItem(
+          //     context,
+          //     icon: Icons.logout,
+          //     label: 'Déconnexion',
+          //     iconColor: Colors.red,
+          //     onTap: () {
+          //       context.read<AuthBloc>().add(LogoutEvent());
+          //       Navigator.pushReplacementNamed(context, RouteConstants.login);
+          //     },
+          //   ),
+          // ),
         ],
       ),
     );

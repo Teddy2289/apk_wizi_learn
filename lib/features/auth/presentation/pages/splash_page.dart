@@ -153,20 +153,42 @@ class _OnSplashPage extends State<SplashPage> {
         child: SafeArea(
           child: Column(
             children: [
-              // Skip Button (top right)
-              Align(
-                alignment: Alignment.topRight,
-                child: TextButton(
-                  onPressed: _skipOnboarding,
-                  child: Text(
-                    'Passer',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.orange,
-                      fontWeight: FontWeight.w600,
+              // Logos Section (Wizi Learn and NS Conseil)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // NS Conseil Logo
+                    Image.asset(
+                      'assets/images/logons.jpg',
+                      height: 100,
+                      fit: BoxFit.contain,
                     ),
-                  ),
+                    // Wizi Learn Logo
+                    Image.asset(
+                      'assets/images/logo1.png',
+                      height: 100,
+                      fit: BoxFit.contain,
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(height: 8),
+              // Skip Button (top right)
+              // Align(
+              //   alignment: Alignment.topRight,
+              //   child: TextButton(
+              //     onPressed: _skipOnboarding,
+              //     child: Text(
+              //       'Passer',
+              //       style: theme.textTheme.bodyLarge?.copyWith(
+              //         color: Colors.orange,
+              //         fontWeight: FontWeight.w600,
+              //       ),
+              //     ),
+              //   ),
+              // ),
 
               // Page View Content
               Expanded(
@@ -205,8 +227,8 @@ class _OnSplashPage extends State<SplashPage> {
                                 borderRadius: BorderRadius.circular(20),
                                 child: Image.asset(
                                   item['imageAsset']!,
-                                  width: size.width * 0.8,
-                                  height: size.height * 0.4,
+                                  width: size.width * 0.6,
+                                  height: size.height * 0.3,
                                   fit: BoxFit.cover,
                                 ),
                               ),

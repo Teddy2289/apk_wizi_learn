@@ -358,28 +358,77 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                 ),
                               ),
                               // Prix
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: categoryColor,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  ('${formatPrice(formation.tarif.toInt())} €'),
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
+                              // Container(
+                              //   padding: const EdgeInsets.symmetric(
+                              //     horizontal: 16,
+                              //     vertical: 8,
+                              //   ),
+                              //   decoration: BoxDecoration(
+                              //     color: categoryColor,
+                              //     borderRadius: BorderRadius.circular(20),
+                              //   ),
+                              //   // child: Text(
+                              //   //   (' A partir de ${formation.duree} heures'),
+                              //   //   style: const TextStyle(
+                              //   //     fontSize: 18,
+                              //   //     fontWeight: FontWeight.bold,
+                              //   //     color: Colors.white,
+                              //   //   ),
+                              //   // ),
+                              // ),
                             ],
                           ),
 
                           const SizedBox(height: 24),
+
+                          // Infos complémentaires (lieu, niveau, public cible, nombre participants)
+                          _buildSection(
+                            title: 'Informations pratiques',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Wrap(
+                                  spacing: 12,
+                                  runSpacing: 12,
+                                  children: [
+                                    if (formation.lieu != null &&
+                                        formation.lieu!.isNotEmpty)
+                                      _buildInfoTile(
+                                        icon: Icons.location_on_outlined,
+                                        label: 'Lieu',
+                                        value: formation.lieu!,
+                                        color: categoryColor,
+                                      ),
+                                    if (formation.niveau != null &&
+                                        formation.niveau!.isNotEmpty)
+                                      _buildInfoTile(
+                                        icon: Icons.school_outlined,
+                                        label: 'Niveau',
+                                        value: formation.niveau!,
+                                        color: categoryColor,
+                                      ),
+                                    if (formation.publicCible != null &&
+                                        formation.publicCible!.isNotEmpty)
+                                      _buildInfoTile(
+                                        icon: Icons.group_outlined,
+                                        label: 'Public cible',
+                                        value: formation.publicCible!,
+                                        color: categoryColor,
+                                      ),
+                                    if (formation.nombreParticipants != null)
+                                      _buildInfoTile(
+                                        icon: Icons.people_alt_outlined,
+                                        label: 'Participants',
+                                        value:
+                                            formation.nombreParticipants
+                                                .toString(),
+                                        color: categoryColor,
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
 
                           // Infos rapides
                           Wrap(
@@ -389,7 +438,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                               _buildInfoTile(
                                 icon: Icons.timer_outlined,
                                 label: 'Durée',
-                                value: '${formation.duree} heures',
+                                value: 'A partir de ${formation.duree} heures',
                                 color: categoryColor,
                               ),
 
@@ -556,55 +605,6 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                 ),
                               ),
                             ),
-
-                          // Infos complémentaires (lieu, niveau, public cible, nombre participants)
-                          _buildSection(
-                            title: 'Informations pratiques',
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Wrap(
-                                  spacing: 12,
-                                  runSpacing: 12,
-                                  children: [
-                                    if (formation.lieu != null &&
-                                        formation.lieu!.isNotEmpty)
-                                      _buildInfoTile(
-                                        icon: Icons.location_on_outlined,
-                                        label: 'Lieu',
-                                        value: formation.lieu!,
-                                        color: categoryColor,
-                                      ),
-                                    if (formation.niveau != null &&
-                                        formation.niveau!.isNotEmpty)
-                                      _buildInfoTile(
-                                        icon: Icons.school_outlined,
-                                        label: 'Niveau',
-                                        value: formation.niveau!,
-                                        color: categoryColor,
-                                      ),
-                                    if (formation.publicCible != null &&
-                                        formation.publicCible!.isNotEmpty)
-                                      _buildInfoTile(
-                                        icon: Icons.group_outlined,
-                                        label: 'Public cible',
-                                        value: formation.publicCible!,
-                                        color: categoryColor,
-                                      ),
-                                    if (formation.nombreParticipants != null)
-                                      _buildInfoTile(
-                                        icon: Icons.people_alt_outlined,
-                                        label: 'Participants',
-                                        value:
-                                            formation.nombreParticipants
-                                                .toString(),
-                                        color: categoryColor,
-                                      ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
 
                           const SizedBox(height: 40),
                           // Section Programme (prefer HTML from API, fallback to PDF)
@@ -923,11 +923,11 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Programme',
+                  'Programme de formation',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 Text(
-                  'Télécharger le programme',
+                  'Télécharger le PDF',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: categoryColor,

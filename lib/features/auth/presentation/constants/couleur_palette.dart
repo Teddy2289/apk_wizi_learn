@@ -20,6 +20,23 @@ class AppColors {
 
   // Category colors (web uses --cat-ia / Tailwind `ia`)
   static const Color ia = Color(0xFFABDA96); // IA category color
+  static const Color iaLight = Color(0xFFF0F9ED);
+  static const Color iaDark = Color(0xFF7BBF5E);
+
+  // Category colors to align with web tokens (--cat-*)
+  static const Color catBureautique = Color(0xFF3D9BE9);
+  static const Color catBureautiqueLight = Color(0xFFE8F4FE);
+  static const Color catBureautiqueDark = Color(0xFF2A7BC8);
+
+  static const Color catLangues = Color(0xFFA55E6E);
+
+  static const Color catInternet = Color(0xFFFFC533);
+  static const Color catInternetLight = Color(0xFFFFF8E8);
+  static const Color catInternetDark = Color(0xFFE6A400);
+
+  static const Color catCreation = Color(0xFF9392BE);
+  static const Color catCreationLight = Color(0xFFF5F4FF);
+  static const Color catCreationDark = Color(0xFF6A6896);
 
   // On colors
   static const Color onPrimary = Color(0xFF000000);
