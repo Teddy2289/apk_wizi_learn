@@ -16,6 +16,10 @@ import 'package:wizi_learn/features/auth/presentation/widgets/welcom_bannery.dar
 import 'package:wizi_learn/features/home/presentation/widgets/how_to_play.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wizi_learn/core/services/quiz_persistence_service.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/resume_quiz_dialog.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/quiz_session_page.dart';
+import 'package:wizi_learn/features/auth/data/models/quiz_model.dart';
 
 import '../../data/datasources/auth_remote_data_source.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -74,6 +78,10 @@ class _HomePageState extends State<HomePage> {
   bool _showInscriptionSuccessModal = false;
   String _inscriptionSuccessMessage = '';
   String _inscriptionFormationTitle = '';
+  
+  // Resume quiz functionality
+  bool _showResumeQuizDialog = false;
+  Map<String, dynamic>? _unfinishedQuizData;
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -87,6 +95,7 @@ class _HomePageState extends State<HomePage> {
     _loadConnectedUser();
     _initFcmListener();
     _evaluateWelcomeBlockOncePerDay();
+    _checkForUnfinishedQuiz();
   }
 
   void _initializeRepositories() {
@@ -304,6 +313,59 @@ class _HomePageState extends State<HomePage> {
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _checkForUnfinishedQuiz() async {
+    try {
+      final persistenceService = QuizPersistenceService();
+      final unfinishedQuiz = await persistenceService.getLastUnfinishedQuiz();
+      
+      if (unfinishedQuiz != null && mounted) {
+        // Show dialog after a short delay to avoid conflicting with other modals
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        if (mounted) {
+          setState(() {
+            _unfinishedQuizData = unfinishedQuiz;
+            _showResumeQuizDialog = true;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking for unfinished quiz: $e');
+    }
+  }
+
+  void _handleResumeQuiz() {
+    if (_unfinishedQuizData != null) {
+      setState(() => _showResumeQuizDialog = false);
+      
+      // Navigate to quiz session page
+      // Note: This navigation assumes the Quiz and Questions data can be reconstructed
+      // In a real scenario, you'd fetch the full quiz data from the API
+      Navigator.of(context).pushNamed(
+        RouteConstants.quiz,
+        arguments: {
+          'quizId': _unfinishedQuizData!['quizId'],
+          'resume': true,
+        },
+      );
+    }
+  }
+
+  void _handleDismissQuiz() async {
+    if (_unfinishedQuizData != null) {
+      final quizId = _unfinishedQuizData!['quizId'] as String;
+      final persistenceService = QuizPersistenceService();
+      await persistenceService.clearSession(quizId);
+      
+      if (mounted) {
+        setState(() {
+          _showResumeQuizDialog = false;
+          _unfinishedQuizData = null;
+        });
+      }
     }
   }
 
@@ -539,6 +601,19 @@ class _HomePageState extends State<HomePage> {
               onContinue: _navigateToCatalogueAfterInscription,
               message: _inscriptionSuccessMessage,
               formationTitle: _inscriptionFormationTitle,
+            ),
+          ),
+        if (_showResumeQuizDialog && _unfinishedQuizData != null)
+          Positioned.fill(
+            child: Material(
+              color: Colors.black.withOpacity(0.7),
+              child: Center(
+                child: ResumeQuizDialog(
+                  quizData: _unfinishedQuizData!,
+                  onResume: _handleResumeQuiz,
+                  onDismiss: _handleDismissQuiz,
+                ),
+              ),
             ),
           ),
       ],
