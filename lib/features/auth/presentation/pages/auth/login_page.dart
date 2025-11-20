@@ -87,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             // NS Conseil Logo
                             Image.asset(
-                              'assets/images/logons.png',
+                              'assets/images/favicon2.ico',
                               height: 40,
                               fit: BoxFit.contain,
                             ),

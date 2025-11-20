@@ -233,21 +233,6 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
-    final colorScheme = theme.colorScheme;
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-    final screenHeight = MediaQuery.of(context).size.height;
-
-    return WillPopScope(
-      onWillPop: () async {
-        _showQuitConfirmationDialog();
-        return false;
-      },
-      child: CustomScaffold(
-        body: Column(
-          children: [
-            // En-tête COMPACT en paysage
-            Container(
               padding: EdgeInsets.symmetric(
                   horizontal: isLandscape ? 12 : 16,
                   vertical: isLandscape ? 10 : 16
