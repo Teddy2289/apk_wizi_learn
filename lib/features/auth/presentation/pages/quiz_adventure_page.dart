@@ -21,6 +21,9 @@ import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_sourc
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
+import 'package:wizi_learn/core/services/quiz_persistence_service.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/resume_quiz_dialog.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/resume_quiz_button.dart';
 
 class QuizAdventurePage extends StatefulWidget {
   final bool quizAdventureEnabled;
@@ -62,6 +65,11 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
   final GlobalKey _keyProgress = GlobalKey();
   final GlobalKey _keyMission = GlobalKey();
   final GlobalKey _keyQuiz = GlobalKey();
+  
+  // Resume quiz functionality
+  bool _showResumeQuizDialog = false;
+  Map<String, dynamic>? _unfinishedQuizData;
+  bool _isQuizModalHidden = false;
   // TutorialCoachMark? _tutorialCoachMark; // Unused field removed
   // bool _tutorialShown = false; // Unused field removed
 
@@ -83,6 +91,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     _loadLoginStreak();
     // Chargement avatar supprimé
     _loadInitialData();
+    _checkForUnfinishedQuiz();
     // _checkAndShowTutorial();
   }
 
@@ -424,6 +433,81 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
       ),
       // Target avatarAnim supprimé
     ];
+  }
+
+  // Resume quiz methods
+  Future<void> _checkForUnfinishedQuiz() async {
+    try {
+      final persistenceService = QuizPersistenceService();
+      final unfinishedQuiz = await persistenceService.getLastUnfinishedQuiz();
+      
+      if (unfinishedQuiz != null && mounted) {
+        final quizId = unfinishedQuiz['quizId'] as String;
+        final isHidden = await persistenceService.isModalHidden(quizId);
+        
+        // Show dialog after a short delay
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        if (mounted) {
+          setState(() {
+            _unfinishedQuizData = unfinishedQuiz;
+            _isQuizModalHidden = isHidden;
+            _showResumeQuizDialog = !isHidden;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking for unfinished quiz: $e');
+    }
+  }
+
+  void _handleResumeQuiz() {
+    if (_unfinishedQuizData != null) {
+      setState(() => _showResumeQuizDialog = false);
+      // Navigate to quiz session page with resume data
+      final quizId = _unfinishedQuizData!['quizId'] as String;
+      Navigator.of(context).pushNamed(
+        RouteConstants.quiz,
+        arguments: {
+          'quizId': quizId,
+          'resume': true,
+        },
+      ).then((_) => _checkForUnfinishedQuiz());
+    }
+  }
+
+  void _handleDismissQuiz() async {
+    // Hide modal temporarily instead of deleting session
+    if (_unfinishedQuizData != null) {
+      final quizId = _unfinishedQuizData!['quizId'] as String;
+      final persistenceService = QuizPersistenceService();
+      await persistenceService.setModalHidden(quizId, true);
+      
+      if (mounted) {
+        setState(() {
+          _showResumeQuizDialog = false;
+          _isQuizModalHidden = true;
+        });
+      }
+    }
+  }
+
+  void _handleCompleteDismissQuiz() async {
+    // Permanently delete quiz session
+    if (_unfinishedQuizData != null) {
+      final quizId = _unfinishedQuizData!['quizId'] as String;
+      final persistenceService = QuizPersistenceService();
+      await persistenceService.clearSession(quizId);
+      await persistenceService.clearModalHiddenState(quizId);
+      
+      if (mounted) {
+        setState(() {
+          _showResumeQuizDialog = false;
+          _unfinishedQuizData = null;
+          _isQuizModalHidden = false;
+        });
+      }
+    }
   }
 
   @override
@@ -814,6 +898,29 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
               minBlastForce: 8,
             ),
           ),
+          // Resume quiz modal
+          if (_showResumeQuizDialog && _unfinishedQuizData != null && !_isQuizModalHidden)
+            Positioned.fill(
+              child: Material(
+                color: Colors.black.withOpacity(0.7),
+                child: Center(
+                  child: ResumeQuizDialog(
+                    quizData: _unfinishedQuizData!,
+                    onResume: _handleResumeQuiz,
+                    onDismiss: _handleDismissQuiz,
+                  ),
+                ),
+              ),
+            ),
+          // Floating resume quiz button when modal is hidden
+          if (_unfinishedQuizData != null && _isQuizModalHidden)
+            ResumeQuizButton(
+              quizTitle: _unfinishedQuizData!['quizTitle'] as String? ?? 'Quiz',
+              questionCount: (_unfinishedQuizData!['questionIds'] as List?)?.length ?? 0,
+              currentProgress: _unfinishedQuizData!['currentIndex'] as int? ?? 0,
+              onResume: _handleResumeQuiz,
+              onDismiss: _handleCompleteDismissQuiz,
+            ),
         ],
       ),
       floatingActionButton:
