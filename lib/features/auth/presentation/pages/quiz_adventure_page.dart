@@ -260,12 +260,20 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     print('🔍 Quiz avancé: ${avance.length}');
 
     List<quiz_model.Quiz> filtered = [];
-    if (userPoints < 10) {
-      filtered = debutant.take(2).toList();
-      print('🔍 Utilisateur < 10 points: affichage de ${filtered.length} quiz débutants');
+    
+    // Logique corrigée selon les règles métier standards
+    if (userPoints < 50) {
+      // Moins de 50 points : seulement débutant
+      filtered = debutant;
+      print('🔍 Utilisateur < 50 points: ${filtered.length} quiz (débutant uniquement)');
+    } else if (userPoints < 80) {
+      // 50-79 points : débutant + intermédiaire
+      filtered = [...debutant, ...intermediaire];
+      print('🔍 Utilisateur 50-79 points: ${filtered.length} quiz (débutant + intermédiaire)');
     } else {
+      // 80+ points : tous les quiz
       filtered = [...debutant, ...intermediaire, ...avance];
-      print('🔍 Utilisateur >= 10 points: affichage de ${filtered.length} quiz au total');
+      print('🔍 Utilisateur >= 80 points: ${filtered.length} quiz (tous)');
     }
 
     // Fallback: si aucun quiz filtré mais la liste d'origine n'est pas vide, retourne au moins le premier quiz
@@ -485,17 +493,9 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
       
       try {
         final quizId = int.parse(_unfinishedQuizData!['quizId'] as String);
+        final quizTitle = _unfinishedQuizData!['quizTitle'] as String? ?? 'Quiz';
         
-        // Fetch quiz data directly
-        final quiz = await _quizRepository.getQuizById(quizId);
-        if (quiz == null) {
-          if (mounted) {
-            _showResumeErrorDialog();
-          }
-          return;
-        }
-        
-        // Fetch questions
+        // Fetch questions directly - c'est tout ce dont nous avons besoin
         final questions = await _quizRepository.getQuizQuestions(quizId);
         if (questions.isEmpty) {
           if (mounted) {
@@ -504,7 +504,25 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
           return;
         }
         
-        // Navigate directly to QuizSessionPage with resume flag
+        // Créer un objet Quiz minimal à partir des données sauvegardées
+        // Pas besoin de récupérer depuis l'API qui peut échouer si le quiz est filtré
+        final quiz = quiz_model.Quiz(
+          id: quizId,
+          titre: quizTitle,
+          description: '',
+          niveau: 'débutant',
+          nbPointsTotal: questions.length * 2, // 2 points par question
+          formation: quiz_model.QuizFormation(
+            id: 0,
+            titre: 'Formation',
+            description: '',
+            duree: '0',
+            categorie: 'Général',
+          ),
+          questions: questions,
+        );
+        
+        // Navigate directly to QuizSessionPage - la session sera restaurée automatiquement
         if (mounted) {
           await Navigator.push(
             context,

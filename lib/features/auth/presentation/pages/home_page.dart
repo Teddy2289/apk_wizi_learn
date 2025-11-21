@@ -294,7 +294,7 @@ class _HomePageState extends State<HomePage> {
     setState(() => _isLoading = true);
     try {
       final contacts = await _contactRepository.getContacts();
-      final formationsRaw = await _formationRepository.getRandomFormations(6);
+      final formationsRaw = await _formationRepository.getDailyFormations(6);
       final formations = formationsRaw.whereType<Formation>().toList();
 
       setState(() {

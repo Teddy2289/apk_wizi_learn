@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
@@ -53,6 +55,38 @@ class FormationRepository {
 
     allFormations.shuffle();
     return allFormations.take(count).toList();
+  }
+
+  /// Retourne des formations qui changent quotidiennement de manière déterministe
+  /// Les mêmes formations sont affichées pendant toute la journée
+  Future<List<Formation>> getDailyFormations(int count) async {
+    final allFormations = await getFormations();
+
+    if (allFormations.isEmpty) {
+      debugPrint('Aucune formation trouvée dans la base.');
+      return [];
+    }
+
+    // Créer une graine (seed) basée sur la date du jour
+    // Cette graine sera la même pour toute la journée
+    final now = DateTime.now();
+    final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays;
+    final seed = now.year * 1000 + dayOfYear;
+
+    // Utiliser Random avec seed pour rotation déterministe
+    final random = Random(seed);
+    final shuffled = List<Formation>.from(allFormations);
+
+    // Fisher-Yates shuffle avec seed pour mélange déterministe
+    for (int i = shuffled.length - 1; i > 0; i--) {
+      final j = random.nextInt(i + 1);
+      final temp = shuffled[i];
+      shuffled[i] = shuffled[j];
+      shuffled[j] = temp;
+    }
+
+    debugPrint('🔄 Rotation quotidienne - Seed: $seed (jour ${now.day}/${now.month}/${now.year})');
+    return shuffled.take(count).toList();
   }
 
   Future<List<Formation>> getCatalogueFormations({int? stagiaireId}) async {
