@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 
 class UserManualPage extends StatelessWidget {
   const UserManualPage({super.key});
@@ -13,38 +14,46 @@ class UserManualPage extends StatelessWidget {
         title: const Text('Manuel d\'utilisation'),
         centerTitle: true,
         leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pushReplacementNamed(context, RouteConstants.dashboard)
+          icon: const Icon(Icons.arrow_back),
+          onPressed:
+              () => Navigator.pushReplacementNamed(
+                context,
+                RouteConstants.dashboard,
+              ),
         ),
-        backgroundColor: isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
+        backgroundColor:
+            isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
         elevation: 1,
         foregroundColor: isDarkMode ? Colors.white : Colors.black87,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildManualSection(
-              icon: Icons.school,
-              title: 'Formations',
-              content: 'Accédez à vos formations via l\'onglet "Mes formations".',
-            ),
-            _buildManualSection(
-              icon: Icons.quiz,
-              title: 'Quiz',
-              content: 'Testez vos connaissances avec les quiz disponibles.',
-            ),
-            _buildManualSection(
-              icon: Icons.timeline,
-              title: 'Progression',
-              content: 'Suivez votre progression dans l\'onglet dédié.',
-            ),
-            _buildManualSection(
-              icon: Icons.contact_support,
-              title: 'Support',
-              content: 'Utilisez la page Contact pour toute question.',
-            ),
-          ],
+      body: SafeAreaBottom(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _buildManualSection(
+                icon: Icons.school,
+                title: 'Formations',
+                content:
+                    'Accédez à vos formations via l\'onglet "Mes formations".',
+              ),
+              _buildManualSection(
+                icon: Icons.quiz,
+                title: 'Quiz',
+                content: 'Testez vos connaissances avec les quiz disponibles.',
+              ),
+              _buildManualSection(
+                icon: Icons.timeline,
+                title: 'Progression',
+                content: 'Suivez votre progression dans l\'onglet dédié.',
+              ),
+              _buildManualSection(
+                icon: Icons.contact_support,
+                title: 'Support',
+                content: 'Utilisez la page Contact pour toute question.',
+              ),
+            ],
+          ),
         ),
       ),
     );

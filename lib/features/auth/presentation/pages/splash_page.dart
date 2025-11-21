@@ -8,6 +8,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 
 const Color kYellowLight = Color(0xFFFFF9C4); // jaune très clair
 const Color kYellow = Color(0xFFFFEB3B); // jaune
@@ -142,7 +143,8 @@ class _OnSplashPage extends State<SplashPage> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      body: Container(
+      body: SafeAreaBottom(
+        child: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [kYellowLight, kWhite, kOrange],
@@ -171,12 +173,12 @@ class _OnSplashPage extends State<SplashPage> {
                       height: 100,
                       fit: BoxFit.contain,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              // Skip Button (top right)
-              // Align(
+            ),
+          ),
+        );
               //   alignment: Alignment.topRight,
               //   child: TextButton(
               //     onPressed: _skipOnboarding,

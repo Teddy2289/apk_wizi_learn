@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 import 'package:intl/intl.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 
 class QuizDetailPage extends StatelessWidget {
   final String quizTitle;
@@ -42,106 +43,108 @@ class QuizDetailPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Détail du Quiz'), centerTitle: true),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Résumé visuel
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            elevation: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    quizTitle,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+      body: SafeAreaBottom(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Résumé visuel
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      quizTitle,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      ...List.generate(
-                        3,
-                        (i) => Icon(
-                          Icons.star,
-                          color: i < stars ? Colors.amber : Colors.grey[300],
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        ...List.generate(
+                          3,
+                          (i) => Icon(
+                            Icons.star,
+                            color: i < stars ? Colors.amber : Colors.grey[300],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Text(
-                        '$score pts',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(width: 16),
+                        Text(
+                          '$score pts',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.timer,
-                        size: 18,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text('${timeSpent}s'),
-                      const SizedBox(width: 16),
-                      Icon(
-                        Icons.calendar_today,
-                        size: 18,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        DateFormat('dd/MM/yyyy à HH:mm').format(completedAt),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // Statistiques détaillées
-                  Row(
-                    children: [
-                      _buildStatItem(
-                        context,
-                        Icons.check_circle,
-                        'Bonnes réponses',
-                        '$correctAnswers/$totalQuestions',
-                        Colors.green,
-                      ),
-                      const SizedBox(width: 16),
-                      _buildStatItem(
-                        context,
-                        Icons.percent,
-                        'Taux de réussite',
-                        '${(percent * 100).round()}%',
-                        theme.colorScheme.primary,
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.timer,
+                          size: 18,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text('${timeSpent}s'),
+                        const SizedBox(width: 16),
+                        Icon(
+                          Icons.calendar_today,
+                          size: 18,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          DateFormat('dd/MM/yyyy à HH:mm').format(completedAt),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // Statistiques détaillées
+                    Row(
+                      children: [
+                        _buildStatItem(
+                          context,
+                          Icons.check_circle,
+                          'Bonnes réponses',
+                          '$correctAnswers/$totalQuestions',
+                          Colors.green,
+                        ),
+                        const SizedBox(width: 16),
+                        _buildStatItem(
+                          context,
+                          Icons.percent,
+                          'Taux de réussite',
+                          '${(percent * 100).round()}%',
+                          theme.colorScheme.primary,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          if (playedQuestions.length > 0)
-            Text(
-              'Questions jouées (${playedQuestions.length})',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+            const SizedBox(height: 24),
+            if (playedQuestions.length > 0)
+              Text(
+                'Questions jouées (${playedQuestions.length})',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-          const SizedBox(height: 12),
-          if (playedQuestions.isNotEmpty || playedQuestions.length > 0)
-            ...playedQuestions.map((q) => _buildQuestionFeedback(q, theme)),
-          const SizedBox(height: 24),
-          _buildAdviceSection(theme, percent),
-        ],
+            const SizedBox(height: 12),
+            if (playedQuestions.isNotEmpty || playedQuestions.length > 0)
+              ...playedQuestions.map((q) => _buildQuestionFeedback(q, theme)),
+            const SizedBox(height: 24),
+            _buildAdviceSection(theme, percent),
+          ],
+        ),
       ),
     );
   }

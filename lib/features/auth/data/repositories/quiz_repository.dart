@@ -56,6 +56,39 @@ class QuizRepository {
     }
   }
 
+  Future<Quiz?> getQuizById(int quizId) async {
+    try {
+      // Try to get specific quiz details
+      // If /quiz/:id endpoint exists
+      try {
+        final response = await apiClient.get('/quiz/$quizId');
+        if (response.data != null && response.data['data'] != null) {
+           return Quiz.fromJson(response.data['data']);
+        }
+      } catch (_) {
+        // Fallback: fetch all quizzes and find it
+        // We use a temporary repository call without stagiaireId to avoid "take 2" logic if possible?
+        // But getQuizzesForStagiaire logic is inside.
+        // Let's manually call the endpoint here to avoid the filter.
+        final response = await apiClient.get('/stagiaire/quizzes');
+        if (response.data != null && response.data['data'] is List) {
+          final list = response.data['data'] as List;
+          final quizData = list.firstWhere(
+            (q) => q['id'].toString() == quizId.toString(),
+            orElse: () => null,
+          );
+          if (quizData != null) {
+            return Quiz.fromJson(quizData);
+          }
+        }
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error getting quiz by id: $e');
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>?> _getStagiaireRanking(int stagiaireId) async {
     try {
       final response = await apiClient.get(AppConstants.globalRanking);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 
 class ThanksPage extends StatelessWidget {
   const ThanksPage({super.key});
@@ -23,35 +24,38 @@ class ThanksPage extends StatelessWidget {
           ),
           onPressed:
               () => Navigator.pushReplacementNamed(
-            context,
-            RouteConstants.dashboard,
-          ),
+                context,
+                RouteConstants.dashboard,
+              ),
         ),
-        backgroundColor: isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
+        backgroundColor:
+            isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
         elevation: 1,
         foregroundColor: isDarkMode ? Colors.white : Colors.black87,
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.favorite, size: 50, color: Colors.red),
-              SizedBox(height: 20),
-              Text(
-                'Nous tenons à remercier :',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 20),
-              Text(
-                '- Notre équipe de développement\n'
-                    '- Nos formateurs dévoués\n'
-                    '- Tous nos utilisateurs fidèles',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
-              ),
-            ],
+      body: SafeAreaBottom(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.favorite, size: 50, color: Colors.red),
+                SizedBox(height: 20),
+                Text(
+                  'Nous tenons à remercier :',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  '- Notre équipe de développement\n'
+                  '- Nos formateurs dévoués\n'
+                  '- Tous nos utilisateurs fidèles',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16),
+                ),
+              ],
+            ),
           ),
         ),
       ),

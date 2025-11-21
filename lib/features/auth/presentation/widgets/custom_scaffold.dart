@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_app_bar.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_bottom_navbar.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_drawer.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
 import '../pages/dashboard_page.dart';
@@ -136,7 +137,7 @@ class _CustomScaffoldState extends State<CustomScaffold> {
       body: Column(
         children: [
           if (widget.showBanner) _buildSponsorshipBanner(context, isLandscape),
-          Expanded(child: widget.body),
+          Expanded(child: SafeAreaBottom(child: widget.body)),
         ],
       ),
       bottomNavigationBar:

@@ -18,6 +18,7 @@ import 'package:wizi_learn/features/auth/presentation/pages/quiz_session_page.da
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_adventure_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
+import 'package:wizi_learn/core/services/quiz_persistence_service.dart';
 
 class QuizPage extends StatefulWidget {
   final bool scrollToPlayed;
@@ -86,7 +87,8 @@ class _QuizPageState extends State<QuizPage> {
       if (args is Map<String, dynamic>) {
         setState(() {
           _fromNotification = args['fromNotification'] ?? false;
-          _scrollToQuizId = args['scrollToQuizId'] ?? args['quizId'];
+          final rawId = args['scrollToQuizId'] ?? args['quizId'];
+          _scrollToQuizId = rawId?.toString();
         });
       }
 
@@ -94,10 +96,13 @@ class _QuizPageState extends State<QuizPage> {
           (args is Map<String, dynamic>) ? (args['resume'] ?? false) : false;
 
       if (shouldResume && _scrollToQuizId != null) {
+        debugPrint('RESUME: Auto-starting quiz $_scrollToQuizId');
         // Auto-start quiz if resume is requested
         WidgetsBinding.instance.addPostFrameCallback((_) {
            _autoStartQuiz(_scrollToQuizId!);
         });
+      } else {
+        debugPrint('RESUME: No resume requested or no quizId. Resume: $shouldResume, ID: $_scrollToQuizId');
       }
 
       final bool forceListArg =
@@ -114,6 +119,7 @@ class _QuizPageState extends State<QuizPage> {
           !widget.quizAdventureEnabled &&
           !widget.forceList &&
           !forceListArg &&
+          !shouldResume &&
           userPrefersAdventure) {
         _didRedirectToAdventure = true;
         Navigator.pushReplacement(
@@ -145,12 +151,9 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   Future<void> _autoStartQuiz(String quizId) async {
-    // Wait for quizzes to load if needed
-    if (_futureQuizzes == null) {
-      await Future.delayed(const Duration(seconds: 1));
-    }
+    debugPrint('RESUME: _autoStartQuiz called for ID $quizId');
     
-    // Try to find the quiz in loaded lists
+    // 1. Try to find in currently loaded quizzes (fastest)
     if (_futureQuizzes != null) {
       try {
         final quizzes = await _futureQuizzes!;
@@ -174,12 +177,65 @@ class _QuizPageState extends State<QuizPage> {
         );
         
         if (quiz.id != 0 && mounted) {
+          debugPrint('RESUME: Quiz found in loaded list! Starting...');
           _startQuiz(quiz);
+          return;
         }
       } catch (e) {
-        debugPrint('Error auto-starting quiz: $e');
+        debugPrint('RESUME: Error searching in loaded quizzes: $e');
       }
     }
+    
+    // 2. If not found or list not ready, fetch directly from repository
+    debugPrint('RESUME: Quiz not found in list or list not ready. Fetching directly...');
+    try {
+      final quiz = await _quizRepository.getQuizById(int.parse(quizId));
+      if (quiz != null && mounted) {
+        debugPrint('RESUME: Quiz fetched directly! Starting...');
+        _startQuiz(quiz);
+      } else {
+        debugPrint('RESUME: Quiz with ID $quizId could not be found anywhere.');
+        if (mounted) {
+          _showResumeErrorDialog(quizId);
+        }
+      }
+    } catch (e) {
+      debugPrint('RESUME: Error fetching quiz directly: $e');
+      if (mounted) {
+        _showResumeErrorDialog(quizId);
+      }
+    }
+  }
+
+  void _showResumeErrorDialog(String quizId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Erreur de reprise'),
+        content: const Text(
+          'Impossible de retrouver le quiz à reprendre. Il a peut-être été désactivé ou supprimé.\n\nVoulez-vous effacer la sauvegarde de ce quiz ?'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final persistence = QuizPersistenceService();
+              await persistence.clearSession(quizId);
+              await persistence.clearModalHiddenState(quizId);
+              if (mounted) {
+                Navigator.pop(context); // Close dialog
+                _showErrorSnackbar('Sauvegarde effacée.');
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Effacer la sauvegarde'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _scrollToQuiz(String quizId) async {

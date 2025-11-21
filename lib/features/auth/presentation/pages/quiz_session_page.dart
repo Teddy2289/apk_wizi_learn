@@ -3,7 +3,6 @@ import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 import 'package:wizi_learn/features/auth/data/models/quiz_model.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_navigation_controls.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_progress_bar.dart';
-import 'package:wizi_learn/features/auth/presentation/components/quiz_timer_display.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/quiz_session/quiz_session_manager.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/question_type_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
@@ -127,6 +126,213 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
 
   void _handlePageChanged(int index) {
     _sessionManager.goToQuestion(index);
+  }
+
+  Widget _buildQuizHeader(ThemeData theme, bool isDarkMode, bool isLandscape) {
+    final colorScheme = theme.colorScheme;
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isLandscape ? 12 : 16,
+        vertical: isLandscape ? 10 : 16,
+      ),
+      decoration: BoxDecoration(
+        color: isDarkMode ? theme.cardColor : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: theme.dividerColor.withOpacity(0.1),
+            width: 1,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.arrow_back_ios_rounded,
+                size: isLandscape ? 16 : 18,
+                color: isDarkMode ? Colors.white70 : Colors.black54,
+              ),
+              onPressed: _showQuitConfirmationDialog,
+              tooltip: 'Quitter le quiz',
+              padding: EdgeInsets.all(isLandscape ? 8 : 12),
+            ),
+          ),
+          SizedBox(width: isLandscape ? 8 : 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.quiz.titre,
+                  style: TextStyle(
+                    fontSize: isLandscape ? 14 : 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                SizedBox(height: isLandscape ? 1 : 2),
+                ValueListenableBuilder<int>(
+                  valueListenable: _sessionManager.currentQuestionIndex,
+                  builder: (_, index, __) {
+                    return Text(
+                      'Question ${index + 1} sur ${widget.questions.length}',
+                      style: TextStyle(
+                        fontSize: isLandscape ? 11 : 13,
+                        color: isDarkMode ? Colors.white60 : Colors.black54,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          ValueListenableBuilder<int>(
+            valueListenable: _sessionManager.currentQuestionIndex,
+            builder: (_, index, __) {
+              return Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isLandscape ? 8 : 12,
+                  vertical: isLandscape ? 4 : 6,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      colorScheme.primary,
+                      colorScheme.primary.withOpacity(0.8),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(isLandscape ? 8 : 12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.primary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  '${index + 1}/${widget.questions.length}',
+                  style: TextStyle(
+                    fontSize: isLandscape ? 12 : 14,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressSection(
+    ThemeData theme,
+    bool isDarkMode,
+    bool isLandscape,
+  ) {
+    final colorScheme = theme.colorScheme;
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isLandscape ? 12 : 16,
+        vertical: isLandscape ? 6 : 12,
+      ),
+      decoration: BoxDecoration(
+        color: isDarkMode ? theme.cardColor.withOpacity(0.5) : Colors.grey[50],
+        border: Border(
+          bottom: BorderSide(
+            color: theme.dividerColor.withOpacity(0.05),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          QuizProgressBar(sessionManager: _sessionManager),
+          SizedBox(height: isLandscape ? 4 : 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              ValueListenableBuilder<int>(
+                valueListenable: _sessionManager.currentQuestionIndex,
+                builder: (_, index, __) {
+                  final progress =
+                      ((index + 1) / widget.questions.length * 100).round();
+                  return Text(
+                    '$progress% complété',
+                    style: TextStyle(
+                      fontSize: isLandscape ? 11 : 13,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.primary,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuestionsArea(
+    ThemeData theme,
+    bool isDarkMode,
+    bool isLandscape,
+  ) {
+    return Expanded(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient:
+              isDarkMode
+                  ? LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      theme.scaffoldBackgroundColor,
+                      theme.scaffoldBackgroundColor.withOpacity(0.95),
+                    ],
+                  )
+                  : LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.grey[50]!, Colors.grey[100]!],
+                  ),
+        ),
+        child: PageView.builder(
+          controller: _pageController,
+          physics: const BouncingScrollPhysics(),
+          onPageChanged: _handlePageChanged,
+          itemCount: widget.questions.length,
+          itemBuilder: (context, pageIndex) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: isLandscape ? 60 : 80),
+              child: QuestionTypePage(
+                key: ValueKey(widget.questions[pageIndex].id),
+                onAnswer: _sessionManager.handleAnswer,
+                question: widget.questions[pageIndex],
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   void _showQuitConfirmationDialog() {
@@ -297,7 +503,6 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    final colorScheme = theme.colorScheme;
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
 
@@ -310,238 +515,9 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
       child: CustomScaffold(
         body: Column(
           children: [
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: isLandscape ? 12 : 16,
-                vertical: isLandscape ? 10 : 16,
-              ),
-              decoration: BoxDecoration(
-                color: isDarkMode ? theme.cardColor : Colors.white,
-                border: Border(
-                  bottom: BorderSide(
-                    color: theme.dividerColor.withOpacity(0.1),
-                    width: 1,
-                  ),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  // Bouton Quitter compact
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.arrow_back_ios_rounded,
-                        size: isLandscape ? 16 : 18,
-                        color: isDarkMode ? Colors.white70 : Colors.black54,
-                      ),
-                      onPressed: _showQuitConfirmationDialog,
-                      tooltip: 'Quitter le quiz',
-                      padding: EdgeInsets.all(isLandscape ? 8 : 12),
-                    ),
-                  ),
-                  SizedBox(width: isLandscape ? 8 : 12),
-
-                  // Informations du quiz compactes
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.quiz.titre,
-                          style: TextStyle(
-                            fontSize: isLandscape ? 14 : 16,
-                            fontWeight: FontWeight.w600,
-                            color: isDarkMode ? Colors.white : Colors.black87,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                        SizedBox(height: isLandscape ? 1 : 2),
-                        ValueListenableBuilder<int>(
-                          valueListenable: _sessionManager.currentQuestionIndex,
-                          builder: (_, index, __) {
-                            return Text(
-                              'Question ${index + 1} sur ${widget.questions.length}',
-                              style: TextStyle(
-                                fontSize: isLandscape ? 11 : 13,
-                                color:
-                                    isDarkMode
-                                        ? Colors.white60
-                                        : Colors.black54,
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Badge de progression compact
-                  ValueListenableBuilder<int>(
-                    valueListenable: _sessionManager.currentQuestionIndex,
-                    builder: (_, index, __) {
-                      return Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isLandscape ? 8 : 12,
-                          vertical: isLandscape ? 4 : 6,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              colorScheme.primary,
-                              colorScheme.primary.withOpacity(0.8),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(
-                            isLandscape ? 8 : 12,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: colorScheme.primary.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          '${index + 1}/${widget.questions.length}',
-                          style: TextStyle(
-                            fontSize: isLandscape ? 12 : 14,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            // Section progression COMPACT en paysage
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: isLandscape ? 12 : 16,
-                vertical: isLandscape ? 6 : 12,
-              ),
-              decoration: BoxDecoration(
-                color:
-                    isDarkMode
-                        ? theme.cardColor.withOpacity(0.5)
-                        : Colors.grey[50],
-                border: Border(
-                  bottom: BorderSide(
-                    color: theme.dividerColor.withOpacity(0.05),
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Column(
-                children: [
-                  // Barre de progression
-                  QuizProgressBar(sessionManager: _sessionManager),
-                  SizedBox(height: isLandscape ? 4 : 8),
-
-                  // Informations de progression et timer
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Progression textuelle
-                      ValueListenableBuilder<int>(
-                        valueListenable: _sessionManager.currentQuestionIndex,
-                        builder: (_, index, __) {
-                          final progress =
-                              ((index + 1) / widget.questions.length * 100)
-                                  .round();
-                          return Text(
-                            '$progress% complété',
-                            style: TextStyle(
-                              fontSize: isLandscape ? 11 : 13,
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.primary,
-                            ),
-                          );
-                        },
-                      ),
-
-                      // Timer compact
-                      // Container(
-                      //   padding: EdgeInsets.symmetric(
-                      //       horizontal: isLandscape ? 6 : 10,
-                      //       vertical: isLandscape ? 2 : 4
-                      //   ),
-                      //   decoration: BoxDecoration(
-                      //     color: isDarkMode
-                      //         ? Colors.grey[800]
-                      //         : Colors.grey[200],
-                      //     borderRadius: BorderRadius.circular(isLandscape ? 6 : 8),
-                      //   ),
-                      //   child: QuizTimerDisplay(sessionManager: _sessionManager),
-                      // ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Zone des questions AVEC ESPACE GARANTI pour les contrôles
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient:
-                      isDarkMode
-                          ? LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              theme.scaffoldBackgroundColor,
-                              theme.scaffoldBackgroundColor.withOpacity(0.95),
-                            ],
-                          )
-                          : LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Colors.grey[50]!, Colors.grey[100]!],
-                          ),
-                ),
-                child: PageView.builder(
-                  controller: _pageController,
-                  physics: const BouncingScrollPhysics(),
-                  onPageChanged: _handlePageChanged,
-                  itemCount: widget.questions.length,
-                  itemBuilder: (context, pageIndex) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        bottom:
-                            isLandscape
-                                ? 60
-                                : 80, // ESPACE RÉSERVÉ pour les contrôles
-                      ),
-                      child: QuestionTypePage(
-                        key: ValueKey(widget.questions[pageIndex].id),
-                        onAnswer: _sessionManager.handleAnswer,
-                        question: widget.questions[pageIndex],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-
-            // Contrôles de navigation FIXES - TOUJOURS VISIBLES
+            _buildQuizHeader(theme, isDarkMode, isLandscape),
+            _buildProgressSection(theme, isDarkMode, isLandscape),
+            _buildQuestionsArea(theme, isDarkMode, isLandscape),
             _buildStickyNavigationControls(isLandscape, theme),
           ],
         ),
@@ -616,7 +592,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
       width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: isLandscape ? 12 : 16,
-        vertical: isLandscape ? 8 : 12,
+        vertical: isLandscape ? 6 : 10,
       ),
       decoration: BoxDecoration(
         color:
@@ -629,8 +605,8 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.15),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
+            blurRadius: 12,
+            offset: const Offset(0, -8),
           ),
         ],
       ),
@@ -638,7 +614,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
         sessionManager: _sessionManager,
         questions: widget.questions,
         playedQuizIds: widget.playedQuizIds,
-        isCompact: isLandscape, // Mode compact en paysage
+        isCompact: isLandscape,
       ),
     );
   }
