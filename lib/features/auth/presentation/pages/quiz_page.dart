@@ -19,6 +19,7 @@ import 'package:wizi_learn/features/auth/presentation/pages/quiz_adventure_page.
 import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 import 'package:wizi_learn/core/services/quiz_persistence_service.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 
 class QuizPage extends StatefulWidget {
   final bool scrollToPlayed;
@@ -92,17 +93,19 @@ class _QuizPageState extends State<QuizPage> {
         });
       }
 
-      final bool shouldResume = 
+      final bool shouldResume =
           (args is Map<String, dynamic>) ? (args['resume'] ?? false) : false;
 
       if (shouldResume && _scrollToQuizId != null) {
         debugPrint('RESUME: Auto-starting quiz $_scrollToQuizId');
         // Auto-start quiz if resume is requested
         WidgetsBinding.instance.addPostFrameCallback((_) {
-           _autoStartQuiz(_scrollToQuizId!);
+          _autoStartQuiz(_scrollToQuizId!);
         });
       } else {
-        debugPrint('RESUME: No resume requested or no quizId. Resume: $shouldResume, ID: $_scrollToQuizId');
+        debugPrint(
+          'RESUME: No resume requested or no quizId. Resume: $shouldResume, ID: $_scrollToQuizId',
+        );
       }
 
       final bool forceListArg =
@@ -152,30 +155,31 @@ class _QuizPageState extends State<QuizPage> {
 
   Future<void> _autoStartQuiz(String quizId) async {
     debugPrint('RESUME: _autoStartQuiz called for ID $quizId');
-    
+
     // 1. Try to find in currently loaded quizzes (fastest)
     if (_futureQuizzes != null) {
       try {
         final quizzes = await _futureQuizzes!;
         final quiz = quizzes.firstWhere(
           (q) => q.id.toString() == quizId,
-          orElse: () => quiz_model.Quiz(
-            id: 0, 
-            titre: '', 
-            description: '', 
-            niveau: '', 
-            nbPointsTotal: 0,
-            formation: quiz_model.QuizFormation(
-              id: 0, 
-              titre: '', 
-              categorie: '', 
-              description: '', 
-              duree: ''
-            ), 
-            questions: []
-          ),
+          orElse:
+              () => quiz_model.Quiz(
+                id: 0,
+                titre: '',
+                description: '',
+                niveau: '',
+                nbPointsTotal: 0,
+                formation: quiz_model.QuizFormation(
+                  id: 0,
+                  titre: '',
+                  categorie: '',
+                  description: '',
+                  duree: '',
+                ),
+                questions: [],
+              ),
         );
-        
+
         if (quiz.id != 0 && mounted) {
           debugPrint('RESUME: Quiz found in loaded list! Starting...');
           _startQuiz(quiz);
@@ -185,9 +189,11 @@ class _QuizPageState extends State<QuizPage> {
         debugPrint('RESUME: Error searching in loaded quizzes: $e');
       }
     }
-    
+
     // 2. If not found or list not ready, fetch directly from repository
-    debugPrint('RESUME: Quiz not found in list or list not ready. Fetching directly...');
+    debugPrint(
+      'RESUME: Quiz not found in list or list not ready. Fetching directly...',
+    );
     try {
       final quiz = await _quizRepository.getQuizById(int.parse(quizId));
       if (quiz != null && mounted) {
@@ -210,31 +216,32 @@ class _QuizPageState extends State<QuizPage> {
   void _showResumeErrorDialog(String quizId) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Erreur de reprise'),
-        content: const Text(
-          'Impossible de retrouver le quiz à reprendre. Il a peut-être été désactivé ou supprimé.\n\nVoulez-vous effacer la sauvegarde de ce quiz ?'
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Erreur de reprise'),
+            content: const Text(
+              'Impossible de retrouver le quiz à reprendre. Il a peut-être été désactivé ou supprimé.\n\nVoulez-vous effacer la sauvegarde de ce quiz ?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Annuler'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final persistence = QuizPersistenceService();
+                  await persistence.clearSession(quizId);
+                  await persistence.clearModalHiddenState(quizId);
+                  if (mounted) {
+                    Navigator.pop(context); // Close dialog
+                    _showErrorSnackbar('Sauvegarde effacée.');
+                  }
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Effacer la sauvegarde'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () async {
-              final persistence = QuizPersistenceService();
-              await persistence.clearSession(quizId);
-              await persistence.clearModalHiddenState(quizId);
-              if (mounted) {
-                Navigator.pop(context); // Close dialog
-                _showErrorSnackbar('Sauvegarde effacée.');
-              }
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Effacer la sauvegarde'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -441,7 +448,7 @@ class _QuizPageState extends State<QuizPage> {
           ),
         ],
       ),
-      body: content,
+      body: SafeAreaBottom(child: content),
       floatingActionButton:
           _showBackToTopButton
               ? FloatingActionButton(
@@ -1485,7 +1492,10 @@ class _QuizPageState extends State<QuizPage> {
     );
   }
 
-  Future<void> _startQuiz(quiz_model.Quiz quiz, {bool isRestart = false}) async {
+  Future<void> _startQuiz(
+    quiz_model.Quiz quiz, {
+    bool isRestart = false,
+  }) async {
     try {
       final questions = await _quizRepository.getQuizQuestions(quiz.id);
       if (questions.isEmpty) {
@@ -2116,28 +2126,19 @@ class _QuizPageState extends State<QuizPage> {
 
     List<quiz_model.Quiz> result;
 
-    // RÈGLES PLUS PERMISSIVES - TOUJOURS retourner au moins quelques quiz
-    if (userPoints < 10) {
-      result = debutant.take(2).toList();
-      debugPrint('Règle <10 points: ${result.length} quiz');
-    } else if (userPoints < 20) {
-      result = debutant.take(4).toList();
-      debugPrint('Règle <20 points: ${result.length} quiz');
-    } else if (userPoints < 40) {
-      result = [...debutant, ...intermediaire.take(2)];
-      debugPrint('Règle <40 points: ${result.length} quiz');
-    } else if (userPoints < 60) {
-      result = [...debutant, ...intermediaire];
-      debugPrint('Règle <60 points: ${result.length} quiz');
+    // Nouvelle logique simplifiée selon les règles métier
+    if (userPoints < 50) {
+      // Moins de 50 points : seulement débutant
+      result = debutant;
+      debugPrint('Règle <50 points: ${result.length} quiz (débutant uniquement)');
     } else if (userPoints < 80) {
-      result = [...debutant, ...intermediaire, ...avance.take(2)];
-      debugPrint('Règle <80 points: ${result.length} quiz');
-    } else if (userPoints < 100) {
-      result = [...debutant, ...intermediaire, ...avance.take(4)];
-      debugPrint('Règle <100 points: ${result.length} quiz');
+      // 50-79 points : débutant + intermédiaire
+      result = [...debutant, ...intermediaire];
+      debugPrint('Règle 50-79 points: ${result.length} quiz (débutant + intermédiaire)');
     } else {
+      // 80+ points : tous les quiz
       result = [...debutant, ...intermediaire, ...avance];
-      debugPrint('Règle 100+ points: ${result.length} quiz');
+      debugPrint('Règle 80+ points: ${result.length} quiz (tous)');
     }
 
     // GARANTIR qu'on retourne au moins 1 quiz si des quiz sont disponibles

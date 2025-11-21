@@ -22,6 +22,7 @@ import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 import 'package:wizi_learn/core/services/quiz_persistence_service.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/resume_quiz_dialog.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/resume_quiz_button.dart';
 
@@ -478,19 +479,92 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     }
   }
 
-  void _handleResumeQuiz() {
+  void _handleResumeQuiz() async {
     if (_unfinishedQuizData != null) {
       setState(() => _showResumeQuizDialog = false);
-      // Navigate to quiz session page with resume data
-      final quizId = _unfinishedQuizData!['quizId'] as String;
-      Navigator.of(context).pushNamed(
-        RouteConstants.quiz,
-        arguments: {
-          'quizId': quizId,
-          'resume': true,
-        },
-      ).then((_) => _checkForUnfinishedQuiz());
+      
+      try {
+        final quizId = int.parse(_unfinishedQuizData!['quizId'] as String);
+        
+        // Fetch quiz data directly
+        final quiz = await _quizRepository.getQuizById(quizId);
+        if (quiz == null) {
+          if (mounted) {
+            _showResumeErrorDialog();
+          }
+          return;
+        }
+        
+        // Fetch questions
+        final questions = await _quizRepository.getQuizQuestions(quizId);
+        if (questions.isEmpty) {
+          if (mounted) {
+            _showResumeErrorDialog();
+          }
+          return;
+        }
+        
+        // Navigate directly to QuizSessionPage with resume flag
+        if (mounted) {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => QuizSessionPage(
+                quiz: quiz,
+                questions: questions,
+                quizAdventureEnabled: widget.quizAdventureEnabled,
+                playedQuizIds: _playedQuizIds,
+                isRestart: false, // Not a restart, it's a resume
+              ),
+            ),
+          );
+          
+          // Reload data after returning
+          _loadInitialData();
+          _checkForUnfinishedQuiz();
+        }
+      } catch (e) {
+        debugPrint('Error resuming quiz: $e');
+        if (mounted) {
+          _showResumeErrorDialog();
+        }
+      }
     }
+  }
+  
+  void _showResumeErrorDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Erreur'),
+        content: const Text(
+          'Impossible de reprendre ce quiz. Il a peut-être été supprimé.\n\nVoulez-vous effacer la sauvegarde ?'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final quizId = _unfinishedQuizData!['quizId'] as String;
+              final persistence = QuizPersistenceService();
+              await persistence.clearSession(quizId);
+              await persistence.clearModalHiddenState(quizId);
+              if (mounted) {
+                Navigator.pop(context);
+                setState(() {
+                  _unfinishedQuizData = null;
+                  _showResumeQuizDialog = false;
+                });
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Effacer'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _handleDismissQuiz() async {
@@ -606,7 +680,8 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
           ),
         ],
       ),
-      body: Stack(
+      body: SafeAreaBottom(
+        child: Stack(
         children: [
           _isLoading
               ? Center(
@@ -939,6 +1014,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
               onDismiss: _handleCompleteDismissQuiz,
             ),
         ],
+        ),
       ),
       floatingActionButton:
           _showBackToTopButton

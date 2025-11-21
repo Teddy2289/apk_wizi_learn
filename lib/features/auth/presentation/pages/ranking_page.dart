@@ -13,6 +13,7 @@ import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});
@@ -179,41 +180,45 @@ class _RankingPageState extends State<RankingPage>
 
   @override
   Widget build(BuildContext context) {
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Scaffold(
       appBar: isLandscape ? _buildLandscapeAppBar() : _buildPortraitAppBar(),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _hasError
-          ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Erreur: $_errorMessage',
-              style: const TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _loadAllData,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Réessayer'),
-            ),
-          ],
-        ),
-      )
-          : TabBarView(
-        controller: _tabController,
-        children: [
-          _buildRankingTab(isLandscape),
-          _buildStatsTab(isLandscape),
-          _buildHistoryTab(isLandscape),
-        ],
+      body: SafeAreaBottom(
+        child:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _hasError
+                ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Erreur: $_errorMessage',
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _loadAllData,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Réessayer'),
+                      ),
+                    ],
+                  ),
+                )
+                : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildRankingTab(isLandscape),
+                    _buildStatsTab(isLandscape),
+                    _buildHistoryTab(isLandscape),
+                  ],
+                ),
       ),
     );
   }
@@ -255,8 +260,8 @@ class _RankingPageState extends State<RankingPage>
             final stats = await _statsFuture;
             if (rankings != null && stats != null) {
               final myRanking = rankings.firstWhere(
-                    (r) =>
-                r.stagiaire.id ==
+                (r) =>
+                    r.stagiaire.id ==
                     stats.levelProgress.debutant.completed.toString(),
                 orElse: () => rankings.first,
               );
@@ -271,17 +276,18 @@ class _RankingPageState extends State<RankingPage>
         IconButton(
           icon: const Icon(Icons.help_outline),
           tooltip: 'Voir le tutoriel',
-          onPressed: () => showStandardHelpDialog(
-            context,
-            title: 'Comment utiliser cette page ?',
-            steps: const [
-              'Naviguez entre Classement, Statistiques et Historique via les onglets.',
-              'Consultez le podium et votre position dans la liste.',
-              'Dans Statistiques, explorez vos performances et votre progression.',
-              'Dans Historique, retrouvez vos quiz passés.',
-              'Utilisez le bouton Partager pour défier vos amis.',
-            ],
-          ),
+          onPressed:
+              () => showStandardHelpDialog(
+                context,
+                title: 'Comment utiliser cette page ?',
+                steps: const [
+                  'Naviguez entre Classement, Statistiques et Historique via les onglets.',
+                  'Consultez le podium et votre position dans la liste.',
+                  'Dans Statistiques, explorez vos performances et votre progression.',
+                  'Dans Historique, retrouvez vos quiz passés.',
+                  'Utilisez le bouton Partager pour défier vos amis.',
+                ],
+              ),
         ),
       ],
     );
@@ -325,10 +331,7 @@ class _RankingPageState extends State<RankingPage>
                       icon: Icon(Icons.leaderboard, size: 16),
                       text: 'Classement',
                     ),
-                    Tab(
-                      icon: Icon(Icons.assessment, size: 16),
-                      text: 'Stats',
-                    ),
+                    Tab(icon: Icon(Icons.assessment, size: 16), text: 'Stats'),
                     Tab(
                       icon: Icon(Icons.history, size: 16),
                       text: 'Historique',
@@ -355,8 +358,8 @@ class _RankingPageState extends State<RankingPage>
                   final stats = await _statsFuture;
                   if (rankings != null && stats != null) {
                     final myRanking = rankings.firstWhere(
-                          (r) =>
-                      r.stagiaire.id ==
+                      (r) =>
+                          r.stagiaire.id ==
                           stats.levelProgress.debutant.completed.toString(),
                       orElse: () => rankings.first,
                     );
@@ -371,17 +374,18 @@ class _RankingPageState extends State<RankingPage>
               IconButton(
                 icon: const Icon(Icons.help_outline, size: 18),
                 tooltip: 'Voir le tutoriel',
-                onPressed: () => showStandardHelpDialog(
-                  context,
-                  title: 'Comment utiliser cette page ?',
-                  steps: const [
-                    'Naviguez entre Classement, Statistiques et Historique via les onglets.',
-                    'Consultez le podium et votre position dans la liste.',
-                    'Dans Statistiques, explorez vos performances et votre progression.',
-                    'Dans Historique, retrouvez vos quiz passés.',
-                    'Utilisez le bouton Partager pour défier vos amis.',
-                  ],
-                ),
+                onPressed:
+                    () => showStandardHelpDialog(
+                      context,
+                      title: 'Comment utiliser cette page ?',
+                      steps: const [
+                        'Naviguez entre Classement, Statistiques et Historique via les onglets.',
+                        'Consultez le podium et votre position dans la liste.',
+                        'Dans Statistiques, explorez vos performances et votre progression.',
+                        'Dans Historique, retrouvez vos quiz passés.',
+                        'Utilisez le bouton Partager pour défier vos amis.',
+                      ],
+                    ),
               ),
             ],
           ),

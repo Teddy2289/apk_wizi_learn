@@ -173,24 +173,9 @@ class _OnSplashPage extends State<SplashPage> {
                       height: 100,
                       fit: BoxFit.contain,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ),
-        );
-              //   alignment: Alignment.topRight,
-              //   child: TextButton(
-              //     onPressed: _skipOnboarding,
-              //     child: Text(
-              //       'Passer',
-              //       style: theme.textTheme.bodyLarge?.copyWith(
-              //         color: Colors.orange,
-              //         fontWeight: FontWeight.w600,
-              //       ),
-              //     ),
-              //   ),
-              // ),
 
               // Page View Content
               Expanded(
@@ -323,6 +308,7 @@ class _OnSplashPage extends State<SplashPage> {
               const SizedBox(height: 20),
             ],
           ),
+        ),
         ),
       ),
     );

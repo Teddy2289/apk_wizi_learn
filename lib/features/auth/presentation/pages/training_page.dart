@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
@@ -159,9 +160,10 @@ class _TrainingPageState extends State<TrainingPage> {
           child: Container(height: 1, color: Colors.grey.shade200),
         ),
       ),
-      body: FutureBuilder<List<Formation>>(
-        future: _futureFormations,
-        builder: (context, snapshot) {
+      body: SafeAreaBottom(
+        child: FutureBuilder<List<Formation>>(
+          future: _futureFormations,
+          builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return _buildLoadingState(isLandscape);
           } else if (snapshot.hasError) {
@@ -184,6 +186,7 @@ class _TrainingPageState extends State<TrainingPage> {
 
           return _buildPortraitLayout(formations, categories);
         },
+        ),
       ),
     );
   }

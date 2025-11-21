@@ -13,6 +13,7 @@ import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.
 import 'package:wizi_learn/features/auth/presentation/widgets/youtube_player_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -530,7 +531,7 @@ class _TutorialPageState extends State<TutorialPage> {
             )
             : Scaffold(
               appBar: _buildAppBar(theme, screenWidth),
-              body: _buildBody(theme),
+              body: SafeAreaBottom(child: _buildBody(theme)),
             ),
         if (_fromNotification)
           Positioned(

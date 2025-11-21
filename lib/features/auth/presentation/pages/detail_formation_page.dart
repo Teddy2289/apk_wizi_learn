@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
@@ -193,7 +194,8 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Stack(
+      body: SafeAreaBottom(
+        child: Stack(
         children: [
           FutureBuilder<Formation>(
             future: _futureFormation,
@@ -813,6 +815,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
               message: _successMessage,
             ),
         ],
+        ),
       ),
     );
   }

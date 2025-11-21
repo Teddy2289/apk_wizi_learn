@@ -9,6 +9,7 @@ import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart'
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
 
 import '../../../../core/constants/route_constants.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 
 class SponsorshipPage extends StatefulWidget {
   const SponsorshipPage({super.key});
@@ -238,38 +239,40 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
               ),
         ),
       ),
-      body: Stack(
-        children: [
-          _isLoadingUser
-              ? _buildLoadingState()
-              : _userError != null
-              ? _buildErrorState()
-              : SingleChildScrollView(
-                padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header avec image
-                    _buildHeaderSection(isSmallScreen),
-                    const SizedBox(height: 24),
+      body: SafeAreaBottom(
+        child: Stack(
+          children: [
+            _isLoadingUser
+                ? _buildLoadingState()
+                : _userError != null
+                ? _buildErrorState()
+                : SingleChildScrollView(
+                  padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header avec image
+                      _buildHeaderSection(isSmallScreen),
+                      const SizedBox(height: 24),
 
-                    // Informations du parrain
-                    _buildParrainInfo(),
-                    const SizedBox(height: 24),
+                      // Informations du parrain
+                      _buildParrainInfo(),
+                      const SizedBox(height: 24),
 
-                    // Formulaire d'inscription
-                    if (!_isSuccess) _buildInscriptionForm(isSmallScreen),
-                    const SizedBox(height: 32),
+                      // Formulaire d'inscription
+                      if (!_isSuccess) _buildInscriptionForm(isSmallScreen),
+                      const SizedBox(height: 32),
 
-                    // Section "Comment ça marche"
-                    _buildHowItWorksSection(isSmallScreen),
-                  ],
+                      // Section "Comment ça marche"
+                      _buildHowItWorksSection(isSmallScreen),
+                    ],
+                  ),
                 ),
-              ),
 
-          // Modal de succès
-          if (_showSuccessModal) _buildSuccessModal(),
-        ],
+            // Modal de succès
+            if (_showSuccessModal) _buildSuccessModal(),
+          ],
+        ),
       ),
     );
   }

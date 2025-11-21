@@ -5,6 +5,7 @@ import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/notification_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/notification_repository.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 import 'package:provider/provider.dart';
 import '../providers/notification_provider.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
@@ -407,41 +408,45 @@ class _NotificationsPageState extends State<NotificationsPage> {
               ),
             ],
           ),
-          body:
-              isLoading && !notifProvider.initialized
-                  ? const Center(child: CircularProgressIndicator())
-                  : RefreshIndicator(
-                    onRefresh: notifProvider.refresh,
-                    child:
-                        notifications.isEmpty
-                            ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.notifications_off,
-                                    size: 48,
-                                    color: Colors.grey.shade400,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    "Aucune notification pour l'instant, tu es à jour !",
-                                    style: TextStyle(
-                                      color: Colors.grey.shade600,
+          body: SafeAreaBottom(
+            child:
+                isLoading && !notifProvider.initialized
+                    ? const Center(child: CircularProgressIndicator())
+                    : RefreshIndicator(
+                      onRefresh: notifProvider.refresh,
+                      child:
+                          notifications.isEmpty
+                              ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.notifications_off,
+                                      size: 48,
+                                      color: Colors.grey.shade400,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      "Aucune notification pour l'instant, tu es à jour !",
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                              : ListView(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                children: _buildNotificationList(
+                                  context,
+                                  notifications,
+                                  notifProvider,
+                                ),
                               ),
-                            )
-                            : ListView(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              children: _buildNotificationList(
-                                context,
-                                notifications,
-                                notifProvider,
-                              ),
-                            ),
-                  ),
+                    ),
+          ),
         );
       },
     );

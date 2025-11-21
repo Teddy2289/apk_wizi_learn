@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 import 'package:wizi_learn/features/auth/data/repositories/contact_repository.dart';
 
 class ContactFaqPage extends StatefulWidget {
@@ -26,7 +27,7 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
     'Problème technique',
     'Question sur une formation',
     'Facturation',
-    'Autre'
+    'Autre',
   ];
 
   @override
@@ -52,19 +53,19 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: Colors.black.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.arrow_back, color: Colors.white),
             ),
-            onPressed: () => Navigator.pushReplacementNamed(
-              context,
-              RouteConstants.dashboard,
-            ),
+            onPressed:
+                () => Navigator.pushReplacementNamed(
+                  context,
+                  RouteConstants.dashboard,
+                ),
           ),
-          backgroundColor: isDarkMode
-              ? theme.appBarTheme.backgroundColor
-              : Colors.white,
+          backgroundColor:
+              isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
           bottom: const TabBar(
             tabs: [
               Tab(icon: Icon(Icons.help_outline)),
@@ -72,11 +73,10 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            _buildFAQSection(theme),
-            _buildContactForm(),
-          ],
+        body: SafeAreaBottom(
+          child: TabBarView(
+            children: [_buildFAQSection(theme), _buildContactForm()],
+          ),
         ),
       ),
     );
@@ -158,12 +158,10 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
         border: OutlineInputBorder(),
         prefixIcon: Icon(Icons.category),
       ),
-      items: _problemTypes.map((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        );
-      }).toList(),
+      items:
+          _problemTypes.map((String value) {
+            return DropdownMenuItem<String>(value: value, child: Text(value));
+          }).toList(),
       onChanged: (newValue) {
         setState(() {
           _selectedProblemType = newValue;
@@ -217,25 +215,24 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
           const SizedBox(height: 4),
           Wrap(
             spacing: 8,
-            children: _selectedFiles.map((file) {
-              return Chip(
-                label: SizedBox(
-                  width: 100,
-                  child: Text(
-                    file.name,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                deleteIcon: const Icon(Icons.close, size: 18),
-                onDeleted: _isSending
-                    ? null
-                    : () {
-                  setState(() {
-                    _selectedFiles.remove(file);
-                  });
-                },
-              );
-            }).toList(),
+            children:
+                _selectedFiles.map((file) {
+                  return Chip(
+                    label: SizedBox(
+                      width: 100,
+                      child: Text(file.name, overflow: TextOverflow.ellipsis),
+                    ),
+                    deleteIcon: const Icon(Icons.close, size: 18),
+                    onDeleted:
+                        _isSending
+                            ? null
+                            : () {
+                              setState(() {
+                                _selectedFiles.remove(file);
+                              });
+                            },
+                  );
+                }).toList(),
           ),
         ],
       ],
@@ -250,12 +247,13 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
         onPressed: _isSending ? null : _submitForm,
-        child: _isSending
-            ? const CircularProgressIndicator(color: Colors.white)
-            : const Text(
-          'ENVOYER LE MESSAGE',
-          style: TextStyle(fontSize: 16),
-        ),
+        child:
+            _isSending
+                ? const CircularProgressIndicator(color: Colors.white)
+                : const Text(
+                  'ENVOYER LE MESSAGE',
+                  style: TextStyle(fontSize: 16),
+                ),
       ),
     );
   }
@@ -274,7 +272,9 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
           _selectedFiles = result.files;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_selectedFiles.length} fichier(s) sélectionné(s)')),
+          SnackBar(
+            content: Text('${_selectedFiles.length} fichier(s) sélectionné(s)'),
+          ),
         );
       }
     } catch (e) {
@@ -285,7 +285,6 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
     }
   }
 
-
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -293,10 +292,12 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
       });
 
       try {
-        await ContactRepository(apiClient: ApiClient(
-          dio: Dio(),
-          storage: const FlutterSecureStorage(),
-        )).sendContactForm(
+        await ContactRepository(
+          apiClient: ApiClient(
+            dio: Dio(),
+            storage: const FlutterSecureStorage(),
+          ),
+        ).sendContactForm(
           email: _emailController.text,
           subject: _subjectController.text,
           problemType: _selectedProblemType ?? '',
@@ -318,7 +319,8 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
         });
       } on DioException catch (e) {
         // Gestion spécifique de l'erreur backend
-        if (e.response?.data?.toString().contains('format() on string') ?? false) {
+        if (e.response?.data?.toString().contains('format() on string') ??
+            false) {
           // Le message a été envoyé mais le backend a un problème mineur
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Message envoyé avec succès!')),
@@ -340,9 +342,9 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
         }
       } catch (e) {
         // Pour les autres types d'erreurs
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur inattendue: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erreur inattendue: $e')));
       } finally {
         setState(() {
           _isSending = false;
@@ -364,27 +366,32 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
 
           _buildFAQItem(
             question: "Comment accéder à mes formations ?",
-            answer: "Toutes vos formations sont disponibles dans l'onglet 'Mes formations' du menu principal.",
+            answer:
+                "Toutes vos formations sont disponibles dans l'onglet 'Mes formations' du menu principal.",
           ),
 
           _buildFAQItem(
             question: "Comment réinitialiser mon mot de passe ?",
-            answer: "Sur la page de connexion, cliquez sur 'Mot de passe oublié'.",
+            answer:
+                "Sur la page de connexion, cliquez sur 'Mot de passe oublié'.",
           ),
 
           _buildFAQItem(
             question: "Comment contacter le support technique ?",
-            answer: "Utilisez le formulaire de contact dans l'onglet 'Contact' de cette page.",
+            answer:
+                "Utilisez le formulaire de contact dans l'onglet 'Contact' de cette page.",
           ),
 
           _buildFAQItem(
             question: "Où voir ma progression ?",
-            answer: "Votre progression est visible dans l'onglet 'Mes Progrès'.",
+            answer:
+                "Votre progression est visible dans l'onglet 'Mes Progrès'.",
           ),
 
           _buildFAQItem(
             question: "Comment obtenir une attestation de formation ?",
-            answer: "Les attestations sont générées automatiquement lorsque vous terminez une formation.",
+            answer:
+                "Les attestations sont générées automatiquement lorsque vous terminez une formation.",
           ),
 
           const SizedBox(height: 24),
@@ -410,19 +417,14 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
         title: Text(
           question,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(answer),
-          ),
+          Padding(padding: const EdgeInsets.all(16), child: Text(answer)),
         ],
       ),
     );

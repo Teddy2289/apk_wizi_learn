@@ -8,6 +8,7 @@ import 'package:wizi_learn/features/auth/data/repositories/all_achievements_repo
 import 'package:wizi_learn/features/auth/data/repositories/achievement_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_widget.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 
 class AllAchievementsPage extends StatefulWidget {
   const AllAchievementsPage({super.key});
@@ -118,115 +119,116 @@ class _AllAchievementsPageState extends State<AllAchievementsPage> {
           child: const SizedBox.shrink(),
         ),
       ),
-      body:
-          _isLoading
-              ? Center(
-                child: CircularProgressIndicator(
-                  color: theme.colorScheme.primary,
-                ),
-              )
-              : LayoutBuilder(
-                builder: (context, constraints) {
-                  final cols = _computeCrossAxisCount(constraints.maxWidth);
-                  final items = filtered();
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.emoji_events,
-                              color: theme.colorScheme.primary,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Badges: ${items.length}${_selectedType != null ? ' (${_labelForType(_selectedType!)})' : ''}',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const Spacer(),
-                            Text(
-                              '${_user.where((u) => _selectedType == null || u.type == _selectedType).length} débloqués',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(
-                                  0.6,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Filtres
-                      if (_availableTypes.isNotEmpty)
+      body: SafeAreaBottom(
+        child:
+            _isLoading
+                ? Center(
+                  child: CircularProgressIndicator(
+                    color: theme.colorScheme.primary,
+                  ),
+                )
+                : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final cols = _computeCrossAxisCount(constraints.maxWidth);
+                    final items = filtered();
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.emoji_events,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Badges: ${items.length}${_selectedType != null ? ' (${_labelForType(_selectedType!)})' : ''}',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '${_user.where((u) => _selectedType == null || u.type == _selectedType).length} débloqués',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.6),
+                                ),
+                              ),
+                            ],
                           ),
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                ChoiceChip(
-                                  label: const Text('Tous'),
-                                  selected: _selectedType == null,
-                                  onSelected: (v) {
-                                    if (!v) return;
-                                    setState(() => _selectedType = null);
-                                  },
-                                ),
-                                const SizedBox(width: 8),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children:
-                                      _availableTypes.map((t) {
-                                        return ChoiceChip(
-                                          label: Text(_labelForType(t)),
-                                          selected: _selectedType == t,
-                                          onSelected: (v) {
-                                            if (!v) return;
-                                            setState(() => _selectedType = t);
-                                          },
-                                        );
-                                      }).toList(),
-                                ),
-                              ],
+                        ),
+                        // Filtres
+                        if (_availableTypes.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  ChoiceChip(
+                                    label: const Text('Tous'),
+                                    selected: _selectedType == null,
+                                    onSelected: (v) {
+                                      if (!v) return;
+                                      setState(() => _selectedType = null);
+                                    },
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children:
+                                        _availableTypes.map((t) {
+                                          return ChoiceChip(
+                                            label: Text(_labelForType(t)),
+                                            selected: _selectedType == t,
+                                            onSelected: (v) {
+                                              if (!v) return;
+                                              setState(() => _selectedType = t);
+                                            },
+                                          );
+                                        }).toList(),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
+                        const SizedBox(height: 8),
+                        Expanded(
+                          child: GridView.builder(
+                            padding: const EdgeInsets.all(16),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: cols,
+                                  mainAxisSpacing: 16,
+                                  crossAxisSpacing: 16,
+                                  childAspectRatio: 0.8,
+                                ),
+                            itemCount: items.length,
+                            itemBuilder: (context, index) {
+                              final badge = items[index];
+                              final unlocked = _user.any(
+                                (a) => a.id == badge.id && a.unlockedAt != null,
+                              );
+                              return AchievementBadgeWidget(
+                                achievement: badge,
+                                unlocked: unlocked,
+                                colored: false,
+                              );
+                            },
+                          ),
                         ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: GridView.builder(
-                          padding: const EdgeInsets.all(16),
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: cols,
-                                mainAxisSpacing: 16,
-                                crossAxisSpacing: 16,
-                                childAspectRatio: 0.8,
-                              ),
-                          itemCount: items.length,
-                          itemBuilder: (context, index) {
-                            final badge = items[index];
-                            final unlocked = _user.any(
-                              (a) => a.id == badge.id && a.unlockedAt != null,
-                            );
-                            return AchievementBadgeWidget(
-                              achievement: badge,
-                              unlocked: unlocked,
-                              colored: false,
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
+                      ],
+                    );
+                  },
+                ),
+      ),
     );
   }
 }
