@@ -86,7 +86,17 @@ class _QuizPageState extends State<QuizPage> {
       if (args is Map<String, dynamic>) {
         setState(() {
           _fromNotification = args['fromNotification'] ?? false;
-          _scrollToQuizId = args['scrollToQuizId'];
+          _scrollToQuizId = args['scrollToQuizId'] ?? args['quizId'];
+        });
+      }
+
+      final bool shouldResume = 
+          (args is Map<String, dynamic>) ? (args['resume'] ?? false) : false;
+
+      if (shouldResume && _scrollToQuizId != null) {
+        // Auto-start quiz if resume is requested
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+           _autoStartQuiz(_scrollToQuizId!);
         });
       }
 
@@ -131,6 +141,44 @@ class _QuizPageState extends State<QuizPage> {
           _startQuiz(_visibleUnplayed.first);
         }
       });
+    }
+  }
+
+  Future<void> _autoStartQuiz(String quizId) async {
+    // Wait for quizzes to load if needed
+    if (_futureQuizzes == null) {
+      await Future.delayed(const Duration(seconds: 1));
+    }
+    
+    // Try to find the quiz in loaded lists
+    if (_futureQuizzes != null) {
+      try {
+        final quizzes = await _futureQuizzes!;
+        final quiz = quizzes.firstWhere(
+          (q) => q.id.toString() == quizId,
+          orElse: () => quiz_model.Quiz(
+            id: 0, 
+            titre: '', 
+            description: '', 
+            niveau: '', 
+            nbPointsTotal: 0,
+            formation: quiz_model.QuizFormation(
+              id: 0, 
+              titre: '', 
+              categorie: '', 
+              description: '', 
+              duree: ''
+            ), 
+            questions: []
+          ),
+        );
+        
+        if (quiz.id != 0 && mounted) {
+          _startQuiz(quiz);
+        }
+      } catch (e) {
+        debugPrint('Error auto-starting quiz: $e');
+      }
     }
   }
 
@@ -1331,7 +1379,7 @@ class _QuizPageState extends State<QuizPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          onPressed: () => _startQuiz(quiz),
+                          onPressed: () => _startQuiz(quiz, isRestart: true),
                           child: const Text(
                             'Refaire ce quiz',
                             style: TextStyle(
@@ -1381,7 +1429,7 @@ class _QuizPageState extends State<QuizPage> {
     );
   }
 
-  Future<void> _startQuiz(quiz_model.Quiz quiz) async {
+  Future<void> _startQuiz(quiz_model.Quiz quiz, {bool isRestart = false}) async {
     try {
       final questions = await _quizRepository.getQuizQuestions(quiz.id);
       if (questions.isEmpty) {
@@ -1403,6 +1451,7 @@ class _QuizPageState extends State<QuizPage> {
                 questions: questions,
                 quizAdventureEnabled: widget.quizAdventureEnabled,
                 playedQuizIds: _playedQuizIds,
+                isRestart: isRestart,
               ),
         ),
       );

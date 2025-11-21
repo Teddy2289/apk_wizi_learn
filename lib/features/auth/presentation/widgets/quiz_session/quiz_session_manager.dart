@@ -201,6 +201,15 @@ class QuizSessionManager {
     return _totalTimeSpent;
   }
 
+  void restoreSession(int index, Map<String, dynamic> answers, int timeSpent) {
+    if (index >= 0 && index < questions.length) {
+      currentQuestionIndex.value = index;
+    }
+    _userAnswers.addAll(answers);
+    _totalTimeSpent = timeSpent;
+    _resetQuestionTimer();
+  }
+
   void dispose() {
     _timer?.cancel();
     currentQuestionIndex.dispose();

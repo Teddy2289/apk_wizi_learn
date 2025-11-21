@@ -13,10 +13,7 @@ class QuizTimerDisplay extends StatelessWidget {
       builder: (_, seconds, _) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            'Temps restant: $seconds secondes',
-            style: const TextStyle(fontSize: 16),
-          ),
+          child: Text('$seconds s', style: const TextStyle(fontSize: 16)),
         );
       },
     );

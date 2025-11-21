@@ -540,7 +540,7 @@ class QuizSubmissionResponse {
     }
 
     return QuizSubmissionResponse(
-      id: json['id'] as int? ?? 0,
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       quizId: json['quizId'] as int? ?? 0,
       score: json['score'] as int? ?? 0,
       correctAnswers: json['correctAnswers'] as int? ?? 0,

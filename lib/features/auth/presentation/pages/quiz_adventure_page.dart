@@ -223,6 +223,9 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     List<quiz_model.Quiz> allQuizzes,
     int userPoints,
   ) {
+    print('🔍 FILTRAGE QUIZ - Points utilisateur: $userPoints');
+    print('🔍 Nombre total de quiz: ${allQuizzes.length}');
+    
     if (allQuizzes.isEmpty) return [];
 
     String normalizeLevel(String? level) {
@@ -233,6 +236,11 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
       }
       if (lvl.contains('avancé') || lvl.contains('expert')) return 'avancé';
       return 'débutant';
+    }
+
+    // Debug: afficher tous les niveaux avant normalisation
+    for (var q in allQuizzes) {
+      print('Quiz: ${q.titre} - Niveau brut: "${q.niveau}" - Normalisé: "${normalizeLevel(q.niveau)}"');
     }
 
     final debutant =
@@ -246,17 +254,26 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     final avance =
         allQuizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
 
+    print('🔍 Quiz débutant: ${debutant.length}');
+    print('🔍 Quiz intermédiaire: ${intermediaire.length}');
+    print('🔍 Quiz avancé: ${avance.length}');
+
     List<quiz_model.Quiz> filtered = [];
     if (userPoints < 10) {
       filtered = debutant.take(2).toList();
+      print('🔍 Utilisateur < 10 points: affichage de ${filtered.length} quiz débutants');
     } else {
       filtered = [...debutant, ...intermediaire, ...avance];
+      print('🔍 Utilisateur >= 10 points: affichage de ${filtered.length} quiz au total');
     }
 
     // Fallback: si aucun quiz filtré mais la liste d'origine n'est pas vide, retourne au moins le premier quiz
     if (filtered.isEmpty && allQuizzes.isNotEmpty) {
       filtered = [allQuizzes.first];
+      print('🔍 FALLBACK: Aucun quiz filtré, affichage du premier quiz');
     }
+    
+    print('🔍 RESULTAT FINAL: ${filtered.length} quiz après filtrage');
     return filtered;
   }
 

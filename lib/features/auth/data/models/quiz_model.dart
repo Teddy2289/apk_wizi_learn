@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart'; // Assurez-vous que c'est le bon chemin
 import 'package:wizi_learn/features/auth/data/models/quiz_formation.dart';
 
+export 'package:wizi_learn/features/auth/data/models/quiz_formation.dart';
+
 class Quiz {
   final int id;
   final String titre;
@@ -65,7 +67,7 @@ class Quiz {
     }
 
     return Quiz(
-      id: json['id'] as int? ?? 0,
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       titre: json['titre']?.toString() ?? 'Titre inconnu',
       description: json['description']?.toString(),
       duree: json['duree']?.toString(),

@@ -15,23 +15,59 @@ class QuizPersistenceService {
       
       if (sessionKeys.isEmpty) return null;
       
-      // Sort keys to get the most recent session (last modified)
-      // For now, just take the last one
-      final lastKey = sessionKeys.last;
-      final sessionJson = prefs.getString(lastKey);
+      // Find the most recent session
+      Map<String, dynamic>? mostRecentSession;
+      DateTime? mostRecentTime;
+      
+      for (final key in sessionKeys) {
+        final jsonStr = prefs.getString(key);
+        if (jsonStr != null && jsonStr.isNotEmpty) {
+          try {
+            final session = json.decode(jsonStr) as Map<String, dynamic>;
+            final timestampStr = session['timestamp'] as String?;
+            
+            if (timestampStr != null) {
+              final timestamp = DateTime.parse(timestampStr);
+              if (mostRecentTime == null || timestamp.isAfter(mostRecentTime)) {
+                mostRecentTime = timestamp;
+                mostRecentSession = session;
+                // Ensure quizId is present
+                mostRecentSession['quizId'] = key.replaceFirst(_keyPrefix, '');
+              }
+            } else {
+               // Fallback if no timestamp, just take it if we have nothing else
+               if (mostRecentSession == null) {
+                 mostRecentSession = session;
+                 mostRecentSession['quizId'] = key.replaceFirst(_keyPrefix, '');
+               }
+            }
+          } catch (e) {
+            print('Error parsing session for key $key: $e');
+          }
+        }
+      }
+      
+      return mostRecentSession;
+    } catch (e) {
+      print('Error getting last unfinished quiz: $e');
+      return null;
+    }
+  }
+
+  /// Get a specific quiz session by ID
+  Future<Map<String, dynamic>?> getSession(String quizId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = '$_keyPrefix$quizId';
+      final sessionJson = prefs.getString(key);
       
       if (sessionJson == null || sessionJson.isEmpty) {
         return null;
       }
       
-      final sessionData = json.decode(sessionJson) as Map<String, dynamic>;
-      
-      // Add the quizId from the key
-      sessionData['quizId'] = lastKey.replaceFirst(_keyPrefix, '');
-      
-      return sessionData;
+      return json.decode(sessionJson) as Map<String, dynamic>;
     } catch (e) {
-      print('Error getting last unfinished quiz: $e');
+      print('Error getting quiz session: $e');
       return null;
     }
   }
@@ -71,6 +107,40 @@ class QuizPersistenceService {
       }
     } catch (e) {
       print('Error clearing all quiz sessions: $e');
+    }
+  }
+  
+  /// Check if the resume quiz modal has been hidden for a specific quiz
+  Future<bool> isModalHidden(String quizId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'quiz_modal_hidden_$quizId';
+      return prefs.getBool(key) ?? false;
+    } catch (e) {
+      print('Error checking if modal is hidden: $e');
+      return false;
+    }
+  }
+  
+  /// Set whether the resume quiz modal should be hidden for a specific quiz
+  Future<void> setModalHidden(String quizId, bool isHidden) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'quiz_modal_hidden_$quizId';
+      await prefs.setBool(key, isHidden);
+    } catch (e) {
+      print('Error setting modal hidden state: $e');
+    }
+  }
+  
+  /// Clear the modal hidden state for a specific quiz
+  Future<void> clearModalHiddenState(String quizId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'quiz_modal_hidden_$quizId';
+      await prefs.remove(key);
+    } catch (e) {
+      print('Error clearing modal hidden state: $e');
     }
   }
 }

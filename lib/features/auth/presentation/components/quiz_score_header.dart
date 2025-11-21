@@ -28,7 +28,7 @@ class QuizScoreHeader extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildScoreItem(context, "$score", "Points"),
-                _buildScoreItem(context, "$correctAnswers/$totalQuestions", "Réponses"),
+                _buildScoreItem(context, "$correctAnswers/5", "Réponses"),
                 _buildScoreItem(context, "${timeSpent}s", "Temps"),
               ],
             ),
