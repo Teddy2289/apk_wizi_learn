@@ -34,7 +34,7 @@ class QuizNavigationControls extends StatelessWidget {
           height: buttonHeight,
           child: Row(
             children: [
-              // Bouton précédent - visible seulement si ce n'est pas la première question
+              // Bouton précédent
               if (index > 0)
                 Expanded(
                   flex: isCompact ? 2 : 3,
@@ -77,7 +77,7 @@ class QuizNavigationControls extends StatelessWidget {
               else
                 const SizedBox.shrink(),
 
-              // Indicateur de progression en mode compact
+              // Indicateur de progression en compact
               if (isCompact && index > 0)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -91,11 +91,13 @@ class QuizNavigationControls extends StatelessWidget {
                   ),
                 ),
 
-              // Bouton suivant/terminer - toujours présent
+              // Bouton suivant / terminer
               Expanded(
                 flex: isCompact ? 3 : 4,
                 child: Container(
-                  margin: EdgeInsets.only(left: (index > 0 && isCompact) ? 6 : 0),
+                  margin: EdgeInsets.only(
+                    left: (index > 0 && isCompact) ? 6 : 0,
+                  ),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,
@@ -128,10 +130,7 @@ class QuizNavigationControls extends StatelessWidget {
                           ),
                         ] else ...[
                           SizedBox(width: isCompact ? 4 : 6),
-                          Icon(
-                            Icons.check_rounded,
-                            size: iconSize,
-                          ),
+                          Icon(Icons.check_rounded, size: iconSize),
                         ],
                       ],
                     ),
@@ -145,84 +144,49 @@ class QuizNavigationControls extends StatelessWidget {
     );
   }
 
-  void _handleNextOrComplete(BuildContext context, int index) async {
+  // ---------------------------------------------------------
+  // LOGIQUE DU BOUTON SUIVANT / TERMINER
+  // ---------------------------------------------------------
+  Future<void> _handleNextOrComplete(BuildContext context, int index) async {
     try {
+      // Si ce n'est pas la dernière question → question suivante
       if (index < questions.length - 1) {
         sessionManager.goToNextQuestion();
-      } else {
-        // Afficher un indicateur de chargement
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder:
-              (context) => const Center(child: CircularProgressIndicator()),
-        );
+        return;
+      }
 
-        try {
-          final results = await sessionManager.completeQuiz();
-          if (!context.mounted) return;
+      // Si dernière question → tenter d’envoyer au backend
+      final result = await sessionManager.completeQuiz();
 
-          // Fermer le dialogue de chargement
-          Navigator.of(context).pop();
-
-          await Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder:
-                  (context) => QuizSummaryPage(
-                questions:
-                (results['questions'] as List)
-                    .map((q) => Question.fromJson(q))
-                    .toList(),
-                score: results['score'] ?? 0,
-                correctAnswers: results['correctAnswers'] ?? 0,
-                totalQuestions:
-                results['totalQuestions'] ?? questions.length,
-                timeSpent: results['timeSpent'] ?? 0,
-                quizResult: {
-          if (!context.mounted) return;
-
-          showDialog(
-            context: context,
+      if (result != null) {
+        // Résultat en ligne OK
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
             builder:
-                (context) => AlertDialog(
-              title: const Text('Erreur de soumission'),
-              content: Text(
-                'Impossible de soumettre le quiz en ce moment.\n\n'
-                    'Voulez-vous voir vos résultats localement ou réessayer la soumission ?',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    _showLocalResults(context);
-                  },
-                  child: const Text('Voir résultats'),
+                (context) => QuizSummaryPage(
+                  questions: questions,
+                  score: result['score'] ?? 0,
+                  correctAnswers: result['correctAnswers'] ?? 0,
+                  totalQuestions: questions.length,
+                  timeSpent: sessionManager.getTimeSpent(),
+                  quizResult: result,
                 ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    _handleNextOrComplete(context, index);
-                  },
-                  child: const Text('Réessayer'),
-                ),
-              ],
-            ),
-          );
-        }
+          ),
+        );
+      } else {
+        // Sinon → résultats locaux
+        _showLocalResults(context);
       }
     } catch (e) {
-      if (!context.mounted) return;
-
-      // Message d'erreur convivial pour l'utilisateur
       String userFriendlyMessage =
-          'Une erreur est survenue lors de la soumission du quiz.';
+          "Une erreur est survenue. Veuillez réessayer.";
 
-      // Si c'est une erreur de réseau ou de serveur, donner un message plus spécifique
-      if (e.toString().contains('Exception') ||
-          e.toString().contains('Failed')) {
+      // Erreurs réseau
+      if (e.toString().contains("Exception") ||
+          e.toString().contains("Failed")) {
         userFriendlyMessage =
-        'Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.';
+            "Erreur de connexion. Vérifiez votre internet et réessayez.";
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -231,7 +195,7 @@ class QuizNavigationControls extends StatelessWidget {
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 5),
           action: SnackBarAction(
-            label: 'Réessayer',
+            label: "Réessayer",
             textColor: Colors.white,
             onPressed: () => _handleNextOrComplete(context, index),
           ),
@@ -240,14 +204,13 @@ class QuizNavigationControls extends StatelessWidget {
     }
   }
 
+  // ---------------------------------------------------------
+  // MODE LOCAL SI L'API NE RÉPOND PAS
+  // ---------------------------------------------------------
   void _showLocalResults(BuildContext context) {
-    // Calculer les résultats localement
     final userAnswers = sessionManager.getUserAnswers();
-    int correctAnswers = 0;
-    int totalQuestions = questions.length;
-
-    // Simuler un calcul de score basique
-    correctAnswers = (userAnswers.length * 0.7).round();
+    final int totalQuestions = questions.length;
+    final int correctAnswers = (userAnswers.length * 0.7).round();
 
     final localResults = {
       'questions': questions.map((q) => q.toJson()).toList(),
@@ -264,14 +227,13 @@ class QuizNavigationControls extends StatelessWidget {
       MaterialPageRoute(
         builder:
             (context) => QuizSummaryPage(
-          questions: questions,
-          score: (localResults['score'] as int?) ?? 0,
-          correctAnswers: (localResults['correctAnswers'] as int?) ?? 0,
-          totalQuestions:
-          (localResults['totalQuestions'] as int?) ?? questions.length,
-          timeSpent: (localResults['timeSpent'] as int?) ?? 0,
-          quizResult: localResults,
-        ),
+              questions: questions,
+              score: localResults['score'] as int,
+              correctAnswers: localResults['correctAnswers'] as int,
+              totalQuestions: localResults['totalQuestions'] as int,
+              timeSpent: localResults['timeSpent'] as int,
+              quizResult: localResults,
+            ),
       ),
     );
   }
