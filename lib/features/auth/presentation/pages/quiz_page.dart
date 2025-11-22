@@ -20,6 +20,8 @@ import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dar
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 import 'package:wizi_learn/core/services/quiz_persistence_service.dart';
 import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/resume_quiz_dialog.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/resume_quiz_button.dart';
 
 class QuizPage extends StatefulWidget {
   final bool scrollToPlayed;
@@ -66,6 +68,12 @@ class _QuizPageState extends State<QuizPage> {
   String? _selectedFormation;
   List<String> _availableLevels = [];
   List<String> _availableFormations = [];
+  
+  // Resume quiz functionality
+  bool _showResumeQuizDialog = false;
+  Map<String, dynamic>? _unfinishedQuizData;
+  bool _isQuizModalHidden = false;
+  
   // Au début de la classe
   Timer? _refreshTimer;
 
@@ -82,6 +90,7 @@ class _QuizPageState extends State<QuizPage> {
     _initializeRepositories();
     _loadInitialData();
     _scrollController.addListener(_scrollListener);
+    _checkForUnfinishedQuiz();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final args = ModalRoute.of(context)?.settings.arguments;
@@ -334,23 +343,50 @@ class _QuizPageState extends State<QuizPage> {
         args?['scrollToPlayed'] ?? widget.scrollToPlayed;
 
     // Contenu principal (header + liste optimisée)
-    Widget content = RefreshIndicator(
-      onRefresh: _loadInitialData,
-      child: CustomScrollView(
-        key: const PageStorageKey('quiz_scroll'),
-        controller: _scrollController,
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            sliver: SliverToBoxAdapter(child: _buildHeader(theme)),
+    Widget content = Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: _loadInitialData,
+          child: CustomScrollView(
+            key: const PageStorageKey('quiz_scroll'),
+            controller: _scrollController,
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                sliver: SliverToBoxAdapter(child: _buildHeader(theme)),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: _buildQuizListContent(theme),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            ],
           ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: _buildQuizListContent(theme),
+        ),
+        // Resume quiz modal
+        if (_showResumeQuizDialog && _unfinishedQuizData != null && !_isQuizModalHidden)
+          Positioned.fill(
+            child: Material(
+              color: Colors.black.withOpacity(0.7),
+              child: Center(
+                child: ResumeQuizDialog(
+                  quizData: _unfinishedQuizData!,
+                  onResume: _handleResumeQuiz,
+                  onDismiss: _handleDismissQuiz,
+                ),
+              ),
+            ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
-        ],
-      ),
+        // Floating resume quiz button when modal is hidden
+        if (_unfinishedQuizData != null && _isQuizModalHidden)
+          ResumeQuizButton(
+            quizTitle: _unfinishedQuizData!['quizTitle'] as String? ?? 'Quiz',
+            questionCount: (_unfinishedQuizData!['questionIds'] as List?)?.length ?? 0,
+            currentProgress: _unfinishedQuizData!['currentIndex'] as int? ?? 0,
+            onResume: _handleResumeQuiz,
+            onDismiss: _handleCompleteDismissQuiz,
+          ),
+      ],
     );
 
     // Gestion scroll ciblé
@@ -449,58 +485,7 @@ class _QuizPageState extends State<QuizPage> {
         ],
       ),
       body: SafeAreaBottom(
-        child: Column(
-          children: [
-            if (_availableFormations.isNotEmpty)
-              Container(
-                color: theme.scaffoldBackgroundColor,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: Row(
-                  children: [
-                    Icon(Icons.school, color: theme.colorScheme.primary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _showFormationPicker,
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                            horizontal: 12,
-                          ),
-                          side: BorderSide(
-                            color: theme.colorScheme.primary.withOpacity(0.5),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              _selectedFormation == null
-                                  ? 'Choisir une formation'
-                                  : _selectedFormation!,
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface.withOpacity(
-                                  0.8,
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              Icons.keyboard_arrow_down,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            Expanded(child: content),
-          ],
-        ),
+        child: content,
       ),
       floatingActionButton:
           _showBackToTopButton
@@ -2247,6 +2232,151 @@ class _QuizPageState extends State<QuizPage> {
       }
     } catch (e) {
       debugPrint('Erreur dans _selectFormationFromLastPlayedIfAny: $e');
+    }
+  }
+
+  // Resume quiz methods
+  Future<void> _checkForUnfinishedQuiz() async {
+    try {
+      final persistenceService = QuizPersistenceService();
+      final unfinishedQuiz = await persistenceService.getLastUnfinishedQuiz();
+      
+      if (unfinishedQuiz != null && mounted) {
+        final quizId = unfinishedQuiz['quizId'] as String;
+        final isHidden = await persistenceService.isModalHidden(quizId);
+        
+        // Show dialog after a short delay
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        if (mounted) {
+          setState(() {
+            _unfinishedQuizData = unfinishedQuiz;
+            _isQuizModalHidden = isHidden;
+            _showResumeQuizDialog = !isHidden;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking for unfinished quiz: $e');
+    }
+  }
+
+  void _handleResumeQuiz() async {
+    if (_unfinishedQuizData != null) {
+      setState(() => _showResumeQuizDialog = false);
+      
+      try {
+        final quizId = int.parse(_unfinishedQuizData!['quizId'] as String);
+        final quizTitle = _unfinishedQuizData!['quizTitle'] as String? ?? 'Quiz';
+        
+        debugPrint('🔄 Attempting to resume quiz: ID=$quizId, Title=$quizTitle');
+        
+        // Récupérer les IDs des questions sauvegardées
+        List<int>? questionIds;
+        if (_unfinishedQuizData!['questionIds'] != null) {
+          questionIds = (_unfinishedQuizData!['questionIds'] as List)
+              .map((e) => int.parse(e.toString()))
+              .toList();
+          debugPrint('📝 Saved question IDs: $questionIds');
+        } else {
+          debugPrint('⚠️ No saved question IDs found');
+        }
+        
+        // Fetch questions directly with specific IDs to match the saved session
+        debugPrint('🔍 Fetching questions for quiz $quizId...');
+        final questions = await _quizRepository.getQuizQuestions(
+          quizId, 
+          targetQuestionIds: questionIds,
+        );
+        
+        debugPrint('✅ Retrieved ${questions.length} questions');
+        
+        if (questions.isEmpty) {
+          debugPrint('❌ No questions found for quiz $quizId');
+          if (mounted) {
+            _showResumeErrorDialog(quizId.toString());
+          }
+          return;
+        }
+        
+        // Créer un objet Quiz minimal à partir des données sauvegardées
+        final quiz = quiz_model.Quiz(
+          id: quizId,
+          titre: quizTitle,
+          description: '',
+          niveau: 'débutant',
+          nbPointsTotal: questions.length * 2,
+          formation: quiz_model.QuizFormation(
+            id: 0,
+            titre: 'Formation',
+            description: '',
+            duree: '0',
+            categorie: 'Général',
+          ),
+          questions: questions,
+        );
+        
+        // Navigate to QuizSessionPage
+        if (mounted) {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => QuizSessionPage(
+                quiz: quiz,
+                questions: questions,
+                quizAdventureEnabled: widget.quizAdventureEnabled,
+                playedQuizIds: _playedQuizIds,
+                isRestart: false,
+              ),
+            ),
+          );
+          
+          // Reload data after returning
+          _loadInitialData();
+          _checkForUnfinishedQuiz();
+        }
+      } catch (e) {
+        debugPrint('Error resuming quiz: $e');
+        if (mounted) {
+          final quizId = _unfinishedQuizData!['quizId'] as String;
+          _showResumeErrorDialog(quizId);
+        }
+      }
+    }
+  }
+
+
+  void _handleDismissQuiz() async {
+    // Hide modal temporarily instead of deleting session
+    if (_unfinishedQuizData != null) {
+      final quizId = _unfinishedQuizData!['quizId'] as String;
+      final persistenceService = QuizPersistenceService();
+      await persistenceService.setModalHidden(quizId, true);
+      
+      if (mounted) {
+        setState(() {
+          _showResumeQuizDialog = false;
+          _isQuizModalHidden = true;
+        });
+      }
+    }
+  }
+
+  void _handleCompleteDismissQuiz() async {
+    // Permanently delete quiz session
+    if (_unfinishedQuizData != null) {
+      final quizId = _unfinishedQuizData!['quizId'] as String;
+      final persistenceService = QuizPersistenceService();
+      await persistenceService.clearSession(quizId);
+      await persistenceService.clearModalHiddenState(quizId);
+      
+      if (mounted) {
+        setState(() {
+          _showResumeQuizDialog = false;
+          _unfinishedQuizData = null;
+          _isQuizModalHidden = false;
+        });
+      }
     }
   }
 }

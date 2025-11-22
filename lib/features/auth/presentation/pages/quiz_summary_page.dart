@@ -294,7 +294,9 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
         }
       }
 
-      unplayedQuizzes.shuffle();
+      // Sort deterministically by quiz ID to ensure consistent ordering
+      // and keep users within the same formation
+      unplayedQuizzes.sort((a, b) => a.id.compareTo(b.id));
 
       debugPrint('🎲 ${unplayedQuizzes.length} quizzes disponibles après tri');
 
