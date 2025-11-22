@@ -778,14 +778,6 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                 key: const PageStorageKey('adventure_scroll'),
                 controller: _scrollController,
                 slivers: [
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                   // Voir plus when many quizzes
                   SliverToBoxAdapter(
                     child:
