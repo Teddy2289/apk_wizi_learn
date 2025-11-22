@@ -1,11 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
+import 'package:wizi_learn/features/auth/data/models/quiz_session.dart';
+import 'package:wizi_learn/features/auth/data/services/quiz_session_storage_service.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/quiz_session/quiz_submission_handler.dart';
 
 class QuizSessionManager {
   final List<Question> questions;
   final String quizId;
+  final String? quizTitle;
+  final QuizSessionStorageService? storageService;
+
   final ValueNotifier<int> currentQuestionIndex = ValueNotifier(0);
   final ValueNotifier<int> remainingSeconds = ValueNotifier(30);
   final ValueNotifier<bool> quizCompleted = ValueNotifier(false);
@@ -17,10 +22,13 @@ class QuizSessionManager {
   int _totalTimeSpent = 0;
   final Map<String, dynamic> _userAnswers = {};
   final QuizSubmissionHandler _submissionHandler;
+  bool _isRestoringSession = false;
 
   QuizSessionManager({
     required this.questions,
     required this.quizId,
+    this.quizTitle,
+    this.storageService,
     this.onTimerEnd,
   }) : _submissionHandler = QuizSubmissionHandler(quizId: quizId);
 
@@ -28,7 +36,7 @@ class QuizSessionManager {
     _startQuestionTimer();
   }
 
-  // Méthodes de navigation ajoutées
+  // Navigation methods
   void goToQuestion(int index) {
     if (index >= 0 && index < questions.length) {
       _recordTimeSpent();
@@ -55,8 +63,7 @@ class QuizSessionManager {
 
   void _resetQuestionTimer() {
     if (_questionStartTime != null) {
-      _totalTimeSpent +=
-          DateTime.now().difference(_questionStartTime!).inSeconds;
+      _totalTimeSpent += DateTime.now().difference(_questionStartTime!).inSeconds;
     }
     _timer?.cancel();
     remainingSeconds.value = 30;
@@ -69,23 +76,18 @@ class QuizSessionManager {
         if (answer is Map) return answer;
         if (answer is List) return answer.isNotEmpty ? answer.first : null;
         return {'text': answer.toString()};
-
       case "carte flash":
         if (answer is Map) {
           return answer['text'] ?? answer.values.first?.toString();
         }
         return answer.toString();
-
       case "choix multiples":
         return answer is List ? answer : [answer];
-
       case "remplir le champ vide":
         if (answer is Map) return answer;
         return {'reponse': answer.toString()};
-
       case "rearrangement":
         return answer is List ? answer : [answer];
-
       default:
         return answer;
     }
@@ -94,22 +96,20 @@ class QuizSessionManager {
   void handleAnswer(dynamic answer) {
     final question = questions[currentQuestionIndex.value];
     final questionId = question.id.toString();
-
     debugPrint("Raw answer received for $questionId: $answer");
-
     _userAnswers[questionId] = _normalizeAnswer(question, answer);
     debugPrint("Stored answer for $questionId: ${_userAnswers[questionId]}");
+    if (!_isRestoringSession) {
+      _saveCurrentSession();
+    }
   }
 
   void goToNextQuestion() {
-    final currentQuestionId =
-        questions[currentQuestionIndex.value].id.toString();
+    final currentQuestionId = questions[currentQuestionIndex.value].id.toString();
     if (!_userAnswers.containsKey(currentQuestionId)) {
       throw Exception('Veuillez répondre à la question avant de continuer');
     }
-
     _recordTimeSpent();
-
     if (currentQuestionIndex.value < questions.length - 1) {
       currentQuestionIndex.value++;
       _resetQuestionTimer();
@@ -132,18 +132,13 @@ class QuizSessionManager {
   }
 
   Future<Map<String, dynamic>> completeQuiz() async {
-    // Avant soumission, vérifiez les IDs
     debugPrint('Réponses à soumettre:');
     _userAnswers.forEach((id, answer) {
       debugPrint('- Question ID: $id, Réponse: $answer');
     });
-
-    // Vérifiez que toutes les questions répondues existent
-    final invalidIds =
-        _userAnswers.keys
-            .where((id) => !questions.any((q) => q.id.toString() == id))
-            .toList();
-
+    final invalidIds = _userAnswers.keys
+        .where((id) => !questions.any((q) => q.id.toString() == id))
+        .toList();
     if (invalidIds.isNotEmpty) {
       debugPrint('ERREUR: IDs de questions invalides: $invalidIds');
       throw Exception('Certaines questions ne font pas partie du quiz');
@@ -151,25 +146,19 @@ class QuizSessionManager {
     quizCompleted.value = true;
     _timer?.cancel();
     _recordTimeSpent();
-
     try {
-      // Valider qu'il y a des réponses à soumettre
       if (_userAnswers.isEmpty) {
         throw Exception('Aucune réponse à soumettre');
       }
-
       final response = await _submissionHandler.submitQuiz(
         userAnswers: _userAnswers,
         timeSpent: _totalTimeSpent,
       );
-
-      // Filtrer les questions non répondues
+      await _clearCurrentSession();
       if (response.containsKey('questions') && response['questions'] is List) {
-        final answeredQuestions =
-            (response['questions'] as List)
-                .where((q) => q['selectedAnswers'] != null)
-                .toList();
-
+        final answeredQuestions = (response['questions'] as List)
+            .where((q) => q['selectedAnswers'] != null)
+            .toList();
         return {
           ...response,
           'questions': answeredQuestions,
@@ -177,7 +166,6 @@ class QuizSessionManager {
           'quizId': quizId,
         };
       }
-
       return response;
     } catch (e, stack) {
       debugPrint('Error completing quiz: $e\n$stack');
@@ -187,19 +175,66 @@ class QuizSessionManager {
 
   void _recordTimeSpent() {
     if (_questionStartTime != null) {
-      _totalTimeSpent +=
-          DateTime.now().difference(_questionStartTime!).inSeconds;
+      _totalTimeSpent += DateTime.now().difference(_questionStartTime!).inSeconds;
     }
   }
 
-  // Méthodes pour accéder aux données de session
-  Map<String, dynamic> getUserAnswers() {
-    return Map<String, dynamic>.from(_userAnswers);
+  // Session data accessors
+  Map<String, dynamic> getUserAnswers() => Map<String, dynamic>.from(_userAnswers);
+  int getTimeSpent() => _totalTimeSpent;
+
+  // Save current session state
+  Future<void> _saveCurrentSession() async {
+    if (storageService == null) return;
+    try {
+      final session = QuizSession(
+        quizId: quizId,
+        quizTitle: quizTitle ?? '',
+        questionIds: questions.map((q) => q.id.toString()).toList(),
+        answers: Map<String, dynamic>.from(_userAnswers),
+        currentIndex: currentQuestionIndex.value,
+        timeSpent: _totalTimeSpent,
+        lastUpdated: DateTime.now(),
+      );
+      await storageService!.saveSession(session);
+    } catch (e) {
+      debugPrint('❌ Failed to save session: $e');
+    }
   }
 
-  int getTimeSpent() {
-    return _totalTimeSpent;
+  // Clear current session from storage
+  Future<void> _clearCurrentSession() async {
+    if (storageService == null) return;
+    try {
+      await storageService!.deleteSession(quizId);
+      debugPrint('🗑️ Session cleared for quiz: $quizId');
+    } catch (e) {
+      debugPrint('❌ Failed to clear session: $e');
+    }
   }
+
+  // Restore session from saved state
+  Future<void> restoreSession(QuizSession session) async {
+    try {
+      _isRestoringSession = true;
+      _userAnswers
+        ..clear()
+        ..addAll(session.answers);
+      _totalTimeSpent = session.timeSpent;
+      currentQuestionIndex.value = session.currentIndex;
+      debugPrint('✅ Session restored: ${session.quizId}');
+      debugPrint('   Questions answered: ${_userAnswers.length}');
+      debugPrint('   Current index: ${session.currentIndex}');
+      debugPrint('   Time spent: ${session.timeSpent}s');
+    } catch (e) {
+      debugPrint('❌ Failed to restore session: $e');
+    } finally {
+      _isRestoringSession = false;
+    }
+  }
+
+  // Manually save session (called on quiz exit)
+  Future<void> saveOnExit() async => await _saveCurrentSession();
 
   void dispose() {
     _timer?.cancel();
