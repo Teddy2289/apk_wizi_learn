@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:confetti/confetti.dart';
 import 'package:dio/dio.dart';
+import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
@@ -933,171 +934,175 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              // Section décompte améliorée
-              _buildCountdownInfo(),
+      body: SafeAreaBottom(
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                // Section décompte améliorée
+                _buildCountdownInfo(),
 
-              // En-tête des scores
-              QuizScoreHeader(
-                score: calculatedScore,
-                correctAnswers: calculatedCorrectAnswers,
-                totalQuestions: answeredQuestions.length,
-                timeSpent: widget.timeSpent,
-              ),
+                // En-tête des scores
+                QuizScoreHeader(
+                  score: calculatedScore,
+                  correctAnswers: calculatedCorrectAnswers,
+                  totalQuestions: answeredQuestions.length,
+                  timeSpent: widget.timeSpent,
+                ),
 
-              // Message d'information pour les résultats locaux
-              if (widget.quizResult?['isLocal'] == true)
+                // Message d'information pour les résultats locaux
+                if (widget.quizResult?['isLocal'] == true)
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          color: Colors.orange,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Résultats calculés localement',
+                                style: TextStyle(
+                                  color: Colors.orange.shade800,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Ces résultats ne sont pas sauvegardés sur le serveur.',
+                                style: TextStyle(
+                                  color: Colors.orange.shade600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                // En-tête de la liste des questions
                 Container(
-                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                    color: isDarkMode ? theme.cardColor : Colors.white,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: theme.dividerColor.withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        Icons.info_outline_rounded,
-                        color: Colors.orange,
-                        size: 22,
+                        Icons.list_alt_rounded,
+                        color: theme.colorScheme.primary,
+                        size: 20,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Résultats calculés localement',
-                              style: TextStyle(
-                                color: Colors.orange.shade800,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Ces résultats ne sont pas sauvegardés sur le serveur.',
-                              style: TextStyle(
-                                color: Colors.orange.shade600,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
+                      const SizedBox(width: 8),
+                      Text(
+                        'Détail des questions',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode ? Colors.white : Colors.black87,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${calculatedCorrectAnswers}/5 correctes',
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
                         ),
                       ),
                     ],
                   ),
                 ),
 
-              // En-tête de la liste des questions
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: isDarkMode ? theme.cardColor : Colors.white,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: theme.dividerColor.withOpacity(0.1),
-                      width: 1,
+                // Liste des questions
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient:
+                          isDarkMode
+                              ? LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  theme.scaffoldBackgroundColor,
+                                  theme.scaffoldBackgroundColor.withOpacity(
+                                    0.95,
+                                  ),
+                                ],
+                              )
+                              : LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [Colors.grey[50]!, Colors.grey[100]!],
+                              ),
+                    ),
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: widget.questions.length,
+                      itemBuilder: (context, index) {
+                        final question = widget.questions[index];
+                        final isCorrect = question.isCorrect ?? false;
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: QuizQuestionCard(
+                            question: question,
+                            isCorrect: isCorrect,
+                            index: index,
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.list_alt_rounded,
-                      color: theme.colorScheme.primary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Détail des questions',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: isDarkMode ? Colors.white : Colors.black87,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${calculatedCorrectAnswers}/${answeredQuestions.length} correctes',
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Liste des questions
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient:
-                        isDarkMode
-                            ? LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                theme.scaffoldBackgroundColor,
-                                theme.scaffoldBackgroundColor.withOpacity(0.95),
-                              ],
-                            )
-                            : LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [Colors.grey[50]!, Colors.grey[100]!],
-                            ),
-                  ),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: widget.questions.length,
-                    itemBuilder: (context, index) {
-                      final question = widget.questions[index];
-                      final isCorrect = question.isCorrect ?? false;
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: QuizQuestionCard(
-                          question: question,
-                          isCorrect: isCorrect,
-                          index: index,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          // Confetti
-          if (_showConfetti)
-            Align(
-              alignment: Alignment.topCenter,
-              child: ConfettiWidget(
-                confettiController: _confettiController,
-                blastDirectionality: BlastDirectionality.explosive,
-                shouldLoop: false,
-                colors: const [
-                  Colors.green,
-                  Colors.blue,
-                  Colors.pink,
-                  Colors.orange,
-                  Colors.purple,
-                ],
-                createParticlePath: drawStar,
-              ),
+              ],
             ),
-        ],
+
+            // Confetti
+            if (_showConfetti)
+              Align(
+                alignment: Alignment.topCenter,
+                child: ConfettiWidget(
+                  confettiController: _confettiController,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  shouldLoop: false,
+                  colors: const [
+                    Colors.green,
+                    Colors.blue,
+                    Colors.pink,
+                    Colors.orange,
+                    Colors.purple,
+                  ],
+                  createParticlePath: drawStar,
+                ),
+              ),
+          ],
+        ),
       ),
 
       // Boutons d'action améliorés

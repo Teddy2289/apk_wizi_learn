@@ -180,19 +180,6 @@ class QuizNavigationControls extends StatelessWidget {
                 results['totalQuestions'] ?? questions.length,
                 timeSpent: results['timeSpent'] ?? 0,
                 quizResult: {
-                  ...results,
-                  'playedQuizIds': playedQuizIds,
-                },
-              ),
-            ),
-          );
-        } catch (e) {
-          // Fermer le dialogue de chargement
-          if (context.mounted) {
-            Navigator.of(context).pop();
-          }
-
-          // Afficher un dialogue avec options
           if (!context.mounted) return;
 
           showDialog(

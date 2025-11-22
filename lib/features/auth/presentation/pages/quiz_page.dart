@@ -448,7 +448,61 @@ class _QuizPageState extends State<QuizPage> {
           ),
         ],
       ),
-      body: SafeAreaBottom(child: content),
+      body: SafeAreaBottom(
+      child: Column(
+        children: [
+          if (_availableFormations.isNotEmpty)
+            Container(
+              color: theme.scaffoldBackgroundColor,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.school,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _showFormationPicker,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                          horizontal: 12,
+                        ),
+                        side: BorderSide(
+                          color: theme.colorScheme.primary.withOpacity(0.5),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _selectedFormation == null
+                                ? 'Choisir une formation'
+                                : _selectedFormation!,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface.withOpacity(0.8),
+                            ),
+                          ),
+                          Icon(
+                            Icons.keyboard_arrow_down,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Expanded(child: content),
+        ],
+      ),
+    ),
       floatingActionButton:
           _showBackToTopButton
               ? FloatingActionButton(
@@ -2191,5 +2245,47 @@ class _QuizPageState extends State<QuizPage> {
     } catch (e) {
       debugPrint('Erreur dans _selectFormationFromLastPlayedIfAny: $e');
     }
+  }
+  void _showFormationPicker() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        final items = [..._availableFormations];
+        return ListView.separated(
+          shrinkWrap: true,
+          padding: const EdgeInsets.all(8),
+          itemBuilder: (_, i) {
+            final title = items[i];
+            final selected = (_selectedFormation == title);
+            return ListTile(
+              leading: Icon(
+                Icons.school,
+                color: selected ? Theme.of(context).colorScheme.primary : null,
+              ),
+              title: Text(title),
+              trailing:
+                  selected
+                      ? Icon(
+                        Icons.check,
+                        color: Theme.of(context).colorScheme.primary,
+                      )
+                      : null,
+              onTap: () {
+                setState(() {
+                  _selectedFormation = title;
+                });
+                _applyFilters();
+                Navigator.pop(context);
+              },
+            );
+          },
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemCount: items.length,
+        );
+      },
+    );
   }
 }

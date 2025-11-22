@@ -495,8 +495,19 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
         final quizId = int.parse(_unfinishedQuizData!['quizId'] as String);
         final quizTitle = _unfinishedQuizData!['quizTitle'] as String? ?? 'Quiz';
         
-        // Fetch questions directly - c'est tout ce dont nous avons besoin
-        final questions = await _quizRepository.getQuizQuestions(quizId);
+        // Récupérer les IDs des questions sauvegardées
+        List<int>? questionIds;
+        if (_unfinishedQuizData!['questionIds'] != null) {
+          questionIds = (_unfinishedQuizData!['questionIds'] as List)
+              .map((e) => int.parse(e.toString()))
+              .toList();
+        }
+        
+        // Fetch questions directly with specific IDs to match the saved session
+        final questions = await _quizRepository.getQuizQuestions(
+          quizId, 
+          targetQuestionIds: questionIds,
+        );
         if (questions.isEmpty) {
           if (mounted) {
             _showResumeErrorDialog();
@@ -699,7 +710,61 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
         ],
       ),
       body: SafeAreaBottom(
-        child: Stack(
+        child: Column(
+          children: [
+            // Formation picker button - NOW AT THE TOP
+            if (_availableFormationTitles.isNotEmpty)
+              Container(
+                color: theme.scaffoldBackgroundColor,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.school,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _showFormationPicker,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 12,
+                          ),
+                          side: BorderSide(
+                            color: theme.colorScheme.primary.withOpacity(0.5),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _selectedFormationTitle == null
+                                  ? 'Choisir une formation'
+                                  : _selectedFormationTitle!,
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface.withOpacity(0.8),
+                              ),
+                            ),
+                            Icon(
+                              Icons.keyboard_arrow_down,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            
+            // Main content area
+            Expanded(
+              child: Stack(
         children: [
           _isLoading
               ? Center(
@@ -713,51 +778,6 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                 key: const PageStorageKey('adventure_scroll'),
                 controller: _scrollController,
                 slivers: [
-                  // Formation picker button
-                  if (_availableFormationTitles.isNotEmpty)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.school,
-                              color: theme.colorScheme.primary,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: _showFormationPicker,
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 10,
-                                    horizontal: 12,
-                                  ),
-                                  side: BorderSide(
-                                    color: theme.colorScheme.primary
-                                        .withOpacity(0.5),
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      _selectedFormationTitle == null
-                                          ? 'Choisir une formation'
-                                          : _selectedFormationTitle!,
-                                      style: TextStyle(
-                                        color: theme.colorScheme.onSurface
-                                            .withOpacity(0.8),
-                                      ),
-                                    ),
-                                    Icon(
-                                      Icons.keyboard_arrow_down,
-                                      color: theme.colorScheme.primary,
-                                    ),
                                   ],
                                 ),
                               ),
@@ -1032,8 +1052,11 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
               onDismiss: _handleCompleteDismissQuiz,
             ),
         ],
+          ),
         ),
-      ),
+      ],
+    ),
+  ),
       floatingActionButton:
           _showBackToTopButton
               ? FloatingActionButton(

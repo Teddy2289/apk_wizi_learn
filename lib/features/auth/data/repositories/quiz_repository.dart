@@ -106,7 +106,7 @@ class QuizRepository {
     }
   }
 
-  Future<List<Question>> getQuizQuestions(int quizId) async {
+  Future<List<Question>> getQuizQuestions(int quizId, {List<int>? targetQuestionIds}) async {
     try {
       final response = await apiClient.get('/quiz/$quizId/questions');
       final formattedJson = const JsonEncoder.withIndent('  ').convert(response.data);
@@ -122,7 +122,19 @@ class QuizRepository {
         return Question.fromJson(q);
       }).toList();
 
-      // Mélanger la liste des questions
+      // Si des IDs spécifiques sont demandés (pour la reprise de quiz)
+      if (targetQuestionIds != null && targetQuestionIds.isNotEmpty) {
+        final targetIdsSet = targetQuestionIds.toSet();
+        final filteredQuestions = allQuestions
+            .where((q) => targetIdsSet.contains(q.id))
+            .toList();
+            
+        // Trier pour respecter l'ordre des IDs demandés si nécessaire, 
+        // ou juste retourner la liste filtrée
+        return filteredQuestions;
+      }
+
+      // Comportement par défaut : Mélanger et prendre 5 questions
       allQuestions.shuffle();
 
       // Prendre seulement 5 questions (ou moins si il y en a moins de 5)
