@@ -401,38 +401,15 @@ class _QuizPageState extends State<QuizPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.home),
-          tooltip: 'Accueil',
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Retour',
           onPressed: () {
-            Navigator.pushReplacementNamed(
-              context,
-              RouteConstants.dashboard,
-              arguments: 0,
-            );
+            Navigator.pop(context);
           },
         ),
         title: const Text('Quiz'),
         centerTitle: true,
         actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: _buildPointsChip(theme),
-          ),
-          IconButton(
-            icon: const Icon(Icons.emoji_events),
-            tooltip: 'Mes Badges',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AchievementPage()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            tooltip: 'Voir le tutoriel',
-            onPressed: _showHowToPlayDialog,
-          ),
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: _showFilterDialog,
@@ -442,7 +419,6 @@ class _QuizPageState extends State<QuizPage> {
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Row(
               children: [
-                // const Text('Liste'),
                 const SizedBox(width: 6),
                 Container(
                   decoration: BoxDecoration(
@@ -458,7 +434,6 @@ class _QuizPageState extends State<QuizPage> {
                     inactiveTrackColor: Colors.white,
                     onChanged: (v) async {
                       if (!v) return;
-                      // Sauvegarder la préférence utilisateur pour la vue aventure
                       await _saveQuizViewPreference(true);
 
                       Navigator.pushReplacement(
@@ -715,36 +690,6 @@ class _QuizPageState extends State<QuizPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 4),
-        Text(
-          'Testez vos connaissances avec ces quiz',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
-          ),
-        ),
-        const SizedBox(height: 8),
-        // Row(
-        //   children: [
-        //     OutlinedButton.icon(
-        //       onPressed: () async {
-        //         // Scroll to available section (top)
-        //         _scrollController.animateTo(
-        //           0,
-        //           duration: const Duration(milliseconds: 500),
-        //           curve: Curves.easeInOut,
-        //         );
-        //       },
-        //       icon: const Icon(Icons.playlist_add_check),
-        //       label: const Text('Disponibles'),
-        //     ),
-        //     const SizedBox(width: 8),
-        //     OutlinedButton.icon(
-        //       onPressed: _scrollToPlayedQuizzes,
-        //       icon: const Icon(Icons.history),
-        //       label: const Text('Déjà joués'),
-        //     ),
-        //   ],
-        // ),
         const SizedBox(height: 10),
         if (_availableFormations.isNotEmpty)
           Row(
