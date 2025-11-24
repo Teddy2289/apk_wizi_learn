@@ -9,6 +9,11 @@ import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.da
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_adventure_page.dart';
 import 'package:wizi_learn/core/services/quiz_persistence_service.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:wizi_learn/core/network/api_client.dart';
+import 'package:wizi_learn/features/auth/data/repositories/quiz_session_repository.dart';
+import 'package:wizi_learn/core/services/quiz_session_service.dart';
 
 import 'dashboard_page.dart';
 
@@ -35,11 +40,25 @@ class QuizSessionPage extends StatefulWidget {
 class _QuizSessionPageState extends State<QuizSessionPage> {
   late final QuizSessionManager _sessionManager;
   final PageController _pageController = PageController();
-  final _persistenceService = QuizPersistenceService();
+  late final QuizSessionService _quizSessionService;
+  int? _participationId;
 
   @override
   void initState() {
     super.initState();
+    
+    // Initialize services
+    final dio = Dio();
+    final storage = const FlutterSecureStorage();
+    final apiClient = ApiClient(dio: dio, storage: storage);
+    final sessionRepository = QuizSessionRepository(apiClient: apiClient);
+    final persistenceService = QuizPersistenceService();
+    
+    _quizSessionService = QuizSessionService(
+      sessionRepository: sessionRepository,
+      persistenceService: persistenceService,
+    );
+
     if (widget.isRestart) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -55,30 +74,42 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
       quizId: widget.quiz.id.toString(),
       onTimerEnd: _goToNextQuestionOnTimerEnd,
     );
-    _sessionManager.startSession();
+    // _sessionManager.startSession(); // Moved to after session check/start
     _sessionManager.currentQuestionIndex.addListener(_syncPageController);
+    _sessionManager.currentQuestionIndex.addListener(_saveProgress);
     _checkAndRestoreSession();
   }
 
   Future<void> _checkAndRestoreSession() async {
     // Si c'est un redémarrage explicite, on efface la session précédente
     if (widget.isRestart) {
-      await _persistenceService.clearSession(widget.quiz.id.toString());
+      await _quizSessionService.persistenceService.clearSession(widget.quiz.id.toString());
+      await _startNewSession();
       return;
     }
 
     try {
-      final session = await _persistenceService.getSession(
-        widget.quiz.id.toString(),
-      );
+      final session = await _quizSessionService.checkUnfinishedQuiz(widget.quiz.id);
       if (session != null && mounted) {
-        final currentIndex = session['currentIndex'] as int? ?? 0;
+        setState(() {
+          _participationId = session['participationId'] as int?;
+        });
+
+        int currentIndex = session['currentIndex'] as int? ?? 0;
+        
+        // Map currentQuestionId to index if available
+        if (session['currentQuestionId'] != null) {
+          final qId = session['currentQuestionId'];
+          final idx = widget.questions.indexWhere((q) => q.id.toString() == qId.toString());
+          if (idx != -1) currentIndex = idx;
+        }
+
         final answers = Map<String, dynamic>.from(session['answers'] ?? {});
         final timeSpent = session['timeSpent'] as int? ?? 0;
 
         _sessionManager.restoreSession(currentIndex, answers, timeSpent);
+        _sessionManager.startSession(); // Start timer after restore
 
-        // Sync page controller after a frame to ensure layout is ready
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_pageController.hasClients) {
             _pageController.jumpToPage(currentIndex);
@@ -91,10 +122,42 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
             duration: Duration(seconds: 2),
           ),
         );
+      } else {
+        await _startNewSession();
       }
     } catch (e) {
       debugPrint('Error restoring session: $e');
+      await _startNewSession();
     }
+  }
+
+  Future<void> _startNewSession() async {
+    _sessionManager.startSession();
+    try {
+      final questionIds = widget.questions.map((q) => int.parse(q.id.toString())).toList();
+      final pId = await _quizSessionService.startQuizSession(widget.quiz.id, questionIds);
+      if (mounted && pId != null) {
+        setState(() {
+          _participationId = pId;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error starting new session: $e');
+    }
+  }
+
+  void _saveProgress() {
+    final currentIndex = _sessionManager.currentQuestionIndex.value;
+    final currentQuestionId = int.tryParse(widget.questions[currentIndex].id.toString());
+    
+    _quizSessionService.saveProgress(
+      participationId: _participationId,
+      quizId: widget.quiz.id.toString(),
+      currentQuestionIndex: currentIndex,
+      currentQuestionId: currentQuestionId,
+      answers: _sessionManager.getUserAnswers(),
+      timeSpent: _sessionManager.getTimeSpent(),
+    );
   }
 
   void _goToNextQuestionOnTimerEnd() {
@@ -118,6 +181,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
 
   @override
   void dispose() {
+    _sessionManager.currentQuestionIndex.removeListener(_saveProgress);
     _sessionManager.currentQuestionIndex.removeListener(_syncPageController);
     _sessionManager.dispose();
     _pageController.dispose();
@@ -466,7 +530,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
         'timestamp': DateTime.now().toIso8601String(),
       };
 
-      await _persistenceService.saveSession(
+      await _quizSessionService.persistenceService.saveSession(
         widget.quiz.id.toString(),
         sessionData,
       );
