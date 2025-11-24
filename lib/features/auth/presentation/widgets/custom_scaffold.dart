@@ -79,23 +79,32 @@ class _CustomScaffoldState extends State<CustomScaffold> {
   Future<void> _initializeData() async {
     try {
       final user = await _authRepository.getMe();
-      if (user.stagiaire?.id != null) {
+      if (user.stagiaire?.id != null && mounted) {
         _userId = user.stagiaire!.id.toString();
-        _pointsSubscription = _statsRepository.getLivePoints(_userId!).listen((
-          points,
-        ) {
-          if (mounted) {
+        _pointsSubscription = _statsRepository.getLivePoints(_userId!).listen(
+          (points) {
+            if (!mounted) return;
             setState(() {
+              if (!mounted) return; // Double-check inside setState
               _currentPoints = points;
             });
-          }
-        });
+          },
+          onError: (error) {
+            debugPrint('Error in points stream: $error');
+          },
+          onDone: () {
+            debugPrint('Points stream closed');
+          },
+          cancelOnError: true,
+        );
       }
     } catch (e) {
       debugPrint('Error initializing user data: $e');
     }
 
-    _loadUnreadCount();
+    if (mounted) {
+      _loadUnreadCount();
+    }
   }
 
   void _loadUnreadCount() {

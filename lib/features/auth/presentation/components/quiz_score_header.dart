@@ -16,6 +16,8 @@ class QuizScoreHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final progressValue = _getSafeProgressValue();
+    
     return Card(
       margin: const EdgeInsets.all(16),
       child: Padding(
@@ -34,14 +36,27 @@ class QuizScoreHeader extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             LinearProgressIndicator(
-              value: correctAnswers / totalQuestions,
+              value: progressValue,
               backgroundColor: Colors.grey[200],
-              color: _getProgressColor(correctAnswers / totalQuestions),
+              color: _getProgressColor(progressValue),
             ),
           ],
         ),
       ),
     );
+  }
+
+  double _getSafeProgressValue() {
+    // Prevent division by zero and handle edge cases
+    if (totalQuestions <= 0) return 0.0;
+    
+    final ratio = correctAnswers / totalQuestions;
+    
+    // Check for invalid values (NaN or Infinity)
+    if (ratio.isNaN || ratio.isInfinite) return 0.0;
+    
+    // Clamp value between 0.0 and 1.0
+    return ratio.clamp(0.0, 1.0);
   }
 
   Widget _buildScoreItem(BuildContext context, String value, String label) {
