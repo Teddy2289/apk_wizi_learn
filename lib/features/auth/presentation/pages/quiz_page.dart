@@ -2282,6 +2282,25 @@ class _QuizPageState extends State<QuizPage> {
           debugPrint('⚠️ No saved question IDs found');
         }
         
+        // Try to get the quiz first to see if it exists
+        debugPrint('🔍 Checking if quiz $quizId exists...');
+        quiz_model.Quiz? quiz;
+        try {
+          quiz = await _quizRepository.getQuizById(quizId);
+          debugPrint('✅ Quiz found: ${quiz?.titre}');
+        } catch (e) {
+          debugPrint('❌ Quiz not found in database: $e');
+          quiz = null;
+        }
+        
+        if (quiz == null) {
+          debugPrint('❌ Quiz ID $quizId no longer exists');
+          if (mounted) {
+            _showResumeErrorDialog(quizId.toString());
+          }
+          return;
+        }
+        
         // Fetch questions directly with specific IDs to match the saved session
         debugPrint('🔍 Fetching questions for quiz $quizId...');
         final questions = await _quizRepository.getQuizQuestions(
@@ -2299,20 +2318,14 @@ class _QuizPageState extends State<QuizPage> {
           return;
         }
         
-        // Créer un objet Quiz minimal à partir des données sauvegardées
-        final quiz = quiz_model.Quiz(
-          id: quizId,
-          titre: quizTitle,
-          description: '',
-          niveau: 'débutant',
-          nbPointsTotal: questions.length * 2,
-          formation: quiz_model.QuizFormation(
-            id: 0,
-            titre: 'Formation',
-            description: '',
-            duree: '0',
-            categorie: 'Général',
-          ),
+        // Use the real quiz data instead of creating a minimal object
+        final quizWithQuestions = quiz_model.Quiz(
+          id: quiz.id,
+          titre: quiz.titre,
+          description: quiz.description,
+          niveau: quiz.niveau,
+          nbPointsTotal: quiz.nbPointsTotal,
+          formation: quiz.formation,
           questions: questions,
         );
         
@@ -2322,7 +2335,7 @@ class _QuizPageState extends State<QuizPage> {
             context,
             MaterialPageRoute(
               builder: (_) => QuizSessionPage(
-                quiz: quiz,
+                quiz: quizWithQuestions,
                 questions: questions,
                 quizAdventureEnabled: widget.quizAdventureEnabled,
                 playedQuizIds: _playedQuizIds,
