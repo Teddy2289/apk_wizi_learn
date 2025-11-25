@@ -95,11 +95,13 @@ class _QuizPageState extends State<QuizPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map<String, dynamic>) {
-        setState(() {
-          _fromNotification = args['fromNotification'] ?? false;
-          final rawId = args['scrollToQuizId'] ?? args['quizId'];
-          _scrollToQuizId = rawId?.toString();
-        });
+        if (mounted) {
+          setState(() {
+            _fromNotification = args['fromNotification'] ?? false;
+            final rawId = args['scrollToQuizId'] ?? args['quizId'];
+            _scrollToQuizId = rawId?.toString();
+          });
+        }
       }
 
       final bool shouldResume =
@@ -489,6 +491,7 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   Future<void> _loadInitialData() async {
+    if (!mounted) return;
     setState(() {
       _isInitialLoad = true;
       _baseQuizzes = []; // Réinitialiser explicitement

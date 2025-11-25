@@ -54,7 +54,7 @@ class Quiz {
               }
               throw Exception('Question data is not a Map');
             } catch (e, stack) {
-              debugPrint('Error parsing question: $e\n$stack');
+              // debugPrint('Error parsing question: $e\n$stack');
               return Question(
                 id: '0', // Utilisez une string comme dans le nouveau modèle
                 text: q['text']?.toString() ?? 'Question non disponible',

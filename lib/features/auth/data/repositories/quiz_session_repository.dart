@@ -65,7 +65,7 @@ class QuizSessionRepository {
         data: {
           'current_question_id': currentQuestionId,
           'answers': answers,
-          'time_spent': _formatTimeSpent(timeSpent),
+          'time_spent': timeSpent,
         },
       );
 

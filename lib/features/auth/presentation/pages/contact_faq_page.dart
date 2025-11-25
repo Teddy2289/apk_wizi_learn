@@ -259,7 +259,7 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
   }
 
   Future<void> _attachFile() async {
-    debugPrint("ATTOOOO");
+    // debugPrint("ATTOOOO");
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         allowMultiple: true,

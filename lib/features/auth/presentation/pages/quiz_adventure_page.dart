@@ -126,12 +126,12 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
         stagiaireId: _connectedStagiaireId,
       );
       print('--- QUIZZES RECUS ---');
-      for (var q in quizzes) {
-        print(
-          'id= [32m${q.id} [0m, titre=${q.titre}, niveau=${q.niveau}, status=${q.status}',
-        );
-      }
-      print('---------------------');
+      // for (var q in quizzes) {
+      //   print(
+      //     'id= [32m${q.id} [0m, titre=${q.titre}, niveau=${q.niveau}, status=${q.status}',
+      //   );
+      // }
+      // print('---------------------');
       final history = await _statsRepository.getQuizHistory(
         page: 1,
         limit: 100,
