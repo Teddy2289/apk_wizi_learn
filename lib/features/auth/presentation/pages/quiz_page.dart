@@ -19,6 +19,7 @@ import 'package:wizi_learn/features/auth/presentation/pages/quiz_adventure_page.
 import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 import 'package:wizi_learn/core/services/quiz_persistence_service.dart';
+import 'package:wizi_learn/core/providers/resume_quiz_provider.dart';
 import 'package:wizi_learn/core/widgets/safe_area_bottom.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/resume_quiz_dialog.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/resume_quiz_button.dart';
@@ -69,10 +70,8 @@ class _QuizPageState extends State<QuizPage> {
   List<String> _availableLevels = [];
   List<String> _availableFormations = [];
   
-  // Resume quiz functionality
-  bool _showResumeQuizDialog = false;
-  Map<String, dynamic>? _unfinishedQuizData;
-  bool _isQuizModalHidden = false;
+  // Resume quiz functionality - using provider pattern like React's useResumeQuiz hook
+  late final ResumeQuizProvider _resumeQuizProvider;
   
   // Au début de la classe
   Timer? _refreshTimer;
@@ -88,9 +87,10 @@ class _QuizPageState extends State<QuizPage> {
     super.initState();
     debugPrint('QuizPage params - scrollToPlayed: ${widget.scrollToPlayed}');
     _initializeRepositories();
+    _resumeQuizProvider = ResumeQuizProvider(QuizPersistenceService());
+    _resumeQuizProvider.checkForUnfinishedQuiz();
     _loadInitialData();
     _scrollController.addListener(_scrollListener);
-    _checkForUnfinishedQuiz();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final args = ModalRoute.of(context)?.settings.arguments;
@@ -289,6 +289,7 @@ class _QuizPageState extends State<QuizPage> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _resumeQuizProvider.dispose();
     super.dispose();
   }
 
@@ -363,29 +364,39 @@ class _QuizPageState extends State<QuizPage> {
             ],
           ),
         ),
-        // Resume quiz modal
-        if (_showResumeQuizDialog && _unfinishedQuizData != null && !_isQuizModalHidden)
-          Positioned.fill(
-            child: Material(
-              color: Colors.black.withOpacity(0.7),
-              child: Center(
-                child: ResumeQuizDialog(
-                  quizData: _unfinishedQuizData!,
-                  onResume: _handleResumeQuiz,
-                  onDismiss: _handleDismissQuiz,
-                ),
-              ),
-            ),
-          ),
-        // Floating resume quiz button when modal is hidden
-        if (_unfinishedQuizData != null && _isQuizModalHidden)
-          ResumeQuizButton(
-            quizTitle: _unfinishedQuizData!['quizTitle'] as String? ?? 'Quiz',
-            questionCount: (_unfinishedQuizData!['questionIds'] as List?)?.length ?? 0,
-            currentProgress: _unfinishedQuizData!['currentIndex'] as int? ?? 0,
-            onResume: _handleResumeQuiz,
-            onDismiss: _handleCompleteDismissQuiz,
-          ),
+        // Resume quiz UI - using ListenableBuilder to listen to provider changes (React pattern)
+        ListenableBuilder(
+          listenable: _resumeQuizProvider,
+          builder: (context, _) {
+            return Stack(
+              children: [
+                // Resume quiz modal
+                if (_resumeQuizProvider.shouldShowModal && _resumeQuizProvider.unfinishedQuiz != null)
+                  Positioned.fill(
+                    child: Material(
+                      color: Colors.black.withOpacity(0.7),
+                      child: Center(
+                        child: ResumeQuizDialog(
+                          quizData: _resumeQuizProvider.unfinishedQuiz!,
+                          onResume: _handleResumeQuiz,
+                          onDismiss: _handleDismissQuiz,
+                        ),
+                      ),
+                    ),
+                  ),
+                // Floating resume quiz button when modal is hidden
+                if (_resumeQuizProvider.shouldShowButton && _resumeQuizProvider.unfinishedQuiz != null)
+                  ResumeQuizButton(
+                    quizTitle: _resumeQuizProvider.unfinishedQuiz!['quizTitle'] as String? ?? 'Quiz',
+                    questionCount: (_resumeQuizProvider.unfinishedQuiz!['questionIds'] as List?)?.length ?? 0,
+                    currentProgress: _resumeQuizProvider.unfinishedQuiz!['currentIndex'] as int? ?? 0,
+                    onResume: _handleResumeQuiz,
+                    onDismiss: _handleCompleteDismissQuiz,
+                  ),
+              ],
+            );
+          },
+        ),
       ],
     );
 
@@ -2180,161 +2191,164 @@ class _QuizPageState extends State<QuizPage> {
     }
   }
 
-  // Resume quiz methods
-  Future<void> _checkForUnfinishedQuiz() async {
+  // Resume quiz methods - delegating to provider (like React's useResumeQuiz hook)
+  void _handleResumeQuiz() async {
+    debugPrint('═══════════════════════════════════════════════');
+    debugPrint('🚀 STARTING QUIZ RESUME PROCESS');
+    debugPrint('═══════════════════════════════════════════════');
+    
+    final unfinishedQuizData = _resumeQuizProvider.unfinishedQuiz;
+    if (unfinishedQuizData == null) {
+      debugPrint('❌ ERROR: No unfinished quiz data found in provider');
+      return;
+    }
+    
+    // Log all data from provider
+    debugPrint('📦 Unfinished Quiz Data:');
+    debugPrint('   - Full data: ${unfinishedQuizData.toString()}');
+    
     try {
-      final persistenceService = QuizPersistenceService();
-      final unfinishedQuiz = await persistenceService.getLastUnfinishedQuiz();
+      final quizIdStr = unfinishedQuizData['quizId'] as String?;
+      debugPrint('   - Quiz ID (string): $quizIdStr');
       
-      if (unfinishedQuiz != null && mounted) {
-        final quizId = unfinishedQuiz['quizId'] as String;
-        final isHidden = await persistenceService.isModalHidden(quizId);
+      if (quizIdStr == null || quizIdStr.isEmpty) {
+        debugPrint('❌ ERROR: Quiz ID is null or empty');
+        return;
+      }
+      
+      final quizId = int.parse(quizIdStr);
+      final quizTitle = unfinishedQuizData['quizTitle'] as String? ?? 'Quiz';
+      
+      debugPrint('✅ Parsed Quiz Info:');
+      debugPrint('   - Quiz ID (int): $quizId');
+      debugPrint('   - Quiz Title: $quizTitle');
+      
+      // Récupérer les IDs des questions sauvegardées
+      List<int>? questionIds;
+      if (unfinishedQuizData['questionIds'] != null) {
+        final rawQuestionIds = unfinishedQuizData['questionIds'];
+        debugPrint('   - Raw question IDs: $rawQuestionIds (type: ${rawQuestionIds.runtimeType})');
         
-        // Show dialog after a short delay
-        await Future.delayed(const Duration(milliseconds: 500));
-        
-        if (mounted) {
-          setState(() {
-            _unfinishedQuizData = unfinishedQuiz;
-            _isQuizModalHidden = isHidden;
-            _showResumeQuizDialog = !isHidden;
-          });
+        questionIds = (rawQuestionIds as List)
+            .map((e) {
+              debugPrint('     Converting: $e (type: ${e.runtimeType})');
+              return int.parse(e.toString());
+            })
+            .toList();
+        debugPrint('✅ Saved question IDs (${ questionIds.length} total): $questionIds');
+      } else {
+        debugPrint('⚠️  No saved question IDs found - will fetch all quiz questions');
+      }
+      
+      // Try to get the quiz first to see if it exists
+      debugPrint('');
+      debugPrint('🔍 STEP 1: Checking if quiz exists in database...');
+      debugPrint('   - Calling _quizRepository.getQuizById($quizId)');
+      
+      quiz_model.Quiz? quiz;
+      try {
+        quiz = await _quizRepository.getQuizById(quizId);
+        if (quiz != null) {
+          debugPrint('✅ Quiz found successfully!');
+          debugPrint('   - ID: ${quiz.id}');
+          debugPrint('   - Titre: ${quiz.titre}');
+          debugPrint('   - Formation: ${quiz.formation.titre}');
+          debugPrint('   - Niveau: ${quiz.niveau}');
+        } else {
+          debugPrint('❌ getQuizById returned null');
         }
+      } catch (e, stackTrace) {
+        debugPrint('❌ EXCEPTION when calling getQuizById:');
+        debugPrint('   - Error: $e');
+        debugPrint('   - Stack trace: $stackTrace');
+        quiz = null;
+      }
+      
+      if (quiz == null) {
+        debugPrint('');
+        debugPrint('❌ QUIZ NOT FOUND - Quiz ID $quizId no longer exists in database');
+        debugPrint('   - This quiz may have been deleted or is not accessible');
+        if (mounted) {
+          _showResumeErrorDialog(quizId.toString());
+        }
+        return;
+      }
+      
+      // Fetch questions directly with specific IDs to match the saved session
+      debugPrint('');
+      debugPrint('🔍 STEP 2: Fetching questions for quiz...');
+      debugPrint('   - Calling _quizRepository.getQuizQuestions(quizId: $quizId, targetQuestionIds: $questionIds)');
+      
+      final questions = await _quizRepository.getQuizQuestions(
+        quizId, 
+        targetQuestionIds: questionIds,
+      );
+      
+      debugPrint('✅ Retrieved ${questions.length} questions');
+      if (questions.isNotEmpty) {
+        debugPrint('   - First question ID: ${questions.first.id}');
+        debugPrint('   - Last question ID: ${questions.last.id}');
+      }
+      
+      if (questions.isEmpty) {
+        debugPrint('');
+        debugPrint('❌ NO QUESTIONS FOUND for quiz $quizId');
+        if (mounted) {
+          _showResumeErrorDialog(quizId.toString());
+        }
+        return;
+      }
+      
+      // Use the real quiz data instead of creating a minimal object
+      final quizWithQuestions = quiz_model.Quiz(
+        id: quiz.id,
+        titre: quiz.titre,
+        description: quiz.description,
+        niveau: quiz.niveau,
+        nbPointsTotal: quiz.nbPointsTotal,
+        formation: quiz.formation,
+        questions: questions,
+      );
+      
+      // Navigate to QuizSessionPage
+      if (mounted) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => QuizSessionPage(
+              quiz: quizWithQuestions,
+              questions: questions,
+              quizAdventureEnabled: widget.quizAdventureEnabled,
+              playedQuizIds: _playedQuizIds,
+              isRestart: false,
+            ),
+          ),
+        );
+        
+        // Reload data after returning and refresh quiz resume state
+        _loadInitialData();
+        await _resumeQuizProvider.refresh();
       }
     } catch (e) {
-      debugPrint('Error checking for unfinished quiz: $e');
-    }
-  }
-
-  void _handleResumeQuiz() async {
-    if (_unfinishedQuizData != null) {
-      setState(() => _showResumeQuizDialog = false);
-      
-      try {
-        final quizId = int.parse(_unfinishedQuizData!['quizId'] as String);
-        final quizTitle = _unfinishedQuizData!['quizTitle'] as String? ?? 'Quiz';
-        
-        debugPrint('🔄 Attempting to resume quiz: ID=$quizId, Title=$quizTitle');
-        
-        // Récupérer les IDs des questions sauvegardées
-        List<int>? questionIds;
-        if (_unfinishedQuizData!['questionIds'] != null) {
-          questionIds = (_unfinishedQuizData!['questionIds'] as List)
-              .map((e) => int.parse(e.toString()))
-              .toList();
-          debugPrint('📝 Saved question IDs: $questionIds');
-        } else {
-          debugPrint('⚠️ No saved question IDs found');
-        }
-        
-        // Try to get the quiz first to see if it exists
-        debugPrint('🔍 Checking if quiz $quizId exists...');
-        quiz_model.Quiz? quiz;
-        try {
-          quiz = await _quizRepository.getQuizById(quizId);
-          debugPrint('✅ Quiz found: ${quiz?.titre}');
-        } catch (e) {
-          debugPrint('❌ Quiz not found in database: $e');
-          quiz = null;
-        }
-        
-        if (quiz == null) {
-          debugPrint('❌ Quiz ID $quizId no longer exists');
-          if (mounted) {
-            _showResumeErrorDialog(quizId.toString());
-          }
-          return;
-        }
-        
-        // Fetch questions directly with specific IDs to match the saved session
-        debugPrint('🔍 Fetching questions for quiz $quizId...');
-        final questions = await _quizRepository.getQuizQuestions(
-          quizId, 
-          targetQuestionIds: questionIds,
-        );
-        
-        debugPrint('✅ Retrieved ${questions.length} questions');
-        
-        if (questions.isEmpty) {
-          debugPrint('❌ No questions found for quiz $quizId');
-          if (mounted) {
-            _showResumeErrorDialog(quizId.toString());
-          }
-          return;
-        }
-        
-        // Use the real quiz data instead of creating a minimal object
-        final quizWithQuestions = quiz_model.Quiz(
-          id: quiz.id,
-          titre: quiz.titre,
-          description: quiz.description,
-          niveau: quiz.niveau,
-          nbPointsTotal: quiz.nbPointsTotal,
-          formation: quiz.formation,
-          questions: questions,
-        );
-        
-        // Navigate to QuizSessionPage
-        if (mounted) {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => QuizSessionPage(
-                quiz: quizWithQuestions,
-                questions: questions,
-                quizAdventureEnabled: widget.quizAdventureEnabled,
-                playedQuizIds: _playedQuizIds,
-                isRestart: false,
-              ),
-            ),
-          );
-          
-          // Reload data after returning
-          _loadInitialData();
-          _checkForUnfinishedQuiz();
-        }
-      } catch (e) {
-        debugPrint('Error resuming quiz: $e');
-        if (mounted) {
-          final quizId = _unfinishedQuizData!['quizId'] as String;
-          _showResumeErrorDialog(quizId);
-        }
+      debugPrint('Error resuming quiz: $e');
+      if (mounted) {
+        final quizId = unfinishedQuizData['quizId'] as String;
+        _showResumeErrorDialog(quizId);
       }
     }
   }
-
 
   void _handleDismissQuiz() async {
-    // Hide modal temporarily instead of deleting session
-    if (_unfinishedQuizData != null) {
-      final quizId = _unfinishedQuizData!['quizId'] as String;
-      final persistenceService = QuizPersistenceService();
-      await persistenceService.setModalHidden(quizId, true);
-      
-      if (mounted) {
-        setState(() {
-          _showResumeQuizDialog = false;
-          _isQuizModalHidden = true;
-        });
-      }
-    }
+    // Hide modal temporarily (show button instead) - delegate to provider
+    await _resumeQuizProvider.hideModal();
   }
 
   void _handleCompleteDismissQuiz() async {
-    // Permanently delete quiz session
-    if (_unfinishedQuizData != null) {
-      final quizId = _unfinishedQuizData!['quizId'] as String;
-      final persistenceService = QuizPersistenceService();
-      await persistenceService.clearSession(quizId);
-      await persistenceService.clearModalHiddenState(quizId);
-      
-      if (mounted) {
-        setState(() {
-          _showResumeQuizDialog = false;
-          _unfinishedQuizData = null;
-          _isQuizModalHidden = false;
-        });
-      }
+    //Permanently delete quiz session - delegate to provider
+    final unfinishedQuizData = _resumeQuizProvider.unfinishedQuiz;
+    if (unfinishedQuizData != null) {
+      final quizId = unfinishedQuizData['quizId'] as String;
+      await _resumeQuizProvider.dismissQuiz(quizId);
     }
   }
 }
