@@ -161,7 +161,7 @@ class _OnSplashPage extends State<SplashPage> {
                   children: [
                     // NS Conseil Logo
                     Image.asset(
-                      'assets/images/logons.jpg',
+                      'assets/images/logons.png',
                       height: 100,
                       fit: BoxFit.contain,
                     ),
