@@ -597,87 +597,7 @@ class _QuizPageState extends State<QuizPage> {
         //   ],
         // ),
         const SizedBox(height: 10),
-        if (_availableFormations.isNotEmpty)
-          Row(
-            children: [
-              Icon(Icons.school, color: theme.colorScheme.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _showFormationPicker,
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 12,
-                    ),
-                    side: BorderSide(
-                      color: theme.colorScheme.primary.withOpacity(0.5),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _selectedFormation ?? 'Choisir une formation',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withOpacity(0.8),
-                        ),
-                      ),
-                      Icon(
-                        Icons.keyboard_arrow_down,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (_selectedFormation != null) ...[
-                const SizedBox(width: 8),
-                IconButton(
-                  tooltip: 'Réinitialiser',
-                  onPressed: () {
-                    setState(() => _selectedFormation = null);
-                    _applyFilters();
-                    _scrollController.animateTo(
-                      0,
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeInOut,
-                    );
-                  },
-                  icon: Icon(Icons.close, color: theme.colorScheme.primary),
-                ),
-              ],
-            ],
-          ),
-        // if (_selectedLevel != null || _selectedFormation != null) ...[
-        //   const SizedBox(height: 8),
-        //   Container(
-        //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        //     decoration: BoxDecoration(
-        //       color: theme.colorScheme.primary.withOpacity(0.1),
-        //       borderRadius: BorderRadius.circular(20),
-        //       border: Border.all(
-        //         color: theme.colorScheme.primary.withOpacity(0.3),
-        //       ),
-        //     ),
-        //     child: Row(
-        //       mainAxisSize: MainAxisSize.min,
-        //       children: [
-        //         Icon(
-        //           Icons.filter_list,
-        //           size: 16,
-        //           color: theme.colorScheme.primary,
-        //         ),
-        //         const SizedBox(width: 6),
-        //         Text(
-        //           _buildFilterText(),
-        //           style: theme.textTheme.bodySmall?.copyWith(
-        //             color: theme.colorScheme.primary,
-        //             fontWeight: FontWeight.w500,
-        //           ),
+        const SizedBox(height: 16),
         //         ),
         //         const SizedBox(width: 8),
         //         GestureDetector(
@@ -1880,54 +1800,6 @@ class _QuizPageState extends State<QuizPage> {
     );
   }
 
-  void _showFormationPicker() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) {
-        final items = [..._availableFormations];
-        return ListView.separated(
-          shrinkWrap: true,
-          padding: const EdgeInsets.all(8),
-          itemBuilder: (_, i) {
-            final title = items[i];
-            final selected = (_selectedFormation == title);
-            return ListTile(
-              leading: Icon(
-                Icons.school,
-                color: selected ? Theme.of(context).colorScheme.primary : null,
-              ),
-              title: Text(title),
-              trailing:
-                  selected
-                      ? Icon(
-                        Icons.check,
-                        color: Theme.of(context).colorScheme.primary,
-                      )
-                      : null,
-              onTap: () {
-                setState(() {
-                  _selectedFormation = title;
-                });
-                _applyFilters();
-                _scrollController.animateTo(
-                  0,
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeInOut,
-                );
-                Navigator.pop(context);
-              },
-            );
-          },
-          separatorBuilder: (_, __) => const Divider(height: 1),
-          itemCount: items.length,
-        );
-      },
-    );
-  }
-
   void _showHowToPlayDialog() {
     showStandardHelpDialog(
       context,
@@ -2011,28 +1883,21 @@ class _QuizPageState extends State<QuizPage> {
 
     List<quiz_model.Quiz> result;
 
-    // RÈGLES PLUS PERMISSIVES - TOUJOURS retourner au moins quelques quiz
-    if (userPoints < 10) {
-      result = debutant.take(2).toList();
-      debugPrint('Règle <10 points: ${result.length} quiz');
-    } else if (userPoints < 20) {
-      result = debutant.take(4).toList();
-      debugPrint('Règle <20 points: ${result.length} quiz');
-    } else if (userPoints < 40) {
-      result = [...debutant, ...intermediaire.take(2)];
-      debugPrint('Règle <40 points: ${result.length} quiz');
-    } else if (userPoints < 60) {
-      result = [...debutant, ...intermediaire];
-      debugPrint('Règle <60 points: ${result.length} quiz');
-    } else if (userPoints < 80) {
-      result = [...debutant, ...intermediaire, ...avance.take(2)];
-      debugPrint('Règle <80 points: ${result.length} quiz');
+    // LOGIQUE D'AFFICHAGE PROGRESSIF:
+    // - Jusqu'à 50 points: Afficher que les quiz Débutant
+    // - De 50 à 100 points: Afficher Débutant + Intermédiaire
+    // - Après 100 points: Afficher TOUS les quiz
+    if (userPoints < 50) {
+      result = debutant;
+      debugPrint('< 50 points: ${result.length} quiz Débutant');
     } else if (userPoints < 100) {
-      result = [...debutant, ...intermediaire, ...avance.take(4)];
-      debugPrint('Règle <100 points: ${result.length} quiz');
+      result = [...debutant, ...intermediaire];
+      debugPrint(
+        '50-100 points: ${result.length} quiz (Débutant + Intermédiaire)',
+      );
     } else {
       result = [...debutant, ...intermediaire, ...avance];
-      debugPrint('Règle 100+ points: ${result.length} quiz');
+      debugPrint('100+ points: ${result.length} quiz (Tous les niveaux)');
     }
 
     // GARANTIR qu'on retourne au moins 1 quiz si des quiz sont disponibles

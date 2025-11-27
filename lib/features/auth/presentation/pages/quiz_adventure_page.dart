@@ -21,6 +21,7 @@ import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_sourc
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
+import 'package:wizi_learn/features/auth/presentation/components/quiz_resume_v2.dart';
 
 class QuizAdventurePage extends StatefulWidget {
   final bool quizAdventureEnabled;
@@ -206,6 +207,69 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
       await _audioPlayer.play(AssetSource(asset));
     } catch (e) {
       // ignore errors silently
+    }
+  }
+
+  Future<void> _resumeQuizAdventure(quiz_model.Quiz quiz) async {
+    try {
+      final questions = await _quizRepository.getQuizQuestions(quiz.id);
+      if (questions.isEmpty) return;
+
+      if (!mounted) return;
+
+      // Afficher le modal QuizResume
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder:
+            (context) => DraggableScrollableSheet(
+              initialChildSize: 0.95,
+              minChildSize: 0.5,
+              maxChildSize: 0.95,
+              builder:
+                  (_, controller) => Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(20),
+                      ),
+                    ),
+                    child: QuizResume(
+                      questions: questions,
+                      score: 0,
+                      correctAnswers: 0,
+                      totalQuestions: questions.length,
+                      timeSpent: 0,
+                      quizTitle: quiz.titre,
+                      completedAt: null,
+                      quizResult: null,
+                      showNextQuiz: false,
+                      onNewQuiz: () => Navigator.pop(context),
+                      onRestart: () => Navigator.pop(context),
+                      onNextQuiz: () {
+                        Navigator.pop(context);
+                        // Continue the quiz in full mode
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (_) => QuizSessionPage(
+                                  quiz: quiz,
+                                  questions: questions,
+                                  quizAdventureEnabled:
+                                      widget.quizAdventureEnabled,
+                                  playedQuizIds: _playedQuizIds,
+                                ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+            ),
+      );
+    } catch (e) {
+      debugPrint('Erreur lors de la reprise du quiz: $e');
     }
   }
 
@@ -692,23 +756,32 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                       return;
                                     }
                                     await _playSound('audio/click.mp3');
-                                    final questions = await _quizRepository
-                                        .getQuizQuestions(quiz.id);
-                                    if (questions.isEmpty) return;
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (_) => QuizSessionPage(
-                                              quiz: quiz,
-                                              questions: questions,
-                                              quizAdventureEnabled:
-                                                  widget.quizAdventureEnabled,
-                                              playedQuizIds: _playedQuizIds,
-                                            ),
-                                      ),
-                                    );
-                                    _loadInitialData();
+
+                                    final isInProgress =
+                                        quiz.status == 'in_progress' ||
+                                        quiz.status == 'inProgress';
+
+                                    if (isInProgress) {
+                                      await _resumeQuizAdventure(quiz);
+                                    } else {
+                                      final questions = await _quizRepository
+                                          .getQuizQuestions(quiz.id);
+                                      if (questions.isEmpty) return;
+                                      await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (_) => QuizSessionPage(
+                                                quiz: quiz,
+                                                questions: questions,
+                                                quizAdventureEnabled:
+                                                    widget.quizAdventureEnabled,
+                                                playedQuizIds: _playedQuizIds,
+                                              ),
+                                        ),
+                                      );
+                                      _loadInitialData();
+                                    }
                                   },
                                 ),
                               ),
