@@ -1966,102 +1966,24 @@ class _QuizPageState extends State<QuizPage> {
           Icon(Icons.star_rounded, size: 18, color: theme.colorScheme.primary),
           const SizedBox(width: 6),
           Text(
-            '$_userPoints points',
-            style: TextStyle(fontWeight: FontWeight.w700, color: Colors.black),
+            '$_userPoints pts',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
           ),
         ],
       ),
     );
   }
 
-  List<quiz_model.Quiz> _filterQuizzesByPoints(
-    List<quiz_model.Quiz> allQuizzes,
-    int userPoints,
-  ) {
-    if (allQuizzes.isEmpty) return [];
-
-    // DEBUG: Vérifier ce qui se passe
-    debugPrint('Filtrage par points - User points: $userPoints');
-    debugPrint('Quiz disponibles avant filtrage: ${allQuizzes.length}');
-
-    String normalizeLevel(String? level) {
-      if (level == null) return 'débutant';
-      final lvl = level.toLowerCase().trim();
-      if (lvl.contains('inter') || lvl.contains('moyen')) {
-        return 'intermédiaire';
-      }
-      if (lvl.contains('avancé') || lvl.contains('expert')) return 'avancé';
-      return 'débutant';
-    }
-
-    final debutant =
-        allQuizzes
-            .where((q) => normalizeLevel(q.niveau) == 'débutant')
-            .toList();
-    final intermediaire =
-        allQuizzes
-            .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
-            .toList();
-    final avance =
-        allQuizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
-
-    debugPrint(
-      'Niveaux - Débutant: ${debutant.length}, Intermédiaire: ${intermediaire.length}, Avancé: ${avance.length}',
-    );
-
-    List<quiz_model.Quiz> result;
-
-    // RÈGLES PLUS PERMISSIVES - TOUJOURS retourner au moins quelques quiz
-    if (userPoints < 10) {
-      result = debutant.take(2).toList();
-      debugPrint('Règle <10 points: ${result.length} quiz');
-    } else if (userPoints < 20) {
-      result = debutant.take(4).toList();
-      debugPrint('Règle <20 points: ${result.length} quiz');
-    } else if (userPoints < 40) {
-      result = [...debutant, ...intermediaire.take(2)];
-      debugPrint('Règle <40 points: ${result.length} quiz');
-    } else if (userPoints < 60) {
-      result = [...debutant, ...intermediaire];
-      debugPrint('Règle <60 points: ${result.length} quiz');
-    } else if (userPoints < 80) {
-      result = [...debutant, ...intermediaire, ...avance.take(2)];
-      debugPrint('Règle <80 points: ${result.length} quiz');
-    } else if (userPoints < 100) {
-      result = [...debutant, ...intermediaire, ...avance.take(4)];
-      debugPrint('Règle <100 points: ${result.length} quiz');
-    } else {
-      result = [...debutant, ...intermediaire, ...avance];
-      debugPrint('Règle 100+ points: ${result.length} quiz');
-    }
-
-    // GARANTIR qu'on retourne au moins 1 quiz si des quiz sont disponibles
-    if (result.isEmpty && allQuizzes.isNotEmpty) {
-      debugPrint(
-        'Aucun quiz après filtrage, retourne les premiers quiz disponibles',
-      );
-      result = allQuizzes.take(2).toList(); // Retourne au moins 2 quiz
-    }
-
-    debugPrint('Résultat final: ${result.length} quiz');
-    return result;
-  }
-
-  void _scrollToTop() {
-    _scrollController.animateTo(
-      0,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-    );
-  }
-
+  /// Sélectionne automatiquement la formation du dernier quiz joué si elle existe
   void _selectFormationFromLastPlayedIfAny() {
-    if (_selectedFormation != null) return;
-    if (_quizHistoryList.isEmpty || _availableFormations.isEmpty) return;
-
     try {
       DateTime parseDate(String s) =>
           DateTime.tryParse(s) ?? DateTime.fromMillisecondsSinceEpoch(0);
+
+      if (_quizHistoryList.isEmpty) return;
 
       final sorted = List<QuizHistory>.from(_quizHistoryList)..sort(
         (a, b) => parseDate(b.completedAt).compareTo(parseDate(a.completedAt)),
@@ -2072,18 +1994,39 @@ class _QuizPageState extends State<QuizPage> {
 
       if (lastFormationTitle.isNotEmpty &&
           _availableFormations.contains(lastFormationTitle)) {
-        // Utiliser un post-frame callback pour éviter setState durant build
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             setState(() {
               _selectedFormation = lastFormationTitle;
             });
-            _applyFilters(); // Re-appliquer les filtres avec la nouvelle formation
+            _applyFilters();
           }
         });
       }
     } catch (e) {
       debugPrint('Erreur dans _selectFormationFromLastPlayedIfAny: $e');
+    }
+  }
+
+  void _scrollToTop() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  List<quiz_model.Quiz> _filterQuizzesByPoints(
+    List<quiz_model.Quiz> quizzes,
+    int userPoints,
+  ) {
+    try {
+      return quizzes.where((q) => q.nbPointsTotal <= userPoints).toList();
+    } catch (e) {
+      debugPrint('Erreur lors du filtrage des quiz par points: $e');
+      return quizzes;
     }
   }
 }

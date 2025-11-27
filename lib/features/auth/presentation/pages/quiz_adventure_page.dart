@@ -206,55 +206,6 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
       await _audioPlayer.play(AssetSource(asset));
     } catch (e) {
       // ignore errors silently
-    }
-  }
-
-  // Ajout de la méthode de filtrage des quiz par points utilisateur
-  List<quiz_model.Quiz> _filterQuizzesByPoints(
-    List<quiz_model.Quiz> allQuizzes,
-    int userPoints,
-  ) {
-    if (allQuizzes.isEmpty) return [];
-
-    String normalizeLevel(String? level) {
-      if (level == null) return 'débutant';
-      final lvl = level.toLowerCase().trim();
-      if (lvl.contains('inter') || lvl.contains('moyen')) {
-        return 'intermédiaire';
-      }
-      if (lvl.contains('avancé') || lvl.contains('expert')) return 'avancé';
-      return 'débutant';
-    }
-
-    final debutant =
-        allQuizzes
-            .where((q) => normalizeLevel(q.niveau) == 'débutant')
-            .toList();
-    final intermediaire =
-        allQuizzes
-            .where((q) => normalizeLevel(q.niveau) == 'intermédiaire')
-            .toList();
-    final avance =
-        allQuizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
-
-    List<quiz_model.Quiz> filtered = [];
-    if (userPoints < 10) {
-      filtered = debutant.take(2).toList();
-    } else {
-      filtered = [...debutant, ...intermediaire, ...avance];
-    }
-
-    // Fallback: si aucun quiz filtré mais la liste d'origine n'est pas vide, retourne au moins le premier quiz
-    if (filtered.isEmpty && allQuizzes.isNotEmpty) {
-      filtered = [allQuizzes.first];
-    }
-    return filtered;
-  }
-
-  Future<void> _loadLoginStreak() async {
-    try {
-      // 1) Préférer la valeur backend si disponible via un appel léger au profil
-      // 2) Repli: SharedPreferences
       int loginStreak = await _fetchLoginStreakFromBackend().catchError((
         _,
       ) async {
@@ -326,6 +277,43 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
       }
     } catch (_) {
       // ignore
+    }
+  }
+
+  /// Charge la valeur de "login streak" depuis le backend ou le cache local
+  Future<void> _loadLoginStreak() async {
+    try {
+      final loginStreak = await _fetchLoginStreakFromBackend().catchError((
+        _,
+      ) async {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          return prefs.getInt('login_streak') ?? 0;
+        } catch (_) {
+          return 0;
+        }
+      });
+
+      if (mounted) {
+        setState(() {
+          _loginStreak = loginStreak;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erreur lors du chargement du login streak: $e');
+    }
+  }
+
+  /// Filtre les quiz en fonction des points utilisateur (déverrouillage)
+  List<quiz_model.Quiz> _filterQuizzesByPoints(
+    List<quiz_model.Quiz> quizzes,
+    int userPoints,
+  ) {
+    try {
+      return quizzes.where((q) => q.nbPointsTotal <= userPoints).toList();
+    } catch (e) {
+      debugPrint('Erreur filtrage quiz par points: $e');
+      return quizzes;
     }
   }
 

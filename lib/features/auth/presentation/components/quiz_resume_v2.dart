@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
-import 'package:wizi_learn/features/auth/data/models/answer_model.dart';
 
 /// Widget principal de résumé de quiz - Logique équivalente à React QuizSummary.tsx
 /// Version 2.0: Optimisée et sans warnings de dépréciation
@@ -75,9 +74,9 @@ class QuizResume extends StatelessWidget {
   String _extractAnswerText(dynamic answer) {
     if (answer == null) return '';
     if (answer is String) return answer;
-    if (answer is Answer) return answer.text ?? answer.id ?? '';
+    if (answer is Answer) return answer.text;
     if (answer is Map) {
-      return answer['text'] ?? answer['label'] ?? answer.toString();
+      return (answer['text'] ?? answer['label'] ?? answer.toString()) as String;
     }
     return answer.toString();
   }
@@ -134,14 +133,16 @@ class QuizResume extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final playedQuestions =
-        questions
-            .where(
-              (q) =>
-                  q.selectedAnswers != null && q.selectedAnswers is! List ||
-                  (q.selectedAnswers is List &&
-                      (q.selectedAnswers as List).isNotEmpty),
-            )
-            .toList();
+        questions.where((q) {
+          if (q.selectedAnswers == null) return false;
+          if (q.selectedAnswers is List) {
+            return (q.selectedAnswers as List).isNotEmpty;
+          }
+          if (q.selectedAnswers is Map) {
+            return (q.selectedAnswers as Map).isNotEmpty;
+          }
+          return true;
+        }).toList();
 
     return SingleChildScrollView(
       child: Padding(
