@@ -83,10 +83,29 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _primeStreakFromLocal();
     _initializeRepositories();
-    _loadData();
+    _refreshFormationsOncePerDay();
     _loadConnectedUser();
     _initFcmListener();
     _evaluateWelcomeBlockOncePerDay();
+  }
+
+  Future<void> _refreshFormationsOncePerDay() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastRefresh = prefs.getString('lastFormationRefreshDate');
+      final now = DateTime.now();
+      final today =
+          '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      if (lastRefresh != today) {
+        await _loadData();
+        await prefs.setString('lastFormationRefreshDate', today);
+      } else {
+        // Si déjà actualisé aujourd'hui, charger depuis le cache ou ignorer
+        await _loadData(); // Optionnel: peut être remplacé par un cache local
+      }
+    } catch (_) {
+      await _loadData();
+    }
   }
 
   void _initializeRepositories() {

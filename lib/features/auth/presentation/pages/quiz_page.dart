@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -451,8 +452,8 @@ class _QuizPageState extends State<QuizPage> {
       final filteredQuizzes = _filterQuizzesByPoints(quizzes, _userPoints);
       debugPrint('✅ Quiz filtrés: ${filteredQuizzes.length} quiz');
 
-      // Extraire les filtres disponibles
-      _extractAvailableFilters(filteredQuizzes);
+      // Extraire / actualiser les formations (cachées une fois par jour)
+      await _extractAvailableFilters(filteredQuizzes);
 
       // METTRE À JOUR L'ÉTAT IMMÉDIATEMENT
       if (mounted) {
@@ -475,21 +476,69 @@ class _QuizPageState extends State<QuizPage> {
     }
   }
 
-  void _extractAvailableFilters(List<quiz_model.Quiz> quizzes) {
-    final levels = <String>{};
-    final formations = <String>{};
+  Future<void> _extractAvailableFilters(List<quiz_model.Quiz> quizzes) async {
+    // Cacher la liste des formations en local et n'actualiser qu'une fois par jour.
+    const cacheKey = 'cached_formations';
+    const refreshKey = 'formations_last_refresh';
 
-    for (final quiz in quizzes) {
-      if (quiz.niveau.isNotEmpty) {
-        levels.add(quiz.niveau);
+    final prefs = await SharedPreferences.getInstance();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final last = prefs.getInt(refreshKey) ?? 0;
+    final cachedJson = prefs.getString(cacheKey) ?? '';
+
+    // Si le cache est absent ou expiré (> 24h), recalculer et sauvegarder
+    if (cachedJson.isEmpty ||
+        (now - last) >= Duration(days: 1).inMilliseconds) {
+      final formations = <String>{};
+      final levels = <String>{};
+      for (final quiz in quizzes) {
+        if (quiz.niveau.isNotEmpty) levels.add(quiz.niveau);
+        final title = quiz.formation.titre;
+        if (title.isNotEmpty) formations.add(title);
       }
-      if (quiz.formation.titre.isNotEmpty) {
-        formations.add(quiz.formation.titre);
+
+      final formationsList = formations.toList()..sort();
+      final levelsList = levels.toList()..sort();
+
+      await prefs.setString(cacheKey, jsonEncode(formationsList));
+      await prefs.setInt(refreshKey, now);
+
+      if (mounted) {
+        setState(() {
+          _availableFormations = formationsList;
+          _availableLevels = levelsList;
+        });
       }
+      return;
     }
 
-    _availableLevels = levels.toList()..sort();
-    _availableFormations = formations.toList()..sort();
+    // Sinon, charger depuis le cache
+    try {
+      final decoded = jsonDecode(cachedJson) as List<dynamic>;
+      final cachedList = decoded.map((e) => e.toString()).toList();
+      if (mounted) {
+        setState(() => _availableFormations = cachedList..sort());
+      }
+    } catch (e) {
+      // Si le cache est corrompu, recalculer rapidement
+      final formations = <String>{};
+      final levels = <String>{};
+      for (final quiz in quizzes) {
+        if (quiz.niveau.isNotEmpty) levels.add(quiz.niveau);
+        final title = quiz.formation.titre;
+        if (title.isNotEmpty) formations.add(title);
+      }
+      final formationsList = formations.toList()..sort();
+      final levelsList = levels.toList()..sort();
+      await prefs.setString(cacheKey, jsonEncode(formationsList));
+      await prefs.setInt(refreshKey, now);
+      if (mounted) {
+        setState(() {
+          _availableFormations = formationsList;
+          _availableLevels = levelsList;
+        });
+      }
+    }
   }
 
   // _separateQuizzes supprimé: remplacé par _applyFilters()
@@ -782,8 +831,9 @@ class _QuizPageState extends State<QuizPage> {
     // Déterminer le nombre de colonnes en fonction de la largeur d'écran
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth >= 600 && screenWidth < 1024;
-    final crossAxisCount = isTablet ? 1 : 2; // 1 colonne sur tablette pour taille uniforme
-    
+    final crossAxisCount =
+        isTablet ? 1 : 2; // 1 colonne sur tablette pour taille uniforme
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: GridView.builder(
