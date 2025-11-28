@@ -1,4 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:wizi_learn/core/exceptions/api_exception.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository_contract.dart';
@@ -43,8 +45,28 @@ class AuthRepository implements AuthRepositoryContract {
       throw AuthException(e.message);
     } finally {
       // Always clear local storage even if logout fails
-      await storage.delete(key: 'auth_token');
-      await storage.delete(key: 'auth_user');
+      try {
+        // Clear all keys stored in flutter_secure_storage
+        await storage.deleteAll();
+      } catch (e) {
+        // If deleteAll is not available or fails, attempt to delete known keys
+        try {
+          await storage.delete(key: 'auth_token');
+          await storage.delete(key: 'auth_user');
+        } catch (_) {}
+      }
+
+      // Also clear SharedPreferences (app-level cache/preferences)
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+      } catch (_) {}
+      // Clear image cache managed by flutter_cache_manager (if used)
+      try {
+        await DefaultCacheManager().emptyCache();
+      } catch (e) {
+        // ignore cache clearing errors
+      }
     }
   }
 
@@ -75,9 +97,17 @@ class AuthRepository implements AuthRepositoryContract {
   }
 
   @override
-  Future<void> sendResetPasswordLink(String email, String resetUrl, {bool isMobile = false}) async {
+  Future<void> sendResetPasswordLink(
+    String email,
+    String resetUrl, {
+    bool isMobile = false,
+  }) async {
     try {
-      await remoteDataSource.sendResetPasswordLink(email, resetUrl,isMobile: isMobile);
+      await remoteDataSource.sendResetPasswordLink(
+        email,
+        resetUrl,
+        isMobile: isMobile,
+      );
     } on ApiException catch (e) {
       throw AuthException(
         e.message.contains('Email non trouvé')
@@ -106,7 +136,9 @@ class AuthRepository implements AuthRepositoryContract {
 
       if (errorMessage.contains('token invalide') ||
           errorMessage.contains('token expiré')) {
-        throw AuthException('Le lien de réinitialisation est invalide ou a expiré');
+        throw AuthException(
+          'Le lien de réinitialisation est invalide ou a expiré',
+        );
       } else {
         throw AuthException('Échec de la réinitialisation du mot de passe');
       }

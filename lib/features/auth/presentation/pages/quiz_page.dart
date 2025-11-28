@@ -779,13 +779,18 @@ class _QuizPageState extends State<QuizPage> {
     ThemeData theme, {
     required bool isPlayed,
   }) {
+    // Déterminer le nombre de colonnes en fonction de la largeur d'écran
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth >= 600 && screenWidth < 1024;
+    final crossAxisCount = isTablet ? 1 : 2; // 1 colonne sur tablette pour taille uniforme
+    
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
           childAspectRatio: 0.95,
