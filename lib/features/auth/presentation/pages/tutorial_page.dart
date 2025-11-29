@@ -13,7 +13,7 @@ import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.
 import 'package:wizi_learn/features/auth/presentation/widgets/youtube_player_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,6 +26,27 @@ String normalizeYoutubeUrl(String url) {
     return 'https://www.youtube.com/watch?v=$id';
   }
   return url;
+}
+
+String? _convertUrlToId(String url) {
+  if (url.contains('youtube.com/shorts/')) {
+    final shortsReg = RegExp(r'youtube\.com/shorts/([\w-]+)');
+    final match = shortsReg.firstMatch(url);
+    if (match != null && match.groupCount >= 1) {
+      return match.group(1);
+    }
+  }
+
+  final regExp = RegExp(
+    r'^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*',
+    caseSensitive: false,
+    multiLine: false,
+  );
+  final match = regExp.firstMatch(url);
+  if (match != null && match.groupCount >= 7) {
+    return match.group(7);
+  }
+  return null;
 }
 
 class TutorialPage extends StatefulWidget {
@@ -93,7 +114,7 @@ class _TutorialPageState extends State<TutorialPage> {
   void dispose() {
     // Nettoyer tous les contrôleurs YouTube
     _youtubeControllers.forEach((_, controller) {
-      controller.dispose();
+      controller.close();
     });
     _youtubeControllers.clear();
     super.dispose();
@@ -217,15 +238,12 @@ class _TutorialPageState extends State<TutorialPage> {
   }
 
   String _getRandomThumbnailUrl(String youtubeUrl) {
-    final videoId = YoutubePlayer.convertUrlToId(
+    final videoId = _convertUrlToId(
       normalizeYoutubeUrl(youtubeUrl),
     );
 
     if (videoId == null) {
-      return YoutubePlayer.getThumbnail(
-        videoId: '',
-        quality: ThumbnailQuality.medium,
-      );
+      return '';
     }
 
     final random = Random();
@@ -305,7 +323,7 @@ class _TutorialPageState extends State<TutorialPage> {
         return duration;
       }
 
-      final videoId = YoutubePlayer.convertUrlToId(media.url);
+      final videoId = _convertUrlToId(media.url);
       if (videoId == null) return const Duration(seconds: 0);
 
       final yt = YoutubeExplode();
@@ -341,22 +359,28 @@ class _TutorialPageState extends State<TutorialPage> {
     }
   }
 
-  YoutubePlayerController _getYoutubeController(String videoId, int mediaId) {
-    if (!_youtubeControllers.containsKey(mediaId)) {
-      _youtubeControllers[mediaId] = YoutubePlayerController(
-        initialVideoId: videoId,
-        flags: const YoutubePlayerFlags(
-          autoPlay: true,
+  YoutubePlayerController _getYoutubeController(String videoId, Media media) {
+    if (!_youtubeControllers.containsKey(media.id)) {
+      final controller = YoutubePlayerController.fromVideoId(
+        videoId: videoId,
+        autoPlay: true,
+        params: const YoutubePlayerParams(
+          showControls: true,
+          showFullscreenButton: true,
           mute: false,
-          enableCaption: true,
-          disableDragSeek: false,
-          forceHD: false,
-          useHybridComposition: true,
-          controlsVisibleAtStart: true,
         ),
       );
+
+      controller.listen((event) {
+        if (event.playerState == PlayerState.ended) {
+          _markMediaAsWatched(media);
+          debugPrint('Vidéo terminée: ${media.titre}');
+        }
+      });
+
+      _youtubeControllers[media.id] = controller;
     }
-    return _youtubeControllers[mediaId]!;
+    return _youtubeControllers[media.id]!;
   }
 
   Future<void> _markMediaAsWatched(Media media) async {
@@ -909,7 +933,7 @@ class _TutorialPageState extends State<TutorialPage> {
       return _buildNoVideoSelectedWidget(theme);
     }
 
-    final videoId = YoutubePlayer.convertUrlToId(
+    final videoId = _convertUrlToId(
       normalizeYoutubeUrl(selectedMedia.url),
     );
     if (videoId == null) {
@@ -1030,29 +1054,8 @@ class _TutorialPageState extends State<TutorialPage> {
               borderRadius: BorderRadius.circular(12),
               child: YoutubePlayer(
                 key: ValueKey(media.id),
-                controller: _getYoutubeController(videoId, media.id),
-                showVideoProgressIndicator: true,
-                progressIndicatorColor: Colors.amber,
-                progressColors: const ProgressBarColors(
-                  playedColor: Colors.amber,
-                  handleColor: Colors.amberAccent,
-                  bufferedColor: Colors.grey,
-                ),
-                bottomActions: [
-                  CurrentPosition(),
-                  ProgressBar(isExpanded: true),
-                  RemainingDuration(),
-                  FullScreenButton(
-                    controller: _getYoutubeController(videoId, media.id),
-                  ),
-                ],
-                onReady: () {
-                  debugPrint('Lecteur YouTube prêt pour: ${media.titre}');
-                },
-                onEnded: (data) {
-                  _markMediaAsWatched(media);
-                  debugPrint('Vidéo terminée: ${media.titre}');
-                },
+                controller: _getYoutubeController(videoId, media),
+                aspectRatio: 16 / 9,
               ),
             ),
           ),
@@ -1199,7 +1202,7 @@ class _TutorialPageState extends State<TutorialPage> {
     ThemeData theme,
     bool isSmallScreen,
   ) {
-    final videoId = YoutubePlayer.convertUrlToId(media.url);
+    final videoId = _convertUrlToId(media.url);
     final thumbnailUrl =
         videoId != null ? _getRandomThumbnailUrl(media.url) : null;
 
