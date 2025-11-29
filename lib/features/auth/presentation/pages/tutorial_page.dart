@@ -367,6 +367,7 @@ class _TutorialPageState extends State<TutorialPage> {
         params: const YoutubePlayerParams(
           showControls: true,
           showFullscreenButton: true,
+          strictRelatedVideos: true,
           mute: false,
         ),
       );

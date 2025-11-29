@@ -1,4 +1,4 @@
-```dart
+
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -190,6 +190,7 @@ class _YoutubePlayerPageState extends State<YoutubePlayerPage> {
       params: const YoutubePlayerParams(
         showControls: true,
         showFullscreenButton: true,
+        strictRelatedVideos: true,
         mute: false,
       ),
     );
@@ -522,4 +523,3 @@ class _ExpandableDescriptionState extends State<_ExpandableDescription> {
     );
   }
 }
-```
