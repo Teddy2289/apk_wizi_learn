@@ -4,56 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
-import 'package:wizi_learn/features/auth/data/models/formation_with_medias.dart';
-import 'package:wizi_learn/features/auth/data/models/media_model.dart';
-import 'package:wizi_learn/features/auth/data/repositories/media_repository.dart';
-import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
-import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
-import 'package:wizi_learn/features/auth/presentation/widgets/youtube_player_page.dart';
-import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
-import 'package:wizi_learn/core/constants/route_constants.dart';
-import 'package:youtube_player_iframe/youtube_player_iframe.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
-import 'package:flutter_html/flutter_html.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-String normalizeYoutubeUrl(String url) {
-  final shortsReg = RegExp(r'youtube\.com/shorts/([\w-]+)');
-  final match = shortsReg.firstMatch(url);
-  if (match != null && match.groupCount >= 1) {
-    final id = match.group(1);
-    return 'https://www.youtube.com/watch?v=$id';
-  }
-  return url;
-}
-
-String? _convertUrlToId(String url) {
-  if (url.contains('youtube.com/shorts/')) {
-    final shortsReg = RegExp(r'youtube\.com/shorts/([\w-]+)');
-    final match = shortsReg.firstMatch(url);
-    if (match != null && match.groupCount >= 1) {
-      return match.group(1);
-    }
-  }
-
-  final regExp = RegExp(
-    r'^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*',
-    caseSensitive: false,
-    multiLine: false,
-  );
-  final match = regExp.firstMatch(url);
-  if (match != null && match.groupCount >= 7) {
-    return match.group(7);
-  }
-  return null;
-}
-
-class TutorialPage extends StatefulWidget {
-  const TutorialPage({super.key});
-
-  @override
-  State<TutorialPage> createState() => _TutorialPageState();
 }
 
 class _TutorialPageState extends State<TutorialPage> {

@@ -3,7 +3,7 @@ import 'package:wizi_learn/features/auth/presentation/pages/home_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/ranking_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/training_page.dart';
-import 'package:wizi_learn/features/auth/presentation/pages/tutorial_page.dart';
+import 'package:wizi_learn/features/auth/presentation/pages/media_tutorial_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -31,7 +31,7 @@ class _DashboardPageState extends State<DashboardPage> {
       key: ValueKey(_pageArguments), // Important pour forcer le rebuild
     ),
     const RankingPage(),
-    const TutorialPage(),
+    const MediaTutorialPage(),
   ];
 
   @override

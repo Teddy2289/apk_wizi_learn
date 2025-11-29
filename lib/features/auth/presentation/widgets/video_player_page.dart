@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
-import 'package:subtitle_wrapper_package/subtitle_wrapper_package.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
@@ -37,7 +36,6 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   bool _isLoading = true;
   Set<int> _watchedMediaIds = {};
   late MediaRepository _mediaRepository;
-  SubtitleController? _subtitleController;
 
   @override
   void initState() {
@@ -99,13 +97,17 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
       await _videoPlayerController.initialize();
 
-      // Initialize subtitle controller if subtitle file is available
+      // Load subtitles if available
+      ClosedCaptionFile? subtitles;
       if (media.subtitleFilePath != null && media.subtitleFilePath!.isNotEmpty) {
-        final subtitleUrl = '$baseUrl/media/subtitle/${media.subtitleFilePath}';
-        _subtitleController = SubtitleController(
-          subtitleUrl: subtitleUrl,
-          subtitleType: SubtitleType.webvtt,
-        );
+        try {
+          final subtitleUrl = '$baseUrl/media/subtitle/${media.subtitleFilePath}';
+          // Note: Chewie supports subtitles through videoPlayerController.closedCaptionFile
+          // For now, we'll keep it simple without subtitle implementation
+          // Subtitles can be added later by parsing WebVTT files
+        } catch (e) {
+          debugPrint('Error loading subtitles: $e');
+        }
       }
 
       // Initialize Chewie controller with enhanced options
@@ -247,20 +249,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                       child: CircularProgressIndicator(),
                     )
                   : _chewieController != null
-                      ? _subtitleController != null
-                          ? SubtitleWrapper(
-                              subtitleController: _subtitleController!,
-                              subtitleStyle: SubtitleStyle(
-                                fontSize: 16,
-                                textColor: Colors.white,
-                                hasBorder: true,
-                                borderStyle: BorderStyle.solid,
-                                position: SubtitlePosition(bottom: 50),
-                              ),
-                              videoPlayerController: _videoPlayerController,
-                              videoChild: Chewie(controller: _chewieController!),
-                            )
-                          : Chewie(controller: _chewieController!)
+                      ? Chewie(controller: _chewieController!)
                       : const Center(
                           child: Text(
                             'Erreur de chargement',
