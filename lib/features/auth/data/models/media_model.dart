@@ -3,6 +3,8 @@ class Media {
   final String titre;
   final String? description;
   final String url;
+  final String? videoUrl; // Virtual attribute from backend
+  final String? subtitleUrl; // Virtual attribute from backend
   final String type;
   final String categorie;
   final int? duree;
@@ -17,6 +19,8 @@ class Media {
     required this.titre,
     this.description,
     required this.url,
+    this.videoUrl,
+    this.subtitleUrl,
     required this.type,
     required this.categorie,
     this.duree,
@@ -33,6 +37,8 @@ class Media {
       titre: json['titre'] as String? ?? '',
       description: json['description'] as String?,
       url: json['url'] as String? ?? '',
+      videoUrl: json['video_url'] as String?,
+      subtitleUrl: json['subtitle_url'] as String?,
       type: json['type'] as String? ?? '',
       categorie: json['categorie'] as String? ?? '',
       duree: json['duree'] as int?,

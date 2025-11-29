@@ -73,35 +73,11 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     try {
       // Dispose old controllers
       if (_chewieController != null) {
-        await _chewieController!.pause();
-        _chewieController!.dispose();
-      }
-      _videoPlayerController.dispose();
-
-      // Get video URL from API base URL + media URL
-      final apiClient = ApiClient(dio: Dio(), storage: const FlutterSecureStorage());
-      final baseUrl = apiClient.baseUrl;
-      final videoUrl = media.url.startsWith('http') 
-        ? media.url 
-        : '$baseUrl/media/stream/${media.url}';
-
-      debugPrint('Loading video: $videoUrl');
-
-      // Initialize video player controller
-      _videoPlayerController = VideoPlayerController.networkUrl(
-        Uri.parse(videoUrl),
-        httpHeaders: {
-          'Accept': 'video/mp4,video/*',
-        },
-      );
-
-      await _videoPlayerController.initialize();
-
-      // Load subtitles if available
-      ClosedCaptionFile? subtitles;
-      if (media.subtitleFilePath != null && media.subtitleFilePath!.isNotEmpty) {
+      if (media.subtitleUrl != null && media.subtitleUrl!.isNotEmpty) {
         try {
-          final subtitleUrl = '$baseUrl/media/subtitle/${media.subtitleFilePath}';
+          final subtitleUrl = media.subtitleUrl!.startsWith('http')
+              ? media.subtitleUrl!
+              : '${baseUrl}${media.subtitleUrl}';
           // Note: Chewie supports subtitles through videoPlayerController.closedCaptionFile
           // For now, we'll keep it simple without subtitle implementation
           // Subtitles can be added later by parsing WebVTT files
