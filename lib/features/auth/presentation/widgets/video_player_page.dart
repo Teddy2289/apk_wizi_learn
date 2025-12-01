@@ -6,6 +6,7 @@ import 'package:chewie/chewie.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
+import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/features/auth/data/models/media_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/media_repository.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -29,7 +30,7 @@ String _filterTitle(String title) {
 }
 
 class _VideoPlayerPageState extends State<VideoPlayerPage> {
-  late VideoPlayerController _videoPlayerController;
+  VideoPlayerController? _videoPlayerController;
   ChewieController? _chewieController;
   late Media currentVideo;
   bool showPlaylist = true;
@@ -73,22 +74,54 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     try {
       // Dispose old controllers
       if (_chewieController != null) {
-      if (media.subtitleUrl != null && media.subtitleUrl!.isNotEmpty) {
-        try {
-          final subtitleUrl = media.subtitleUrl!.startsWith('http')
-              ? media.subtitleUrl!
-              : '${baseUrl}${media.subtitleUrl}';
-          // Note: Chewie supports subtitles through videoPlayerController.closedCaptionFile
-          // For now, we'll keep it simple without subtitle implementation
-          // Subtitles can be added later by parsing WebVTT files
-        } catch (e) {
-          debugPrint('Error loading subtitles: $e');
+        await _chewieController!.pause();
+        _chewieController!.dispose();
+        _chewieController = null;
+      }
+      if (_videoPlayerController != null) {
+        _videoPlayerController!.dispose();
+        _videoPlayerController = null;
+      }
+
+      // Get video URL - use baseUrlImg for media files, not baseUrl (which includes /api)
+      const baseUrl = AppConstants.baseUrlImg;
+      
+      // Use videoUrl from backend if available, otherwise construct it
+      String videoUrl;
+      if (media.videoUrl != null && media.videoUrl!.isNotEmpty) {
+        // Backend provides video_url like "/api/media/stream/uploads/medias/1764409630.mp4"
+        videoUrl = media.videoUrl!.startsWith('http')
+            ? media.videoUrl!
+            : '$baseUrl${media.videoUrl}';
+      } else {
+        // Fallback: construct URL manually
+        // media.url might be "uploads/medias/1764409630.mp4" or full path
+        if (media.url.startsWith('http')) {
+          videoUrl = media.url;
+        } else if (media.url.startsWith('/api/')) {
+          // Already has /api prefix
+          videoUrl = '$baseUrl${media.url}';
+        } else {
+          // Need to add /api/media/stream/ prefix
+          videoUrl = '$baseUrl/api/media/stream/${media.url}';
         }
       }
 
+      debugPrint('Loading video: $videoUrl');
+
+      // Initialize video player controller
+      _videoPlayerController = VideoPlayerController.networkUrl(
+        Uri.parse(videoUrl),
+        httpHeaders: {
+          'Accept': 'video/mp4,video/*',
+        },
+      );
+
+      await _videoPlayerController!.initialize();
+
       // Initialize Chewie controller with enhanced options
       _chewieController = ChewieController(
-        videoPlayerController: _videoPlayerController,
+        videoPlayerController: _videoPlayerController!,
         autoPlay: true,
         looping: false,
         showControls: true,
@@ -126,7 +159,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
       );
 
       // Listen for video progress to mark as watched
-      _videoPlayerController.addListener(_videoListener);
+      _videoPlayerController!.addListener(_videoListener);
 
       if (mounted) {
         setState(() => _isLoading = false);
@@ -135,20 +168,25 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
       debugPrint('Error initializing video player: $e');
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur de chargement de la vidéo: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        // Use post-frame callback to show snackbar after build is complete
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Erreur de chargement de la vidéo: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        });
       }
     }
   }
 
   void _videoListener() {
-    if (!_videoPlayerController.value.isInitialized) return;
+    if (_videoPlayerController == null || !_videoPlayerController!.value.isInitialized) return;
     
-    final position = _videoPlayerController.value.position;
+    final position = _videoPlayerController!.value.position;
     if (position.inSeconds >= 5 && !_watchedMediaIds.contains(currentVideo.id)) {
       _markVideoAsWatched();
     }
@@ -182,8 +220,8 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
   @override
   void dispose() {
-    _videoPlayerController.removeListener(_videoListener);
-    _videoPlayerController.dispose();
+    _videoPlayerController?.removeListener(_videoListener);
+    _videoPlayerController?.dispose();
     _chewieController?.dispose();
     super.dispose();
   }
