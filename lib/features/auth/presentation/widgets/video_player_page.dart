@@ -83,6 +83,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
         _videoPlayerController = null;
       }
 
+
       // Get video URL - use baseUrlImg for media files, not baseUrl (which includes /api)
       const baseUrl = AppConstants.baseUrlImg;
       
@@ -92,18 +93,20 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
         // Backend provides video_url like "/api/media/stream/uploads/medias/1764409630.mp4"
         videoUrl = media.videoUrl!.startsWith('http')
             ? media.videoUrl!
-            : '$baseUrl${media.videoUrl}';
+            : '$baseUrl/${media.videoUrl!.startsWith('/') ? media.videoUrl!.substring(1) : media.videoUrl!}';
       } else {
         // Fallback: construct URL manually
         // media.url might be "uploads/medias/1764409630.mp4" or full path
         if (media.url.startsWith('http')) {
           videoUrl = media.url;
         } else if (media.url.startsWith('/api/')) {
-          // Already has /api prefix
+          // Already has /api prefix - remove leading slash to avoid double slash
           videoUrl = '$baseUrl${media.url}';
         } else {
           // Need to add /api/media/stream/ prefix
-          videoUrl = '$baseUrl/api/media/stream/${media.url}';
+          // Ensure proper slash handling
+          final cleanPath = media.url.startsWith('/') ? media.url.substring(1) : media.url;
+          videoUrl = '$baseUrl/api/media/stream/$cleanPath';
         }
       }
 

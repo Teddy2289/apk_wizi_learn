@@ -307,19 +307,6 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     }
   }
 
-  /// Filtre les quiz en fonction des points utilisateur (déverrouillage)
-  List<quiz_model.Quiz> _filterQuizzesByPoints(
-    List<quiz_model.Quiz> quizzes,
-    int userPoints,
-  ) {
-    try {
-      return quizzes.where((q) => q.nbPointsTotal <= userPoints).toList();
-    } catch (e) {
-      debugPrint('Erreur filtrage quiz par points: $e');
-      return quizzes;
-    }
-  }
-
   Future<void> _saveQuizViewPreference(bool isAdventureMode) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('quiz_view_preference', isAdventureMode);
@@ -415,6 +402,51 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
       ),
       // Target avatarAnim supprimé
     ];
+  }
+
+  /// Filtre les quiz en fonction des points totaux de l'utilisateur
+  /// pour un déverrouillage progressif par niveau
+  List<quiz_model.Quiz> _filterQuizzesByPoints(List<quiz_model.Quiz> quizzes, int userPoints) {
+    if (quizzes.isEmpty) return [];
+
+    // Normaliser les niveaux pour gérer les variations de casse/format
+    String normalizeLevel(String? level) {
+      if (level == null || level.isEmpty) return 'débutant';
+      final lvl = level.toLowerCase().trim();
+      if (lvl.contains('inter') || lvl.contains('moyen')) {
+        return 'intermédiaire';
+      }
+      if (lvl.contains('avancé') || lvl.contains('expert') || lvl.contains('avance')) {
+        return 'avancé';
+      }
+      return 'débutant';
+    }
+
+    // Séparer les quiz par niveau
+    final debutant = quizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
+    final intermediaire = quizzes.where((q) => normalizeLevel(q.niveau) == 'intermédiaire').toList();
+    final avance = quizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
+
+    // Appliquer les règles de filtrage progressif
+    List<quiz_model.Quiz> result;
+    
+    if (userPoints < 20) {
+      // Moins de 20 points : seulement 5 quiz débutants
+      result = debutant.take(5).toList();
+    } else if (userPoints < 50) {
+      // 20-49 points : tous les quiz débutants
+      result = debutant;
+    } else if (userPoints < 100) {
+      // 50-99 points : débutants + intermédiaires
+      result = [...debutant, ...intermediaire];
+    } else {
+      // 100+ points : tous les niveaux
+      result = [...debutant, ...intermediaire, ...avance];
+    }
+
+    debugPrint('🔒 Filtrage quiz adventure: ${quizzes.length} quiz → ${result.length} accessibles (${userPoints} pts)');
+    
+    return result;
   }
 
   Future<void> _startQuiz(quiz_model.Quiz quiz) async {

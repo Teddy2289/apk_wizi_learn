@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/universal_video_player_page.dart';
 }
 
 class _TutorialPageState extends State<TutorialPage> {
@@ -110,7 +111,7 @@ class _TutorialPageState extends State<TutorialPage> {
           context,
           MaterialPageRoute(
             builder:
-                (_) => YoutubePlayerPage(
+                (_) => UniversalVideoPlayerPage(
                   video: _createMediaCopyWithNormalizedUrl(mediaToOpen),
                   videosInSameCategory:
                       formation.medias
@@ -958,7 +959,7 @@ class _TutorialPageState extends State<TutorialPage> {
                 context,
                 MaterialPageRoute(
                   builder:
-                      (_) => YoutubePlayerPage(
+                      (_) => UniversalVideoPlayerPage(
                         video: media,
                         videosInSameCategory: medias,
                       ),
@@ -1044,7 +1045,7 @@ class _TutorialPageState extends State<TutorialPage> {
                 context,
                 MaterialPageRoute(
                   builder:
-                      (_) => YoutubePlayerPage(
+                      (_) => UniversalVideoPlayerPage(
                         video: media,
                         videosInSameCategory: medias,
                       ),
@@ -1274,7 +1275,7 @@ class _TutorialPageState extends State<TutorialPage> {
         context,
         MaterialPageRoute(
           builder:
-              (_) => YoutubePlayerPage(
+              (_) => UniversalVideoPlayerPage(
                 video: media,
                 videosInSameCategory:
                     selectedFormation.medias
