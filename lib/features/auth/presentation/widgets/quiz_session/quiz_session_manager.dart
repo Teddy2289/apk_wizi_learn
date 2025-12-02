@@ -39,7 +39,19 @@ class QuizSessionManager {
       currentQuestionIndex.value = data['currentIndex'];
     }
     if (data['answers'] != null) {
-      _userAnswers.addAll(Map<String, dynamic>.from(data['answers']));
+      // Filtrer les réponses pour ne garder que celles qui correspondent aux questions actuelles
+      final savedAnswers = Map<String, dynamic>.from(data['answers']);
+      final validQuestionIds = questions.map((q) => q.id.toString()).toSet();
+      
+      savedAnswers.forEach((questionId, answer) {
+        if (validQuestionIds.contains(questionId)) {
+          _userAnswers[questionId] = answer;
+        } else {
+          debugPrint('⚠️ Question ID $questionId ignorée (ne fait plus partie du quiz)');
+        }
+      });
+      
+      debugPrint('✅ Session restaurée : ${_userAnswers.length} réponses valides sur ${savedAnswers.length} sauvegardées');
     }
     if (data['timeSpent'] != null) {
       _totalTimeSpent = data['timeSpent'];
