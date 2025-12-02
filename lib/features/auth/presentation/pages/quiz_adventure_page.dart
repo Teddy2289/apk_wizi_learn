@@ -21,6 +21,9 @@ import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_sourc
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
+import 'package:wizi_learn/features/auth/services/quiz_resume_service.dart';
+import 'package:wizi_learn/features/auth/presentation/components/resume_quiz_dialog.dart';
+import 'package:wizi_learn/features/auth/auth_injection_container.dart';
 
 class QuizAdventurePage extends StatefulWidget {
   final bool quizAdventureEnabled;
@@ -414,6 +417,63 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     ];
   }
 
+  Future<void> _startQuiz(quiz_model.Quiz quiz) async {
+    if (quiz.questions.isEmpty) return;
+    
+    await _playSound('audio/click.mp3');
+    
+    try {
+      final questions = await _quizRepository.getQuizQuestions(quiz.id);
+      if (questions.isEmpty) return;
+
+      // Check for resume
+      final resumeService = sl<QuizResumeService>();
+      final sessionData = await resumeService.getSession(quiz.id.toString());
+      Map<String, dynamic>? initialSessionData;
+
+      if (sessionData != null && mounted) {
+        final shouldResume = await showDialog<bool>(
+          context: context,
+          builder: (context) => ResumeQuizDialog(
+            quizTitle: quiz.titre,
+            questionCount: questions.length,
+            currentIndex: sessionData['currentIndex'] ?? 0,
+            onResume: () => Navigator.pop(context, true),
+            onDismiss: () => Navigator.pop(context, false),
+          ),
+        );
+
+        if (shouldResume == null) return; // Cancelled
+
+        if (shouldResume) {
+          initialSessionData = sessionData;
+        } else {
+          await resumeService.clearSession(quiz.id.toString());
+        }
+      }
+
+      if (!mounted) return;
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (_) => QuizSessionPage(
+                quiz: quiz,
+                questions: questions,
+                quizAdventureEnabled: widget.quizAdventureEnabled,
+                playedQuizIds: _playedQuizIds,
+                initialSessionData: initialSessionData,
+              ),
+        ),
+      );
+      _loadInitialData();
+    } catch (e) {
+      debugPrint('Error starting quiz: $e');
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -674,29 +734,12 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                   isUnlocked,
                                   stars,
                                   nodeColor,
-                                  onTap: () async {
+                                  onTap: () {
                                     if (!(isUnlocked || isPlayed) ||
                                         quiz.questions.isEmpty) {
                                       return;
                                     }
-                                    await _playSound('audio/click.mp3');
-                                    final questions = await _quizRepository
-                                        .getQuizQuestions(quiz.id);
-                                    if (questions.isEmpty) return;
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (_) => QuizSessionPage(
-                                              quiz: quiz,
-                                              questions: questions,
-                                              quizAdventureEnabled:
-                                                  widget.quizAdventureEnabled,
-                                              playedQuizIds: _playedQuizIds,
-                                            ),
-                                      ),
-                                    );
-                                    _loadInitialData();
+                                    _startQuiz(quiz);
                                   },
                                 ),
                               ),
@@ -750,28 +793,11 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                   isUnlocked,
                                   stars,
                                   nodeColor,
-                                  onTap: () async {
+                                  onTap: () {
                                     if (!isUnlocked || quiz.questions.isEmpty) {
                                       return;
                                     }
-                                    await _playSound('audio/click.mp3');
-                                    final questions = await _quizRepository
-                                        .getQuizQuestions(quiz.id);
-                                    if (questions.isEmpty) return;
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (_) => QuizSessionPage(
-                                              quiz: quiz,
-                                              questions: questions,
-                                              quizAdventureEnabled:
-                                                  widget.quizAdventureEnabled,
-                                              playedQuizIds: _playedQuizIds,
-                                            ),
-                                      ),
-                                    );
-                                    _loadInitialData();
+                                    _startQuiz(quiz);
                                   },
                                 ),
                               ),

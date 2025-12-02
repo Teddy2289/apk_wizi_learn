@@ -7,6 +7,7 @@ import '../../core/network/api_client.dart';
 import 'data/datasources/auth_remote_data_source.dart';
 import 'data/repositories/auth_repository.dart';
 import 'presentation/bloc/auth_bloc.dart';
+import 'services/quiz_resume_service.dart';
 
 final sl = GetIt.instance;
 
@@ -17,6 +18,10 @@ Future<void> initAuthDependencies() async {
   sl.registerSingletonAsync<SharedPreferences>(
         () => SharedPreferences.getInstance(),
   );
+
+  // Attendre que SharedPreferences soit prêt
+  await sl.isReady<SharedPreferences>();
+
 
   // Core
   sl.registerLazySingleton<ApiClient>(
@@ -36,6 +41,11 @@ Future<void> initAuthDependencies() async {
   // Enregistrez l'interface en pointant vers l'implémentation
   sl.registerLazySingleton<AuthRepositoryContract>(
         () => sl<AuthRepository>(),
+  );
+
+  // Services
+  sl.registerLazySingleton<QuizResumeService>(
+        () => QuizResumeService(sl()),
   );
 
   // Bloc

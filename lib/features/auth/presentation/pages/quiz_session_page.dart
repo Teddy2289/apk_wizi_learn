@@ -26,7 +26,10 @@ class QuizSessionPage extends StatefulWidget {
     this.isRestart = false,
     this.quizAdventureEnabled = false,
     required this.playedQuizIds,
+    this.initialSessionData,
   });
+
+  final Map<String, dynamic>? initialSessionData;
 
   @override
   State<QuizSessionPage> createState() => _QuizSessionPageState();
@@ -52,7 +55,9 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     _sessionManager = QuizSessionManager(
       questions: widget.questions,
       quizId: widget.quiz.id.toString(),
+      quizTitle: widget.quiz.titre,
       onTimerEnd: _goToNextQuestionOnTimerEnd,
+      initialData: widget.initialSessionData,
     );
     _sessionManager.startSession();
     _sessionManager.currentQuestionIndex.addListener(_syncPageController);
@@ -208,25 +213,32 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     // Fermer la modal
     Navigator.of(context).pop();
 
-    // Arrêter le timer et nettoyer les ressources
-    _sessionManager.dispose();
+    // Sauvegarder une dernière fois avant de quitter
+    debugPrint('🚪 Quitting quiz - saving session one last time');
+    _sessionManager.saveBeforeQuit();
 
-    // Rediriger vers la liste des quiz
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => DashboardPage(
-              initialIndex: 2,
-              arguments: {
-                'selectedTabIndex': 2,
-                'fromNotification': true,
-                'useCustomScaffold': true,
-              },
-            ),
-      ),
-      (route) => false,
-    );
+    // Laisser le temps à la sauvegarde de se terminer
+    Future.delayed(const Duration(milliseconds: 100), () {
+      // Arrêter le timer et nettoyer les ressources
+      _sessionManager.dispose();
+
+      // Rediriger vers la liste des quiz
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => DashboardPage(
+                initialIndex: 2,
+                arguments: {
+                  'selectedTabIndex': 2,
+                  'fromNotification': true,
+                  'useCustomScaffold': true,
+                },
+              ),
+        ),
+        (route) => false,
+      );
+    });
   }
 
   @override

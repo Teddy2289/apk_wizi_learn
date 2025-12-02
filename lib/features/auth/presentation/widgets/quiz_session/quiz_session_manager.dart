@@ -2,10 +2,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/quiz_session/quiz_submission_handler.dart';
+import 'package:wizi_learn/features/auth/auth_injection_container.dart';
+import 'package:wizi_learn/features/auth/services/quiz_resume_service.dart';
 
 class QuizSessionManager {
   final List<Question> questions;
   final String quizId;
+  final String quizTitle;
   final ValueNotifier<int> currentQuestionIndex = ValueNotifier(0);
   final ValueNotifier<int> remainingSeconds = ValueNotifier(30);
   final ValueNotifier<bool> quizCompleted = ValueNotifier(false);
@@ -17,12 +20,57 @@ class QuizSessionManager {
   int _totalTimeSpent = 0;
   final Map<String, dynamic> _userAnswers = {};
   final QuizSubmissionHandler _submissionHandler;
+  final QuizResumeService _resumeService = sl<QuizResumeService>();
 
   QuizSessionManager({
     required this.questions,
     required this.quizId,
+    required this.quizTitle,
     this.onTimerEnd,
-  }) : _submissionHandler = QuizSubmissionHandler(quizId: quizId);
+    Map<String, dynamic>? initialData,
+  }) : _submissionHandler = QuizSubmissionHandler(quizId: quizId) {
+    if (initialData != null) {
+      _restoreSession(initialData);
+    }
+  }
+
+  void _restoreSession(Map<String, dynamic> data) {
+    if (data['currentIndex'] != null) {
+      currentQuestionIndex.value = data['currentIndex'];
+    }
+    if (data['answers'] != null) {
+      _userAnswers.addAll(Map<String, dynamic>.from(data['answers']));
+    }
+    if (data['timeSpent'] != null) {
+      _totalTimeSpent = data['timeSpent'];
+    }
+  }
+
+  void _saveSession() {
+    // Ne pas sauvegarder si le quiz est terminé
+    if (quizCompleted.value) return;
+    
+    debugPrint('💾 Saving quiz session: quizId=$quizId, index=${currentQuestionIndex.value}, answers=${_userAnswers.length}');
+    
+    _resumeService.saveSession(
+      quizId: quizId,
+      quizTitle: quizTitle,
+      currentIndex: currentQuestionIndex.value,
+      answers: _userAnswers,
+      timeSpent: _totalTimeSpent,
+      questionIds: questions.map((q) => q.id.toString()).toList(),
+    ).then((_) {
+      debugPrint('✅ Session saved successfully');
+    }).catchError((e) {
+      debugPrint('❌ Error saving session: $e');
+    });
+  }
+
+  // Méthode publique pour sauvegarder avant de quitter
+  void saveBeforeQuit() {
+    _recordTimeSpent(); // Enregistrer  le temps final
+    _saveSession();
+  }
 
   void startSession() {
     _startQuestionTimer();
@@ -34,6 +82,7 @@ class QuizSessionManager {
       _recordTimeSpent();
       currentQuestionIndex.value = index;
       _resetQuestionTimer();
+      _saveSession();
     }
   }
 
@@ -99,6 +148,7 @@ class QuizSessionManager {
 
     _userAnswers[questionId] = _normalizeAnswer(question, answer);
     debugPrint("Stored answer for $questionId: ${_userAnswers[questionId]}");
+    _saveSession();
   }
 
   void goToNextQuestion() {
@@ -113,6 +163,7 @@ class QuizSessionManager {
     if (currentQuestionIndex.value < questions.length - 1) {
       currentQuestionIndex.value++;
       _resetQuestionTimer();
+      _saveSession();
     }
   }
 
@@ -121,6 +172,7 @@ class QuizSessionManager {
     if (currentQuestionIndex.value > 0) {
       currentQuestionIndex.value--;
       _resetQuestionTimer();
+      _saveSession();
     }
   }
 
@@ -177,6 +229,9 @@ class QuizSessionManager {
           'quizId': quizId,
         };
       }
+
+      // Nettoyer la session après succès
+      await _resumeService.clearSession(quizId);
 
       return response;
     } catch (e, stack) {

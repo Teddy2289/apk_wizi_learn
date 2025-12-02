@@ -19,6 +19,9 @@ import 'package:wizi_learn/features/auth/presentation/pages/quiz_session_page.da
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_adventure_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
+import 'package:wizi_learn/features/auth/services/quiz_resume_service.dart';
+import 'package:wizi_learn/features/auth/presentation/components/resume_quiz_dialog.dart';
+import 'package:wizi_learn/features/auth/auth_injection_container.dart';
 
 class QuizPage extends StatefulWidget {
   final bool scrollToPlayed;
@@ -1444,10 +1447,47 @@ class _QuizPageState extends State<QuizPage> {
         return;
       }
 
+      // Check for resume
+      final resumeService = sl<QuizResumeService>();
+      debugPrint('🔍 Checking for saved session: quizId=${quiz.id}');
+      final sessionData = await resumeService.getSession(quiz.id.toString());
+      debugPrint('📦 Session data: $sessionData');
+      Map<String, dynamic>? initialSessionData;
+
+      if (sessionData != null && mounted) {
+        debugPrint('✅ Found saved session! Showing resume dialog...');
+        final shouldResume = await showDialog<bool>(
+          context: context,
+          builder: (context) => ResumeQuizDialog(
+            quizTitle: quiz.titre,
+            questionCount: questions.length,
+            currentIndex: sessionData['currentIndex'] ?? 0,
+            onResume: () => Navigator.pop(context, true),
+            onDismiss: () => Navigator.pop(context, false),
+          ),
+        );
+
+        if (shouldResume == null) return; // Cancelled
+
+        if (shouldResume) {
+          debugPrint('▶️ User chose to resume');
+          initialSessionData = sessionData;
+        } else {
+          debugPrint('🗑️ User chose to dismiss, clearing session');
+          await resumeService.clearSession(quiz.id.toString());
+        }
+      } else {
+        debugPrint('❌ No saved session found or widget not mounted');
+      }
+
       // Mettre à jour l'état pour indiquer que le quiz a été joué
-      setState(() {
-        _playedQuizIds.add(quiz.id.toString());
-      });
+      if (mounted) {
+        setState(() {
+          _playedQuizIds.add(quiz.id.toString());
+        });
+      }
+
+      if (!mounted) return;
 
       final result = await Navigator.push(
         context,
@@ -1458,6 +1498,7 @@ class _QuizPageState extends State<QuizPage> {
                 questions: questions,
                 quizAdventureEnabled: widget.quizAdventureEnabled,
                 playedQuizIds: _playedQuizIds,
+                initialSessionData: initialSessionData,
               ),
         ),
       );
