@@ -47,7 +47,7 @@ class FormationRepository {
     final allFormations = await getFormations();
 
     if (allFormations.isEmpty) {
-      debugPrint('Aucune formation trouvée dans la base.');
+      // debugPrint('Aucune formation trouvée dans la base.');
       return [];
     }
 
@@ -75,9 +75,9 @@ class FormationRepository {
             final String? dateDebut = pivot['date_debut']?.toString();
             final String? dateFin = pivot['date_fin']?.toString();
 
-            debugPrint(
-              'Formation: \n  titre: ${formation['titre']} \n  date_debut: $dateDebut \n  date_fin: $dateFin',
-            );
+            // debugPrint(
+            //   'Formation: \n  titre: ${formation['titre']} \n  date_debut: $dateDebut \n  date_fin: $dateFin',
+            // );
 
             catalogueFormations.add(
               Formation(

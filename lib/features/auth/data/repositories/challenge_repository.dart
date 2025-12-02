@@ -69,7 +69,7 @@ class ChallengeRepository {
       if (res.data == null) return null;
       return ChallengeConfig.fromJson(Map<String, dynamic>.from(res.data));
     } catch (e) {
-      debugPrint('Challenge config fetch failed: $e');
+      // debugPrint('Challenge config fetch failed: $e');
       return null;
     }
   }
@@ -87,7 +87,7 @@ class ChallengeRepository {
           .map((e) => ChallengeEntry.fromJson(Map<String, dynamic>.from(e)))
           .toList();
     } catch (e) {
-      debugPrint('Challenge leaderboard fetch failed: $e');
+      // debugPrint('Challenge leaderboard fetch failed: $e');
       return [];
     }
   }
@@ -113,7 +113,7 @@ class ChallengeRepository {
           res.statusCode! >= 200 &&
           res.statusCode! < 300;
     } catch (e) {
-      debugPrint('Failed to submit challenge entry: $e');
+      // debugPrint('Failed to submit challenge entry: $e');
       return false;
     }
   }

@@ -13,7 +13,7 @@ class QuizRepository {
   Future<List<Quiz>> getQuizzesForStagiaire({int? stagiaireId}) async {
     try {
       final response = await apiClient.get('/stagiaire/quizzes');
-      debugPrint('Response from /stagiaire/quizzes: ${jsonEncode(response.data)}');
+      // debugPrint('Response from /stagiaire/quizzes: ${jsonEncode(response.data)}');
       if (response.data == null || response.data['data'] == null) {
         return [];
       }
@@ -51,7 +51,7 @@ class QuizRepository {
 
       return quizzes;
     } catch (e, stack) {
-      debugPrint('Error in getQuizzesForStagiaire: $e\n$stack');
+      // debugPrint('Error in getQuizzesForStagiaire: $e\n$stack');
       return [];
     }
   }
@@ -97,7 +97,7 @@ class QuizRepository {
 
       return randomQuestions;
     } catch (e, stack) {
-      debugPrint('Error loading questions: $e\n$stack');
+      // debugPrint('Error loading questions: $e\n$stack');
       return [];
     }
   }
@@ -118,7 +118,7 @@ class QuizRepository {
         'timeSpent': timeSpent,
       };
 
-      debugPrint('Sending payload to server: $payload');
+      // debugPrint('Sending payload to server: $payload');
 
       final response = await apiClient.post(
         '/quiz/$quizId/result',
@@ -131,7 +131,7 @@ class QuizRepository {
 
       return response.data;
     } catch (e, stack) {
-      debugPrint('Error submitting quiz results: $e\n$stack');
+      // debugPrint('Error submitting quiz results: $e\n$stack');
       throw Exception('Échec de la soumission: ${e.toString()}');
     }
   }

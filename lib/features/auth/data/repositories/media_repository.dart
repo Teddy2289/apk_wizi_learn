@@ -44,20 +44,20 @@ class MediaRepository {
       final response = await apiClient.get('/stagiaire/$userId/formations');
 
       if (response.data == null) {
-        debugPrint("Réponse nulle du serveur");
+        // debugPrint("Réponse nulle du serveur");
         return [];
       }
 
       final data = response.data;
       if (data is! Map<String, dynamic>) {
-        debugPrint("Format de réponse invalide: ${data.runtimeType}");
+        // debugPrint("Format de réponse invalide: ${data.runtimeType}");
         return [];
       }
 
       final formationsJson = data['data'] as List?;
 
       if (formationsJson == null) {
-        debugPrint("Aucune donnée de formation trouvée");
+        // debugPrint("Aucune donnée de formation trouvée");
         return [];
       }
 
@@ -65,7 +65,7 @@ class MediaRepository {
           .map((json) => FormationWithMedias.fromJson(json))
           .toList();
     } catch (e) {
-      debugPrint("Erreur lors de la récupération des formations: $e");
+      // debugPrint("Erreur lors de la récupération des formations: $e");
       return [];
     }
   }
@@ -79,7 +79,7 @@ class MediaRepository {
       );
       return response.data['success'] == true;
     } catch (e) {
-      debugPrint("Erreur lors du marquage comme vu: $e");
+      // debugPrint("Erreur lors du marquage comme vu: $e");
       return false;
     }
   }
@@ -105,7 +105,7 @@ class MediaRepository {
   Future<Set<int>> getWatchedMediaIds() async {
     try {
       final response = await apiClient.get('/medias/formations-with-status');
-      debugPrint('Erreur lors du marquage comme vu (avec réponse 2): $response');
+      // debugPrint('Erreur lors du marquage comme vu (avec réponse 2): $response');
 
       if (response.data is List) {
         final formations = response.data as List;
@@ -131,7 +131,7 @@ class MediaRepository {
       }
       return {};
     } catch (e) {
-      debugPrint("Erreur lors de la récupération des médias vus: $e");
+      // debugPrint("Erreur lors de la récupération des médias vus: $e");
       return {};
     }
   }

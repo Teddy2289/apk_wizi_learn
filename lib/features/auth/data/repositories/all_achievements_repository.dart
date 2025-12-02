@@ -14,7 +14,7 @@ class AllAchievementsRepository {
       debugPrint('Réponse allAchievements : ${response.data}');
 
       if (response.data == null || response.data['achievements'] == null) {
-        debugPrint('⚠ Aucune donnée achievements trouvée');
+        // debugPrint('⚠ Aucune donnée achievements trouvée');
         return [];
       }
 

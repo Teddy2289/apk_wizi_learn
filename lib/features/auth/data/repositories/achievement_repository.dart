@@ -11,10 +11,10 @@ class AchievementRepository {
   Future<List<Achievement>> getUserAchievements() async {
     try {
       final response = await apiClient.get(AppConstants.userAchievements);
-      debugPrint('Réponse userAchievements : ${response.data}');
+      // debugPrint('Réponse userAchievements : ${response.data}');
 
       if (response.data == null || response.data['achievements'] == null) {
-        debugPrint('⚠ Aucune donnée achievements trouvée');
+        // debugPrint('⚠ Aucune donnée achievements trouvée');
         return [];
       }
 
@@ -31,10 +31,10 @@ class AchievementRepository {
   Future<List<Achievement>> getAllAchievements() async {
     try {
       final response = await apiClient.get(AppConstants.allAchievements);
-      debugPrint('Réponse allAchievements : ${response.data}');
+      // debugPrint('Réponse allAchievements : ${response.data}');
 
       if (response.data == null || response.data['achievements'] == null) {
-        debugPrint('⚠ Aucune donnée achievements trouvée');
+        // debugPrint('⚠ Aucune donnée achievements trouvée');
         return [];
       }
 

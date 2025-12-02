@@ -80,7 +80,7 @@ class _QuizPageState extends State<QuizPage> {
   @override
   void initState() {
     super.initState();
-    debugPrint('QuizPage params - scrollToPlayed: ${widget.scrollToPlayed}');
+    // debugPrint('QuizPage params - scrollToPlayed: ${widget.scrollToPlayed}');
     _initializeRepositories();
     _loadInitialData();
     _scrollController.addListener(_scrollListener);
@@ -139,7 +139,7 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   Future<void> _scrollToQuiz(String quizId) async {
-    debugPrint('Srolling to quiz with ID: $quizId');
+    // debugPrint('Srolling to quiz with ID: $quizId');
     if (_scrollController.hasClients && _futureQuizzes != null) {
       try {
         final quizzes = await _futureQuizzes!;
@@ -415,13 +415,13 @@ class _QuizPageState extends State<QuizPage> {
 
   Future<void> _loadQuizHistory() async {
     try {
-      debugPrint('🔄 Chargement historique...');
+      // debugPrint('🔄 Chargement historique...');
 
       final history = await _statsRepository.getQuizHistory();
-      debugPrint('✅ Historique chargé: ${history.length} entrées');
+      // debugPrint('✅ Historique chargé: ${history.length} entrées');
 
       final playedIds = history.map((h) => h.quiz.id.toString()).toList();
-      debugPrint('✅ Quiz joués: $playedIds');
+      // debugPrint('✅ Quiz joués: $playedIds');
 
       if (mounted) {
         setState(() {
@@ -431,8 +431,8 @@ class _QuizPageState extends State<QuizPage> {
         });
       }
     } catch (e, stack) {
-      debugPrint('❌ Erreur historique: $e');
-      debugPrint('Stack: $stack');
+      // debugPrint('❌ Erreur historique: $e');
+      // debugPrint('Stack: $stack');
 
       if (mounted) {
         setState(() {
@@ -450,10 +450,10 @@ class _QuizPageState extends State<QuizPage> {
         stagiaireId: _connectedStagiaireId!,
       );
 
-      debugPrint('✅ Quiz chargés: ${quizzes.length} quiz');
+      // debugPrint('✅ Quiz chargés: ${quizzes.length} quiz');
 
       final filteredQuizzes = _filterQuizzesByPoints(quizzes, _userPoints);
-      debugPrint('✅ Quiz filtrés: ${filteredQuizzes.length} quiz');
+      // debugPrint('✅ Quiz filtrés: ${filteredQuizzes.length} quiz');
 
       // Extraire / actualiser les formations (cachées une fois par jour)
       await _extractAvailableFilters(filteredQuizzes);
@@ -466,8 +466,8 @@ class _QuizPageState extends State<QuizPage> {
         });
       }
     } catch (e, stack) {
-      debugPrint('❌ Erreur chargement quiz: $e');
-      debugPrint('Stack: $stack');
+      // debugPrint('❌ Erreur chargement quiz: $e');
+      // debugPrint('Stack: $stack');
 
       // Même en cas d'erreur, mettre à jour l'état
       if (mounted) {

@@ -142,7 +142,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint('Erreur chargement formations: $e');
+      // debugPrint('Erreur chargement formations: $e');
       setState(() {
         _isLoading = false;
         _errorMessage = 'Erreur lors du chargement des formations';

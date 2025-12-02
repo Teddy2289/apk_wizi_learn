@@ -17,7 +17,7 @@
 
     @override
     Widget build(BuildContext context) {
-      debugPrint("Full question data for ${question.id}: ${question.toJson()}");
+      // debugPrint("Full question data for ${question.id}: ${question.toJson()}");
       return Card(
         color: isCorrect ? Colors.green[50] : Colors.red[50],
         child: Padding(
@@ -62,9 +62,9 @@
     }
 
     String _formatUserAnswer(Question question) {
-      debugPrint("QUESTION REPONSE====${question.meta?.selectedAnswers}");
-      debugPrint("Formatting answer for question ${question.id} of type ${question.type}");
-      debugPrint("Selected answers raw: ${question.selectedAnswers}");
+      // debugPrint("QUESTION REPONSE====${question.meta?.selectedAnswers}");
+      // debugPrint("Formatting answer for question ${question.id} of type ${question.type}");
+      // debugPrint("Selected answers raw: ${question.selectedAnswers}");
 
       // 1. Vérifier d'abord les métadonnées
       if (question.meta?.selectedAnswers != null) {

@@ -24,11 +24,11 @@ class ParrainageRepository {
         'date_inscription': DateTime.now().toIso8601String().split('T')[0], // Optionnel
       };
 
-      debugPrint("🟡 Payload envoyé: $data");
+      // debugPrint("🟡 Payload envoyé: $data");
 
       final response = await apiClient.post('/parrainage/register-filleul', data: data);
 
-      debugPrint("🟢 Réponse backend: ${response.statusCode} - ${response.data}");
+      // debugPrint("🟢 Réponse backend: ${response.statusCode} - ${response.data}");
 
       if (response.data['success'] == true) {
         return {
@@ -37,7 +37,7 @@ class ParrainageRepository {
           'data': response.data['data'],
         };
       } else {
-        debugPrint("🔴 Erreurs backend: ${response.data['errors']}");
+        // debugPrint("🔴 Erreurs backend: ${response.data['errors']}"); 
         return {
           'success': false,
           'errors': response.data['errors'],
@@ -45,7 +45,7 @@ class ParrainageRepository {
         };
       }
     } catch (e) {
-      debugPrint("🔴 Erreur inscription filleul: $e");
+      // debugPrint("🔴 Erreur inscription filleul: $e");    
       return {
         'success': false,
         'message': 'Erreur technique: $e',
