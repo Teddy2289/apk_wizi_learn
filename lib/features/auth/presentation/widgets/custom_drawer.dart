@@ -269,36 +269,54 @@ class CustomDrawer extends StatelessWidget {
                   ),
 
                   // Menu principal
-                  _buildMenuSection(
-                    context,
-                    title: 'Navigation',
-                    items: [
-                      _MenuItem(
-                        icon: Icons.school,
-                        label: 'Mes formations',
-                        route: RouteConstants.myTrainings,
-                      ),
-                      _MenuItem(
-                        icon: Icons.timeline,
-                        label: 'Mes Progrès',
-                        route: RouteConstants.myProgress,
-                      ),
-                      _MenuItem(
-                        icon: Icons.quiz,
-                        label: 'Mes Quiz',
-                        route: RouteConstants.quiz,
-                      ),
-                      _MenuItem(
-                        icon: Icons.phone,
-                        label: 'Mes Contacts',
-                        route: RouteConstants.mescontact,
-                      ),
-                      _MenuItem(
-                        icon: Icons.emoji_events,
-                        label: 'Mes Badges',
-                        route: RouteConstants.achievement,
-                      ),
-                    ],
+                  BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, state) {
+                      // Déterminer si l'utilisateur a accès commercial
+                      final hasCommercialAccess = state is Authenticated &&
+                          ['commercial', 'formateur', 'admin'].contains(
+                            state.user.stagiaire?.role?.toLowerCase() ??
+                                state.user.role?.toLowerCase(),
+                          );
+
+                      return _buildMenuSection(
+                        context,
+                        title: 'Navigation',
+                        items: [
+                          _MenuItem(
+                            icon: Icons.school,
+                            label: 'Mes formations',
+                            route: RouteConstants.myTrainings,
+                          ),
+                          _MenuItem(
+                            icon: Icons.timeline,
+                            label: 'Mes Progrès',
+                            route: RouteConstants.myProgress,
+                          ),
+                          _MenuItem(
+                            icon: Icons.quiz,
+                            label: 'Mes Quiz',
+                            route: RouteConstants.quiz,
+                          ),
+                          _MenuItem(
+                            icon: Icons.phone,
+                            label: 'Mes Contacts',
+                            route: RouteConstants.mescontact,
+                          ),
+                          _MenuItem(
+                            icon: Icons.emoji_events,
+                            label: 'Mes Badges',
+                            route: RouteConstants.achievement,
+                          ),
+                          // Commercial Dashboard - Pour commercial, formateur et admin uniquement
+                          if (hasCommercialAccess)
+                            _MenuItem(
+                              icon: Icons.business_center,
+                              label: 'Interface Commerciale',
+                              route: RouteConstants.commercialDashboard,
+                            ),
+                        ],
+                      );
+                    },
                   ),
 
                   // Section aide et informations
