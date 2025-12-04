@@ -9,7 +9,7 @@ import 'package:dio/dio.dart';
 import '../../../core/constants/app_constants.dart';
 
 class OnlineUsersScreen extends StatefulWidget {
-  const OnlineUsersScreen({super.key};
+  const OnlineUsersScreen({super.key});
 
   @override
   State<OnlineUsersScreen> createState() => _OnlineUsersScreenState();
