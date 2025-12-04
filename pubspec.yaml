@@ -73,6 +73,7 @@ dependencies:
   http: ^1.2.1
   device_info_plus: ^12.2.0
   package_info_plus: ^9.0.0
+  fl_chart: ^0.68.0
 
 dev_dependencies:
   flutter_test:
