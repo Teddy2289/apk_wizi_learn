@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:wizi_learn/features/auth/data/models/achievement_model.dart';
 
 class AchievementBadgeWidget extends StatelessWidget {
   final Achievement achievement;
   final bool unlocked;
   final bool colored;
+  
   const AchievementBadgeWidget({
     super.key,
     required this.achievement,
@@ -12,150 +14,134 @@ class AchievementBadgeWidget extends StatelessWidget {
     this.colored = true,
   });
 
-  bool _isUrl(String value) {
-    return value.startsWith('http://') || value.startsWith('https://');
-  }
-
-  IconData _mapIcon(String name) {
-    switch (name.toLowerCase()) {
-      case 'trophy':
-        return Icons.emoji_events;
-      case 'fire':
-        return Icons.local_fire_department;
-      case 'party':
-        return Icons.celebration;
-      case 'tv':
-        return Icons.live_tv;
-      case 'clapper':
-        return Icons.movie;
-      case 'handshake':
-        return Icons.handshake;
-      case 'bronze':
-      case 'silver':
-      case 'gold':
-        return Icons.emoji_events;
+  IconData _getIconForType(String? type) {
+    switch (type?.toLowerCase()) {
+      case 'connexion_serie':
+        return LucideIcons.flame;
+      case 'points_total':
+        return LucideIcons.trophy;
+      case 'palier':
+        return LucideIcons.medal;
+      case 'quiz':
+        return LucideIcons.brain;
+      case 'premium':
+        return LucideIcons.star;
+      case 'challenge':
+        return LucideIcons.zap;
+      case 'exclusif':
+        return LucideIcons.lock;
       default:
-        return Icons.emoji_events;
+        return LucideIcons.checkCircle;
     }
   }
 
-  Color _levelColor(String? level) {
-    switch ((level ?? '').toLowerCase()) {
+  Map<String, Color> _getLevelColors(String? level) {
+    switch (level?.toLowerCase()) {
       case 'bronze':
-        return const Color(0xFFCD7F32);
-      case 'silver':
-        return const Color(0xFFC0C0C0);
-      case 'gold':
-        return const Color(0xFFFFD700);
+        return {
+          'bg': const Color(0xFFFEF3C7), // amber-100
+          'text': const Color(0xFFD97706), // amber-600
+        };
+      case 'argent':
+        return {
+          'bg': const Color(0xFFF3F4F6), // gray-100
+          'text': const Color(0xFF4B5563), // gray-600
+        };
+      case 'or':
+        return {
+          'bg': const Color(0xFFFFF7ED), // orange-50
+          'text': const Color(0xFFF97316), // orange-500
+        };
+      case 'platine':
+        return {
+          'bg': const Color(0xFFDBEAFE), // blue-100
+          'text': const Color(0xFF2563EB), // blue-600
+        };
       default:
-        return Colors.amber;
+        return {
+          'bg': const Color(0xFFF3E8FF), // purple-100
+          'text': const Color(0xFF9333EA), // purple-600
+        };
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = _getLevelColors(achievement.level);
+    final bgColor = unlocked ? colors['bg']! : const Color(0xFFF3F4F6);
+    final iconColor = unlocked ? colors['text']! : const Color(0xFF9CA3AF);
 
-    final hasIcon =
-        (achievement.icon != null && achievement.icon!.trim().isNotEmpty);
-    final baseColor =
-        hasIcon &&
-                [
-                  'bronze',
-                  'silver',
-                  'gold',
-                ].contains(achievement.icon!.toLowerCase())
-            ? _levelColor(achievement.icon)
-            : _levelColor(achievement.level);
-
-    // Determine circle and icon colors depending on colored flag
-    final defaultCircleColor =
-        unlocked ? baseColor : (Colors.grey[300] ?? Colors.grey);
-    final grayscaleCircleColor =
-        unlocked
-            ? (Colors.grey[400] ?? Colors.grey)
-            : (Colors.grey[300] ?? Colors.grey);
-    final circleColor = colored ? defaultCircleColor : grayscaleCircleColor;
-
-    Color iconColor(bool wantWhiteIfColored) {
-      if (!colored) return Colors.grey[700] ?? Colors.grey;
-      return wantWhiteIfColored
-          ? Colors.white
-          : (unlocked ? Colors.white : Colors.grey);
-    }
-
-    Widget inner;
-    if (hasIcon && _isUrl(achievement.icon!)) {
-      inner = Image.network(
-        achievement.icon!,
-        width: 40,
-        height: 40,
-        color:
-            colored
-                ? (unlocked ? null : Colors.grey)
-                : (Colors.grey[600] ?? Colors.grey),
-        errorBuilder:
-            (_, __, ___) => Icon(
-              _mapIcon(achievement.icon!),
-              size: 40,
-              color: iconColor(true),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFF3F4F6),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Icon with background
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(999),
             ),
-      );
-    } else if (hasIcon) {
-      inner = Icon(
-        _mapIcon(achievement.icon!),
-        size: 40,
-        color: iconColor(true),
-      );
-    } else {
-      inner = Icon(Icons.emoji_events, size: 40, color: iconColor(true));
-    }
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: circleColor,
-            boxShadow:
-                (colored && unlocked)
-                    ? [
-                      BoxShadow(
-                        color: baseColor.withOpacity(0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                    : null,
+            child: Icon(
+              _getIconForType(achievement.type),
+              size: 24,
+              color: iconColor,
+            ),
           ),
-          child: Center(child: inner),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          achievement.name,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: unlocked ? theme.colorScheme.onSurface : Colors.grey,
-          ),
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        if (unlocked && achievement.unlockedAt != null)
+          const SizedBox(height: 12),
+          
+          // Badge name
           Text(
-            'Débloqué le\n${achievement.unlockedAt!.day}/${achievement.unlockedAt!.month}/${achievement.unlockedAt!.year}',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color:
-                  colored
-                      ? theme.colorScheme.primary
-                      : (Colors.grey[600] ?? Colors.grey),
+            achievement.name,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: unlocked 
+                ? const Color(0xFF1F2937) 
+                : const Color(0xFF9CA3AF),
             ),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-      ],
+          
+          // Level badge (optional)
+          if (achievement.level != null && unlocked) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: colors['bg'],
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                achievement.level!,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: colors['text'],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
