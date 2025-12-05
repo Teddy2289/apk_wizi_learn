@@ -13,6 +13,7 @@ import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/period_filter_chips.dart';
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});
@@ -31,6 +32,7 @@ class _RankingPageState extends State<RankingPage>
   bool _isLoading = true;
   bool _hasError = false;
   String? _errorMessage;
+  String _selectedPeriod = 'all';
 
   // GlobalKeys pour le tutoriel interactif
   final GlobalKey _keyTabBar = GlobalKey();
@@ -423,26 +425,44 @@ class _RankingPageState extends State<RankingPage>
   Widget _buildRankingTab(bool isLandscape) {
     return Padding(
       padding: EdgeInsets.all(isLandscape ? 8 : 16),
-      child: FutureBuilder<List<GlobalRanking>>(
-        future: _rankingFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError || !snapshot.hasData) {
-            return const Center(
-              child: Text('Erreur de chargement du classement'),
-            );
-          }
-          return Card(
-            margin: EdgeInsets.zero,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(isLandscape ? 12 : 16),
+      child: Column(
+        children: [
+          // Period filter chips
+          PeriodFilterChips(
+            selectedPeriod: _selectedPeriod,
+            onPeriodChanged: (period) {
+              setState(() {
+                _selectedPeriod = period;
+              });
+              _loadAllData();
+            },
+          ),
+          const SizedBox(height: 16),
+          // Ranking content
+          Expanded(
+            child: FutureBuilder<List<GlobalRanking>>(
+              future: _rankingFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError || !snapshot.hasData) {
+                  return const Center(
+                    child: Text('Erreur de chargement du classement'),
+                  );
+                }
+                return Card(
+                  margin: EdgeInsets.zero,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(isLandscape ? 12 : 16),
+                  ),
+                  child: GlobalRankingWidget(rankings: snapshot.data!),
+                );
+              },
             ),
-            child: GlobalRankingWidget(rankings: snapshot.data!),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
