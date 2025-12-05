@@ -67,7 +67,7 @@ class _RankingPageState extends State<RankingPage>
 
     try {
       _historyFuture = _repository.getQuizHistory();
-      _rankingFuture = _repository.getGlobalRanking();
+      _rankingFuture = _repository.getGlobalRanking(period: _selectedPeriod);
       _statsFuture = _repository.getQuizStats();
 
       await Future.wait([_historyFuture!, _rankingFuture!, _statsFuture!]);
