@@ -24,6 +24,116 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
   bool _isLoadingUser = true;
   // Afficher le classement en mode liste (sans podium)
   bool _showList = false;
+  int? _selectedFormationId;
+  int? _selectedFormateurId;
+
+  String _formatName(String prenom, String nom) {
+    if (prenom.isEmpty && nom.isEmpty) return '';
+    final initial = nom.isNotEmpty ? '${nom[0].toUpperCase()}.' : '';
+    return '$prenom${initial.isNotEmpty ? ' $initial' : ''}'.trim();
+  }
+
+  List<GlobalRanking> _getFilteredRankings() {
+    final sorted = [...widget.rankings]
+      ..sort((a, b) => a.rang.compareTo(b.rang));
+
+    return sorted.where((ranking) {
+      final matchesFormation = _selectedFormationId == null ||
+          ranking.formateurs.any(
+            (f) => f.formations.any((formation) => formation.id == _selectedFormationId),
+          );
+      final matchesFormateur = _selectedFormateurId == null ||
+          ranking.formateurs.any((f) => f.id == _selectedFormateurId);
+      return matchesFormation && matchesFormateur;
+    }).toList();
+  }
+
+  List<DropdownMenuItem<int?>> _buildFormationOptions() {
+    final options = <DropdownMenuItem<int?>>[
+      const DropdownMenuItem<int?>(
+        value: null,
+        child: Text('Toutes les formations'),
+      ),
+    ];
+    final ids = <int>{};
+    for (final ranking in widget.rankings) {
+      for (final formateur in ranking.formateurs) {
+        for (final formation in formateur.formations) {
+          if (ids.add(formation.id)) {
+            options.add(
+              DropdownMenuItem<int?>(
+                value: formation.id,
+                child: Text(formation.titre),
+              ),
+            );
+          }
+        }
+      }
+    }
+    return options;
+  }
+
+  List<DropdownMenuItem<int?>> _buildFormateurOptions() {
+    final options = <DropdownMenuItem<int?>>[
+      const DropdownMenuItem<int?>(
+        value: null,
+        child: Text('Tous les formateurs'),
+      ),
+    ];
+    final ids = <int>{};
+    for (final ranking in widget.rankings) {
+      for (final formateur in ranking.formateurs) {
+        if (ids.add(formateur.id)) {
+          options.add(
+            DropdownMenuItem<int?>(
+              value: formateur.id,
+              child: Text(_formatName(formateur.prenom, formateur.nom)),
+            ),
+          );
+        }
+      }
+    }
+    return options;
+  }
+
+  Widget _buildFilters(bool isSmallScreen) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          SizedBox(
+            width: isSmallScreen ? double.infinity : 220,
+            child: DropdownButtonFormField<int?>(
+              value: _selectedFormationId,
+              items: _buildFormationOptions(),
+              onChanged: (value) => setState(() => _selectedFormationId = value),
+              decoration: const InputDecoration(
+                labelText: 'Filtrer par formation',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: isSmallScreen ? double.infinity : 220,
+            child: DropdownButtonFormField<int?>(
+              value: _selectedFormateurId,
+              items: _buildFormateurOptions(),
+              onChanged: (value) => setState(() => _selectedFormateurId = value),
+              decoration: const InputDecoration(
+                labelText: 'Filtrer par formateur',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -65,12 +175,13 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
   @override
   Widget build(BuildContext context) {
     final isSmallScreen = MediaQuery.of(context).size.width < 600;
+    final filteredRankings = _getFilteredRankings();
 
     if (_isLoadingUser) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (widget.rankings.isEmpty) {
+    if (filteredRankings.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(12),
         child: Center(
@@ -93,9 +204,9 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
     }
 
     // Séparation top 3 et reste
-    final podium = widget.rankings.take(3).toList();
-    final rest = widget.rankings.length > 3 ? widget.rankings.sublist(3) : [];
-    final myIndex = widget.rankings.indexWhere(
+    final podium = filteredRankings.take(3).toList();
+    final rest = filteredRankings.length > 3 ? filteredRankings.sublist(3) : [];
+    final myIndex = filteredRankings.indexWhere(
       (r) => int.tryParse(r.stagiaire.id.toString()) == _connectedStagiaireId,
     );
     final isCurrentUserInRest = myIndex >= 3;
@@ -145,6 +256,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                   ),
                 ],
               ),
+              _buildFilters(isSmallScreen),
               const SizedBox(height: 12),
               _buildHeader(context, isSmallScreen),
               const SizedBox(height: 8),
@@ -198,6 +310,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                   ),
                 ],
               ),
+          _buildFilters(isSmallScreen),
               const SizedBox(height: 16),
               // Podium
               _buildPodium(context, podium, isSmallScreen),
@@ -287,6 +400,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                     ),
                   ],
                 ),
+                _buildFilters(false),
                 const SizedBox(height: 16),
                 _buildPodium(context, podium, false),
               ],
@@ -375,13 +489,6 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
       const Color(0xFFFFD700), // Or
       const Color(0xFFCD7F32), // Bronze
     ];
-
-    // Fonction pour formater les noms
-    String formatName(String prenom, String nom) {
-      if (nom.isEmpty) return prenom;
-      final nomAbrege = nom[0].toUpperCase();
-      return '$nomAbrege. $prenom';
-    }
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
@@ -529,7 +636,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                       message:
                           '${ranking.stagiaire.prenom} ${ranking.stagiaire.nom.toUpperCase()}',
                       child: Text(
-                        formatName(
+                        _formatName(
                           ranking.stagiaire.prenom,
                           ranking.stagiaire.nom,
                         ),
@@ -560,7 +667,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                           ),
                           child: Text(
                             ranking.formateurs
-                                .map((f) => formatName(f.prenom, f.nom))
+                                .map((f) => _formatName(f.prenom, f.nom))
                                 .join(', '),
                             style: TextStyle(
                               fontSize: isSmallScreen ? 9 : 11,
@@ -765,7 +872,10 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${ranking.stagiaire.prenom} ${ranking.stagiaire.nom.toUpperCase()}',
+                              _formatName(
+                                ranking.stagiaire.prenom,
+                                ranking.stagiaire.nom,
+                              ),
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: isSmallScreen ? 14 : 16,
@@ -783,25 +893,19 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                             if (ranking.formateurs.isNotEmpty) ...[
                               const SizedBox(height: 2),
                               ...ranking.formateurs.map((formateur) {
-                                // Formater le nom : première lettre du nom + prénom complet
-                                final nomAbrege =
-                                    formateur.nom.isNotEmpty
-                                        ? '${formateur.nom[0]}. '
-                                        : '';
-                                final nomComplet =
-                                    '$nomAbrege${formateur.prenom}';
-                                final nomCompletTooltip =
-                                    '${formateur.prenom} ${formateur.nom.toUpperCase()}';
-
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 2),
                                   child: Row(
                                     children: [
                                       Expanded(
                                         child: Tooltip(
-                                          message: nomCompletTooltip,
+                                          message:
+                                              '${formateur.prenom} ${formateur.nom.toUpperCase()}',
                                           child: Text(
-                                            nomComplet,
+                                            _formatName(
+                                              formateur.prenom,
+                                              formateur.nom,
+                                            ),
                                             style: TextStyle(
                                               fontSize: isSmallScreen ? 10 : 12,
                                               color: Colors.grey.shade600,

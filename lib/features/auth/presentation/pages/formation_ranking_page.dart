@@ -69,6 +69,12 @@ class _FormationRankingPageState extends State<FormationRankingPage> {
     }
   }
 
+  String _formatName(String prenom, String nom) {
+    if (prenom.isEmpty && nom.isEmpty) return '';
+    final initial = nom.isNotEmpty ? '${nom[0].toUpperCase()}.' : '';
+    return '$prenom${initial.isNotEmpty ? ' $initial' : ''}'.trim();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
@@ -368,7 +374,7 @@ class _FormationRankingPageState extends State<FormationRankingPage> {
                                 ),
                               ),
                               title: Text(
-                                '${entry.prenom} ${entry.nom}',
+                                _formatName(entry.prenom, entry.nom),
                                 style: TextStyle(
                                   fontWeight: isTopThree ? FontWeight.bold : FontWeight.w600,
                                   fontSize: 16,
