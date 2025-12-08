@@ -457,7 +457,10 @@ class _RankingPageState extends State<RankingPage>
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(isLandscape ? 12 : 16),
                   ),
-                  child: GlobalRankingWidget(rankings: snapshot.data!),
+                  child: GlobalRankingWidget(
+                    key: ValueKey(_selectedPeriod), // reset filtres quand période change
+                    rankings: snapshot.data!,
+                  ),
                 );
               },
             ),
