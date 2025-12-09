@@ -408,6 +408,10 @@ class _MediaTutorialPageState extends State<MediaTutorialPage> {
         final items = snap.data ?? [];
         if (items.isEmpty) return const SizedBox.shrink();
 
+        if (items.length <= 1) {
+          return const SizedBox.shrink();
+        }
+
         return Container(
           constraints: BoxConstraints(
             maxWidth: MediaQuery.of(context).size.width * 0.35,
@@ -657,6 +661,52 @@ class _MediaTutorialPageState extends State<MediaTutorialPage> {
     );
   }
 
+  // Badge catégorie coloré
+  Widget _buildCategoryBadge(String category, {bool isSmall = false}) {
+    final isAstuce = category == 'astuce';
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isSmall ? 8 : 12,
+        vertical: isSmall ? 4 : 6,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isAstuce
+              ? [const Color(0xFFFEB823), const Color(0xFFF59E0B)]
+              : [const Color(0xFF3B82F6), const Color(0xFF1D4ED8)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: (isAstuce ? const Color(0xFFFEB823) : const Color(0xFF3B82F6))
+                .withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isAstuce ? Icons.lightbulb : Icons.school,
+            size: isSmall ? 14 : 16,
+            color: Colors.white,
+          ),
+          SizedBox(width: isSmall ? 3 : 4),
+          Text(
+            isAstuce ? 'Astuce' : 'Tutoriel',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: isSmall ? 11 : 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMediaListItem(
     Media media,
     bool isWatched,
@@ -665,62 +715,156 @@ class _MediaTutorialPageState extends State<MediaTutorialPage> {
   ) {
     final colorScheme = theme.colorScheme;
     
-    return Card(
-      elevation: isSelected ? 4 : 1,
-      color: isSelected
-          ? colorScheme.primary.withOpacity(0.08)
-          : isWatched
-              ? colorScheme.surfaceContainerHighest.withOpacity(0.5)
-              : null,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: isSelected
-            ? BorderSide(color: colorScheme.primary, width: 2)
-            : BorderSide.none,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isSelected
+              ? [
+                  colorScheme.primaryContainer,
+                  colorScheme.primaryContainer.withOpacity(0.8),
+                ]
+              : isWatched
+                  ? [
+                      Colors.grey[100]!,
+                      Colors.grey[50]!,
+                    ]
+                  : [
+                      const Color(0xFFFFFBEA),
+                      const Color(0xFFFFF9C4),
+                    ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: isSelected
+                ? colorScheme.primary.withOpacity(0.3)
+                : Colors.black.withOpacity(0.08),
+            blurRadius: isSelected ? 12 : 8,
+            offset: Offset(0, isSelected ? 4 : 2),
+          ),
+        ],
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: () => setState(() => _selectedMedia = media),
-        child: ListTile(
-          leading: Stack(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => setState(() => _selectedMedia = media),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Stack(
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isWatched
+                              ? [Colors.grey[300]!, Colors.grey[200]!]
+                              : [
+                                  colorScheme.primary.withOpacity(0.2),
+                                  colorScheme.primary.withOpacity(0.1),
+                                ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.play_circle_fill,
+                        size: 32,
+                        color: isWatched ? colorScheme.primary : Colors.grey,
+                      ),
+                    ),
+                    if (isWatched)
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFF10B981), Color(0xFF059669)],
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            size: 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                child: Icon(
-                  Icons.play_circle_fill,
-                  size: 30,
-                  color: isWatched ? colorScheme.primary : Colors.grey,
-                ),
-              ),
-              if (isWatched)
-                const Positioned(
-                  top: 0,
-                  right: 0,
-                  child: Icon(
-                    Icons.check_circle,
-                    size: 20,
-                    color: Colors.green,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _filterTitle(media.titre),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.w600,
+                          color: isSelected ? colorScheme.primary : null,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          _buildCategoryBadge(media.categorie, isSmall: true),
+                          if (media.duree != null) ..[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.access_time,
+                                    size: 12,
+                                    color: Colors.grey[700],
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    '${media.duree} min',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey[700],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-            ],
-          ),
-          title: Text(
-            _filterTitle(media.titre),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? colorScheme.primary : null,
+              ],
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
-          subtitle: media.duree != null
-              ? Text('${media.duree} min')
-              : null,
         ),
       ),
     );
@@ -735,86 +879,168 @@ class _MediaTutorialPageState extends State<MediaTutorialPage> {
   ) {
     final colorScheme = theme.colorScheme;
     
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => VideoPlayerPage(
-                video: media,
-                videosInSameCategory: allMedias,
-              ),
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            children: [
-              Stack(
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.play_circle_fill,
-                      size: 40,
-                      color: isWatched ? colorScheme.primary : Colors.grey,
-                    ),
-                  ),
-                  if (isWatched)
-                    const Positioned(
-                      top: 4,
-                      right: 4,
-                      child: Icon(
-                        Icons.check_circle,
-                        size: 24,
-                        color: Colors.green,
-                      ),
-                    ),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isWatched
+              ? [
+                  Colors.grey[100]!,
+                  Colors.grey[50]!,
+                ]
+              : [
+                  const Color(0xFFFFFBEA),
+                  const Color(0xFFFFF9C4),
                 ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => VideoPlayerPage(
+                  video: media,
+                  videosInSameCategory: allMedias,
+                ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(14.0),
+            child: Row(
+              children: [
+                Stack(
                   children: [
-                    Text(
-                      _filterTitle(media.titre),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (media.duree != null) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.timer, size: 16, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${media.duree} min',
-                            style: theme.textTheme.bodySmall,
+                    Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isWatched
+                              ? [Colors.grey[300]!, Colors.grey[200]!]
+                              : [
+                                  colorScheme.primary.withOpacity(0.2),
+                                  colorScheme.primary.withOpacity(0.1),
+                                ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
-                    ],
+                      child: Icon(
+                        Icons.play_circle_fill,
+                        size: 44,
+                        color: isWatched ? colorScheme.primary : Colors.grey[400],
+                      ),
+                    ),
+                    if (isWatched)
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFF10B981), Color(0xFF059669)],
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
-              ),
-              const Icon(Icons.chevron_right),
-            ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _filterTitle(media.titre),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _buildCategoryBadge(media.categorie, isSmall: true),
+                          if (media.duree != null) ..[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.access_time,
+                                    size: 12,
+                                    color: Colors.grey[700],
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${media.duree} min',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey[700],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.05),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.chevron_right,
+                    color: colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

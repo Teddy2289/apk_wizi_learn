@@ -603,6 +603,10 @@ class _TutorialPageState extends State<TutorialPage> {
         final items = snap.data ?? [];
         if (items.isEmpty) return const SizedBox.shrink();
 
+        if (items.length <= 1) {
+          return const SizedBox.shrink();
+        }
+
         return Container(
           constraints: BoxConstraints(
             maxWidth: MediaQuery.of(context).size.width * 0.35,
@@ -622,7 +626,6 @@ class _TutorialPageState extends State<TutorialPage> {
             onChanged: (v) {
               setState(() {
                 _selectedFormationId = v;
-                // Mettre à jour la sélection média quand la formation change
                 final medias = _getFilteredMedias(items);
                 if (medias.isNotEmpty) {
                   _selectedMedia = medias.first;
@@ -1060,6 +1063,52 @@ class _TutorialPageState extends State<TutorialPage> {
     );
   }
 
+  // Badge catégorie coloré
+  Widget _buildCategoryBadge(String category, {bool isSmall = false}) {
+    final isAstuce = category == 'astuce';
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isSmall ? 8 : 12,
+        vertical: isSmall ? 4 : 6,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isAstuce
+              ? [const Color(0xFFFEB823), const Color(0xFFF59E0B)]
+              : [const Color(0xFF3B82F6), const Color(0xFF1D4ED8)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: (isAstuce ? const Color(0xFFFEB823) : const Color(0xFF3B82F6))
+                .withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isAstuce ? Icons.lightbulb : Icons.school,
+            size: isSmall ? 14 : 16,
+            color: Colors.white,
+          ),
+          SizedBox(width: isSmall ? 3 : 4),
+          Text(
+            isAstuce ? 'Astuce' : 'Tutoriel',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: isSmall ? 11 : 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMediaItem(
     BuildContext context,
     Media media,
@@ -1078,67 +1127,149 @@ class _TutorialPageState extends State<TutorialPage> {
       builder: (context, snapshot) {
         final duration = snapshot.data ?? const Duration(seconds: 0);
 
-        return Card(
-          elevation: isSelected ? 4 : 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side:
-                isSelected
-                    ? BorderSide(color: colorScheme.primary, width: 2)
-                    : BorderSide.none,
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isSelected
+                  ? [
+                      colorScheme.primaryContainer,
+                      colorScheme.primaryContainer.withOpacity(0.8),
+                    ]
+                  : isWatched
+                      ? [
+                          Colors.grey[100]!,
+                          Colors.grey[50]!,
+                        ]
+                      : [
+                          const Color(0xFFFFFBEA),
+                          const Color(0xFFFFF9C4),
+                        ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: isSelected
+                    ? colorScheme.primary.withOpacity(0.3)
+                    : Colors.black.withOpacity(0.08),
+                blurRadius: isSelected ? 12 : 8,
+                offset: Offset(0, isSelected ? 4 : 2),
+              ),
+            ],
           ),
-          color:
-              isSelected
-                  ? colorScheme.primaryContainer
-                  : (isWatched
-                      ? colorScheme.surfaceContainerHighest.withOpacity(0.7)
-                      : const Color(0xFFFFF9C4)),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () => _onMediaItemTap(media, isWatched, isTablet),
-            child: Padding(
-              padding: EdgeInsets.all(isSmallScreen ? 8.0 : 12.0),
-              child: Row(
-                children: [
-                  if (showThumbnail)
-                    _buildThumbnail(
-                      media,
-                      isWatched,
-                      duration,
-                      theme,
-                      isSmallScreen,
-                    ),
-                  if (showThumbnail) SizedBox(width: isSmallScreen ? 8 : 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _filterTitle(media.titre),
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color:
-                                isSelected
-                                    ? colorScheme.onPrimaryContainer
-                                    : (isWatched
-                                        ? colorScheme.onSurface.withOpacity(0.7)
-                                        : colorScheme.onSurface),
-                            fontSize: isSmallScreen ? 14 : 16,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => _onMediaItemTap(media, isWatched, isTablet),
+              child: Padding(
+                padding: EdgeInsets.all(isSmallScreen ? 10.0 : 14.0),
+                child: Row(
+                  children: [
+                    if (showThumbnail)
+                      _buildThumbnail(
+                        media,
+                        isWatched,
+                        duration,
+                        theme,
+                        isSmallScreen,
+                      ),
+                    if (showThumbnail) SizedBox(width: isSmallScreen ? 10 : 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  _filterTitle(media.titre),
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: isSelected
+                                        ? colorScheme.onPrimaryContainer
+                                        : (isWatched
+                                            ? colorScheme.onSurface
+                                                .withOpacity(0.7)
+                                            : colorScheme.onSurface),
+                                    fontSize: isSmallScreen ? 14 : 16,
+                                    height: 1.3,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (snapshot.connectionState == ConnectionState.waiting)
-                          const LinearProgressIndicator(),
-                      ],
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              _buildCategoryBadge(
+                                media.categorie,
+                                isSmall: isSmallScreen,
+                              ),
+                              const SizedBox(width: 8),
+                              if (duration.inSeconds > 0)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.access_time,
+                                        size: isSmallScreen ? 12 : 14,
+                                        color: Colors.grey[700],
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _formatDuration(duration),
+                                        style: TextStyle(
+                                          fontSize: isSmallScreen ? 11 : 12,
+                                          color: Colors.grey[700],
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 8.0),
+                              child: LinearProgressIndicator(),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Icon(
-                    Icons.chevron_right,
-                    color: colorScheme.onSurface.withOpacity(0.6),
-                    size: isSmallScreen ? 20 : 24,
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? colorScheme.primary.withOpacity(0.1)
+                            : Colors.black.withOpacity(0.05),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.chevron_right,
+                        color: isSelected
+                            ? colorScheme.primary
+                            : colorScheme.onSurface.withOpacity(0.6),
+                        size: isSmallScreen ? 20 : 24,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1161,7 +1292,7 @@ class _TutorialPageState extends State<TutorialPage> {
     return Stack(
       alignment: Alignment.center,
       children: [
-        // Ajuster la taille de la miniature pour tablettes/paysage (meilleure lisibilité)
+        // Container principal de la miniature
         Container(
           width:
               isSmallScreen
@@ -1177,61 +1308,152 @@ class _TutorialPageState extends State<TutorialPage> {
                       : MediaQuery.of(context).size.width * 0.2),
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(8),
-            image:
-                thumbnailUrl != null
-                    ? DecorationImage(
-                      image: NetworkImage(thumbnailUrl),
-                      fit: BoxFit.cover,
-                    )
-                    : null,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          child:
-              thumbnailUrl == null
-                  ? Icon(Icons.videocam, size: isSmallScreen ? 24 : 32)
-                  : null,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Image de fond
+                if (thumbnailUrl != null)
+                  Image.network(
+                    thumbnailUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.videocam,
+                        size: isSmallScreen ? 24 : 32,
+                        color: Colors.grey[400],
+                      );
+                    },
+                  )
+                else
+                  Center(
+                    child: Icon(
+                      Icons.videocam,
+                      size: isSmallScreen ? 24 : 32,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                // Gradient overlay
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.3),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        Icon(
-          Icons.play_circle_fill,
-          size: isSmallScreen ? 28 : 36,
-          color: Colors.white.withOpacity(0.8),
+        // Icône play au centre
+        Container(
+          padding: EdgeInsets.all(isSmallScreen ? 8 : 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(
+            Icons.play_arrow,
+            size: isSmallScreen ? 20 : 28,
+            color: const Color(0xFF3B82F6),
+          ),
         ),
+        // Badge "vidéo vue" en haut à droite
         if (isWatched)
           Positioned(
-            top: 4,
-            right: 4,
+            top: 6,
+            right: 6,
             child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: Colors.green,
+              padding: EdgeInsets.all(isSmallScreen ? 4 : 6),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF10B981), Color(0xFF059669)],
+                ),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF10B981).withOpacity(0.5),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Icon(
                 Icons.check,
-                size: isSmallScreen ? 10 : 12,
+                size: isSmallScreen ? 12 : 14,
                 color: Colors.white,
               ),
             ),
           ),
-        Positioned(
-          bottom: 4,
-          right: 4,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.7),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              _formatDuration(duration),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: isSmallScreen ? 10 : 12,
+        // Badge de durée en bas à droite
+        if (duration.inSeconds > 0)
+          Positioned(
+            bottom: 6,
+            right: 6,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: isSmallScreen ? 6 : 8,
+                vertical: isSmallScreen ? 3 : 4,
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.black.withOpacity(0.8),
+                    Colors.black.withOpacity(0.9),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.access_time,
+                    size: isSmallScreen ? 10 : 12,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    _formatDuration(duration),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: isSmallScreen ? 10 : 11,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ),
       ],
     );
   }
