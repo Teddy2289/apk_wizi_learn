@@ -825,7 +825,7 @@ class _MediaTutorialPageState extends State<MediaTutorialPage> {
                       Row(
                         children: [
                           _buildCategoryBadge(media.categorie, isSmall: true),
-                          if (media.duree != null) ..[
+                          if (media.duree != null) ...[
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -990,7 +990,7 @@ class _MediaTutorialPageState extends State<MediaTutorialPage> {
                       Row(
                         children: [
                           _buildCategoryBadge(media.categorie, isSmall: true),
-                          if (media.duree != null) ..[
+                          if (media.duree != null) ...[
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(

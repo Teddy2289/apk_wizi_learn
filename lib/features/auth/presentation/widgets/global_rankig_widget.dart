@@ -1056,27 +1056,22 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
   Color _getRankColor(BuildContext context, int rank) {
     switch (rank) {
       case 1:
-        return Colors.amber.withOpacity(0.3);
+        return const Color(0xFFFEB823); // Or vif
       case 2:
-        return Colors.grey.withOpacity(0.3);
+        return const Color(0xFF9CA3AF); // Argent
       case 3:
-        return Colors.orange.withOpacity(0.3);
+        return const Color(0xFFF59E0B); // Bronze
+      case 4:
+        return const Color(0xFF6B7280); // Gris
+      case 5:
+        return const Color(0xFF3B82F6); // Bleu
       default:
-        return Theme.of(context).colorScheme.surfaceContainerHighest;
+        return Colors.grey.shade300;
     }
   }
 
   Color _getRankTextColor(BuildContext context, int rank) {
-    switch (rank) {
-      case 1:
-        return Colors.amber.shade800;
-      case 2:
-        return Colors.grey.shade800;
-      case 3:
-        return Colors.orange.shade800;
-      default:
-        return Theme.of(context).colorScheme.onSurface;
-    }
+    return Colors.white; // Texte blanc pour tous les badges
   }
 }
 

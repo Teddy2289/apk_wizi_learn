@@ -46,11 +46,15 @@ class _FormationRankingPageState extends State<FormationRankingPage> {
   Color _getRankColor(int rang) {
     switch (rang) {
       case 1:
-        return Colors.amber.shade600;
+        return const Color(0xFFFEB823); // Or vif
       case 2:
-        return Colors.grey.shade400;
+        return const Color(0xFF9CA3AF); // Argent
       case 3:
-        return Colors.orange.shade700;
+        return const Color(0xFFF59E0B); // Bronze
+      case 4:
+        return const Color(0xFF6B7280); // Gris
+      case 5:
+        return const Color(0xFF3B82F6); // Bleu
       default:
         return Colors.grey.shade300;
     }
@@ -321,10 +325,10 @@ class _FormationRankingPageState extends State<FormationRankingPage> {
                         final isTopThree = entry.rang <= 3;
 
                         return Card(
-                          elevation: isTopThree ? 4 : 1,
+                          elevation: isTopThree ? 4 : 2,
                           margin: const EdgeInsets.only(bottom: 12),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(16),
                             side: BorderSide(
                               color: isTopThree ? _getRankColor(entry.rang) : Colors.transparent,
                               width: 2,
@@ -339,74 +343,107 @@ class _FormationRankingPageState extends State<FormationRankingPage> {
                                         _getRankColor(entry.rang).withOpacity(0.05),
                                       ],
                                     ),
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(16),
                                   )
                                 : null,
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
-                                vertical: 8,
+                                vertical: 12,
                               ),
-                              leading: Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: isTopThree
-                                      ? _getRankColor(entry.rang)
-                                      : Colors.grey.shade200,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: isTopThree
-                                      ? Icon(
-                                          _getRankIcon(entry.rang),
-                                          color: Colors.white,
-                                          size: 28,
-                                        )
-                                      : Text(
-                                          '${entry.rang}',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.grey.shade700,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                              title: Text(
-                                _formatName(entry.prenom, entry.nom),
-                                style: TextStyle(
-                                  fontWeight: isTopThree ? FontWeight.bold : FontWeight.w600,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              subtitle: Text(
-                                '${entry.quizCompletes} quiz complétés',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                              trailing: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.end,
+                              child: Row(
                                 children: [
-                                  Text(
-                                    '${entry.totalPoints}',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: isTopThree
-                                          ? _getRankColor(entry.rang)
-                                          : Colors.grey.shade700,
+                                  // Badge de position
+                                  Container(
+                                    width: 52,
+                                    height: 52,
+                                    decoration: BoxDecoration(
+                                      color: _getRankColor(entry.rang),
+                                      shape: BoxShape.circle,
+                                      boxShadow: isTopThree
+                                          ? [
+                                              BoxShadow(
+                                                color: _getRankColor(entry.rang).withOpacity(0.4),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ]
+                                          : [],
+                                    ),
+                                    child: Center(
+                                      child: isTopThree
+                                          ? Icon(
+                                              _getRankIcon(entry.rang),
+                                              color: Colors.white,
+                                              size: 28,
+                                            )
+                                          : Text(
+                                              '${entry.rang}',
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
                                     ),
                                   ),
-                                  Text(
-                                    'points',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
+                                  const SizedBox(width: 16),
+                                  // Contenu
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _formatName(entry.prenom, entry.nom),
+                                          style: TextStyle(
+                                            fontWeight: isTopThree ? FontWeight.bold : FontWeight.w600,
+                                            fontSize: 17,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.quiz_outlined,
+                                              size: 14,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${entry.quizCompletes} quiz complétés',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
+                                  ),
+                                  // Points
+                                  Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        '${entry.totalPoints}',
+                                        style: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFFFEB823), // Or/Gold
+                                        ),
+                                      ),
+                                      Text(
+                                        'Pts',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
