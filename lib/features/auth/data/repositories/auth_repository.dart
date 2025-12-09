@@ -144,4 +144,14 @@ class AuthRepository implements AuthRepositoryContract {
       }
     }
   }
+
+  /// Récupère les détails d'un stagiaire
+  Future<Map<String, dynamic>> getStagiaireDetails(int stagiaireId) async {
+    try {
+      final response = await remoteDataSource.getStagiaireDetails(stagiaireId);
+      return response;
+    } on ApiException catch (e) {
+      throw AuthException('Erreur lors de la récupération des détails: ${e.message}');
+    }
+  }
 }

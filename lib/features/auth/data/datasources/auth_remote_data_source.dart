@@ -22,6 +22,7 @@ abstract class AuthRemoteDataSource {
     required String password,
     required String passwordConfirmation,
   });
+  Future<Map<String, dynamic>> getStagiaireDetails(int stagiaireId);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -146,6 +147,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           statusCode: response.statusCode,
         );
       }
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getStagiaireDetails(int stagiaireId) async {
+    try {
+      final response = await apiClient.get('/stagiaires/$stagiaireId/details');
+      return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

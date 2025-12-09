@@ -427,17 +427,17 @@ class _RankingPageState extends State<RankingPage>
       padding: EdgeInsets.all(isLandscape ? 8 : 16),
       child: Column(
         children: [
-          // Period filter chips
-          PeriodFilterChips(
-            selectedPeriod: _selectedPeriod,
-            onPeriodChanged: (period) {
-              setState(() {
-                _selectedPeriod = period;
-              });
-              _loadAllData();
-            },
-          ),
-          const SizedBox(height: 16),
+          // // Period filter chips
+          // PeriodFilterChips(
+          //   selectedPeriod: _selectedPeriod,
+          //   onPeriodChanged: (period) {
+          //     setState(() {
+          //       _selectedPeriod = period;
+          //     });
+          //     _loadAllData();
+          //   },
+          // ),
+          // const SizedBox(height: 16),
           // Ranking content
           Expanded(
             child: FutureBuilder<List<GlobalRanking>>(

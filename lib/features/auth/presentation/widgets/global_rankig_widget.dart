@@ -8,6 +8,8 @@ import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/formateur_formations_modal.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/compact_filters_widget.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/stagiaire_details_dialog.dart';
 
 class GlobalRankingWidget extends StatefulWidget {
   final List<GlobalRanking> rankings;
@@ -26,6 +28,12 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
   bool _showList = false;
   int? _selectedFormationId;
   int? _selectedFormateurId;
+  
+  // Nouveaux états pour filtres compacts
+  String _selectedPeriod = 'all';
+  String _searchQuery = '';
+  String _sortBy = 'rang';
+  bool _sortAscending = true;
 
   String _formatName(String prenom, String nom) {
     if (prenom.isEmpty && nom.isEmpty) return '';
@@ -34,18 +42,53 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
   }
 
   List<GlobalRanking> _getFilteredRankings() {
-    final sorted = [...widget.rankings]
-      ..sort((a, b) => a.rang.compareTo(b.rang));
+    var filtered = [...widget.rankings];
 
-    return sorted.where((ranking) {
-      final matchesFormation = _selectedFormationId == null ||
-          ranking.formateurs.any(
-            (f) => f.formations.any((formation) => formation.id == _selectedFormationId),
-          );
-      final matchesFormateur = _selectedFormateurId == null ||
-          ranking.formateurs.any((f) => f.id == _selectedFormateurId);
-      return matchesFormation && matchesFormateur;
-    }).toList();
+    // Filtre recherche
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((r) {
+        final name = '${r.stagiaire.prenom} ${r.stagiaire.nom}'.toLowerCase();
+        return name.contains(_searchQuery.toLowerCase());
+      }).toList();
+    }
+
+    // Filtre formation
+    if (_selectedFormationId != null) {
+      filtered = filtered.where((ranking) {
+        return ranking.formateurs.any(
+          (f) => f.formations.any((formation) => formation.id == _selectedFormationId),
+        );
+      }).toList();
+    }
+
+    // Filtre formateur
+    if (_selectedFormateurId != null) {
+      filtered = filtered.where((ranking) {
+        return ranking.formateurs.any((f) => f.id == _selectedFormateurId);
+      }).toList();
+    }
+
+    // Tri
+    filtered.sort((a, b) {
+      int comparison;
+      switch (_sortBy) {
+        case 'score':
+          comparison = a.totalPoints.compareTo(b.totalPoints);
+          break;
+        case 'quiz':
+          comparison = a.quizCount.compareTo(b.quizCount);
+          break;
+        case 'name':
+          comparison = a.stagiaire.prenom.compareTo(b.stagiaire.prenom);
+          break;
+        case 'rang':
+        default:
+          comparison = a.rang.compareTo(b.rang);
+      }
+      return _sortAscending ? comparison : -comparison;
+    });
+
+    return filtered;
   }
 
   List<DropdownMenuItem<int?>> _buildFormationOptions() {
@@ -97,43 +140,104 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
   }
 
   Widget _buildFilters(bool isSmallScreen) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          SizedBox(
-            width: isSmallScreen ? double.infinity : 220,
-            child: DropdownButtonFormField<int?>(
-              value: _selectedFormationId,
-              items: _buildFormationOptions(),
-              onChanged: (value) => setState(() => _selectedFormationId = value),
-              decoration: const InputDecoration(
-                labelText: 'Filtrer par formation',
-                border: OutlineInputBorder(),
-                isDense: true,
-              ),
-            ),
-          ),
-          SizedBox(
-            width: isSmallScreen ? double.infinity : 220,
-            child: DropdownButtonFormField<int?>(
-              value: _selectedFormateurId,
-              items: _buildFormateurOptions(),
-              onChanged: (value) => setState(() => _selectedFormateurId = value),
-              decoration: const InputDecoration(
-                labelText: 'Filtrer par formateur',
-                border: OutlineInputBorder(),
-                isDense: true,
-              ),
-            ),
-          ),
-        ],
-      ),
+    return CompactFiltersWidget(
+      // Période
+      selectedPeriod: _selectedPeriod,
+      onPeriodChanged: (period) {
+        setState(() => _selectedPeriod = period);
+        // Recharger si nécessaire
+      },
+      
+      // Recherche
+      searchQuery: _searchQuery,
+      onSearchChanged: (query) {
+        setState(() => _searchQuery = query);
+      },
+      
+      // Formation
+      selectedFormation: _selectedFormationId?.toString(),
+      formations: _buildFormationsList(),
+      onFormationChanged: (id) {
+        setState(() => _selectedFormationId = id != null ? int.tryParse(id) : null);
+      },
+      
+      // Formateur
+      selectedFormateur: _selectedFormateurId?.toString(),
+      formateurs: _buildFormateursList(),
+      onFormateurChanged: (id) {
+        setState(() => _selectedFormateurId = id != null ? int.tryParse(id) : null);
+      },
+      
+      // Tri
+      sortBy: _sortBy,
+      sortOptions: const [
+        {'id': 'rang', 'label': 'Rang', 'value': 'Rang'},
+        {'id': 'score', 'label': 'Points', 'value': 'Points'},
+        {'id': 'quiz', 'label': 'Quiz', 'value': 'Quiz'},
+        {'id': 'name', 'label': 'Nom', 'value': 'Nom'},
+      ],
+      onSortChanged: (sort) {
+        setState(() => _sortBy = sort);
+      },
+      sortAscending: _sortAscending,
+      onSortOrderToggle: () {
+        setState(() => _sortAscending = !_sortAscending);
+      },
+      
+      // Réinitialiser
+      onResetFilters: () {
+        setState(() {
+          _searchQuery = '';
+          _selectedFormationId = null;
+          _selectedFormateurId = null;
+          _sortBy = 'rang';
+          _sortAscending = true;
+        });
+      },
+      hasActiveFilters: _searchQuery.isNotEmpty ||
+          _selectedFormationId != null ||
+          _selectedFormateurId != null ||
+          _sortBy != 'rang',
     );
   }
+
+  // Helpers pour convertir en List<Map>
+  List<Map<String, dynamic>> _buildFormationsList() {
+    final formations = <Map<String, dynamic>>[];
+    final ids = <int>{};
+    
+    for (final ranking in widget.rankings) {
+      for (final formateur in ranking.formateurs) {
+        for (final formation in formateur.formations) {
+          if (ids.add(formation.id)) {
+            formations.add({
+              'id': formation.id,
+              'label': formation.titre,
+            });
+          }
+        }
+      }
+    }
+    return formations;
+  }
+
+  List<Map<String, dynamic>> _buildFormateursList() {
+    final formateurs = <Map<String, dynamic>>[];
+    final ids = <int>{};
+    
+    for (final ranking in widget.rankings) {
+      for (final formateur in ranking.formateurs) {
+        if (ids.add(formateur.id)) {
+          formateurs.add({
+            'id': formateur.id,
+            'label': _formatName(formateur.prenom, formateur.nom),
+          });
+        }
+      }
+    }
+    return formateurs;
+  }
+
 
   @override
   void initState() {
@@ -169,6 +273,48 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
       setState(() {
         _isLoadingUser = false;
       });
+    }
+  }
+
+  // Afficher les détails du stagiaire
+  Future<void> _showStagiaireDetails(BuildContext context, int stagiaireId) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      final response = await _authRepository.getStagiaireDetails(stagiaireId);
+      
+      // Close loading dialog
+      if (context.mounted) Navigator.of(context).pop();
+      
+      // Show details dialog
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => StagiaireDetailsDialog(
+            stagiaireData: response,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (context.mounted) Navigator.of(context).pop();
+      
+      // Show error
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors du chargement des détails: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -531,11 +677,14 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                   _connectedStagiaireId;
 
               return Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    // Badge de position
-                    Container(
+                child: InkWell(
+                  onTap: () => _showStagiaireDetails(context, int.parse(ranking.stagiaire.id.toString())),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      // Badge de position
+                      Container(
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -704,9 +853,11 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                     const SizedBox(height: 8),
                   ],
                 ),
-              );
-            }),
-          ),
+              ), // Column
+            ), // InkWell
+          ); // Expanded
+        }),
+      ),
         ],
       ),
     );
@@ -783,7 +934,10 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
     bool isCurrentUser = false,
     bool highlight = false,
   }) {
-    return Container(
+    return InkWell(
+      onTap: () => _showStagiaireDetails(context, int.parse(ranking.stagiaire.id.toString())),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
       margin: highlight ? const EdgeInsets.symmetric(vertical: 8) : null,
       decoration: BoxDecoration(
         color:
@@ -1049,9 +1203,10 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
             ),
           ],
         ),
-      ),
-    );
-  }
+      ), // Padding
+    ), // Container (child)
+  ); // InkWell
+}
 
   Color _getRankColor(BuildContext context, int rank) {
     switch (rank) {
