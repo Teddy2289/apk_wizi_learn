@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:wizi_learn/features/profile/data/repositories/profile_repository.dart';
 
 class ProfileEditForm extends StatefulWidget {
+  final ProfileRepository repository;
   final Function()? onSuccess;
   final VoidCallback? onCancel;
 
   const ProfileEditForm({
     Key? key,
+    required this.repository,
     this.onSuccess,
     this.onCancel,
   }) : super(key: key);
@@ -49,20 +52,34 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
   }
 
   Future<void> _fetchProfile() async {
-    // TODO: Implement API call to fetch profile
-    // For now, simulate delay
-    await Future.delayed(const Duration(seconds: 1));
-    
-    setState(() {
-      _prenomController.text = 'Jean';
-      _nomController.text = 'Dupont';
-      _emailController.text = 'jean.dupont@example.com';
-      _telephoneController.text = '0612345678';
-      _villeController.text = 'Paris';
-      _codePostalController.text = '75001';
-      _adresseController.text = '1 rue de la Paix';
-      _fetching = false;
-    });
+    try {
+      setState(() {
+        _fetching = true;
+        _error = null;
+      });
+
+      final profile = await widget.repository.getProfile();
+
+      if (mounted) {
+        setState(() {
+          _prenomController.text = profile['prenom'] ?? '';
+          _nomController.text = profile['nom'] ?? '';
+          _emailController.text = profile['email'] ?? '';
+          _telephoneController.text = profile['telephone'] ?? '';
+          _villeController.text = profile['ville'] ?? '';
+          _codePostalController.text = profile['code_postal'] ?? '';
+          _adresseController.text = profile['adresse'] ?? '';
+          _fetching = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Erreur lors du chargement du profil: ${e.toString()}';
+          _fetching = false;
+        });
+      }
+    }
   }
 
   Future<void> _submitForm() async {
@@ -75,8 +92,22 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
     });
 
     try {
-      // TODO: Implement API call to update profile
-      await Future.delayed(const Duration(seconds: 1));
+      await widget.repository.updateProfile(
+        prenom: _prenomController.text.trim(),
+        nom: _nomController.text.trim(),
+        telephone: _telephoneController.text.trim().isEmpty
+            ? null
+            : _telephoneController.text.trim(),
+        ville: _villeController.text.trim().isEmpty
+            ? null
+            : _villeController.text.trim(),
+        codePostal: _codePostalController.text.trim().isEmpty
+            ? null
+            : _codePostalController.text.trim(),
+        adresse: _adresseController.text.trim().isEmpty
+            ? null
+            : _adresseController.text.trim(),
+      );
 
       if (mounted) {
         setState(() {
@@ -85,7 +116,7 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
         });
 
         // Call success callback after delay
-        Future.delayed(const Duration(seconds: 1), () {
+        Future.delayed(const Duration(milliseconds: 1500), () {
           if (mounted) {
             widget.onSuccess?.call();
           }
@@ -94,7 +125,7 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Une erreur est survenue lors de la mise à jour';
+          _error = e.toString().replaceAll('Exception: ', '');
           _loading = false;
         });
       }
