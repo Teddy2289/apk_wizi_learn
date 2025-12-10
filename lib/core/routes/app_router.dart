@@ -24,6 +24,7 @@ import '../../features/auth/presentation/pages/auth/login_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/contact_page.dart';
 import 'package:wizi_learn/features/commercial/screens/commercial_dashboard_screen.dart';
+import 'package:wizi_learn/features/profile/presentation/pages/profile_edit_page.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -103,6 +104,11 @@ class AppRouter {
       case RouteConstants.commercialDashboard:
         return MaterialPageRoute(
           builder: (_) => const CommercialDashboardScreen(),
+        );
+      
+      case RouteConstants.profileEdit:
+        return MaterialPageRoute(
+          builder: (_) => const ProfileEditPage(),
         );
       
       default:

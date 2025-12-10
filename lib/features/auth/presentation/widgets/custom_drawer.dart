@@ -293,6 +293,11 @@ class CustomDrawer extends StatelessWidget {
                             route: RouteConstants.myProgress,
                           ),
                           _MenuItem(
+                            icon: Icons.edit_outlined,
+                            label: 'Modifier mon profil',
+                            route: RouteConstants.profileEdit,
+                          ),
+                          _MenuItem(
                             icon: Icons.quiz,
                             label: 'Mes Quiz',
                             route: RouteConstants.quiz,

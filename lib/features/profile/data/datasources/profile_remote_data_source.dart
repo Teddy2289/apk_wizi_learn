@@ -24,7 +24,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       if (token == null) throw ApiException(message: 'Token non disponible');
 
       final response = await dio.get(
-        '$baseUrl/stagiaires/profile',
+        '$baseUrl/stagiaire/profile',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -46,7 +46,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       if (token == null) throw ApiException(message: 'Token non disponible');
 
       final response = await dio.put(
-        '$baseUrl/stagiaires/profile',
+        '$baseUrl/stagiaire/profile',
         data: data,
         options: Options(
           headers: {

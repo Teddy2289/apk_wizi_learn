@@ -29,7 +29,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
     final dataSource = ProfileRemoteDataSourceImpl(
       dio: dio,
-      baseUrl: AppConstants.apiUrl,
+      baseUrl: AppConstants.baseUrl,
       getToken: () => storage.read(key: 'token'),
     );
 
