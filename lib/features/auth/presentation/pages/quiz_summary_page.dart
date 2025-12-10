@@ -21,6 +21,7 @@ import 'package:wizi_learn/features/auth/presentation/components/quiz_question_c
 import 'package:wizi_learn/features/auth/presentation/components/quiz_score_header.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_session_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_widget.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/badge_unlock_dialog.dart';
 
 class QuizSummaryPage extends StatefulWidget {
   final List<Question> questions;
@@ -653,126 +654,45 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
     }
   }
 
-  void _showBadgePopup(List<Achievement> badges) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.amber.shade50, Colors.orange.shade50],
+  void _showBadgePopup(List<Achievement> badges) async {
+    // Récupérer tous les badges pour montrer ceux à découvrir
+    List<Achievement> allBadges = [];
+    try {
+      final dio = Dio();
+      final storage = const FlutterSecureStorage();
+      final apiClient = ApiClient(dio: dio, storage: storage);
+      final repo = AchievementRepository(apiClient: apiClient);
+      allBadges = await repo.getUserAchievements();
+    } catch (e) {
+      debugPrint("Erreur récupération badges: $e");
+    }
+
+    // Filtrer les badges verrouillés pour la section découverte
+    final lockedBadges = allBadges
+        .where((b) => b.unlockedAt == null)
+        .take(2)
+        .toList();
+
+    // Afficher un dialog par badge débloqué
+    for (var badge in badges) {
+      if (!mounted) return;
+      
+      await showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) => BadgeUnlockDialog(
+          badge: badge,
+          otherBadges: lockedBadges,
+          onViewAll: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const AchievementPage(),
               ),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.amber,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.amber.withOpacity(0.5),
-                        blurRadius: 15,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    Icons.emoji_events,
-                    color: Colors.white,
-                    size: 40,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Nouveau badge débloqué !',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange.shade900,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Félicitations pour votre accomplissement !',
-                  style: TextStyle(color: Colors.orange.shade700, fontSize: 14),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                ...badges.map(
-                  (badge) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: AchievementBadgeWidget(
-                      achievement: badge,
-                      unlocked: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text('Continuer'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const AchievementPage(),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.emoji_events, size: 18),
-                            const SizedBox(width: 6),
-                            Text('Voir'),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+            );
+          },
+        ),
+      );
+    }
   }
 
   void _showCongratulationDialog() {
