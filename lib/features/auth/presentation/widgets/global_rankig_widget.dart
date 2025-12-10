@@ -852,10 +852,10 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                     ),
                     const SizedBox(height: 8),
                   ],
-                ),
-              ), // Column
-            ), // InkWell
-          ); // Expanded
+                ), // Column
+              ), // InkWell child
+            ), // Expanded child
+          );
         }),
       ),
         ],
