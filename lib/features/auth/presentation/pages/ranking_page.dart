@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/period_filter_chips.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/profile_stats.dart';
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});
@@ -210,11 +211,11 @@ class _RankingPageState extends State<RankingPage>
         ),
       )
           : TabBarView(
-        controller: _tabController,
-        children: [
-          _buildRankingTab(isLandscape),
-          _buildStatsTab(isLandscape),
-          _buildHistoryTab(isLandscape),
+              controller: _tabController,
+              children: [
+                _buildRankingTab(isLandscape),
+                _buildStatsTab(isLandscape),
+                _buildHistoryTab(isLandscape),
         ],
       ),
     );

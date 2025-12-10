@@ -853,11 +853,10 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                     const SizedBox(height: 8),
                   ],
                 ), // Column
-              ), // InkWell child
-            ), // Expanded child
-          );
-        }),
-      ),
+              ), // InkWell
+            ); // Expanded
+          }),
+        ),
         ],
       ),
     );
@@ -1073,50 +1072,50 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                                       ),
                                       const SizedBox(width: 6),
                                       // Bouton Voir formations - COMPACT AVEC TOOLTIP
-                                      Tooltip(
-                                        message:
-                                            'Voir les formations de ${formateur.prenom} ${formateur.nom}',
-                                        child: GestureDetector(
-                                          onTap:
-                                              () => _showFormateurFormations(
-                                                context,
-                                                formateur,
-                                              ),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 3,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.blue.shade50,
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                              border: Border.all(
-                                                color: Colors.blue.shade200,
-                                              ),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(
-                                                  Icons.school_outlined,
-                                                  size: 10,
-                                                  color: Colors.blue.shade600,
-                                                ),
-                                                const SizedBox(width: 2),
-                                                Text(
-                                                  'Voir',
-                                                  style: TextStyle(
-                                                    fontSize: 9,
-                                                    color: Colors.blue.shade600,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
+                                      // Tooltip(
+                                      //   message:
+                                      //       'Voir les formations de ${formateur.prenom} ${formateur.nom}',
+                                      //   child: GestureDetector(
+                                      //     onTap:
+                                      //         () => _showFormateurFormations(
+                                      //           context,
+                                      //           formateur,
+                                      //         ),
+                                      //     child: Container(
+                                      //       padding: const EdgeInsets.symmetric(
+                                      //         horizontal: 6,
+                                      //         vertical: 3,
+                                      //       ),
+                                      //       decoration: BoxDecoration(
+                                      //         color: Colors.blue.shade50,
+                                      //         borderRadius:
+                                      //             BorderRadius.circular(4),
+                                      //         border: Border.all(
+                                      //           color: Colors.blue.shade200,
+                                      //         ),
+                                      //       ),
+                                      //       child: Row(
+                                      //         mainAxisSize: MainAxisSize.min,
+                                      //         children: [
+                                      //           Icon(
+                                      //             Icons.school_outlined,
+                                      //             size: 10,
+                                      //             color: Colors.blue.shade600,
+                                      //           ),
+                                      //           const SizedBox(width: 2),
+                                      //           Text(
+                                      //             'Voir',
+                                      //             style: TextStyle(
+                                      //               fontSize: 9,
+                                      //               color: Colors.blue.shade600,
+                                      //               fontWeight: FontWeight.w500,
+                                      //             ),
+                                      //           ),
+                                      //         ],
+                                      //       ),
+                                      //     ),
+                                      //   ),
+                                      // ),
                                     ],
                                   ),
                                 );

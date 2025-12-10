@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wizi_learn/core/constants/app_constants.dart';
 
 class StagiaireDetailsDialog extends StatelessWidget {
   final Map<String, dynamic> stagiaireData;
@@ -27,8 +28,8 @@ class StagiaireDetailsDialog extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundImage: stagiaireData['avatar'] != null
-                        ? NetworkImage(stagiaireData['avatar'])
+                    backgroundImage: stagiaireData['avatar'] != null && stagiaireData['avatar'].toString().isNotEmpty
+                        ? NetworkImage('${AppConstants.baseUrlImg}/${stagiaireData['avatar']}')
                         : null,
                     child: stagiaireData['avatar'] == null
                         ? Text(
@@ -43,11 +44,11 @@ class StagiaireDetailsDialog extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${stagiaireData['firstname']} ${stagiaireData['name']}',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
+                            '${stagiaireData['firstname']} ${(stagiaireData['name'] as String).isNotEmpty ? (stagiaireData['name'] as String)[0]+'.' : ''}',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
                         const SizedBox(height: 4),
                         Text(
                           'Position #${stagiaireData['rang']} • ${stagiaireData['totalPoints']} points',
@@ -70,10 +71,12 @@ class StagiaireDetailsDialog extends StatelessWidget {
               // Formations
               if (stagiaireData['formations'] != null &&
                   (stagiaireData['formations'] as List).isNotEmpty) ...[
-                const Text(
-                  'Formations',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                 Text(
+                        (stagiaireData['formations'] as List).length == 1
+                            ? 'Formation'
+                            : 'Formations',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
@@ -93,7 +96,7 @@ class StagiaireDetailsDialog extends StatelessWidget {
               if (stagiaireData['formateurs'] != null &&
                   (stagiaireData['formateurs'] as List).isNotEmpty) ...[
                 const Text(
-                  'Formateurs',
+                  'Accompagnée par :',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
@@ -135,7 +138,8 @@ class StagiaireDetailsDialog extends StatelessWidget {
                     child: _buildStatCard(
                       context,
                       'Quiz',
-                      '${stagiaireData['quizStats']?['totalCompleted'] ?? 0}/${stagiaireData['quizStats']?['totalQuiz'] ?? 0}',
+                      '${stagiaireData['quizStats']?['totalCompleted'] ?? 0}',
+                      // /${stagiaireData['quizStats']?['totalQuiz'] ?? 0}',
                       Icons.quiz,
                       Colors.blue,
                     ),
@@ -192,12 +196,12 @@ class StagiaireDetailsDialog extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 16,
-            backgroundImage: image != null ? NetworkImage(image) : null,
-            child: image == null ? Text(prenom[0]) : null,
+            backgroundImage: image != null && image.isNotEmpty ? NetworkImage('${AppConstants.baseUrlImg}/$image') : null,
+            child: image == null || image.isEmpty ? Text(prenom[0]) : null,
           ),
           const SizedBox(width: 8),
           Text(
-            '$prenom $nom',
+            '$prenom ${nom.isNotEmpty ? nom[0]+'.' : ""}',
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
         ],
@@ -269,7 +273,8 @@ class StagiaireDetailsDialog extends StatelessWidget {
               ),
             ),
             Text(
-              '$completed/$total',
+              // '$completed/$total',
+              '$completed',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[600],
