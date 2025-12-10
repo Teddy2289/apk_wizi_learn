@@ -25,6 +25,9 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/contact_page.dart';
 import 'package:wizi_learn/features/commercial/screens/commercial_dashboard_screen.dart';
 import 'package:wizi_learn/features/profile/presentation/pages/profile_edit_page.dart';
+import 'package:wizi_learn/features/formateur/presentation/pages/formateur_dashboard_page.dart';
+import 'package:wizi_learn/features/formateur/presentation/pages/formateur_classement_page.dart';
+import 'package:wizi_learn/features/formateur/presentation/pages/send_notification_page.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -107,10 +110,22 @@ class AppRouter {
         );
       
       case RouteConstants.profileEdit:
-        return MaterialPageRoute(
-          builder: (_) => const ProfileEditPage(),
-        );
+        return MaterialPageRoute(builder: (_) => const ProfileEditPage());
       
+      // Routes Formateur
+      case '/formateur/dashboard':
+        return MaterialPageRoute(
+          builder: (_) => const FormateurDashboardPage(),
+        );
+      case '/formateur/classement':
+        return MaterialPageRoute(
+          builder: (_) => const FormateurClassementPage(),
+        );
+      case '/formateur/send-notification':
+        return MaterialPageRoute(
+          builder: (_) => const SendNotificationPage(),
+        );
+
       default:
         return MaterialPageRoute(
           builder:

@@ -60,17 +60,76 @@ class _OnSplashPage extends State<SplashPage> {
   Future<void> _decideStart() async {
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
-    final isAuthenticated = await _isAuthenticated();
+    final user = await _getAuthenticatedUser();
+    
     if (!mounted) return;
-    if (isAuthenticated) {
-      Navigator.pushReplacementNamed(context, RouteConstants.dashboard);
+    
+    if (user != null) {
+      // Redirection basée sur le rôle
+      final route = _getRouteForRole(user['role'] as String?);
+      Navigator.pushReplacementNamed(context, route);
       return;
     }
+    
     if (hasSeenOnboarding) {
       Navigator.pushReplacementNamed(context, RouteConstants.login);
       return;
     }
     // Sinon: afficher l'onboarding (ne rien faire)
+  }
+
+  /// Récupère l'utilisateur authentifié avec ses informations
+  Future<Map<String, dynamic>?> _getAuthenticatedUser() async {
+    try {
+      final dio = Dio();
+      const storage = FlutterSecureStorage();
+      final apiClient = ApiClient(dio: dio, storage: storage);
+      final authRepo = AuthRepository(
+        remoteDataSource: AuthRemoteDataSourceImpl(
+          apiClient: apiClient,
+          storage: storage,
+        ),
+        storage: storage,
+      );
+      final user = await authRepo.getMe();
+      
+      if (user.stagiaire != null) {
+        // Retourner les informations utilisateur incluant le rôle
+        return {
+          'id': user.id,
+          'name': user.name,
+          'email': user.email,
+          'role': user.role, // Le rôle de l'utilisateur
+          'stagiaire': user.stagiaire,
+        };
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Détermine la route selon le rôle de l'utilisateur
+  String _getRouteForRole(String? role) {
+    final lowerRole = role?.toLowerCase() ?? '';
+    
+    // Formateurs (masculin et féminin)
+    if (lowerRole == 'formateur' || lowerRole == 'formatrice') {
+      return RouteConstants.commercialDashboard;
+    }
+    
+    // Commerciaux (masculin et féminin)
+    if (lowerRole == 'commercial' || lowerRole == 'commerciale') {
+      return RouteConstants.commercialDashboard;
+    }
+    
+    // Admin
+    if (lowerRole == 'admin') {
+      return RouteConstants.commercialDashboard;
+    }
+    
+    // Stagiaire ou par défaut
+    return RouteConstants.dashboard;
   }
 
   Future<bool> _isAuthenticated() async {
