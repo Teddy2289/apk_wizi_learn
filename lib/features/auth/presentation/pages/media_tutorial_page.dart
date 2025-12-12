@@ -62,7 +62,7 @@ class _MediaTutorialPageState extends State<MediaTutorialPage> {
   void initState() {
     super.initState();
     _initializeDependencies();
-    _checkTutorialSeen();
+    // _checkTutorialSeen(); // Désactivé - Affichage manuel uniquement via bouton aide
     _loadFormations();
     _loadWatchedMediaIds();
     _checkNotificationNavigation();

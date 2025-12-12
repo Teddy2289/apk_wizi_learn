@@ -55,7 +55,7 @@ class _TutorialPageState extends State<TutorialPage> {
   void initState() {
     super.initState();
     _initializeDependencies();
-    _checkTutorialSeen();
+    // _checkTutorialSeen(); // Désactivé - Affichage manuel uniquement via bouton aide
     _loadFormations();
     _loadWatchedMediaIds();
     _checkNotificationNavigation();
@@ -507,16 +507,17 @@ class _TutorialPageState extends State<TutorialPage> {
               appBar: _buildAppBar(theme, screenWidth),
               body: _buildBody(theme),
             ),
-        if (_fromNotification)
-          Positioned(
-            right: 16,
-            bottom: 24,
-            child: FloatingActionButton.small(
-              onPressed: _triggerTutorial,
-              tooltip: 'Voir le tutoriel',
-              child: const Icon(Icons.help_outline),
-            ),
+        // Bouton d'aide pour accès rapide au tutoriel
+        Positioned(
+          right: 16,
+          bottom: 24,
+          child: FloatingActionButton.small(
+            onPressed: _triggerTutorial,
+            tooltip: 'Voir le tutoriel',
+            backgroundColor: const Color(0xFFFEB823),
+            child: const Icon(Icons.help_outline, color: Colors.white),
           ),
+        ),
         if (_showTutorial) _buildTutorialOverlay(context),
       ],
     );

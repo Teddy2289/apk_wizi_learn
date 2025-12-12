@@ -1,0 +1,1429 @@
+ tree
+Structure du dossier
+Le numéro de série du volume est DA69-32CC
+C:.
+├───.dart_tool
+│   └───dartpad
+├───.github
+│   └───workflows
+├───.idea
+│   ├───caches
+│   └───libraries
+├───android
+│   ├───.gradle
+│   │   ├───8.13
+│   │   │   ├───checksums
+│   │   │   ├───executionHistory
+│   │   │   ├───expanded
+│   │   │   ├───fileChanges
+│   │   │   ├───fileHashes
+│   │   │   └───vcsMetadata
+│   │   ├───buildOutputCleanup
+│   │   ├───noVersion
+│   │   └───vcs-1
+│   ├───.kotlin
+│   │   └───sessions
+│   ├───app
+│   │   └───src
+│   │       ├───debug
+│   │       ├───main
+│   │       │   ├───java
+│   │       │   │   ├───com
+│   │       │   │   │   └───example
+│   │       │   │   │       └───wizi_learn
+│   │       │   │   └───io
+│   │       │   │       └───flutter
+│   │       │   │           └───plugins
+│   │       │   └───res
+│   │       │       ├───drawable
+│   │       │       ├───drawable-hdpi
+│   │       │       ├───drawable-mdpi
+│   │       │       ├───drawable-v21
+│   │       │       ├───drawable-xhdpi
+│   │       │       ├───drawable-xxhdpi
+│   │       │       ├───drawable-xxxhdpi
+│   │       │       ├───mipmap-anydpi-v26
+│   │       │       ├───mipmap-hdpi
+│   │       │       ├───mipmap-mdpi
+│   │       │       ├───mipmap-xhdpi
+│   │       │       ├───mipmap-xxhdpi
+│   │       │       ├───mipmap-xxxhdpi
+│   │       │       ├───values
+│   │       │       └───values-night
+│   │       └───profile
+│   ├───build
+│   │   └───reports
+│   │       └───problems
+│   └───gradle
+│       └───wrapper
+├───assets
+│   ├───audio
+│   ├───fonts
+│   │   └───static
+│   └───images
+│       └───avatars
+├───ios
+│   ├───Flutter
+│   │   └───ephemeral
+│   ├───Runner
+│   │   ├───Assets.xcassets
+│   │   │   ├───AppIcon.appiconset
+│   │   │   └───LaunchImage.imageset
+│   │   └───Base.lproj
+│   ├───Runner.xcodeproj
+│   │   ├───project.xcworkspace
+│   │   │   └───xcshareddata
+│   │   └───xcshareddata
+│   │       └───xcschemes
+│   ├───Runner.xcworkspace
+│   │   └───xcshareddata
+│   └───RunnerTests
+├───lib
+│   ├───core
+│   │   ├───config
+│   │   ├───constants
+│   │   ├───exceptions
+│   │   ├───network
+│   │   ├───routes
+│   │   ├───services
+│   │   └───utils
+│   ├───debug
+│   ├───features
+│   │   ├───auth
+│   │   │   ├───data
+│   │   │   │   ├───datasources
+│   │   │   │   ├───mappers
+│   │   │   │   ├───models
+│   │   │   │   └───repositories
+│   │   │   ├───domain
+│   │   │   ├───presentation
+│   │   │   │   ├───bloc
+│   │   │   │   ├───components
+│   │   │   │   ├───constants
+│   │   │   │   ├───pages
+│   │   │   │   │   └───auth
+│   │   │   │   ├───providers
+│   │   │   │   └───widgets
+│   │   │   │       ├───question_types
+│   │   │   │       └───quiz_session
+│   │   │   └───services
+│   │   ├───commercial
+│   │   │   ├───models
+│   │   │   ├───screens
+│   │   │   ├───services
+│   │   │   ├───theme
+│   │   │   └───widgets
+│   │   ├───formateur
+│   │   │   └───presentation
+│   │   │       └───pages
+│   │   ├───home
+│   │   │   └───presentation
+│   │   │       └───widgets
+│   │   ├───lessons
+│   │   │   └───widgets
+│   │   └───profile
+│   │       ├───data
+│   │       │   ├───datasources
+│   │       │   └───repositories
+│   │       └───presentation
+│   │           ├───pages
+│   │           └───widgets
+│   ├───pages
+│   └───video
+├───linux
+│   ├───flutter
+│   │   └───ephemeral
+│   │       └───.plugin_symlinks
+│   │           ├───audioplayers_linux
+│   │           │   └───linux
+│   │           │       └───include
+│   │           │           └───audioplayers_linux
+│   │           ├───device_info_plus
+│   │           │   ├───android
+│   │           │   │   └───src
+│   │           │   │       └───main
+│   │           │   │           └───kotlin
+│   │           │   │               └───dev
+│   │           │   │                   └───fluttercommunity
+│   │           │   │                       └───plus
+│   │           │   │                           └───device_info
+│   │           │   ├───example
+│   │           │   │   ├───android
+│   │           │   │   │   ├───app
+│   │           │   │   │   │   └───src
+│   │           │   │   │   │       ├───debug
+│   │           │   │   │   │       ├───main
+│   │           │   │   │   │       │   ├───java
+│   │           │   │   │   │       │   │   └───io
+│   │           │   │   │   │       │   │       └───flutter
+│   │           │   │   │   │       │   │           └───plugins
+│   │           │   │   │   │       │   ├───kotlin
+│   │           │   │   │   │       │   │   └───io
+│   │           │   │   │   │       │   │       └───flutter
+│   │           │   │   │   │       │   │           └───plugins
+│   │           │   │   │   │       │   │               └───deviceinfoexample
+│   │           │   │   │   │       │   │                   └───example
+│   │           │   │   │   │       │   └───res
+│   │           │   │   │   │       │       ├───drawable
+│   │           │   │   │   │       │       ├───mipmap-hdpi
+│   │           │   │   │   │       │       ├───mipmap-mdpi
+│   │           │   │   │   │       │       ├───mipmap-xhdpi
+│   │           │   │   │   │       │       ├───mipmap-xxhdpi
+│   │           │   │   │   │       │       ├───mipmap-xxxhdpi
+│   │           │   │   │   │       │       └───values
+│   │           │   │   │   │       └───profile
+│   │           │   │   │   └───gradle
+│   │           │   │   │       └───wrapper
+│   │           │   │   ├───integration_test
+│   │           │   │   ├───ios
+│   │           │   │   │   ├───Flutter
+│   │           │   │   │   ├───Runner
+│   │           │   │   │   │   ├───Assets.xcassets
+│   │           │   │   │   │   │   ├───AppIcon.appiconset
+│   │           │   │   │   │   │   └───LaunchImage.imageset
+│   │           │   │   │   │   └───Base.lproj
+│   │           │   │   │   ├───Runner.xcodeproj
+│   │           │   │   │   │   ├───project.xcworkspace
+│   │           │   │   │   │   │   └───xcshareddata
+│   │           │   │   │   │   │       └───swiftpm
+│   │           │   │   │   │   │           └───configuration
+│   │           │   │   │   │   └───xcshareddata
+│   │           │   │   │   │       └───xcschemes
+│   │           │   │   │   ├───Runner.xcworkspace
+│   │           │   │   │   │   └───xcshareddata
+│   │           │   │   │   │       └───swiftpm
+│   │           │   │   │   │           └───configuration
+│   │           │   │   │   └───RunnerTests
+│   │           │   │   ├───lib
+│   │           │   │   ├───linux
+│   │           │   │   │   └───flutter
+│   │           │   │   ├───macos
+│   │           │   │   │   ├───Flutter
+│   │           │   │   │   ├───Runner
+│   │           │   │   │   │   ├───Assets.xcassets
+│   │           │   │   │   │   │   └───AppIcon.appiconset
+│   │           │   │   │   │   ├───Base.lproj
+│   │           │   │   │   │   └───Configs
+│   │           │   │   │   ├───Runner.xcodeproj
+│   │           │   │   │   │   ├───project.xcworkspace
+│   │           │   │   │   │   │   └───xcshareddata
+│   │           │   │   │   │   │       └───swiftpm
+│   │           │   │   │   │   │           └───configuration
+│   │           │   │   │   │   └───xcshareddata
+│   │           │   │   │   │       └───xcschemes
+│   │           │   │   │   ├───Runner.xcworkspace
+│   │           │   │   │   │   └───xcshareddata
+│   │           │   │   │   │       └───swiftpm
+│   │           │   │   │   │           └───configuration
+│   │           │   │   │   └───RunnerTests
+│   │           │   │   ├───web
+│   │           │   │   │   └───icons
+│   │           │   │   └───windows
+│   │           │   │       ├───flutter
+│   │           │   │       └───runner
+│   │           │   │           └───resources
+│   │           │   ├───ios
+│   │           │   │   └───device_info_plus
+│   │           │   │       └───Sources
+│   │           │   │           └───device_info_plus
+│   │           │   │               └───include
+│   │           │   │                   └───device_info_plus
+│   │           │   ├───lib
+│   │           │   │   └───src
+│   │           │   │       └───model
+│   │           │   ├───macos
+│   │           │   │   └───device_info_plus
+│   │           │   │       └───Sources
+│   │           │   │           └───device_info_plus
+│   │           │   └───test
+│   │           │       └───model
+│   │           ├───file_picker
+│   │           │   ├───android
+│   │           │   │   ├───gradle
+│   │           │   │   │   └───wrapper
+│   │           │   │   └───src
+│   │           │   │       └───main
+│   │           │   │           └───kotlin
+│   │           │   │               └───com
+│   │           │   │                   └───mr
+│   │           │   │                       └───flutter
+│   │           │   │                           └───plugin
+│   │           │   │                               └───filepicker
+│   │           │   ├───example
+│   │           │   │   ├───android
+│   │           │   │   │   ├───app
+│   │           │   │   │   │   └───src
+│   │           │   │   │   │       ├───debug
+│   │           │   │   │   │       ├───main
+│   │           │   │   │   │       │   ├───kotlin
+│   │           │   │   │   │       │   │   └───com
+│   │           │   │   │   │       │   │       └───mr
+│   │           │   │   │   │       │   │           └───flutter
+│   │           │   │   │   │       │   │               └───plugin
+│   │           │   │   │   │       │   │                   └───filepicker
+│   │           │   │   │   │       │   │                       └───file_picker_example
+│   │           │   │   │   │       │   └───res
+│   │           │   │   │   │       │       ├───drawable
+│   │           │   │   │   │       │       ├───drawable-v21
+│   │           │   │   │   │       │       ├───mipmap-hdpi
+│   │           │   │   │   │       │       ├───mipmap-mdpi
+│   │           │   │   │   │       │       ├───mipmap-xhdpi
+│   │           │   │   │   │       │       ├───mipmap-xxhdpi
+│   │           │   │   │   │       │       ├───mipmap-xxxhdpi
+│   │           │   │   │   │       │       ├───values
+│   │           │   │   │   │       │       └───values-night
+│   │           │   │   │   │       └───profile
+│   │           │   │   │   └───gradle
+│   │           │   │   │       └───wrapper
+│   │           │   │   ├───ios
+│   │           │   │   │   ├───Flutter
+│   │           │   │   │   ├───Runner
+│   │           │   │   │   │   ├───Assets.xcassets
+│   │           │   │   │   │   │   ├───AppIcon.appiconset
+│   │           │   │   │   │   │   └───LaunchImage.imageset
+│   │           │   │   │   │   └───Base.lproj
+│   │           │   │   │   ├───Runner.xcodeproj
+│   │           │   │   │   │   ├───project.xcworkspace
+│   │           │   │   │   │   │   └───xcshareddata
+│   │           │   │   │   │   │       └───swiftpm
+│   │           │   │   │   │   └───xcshareddata
+│   │           │   │   │   │       └───xcschemes
+│   │           │   │   │   └───Runner.xcworkspace
+│   │           │   │   │       └───xcshareddata
+│   │           │   │   ├───lib
+│   │           │   │   │   └───src
+│   │           │   │   ├───linux
+│   │           │   │   │   └───flutter
+│   │           │   │   ├───macos
+│   │           │   │   │   ├───Flutter
+│   │           │   │   │   ├───Runner
+│   │           │   │   │   │   ├───Assets.xcassets
+│   │           │   │   │   │   │   └───AppIcon.appiconset
+│   │           │   │   │   │   ├───Base.lproj
+│   │           │   │   │   │   └───Configs
+│   │           │   │   │   ├───Runner.xcodeproj
+│   │           │   │   │   │   ├───project.xcworkspace
+│   │           │   │   │   │   │   └───xcshareddata
+│   │           │   │   │   │   └───xcshareddata
+│   │           │   │   │   │       └───xcschemes
+│   │           │   │   │   ├───Runner.xcworkspace
+│   │           │   │   │   │   └───xcshareddata
+│   │           │   │   │   └───RunnerTests
+│   │           │   │   ├───screenshots
+│   │           │   │   ├───web
+│   │           │   │   │   └───icons
+│   │           │   │   └───windows
+│   │           │   │       ├───flutter
+│   │           │   │       └───runner
+│   │           │   │           └───resources
+│   │           │   ├───ios
+│   │           │   │   └───file_picker
+│   │           │   │       └───Sources
+│   │           │   │           └───file_picker
+│   │           │   │               └───include
+│   │           │   │                   └───file_picker
+│   │           │   ├───lib
+│   │           │   │   ├───src
+│   │           │   │   │   ├───linux
+│   │           │   │   │   └───windows
+│   │           │   │   └───_internal
+│   │           │   ├───macos
+│   │           │   │   └───file_picker
+│   │           │   │       └───Sources
+│   │           │   │           └───file_picker
+│   │           │   └───test
+│   │           │       ├───linux
+│   │           │       └───test_files
+│   │           ├───file_selector_linux
+│   │           │   ├───example
+│   │           │   │   ├───lib
+│   │           │   │   └───linux
+│   │           │   │       └───flutter
+│   │           │   ├───lib
+│   │           │   │   └───src
+│   │           │   ├───linux
+│   │           │   │   ├───include
+│   │           │   │   │   └───file_selector_linux
+│   │           │   │   └───test
+│   │           │   ├───pigeons
+│   │           │   └───test
+│   │           ├───flutter_local_notifications_linux
+│   │           │   ├───lib
+│   │           │   │   └───src
+│   │           │   │       └───model
+│   │           │   └───test
+│   │           ├───flutter_secure_storage_linux
+│   │           │   └───linux
+│   │           │       └───include
+│   │           │           └───flutter_secure_storage_linux
+│   │           ├───image_picker_linux
+│   │           │   ├───example
+│   │           │   │   ├───lib
+│   │           │   │   └───linux
+│   │           │   │       └───flutter
+│   │           │   ├───lib
+│   │           │   └───test
+│   │           ├───package_info_plus
+│   │           │   ├───android
+│   │           │   │   └───src
+│   │           │   │       └───main
+│   │           │   │           └───kotlin
+│   │           │   │               └───dev
+│   │           │   │                   └───fluttercommunity
+│   │           │   │                       └───plus
+│   │           │   │                           └───packageinfo
+│   │           │   ├───example
+│   │           │   │   ├───android
+│   │           │   │   │   ├───app
+│   │           │   │   │   │   └───src
+│   │           │   │   │   │       ├───androidTest
+│   │           │   │   │   │       │   └───java
+│   │           │   │   │   │       │       └───io
+│   │           │   │   │   │       │           └───flutter
+│   │           │   │   │   │       │               └───plugins
+│   │           │   │   │   │       │                   └───packageinfoexample
+│   │           │   │   │   │       └───main
+│   │           │   │   │   │           ├───java
+│   │           │   │   │   │           │   └───io
+│   │           │   │   │   │           │       └───flutter
+│   │           │   │   │   │           │           └───plugins
+│   │           │   │   │   │           └───res
+│   │           │   │   │   │               ├───mipmap-hdpi
+│   │           │   │   │   │               ├───mipmap-mdpi
+│   │           │   │   │   │               ├───mipmap-xhdpi
+│   │           │   │   │   │               ├───mipmap-xxhdpi
+│   │           │   │   │   │               └───mipmap-xxxhdpi
+│   │           │   │   │   └───gradle
+│   │           │   │   │       └───wrapper
+│   │           │   │   ├───integration_test
+│   │           │   │   ├───ios
+│   │           │   │   │   ├───Flutter
+│   │           │   │   │   ├───Runner
+│   │           │   │   │   │   ├───Assets.xcassets
+│   │           │   │   │   │   │   ├───AppIcon.appiconset
+│   │           │   │   │   │   │   └───LaunchImage.imageset
+│   │           │   │   │   │   └───Base.lproj
+│   │           │   │   │   ├───Runner.xcodeproj
+│   │           │   │   │   │   ├───project.xcworkspace
+│   │           │   │   │   │   │   └───xcshareddata
+│   │           │   │   │   │   │       └───swiftpm
+│   │           │   │   │   │   │           └───configuration
+│   │           │   │   │   │   └───xcshareddata
+│   │           │   │   │   │       └───xcschemes
+│   │           │   │   │   ├───Runner.xcworkspace
+│   │           │   │   │   │   └───xcshareddata
+│   │           │   │   │   │       └───swiftpm
+│   │           │   │   │   │           └───configuration
+│   │           │   │   │   └───RunnerTests
+│   │           │   │   ├───lib
+│   │           │   │   ├───linux
+│   │           │   │   │   └───flutter
+│   │           │   │   ├───macos
+│   │           │   │   │   ├───Flutter
+│   │           │   │   │   ├───Runner
+│   │           │   │   │   │   ├───Assets.xcassets
+│   │           │   │   │   │   │   └───AppIcon.appiconset
+│   │           │   │   │   │   ├───Base.lproj
+│   │           │   │   │   │   └───Configs
+│   │           │   │   │   ├───Runner.xcodeproj
+│   │           │   │   │   │   ├───project.xcworkspace
+│   │           │   │   │   │   │   └───xcshareddata
+│   │           │   │   │   │   │       └───swiftpm
+│   │           │   │   │   │   │           └───configuration
+│   │           │   │   │   │   └───xcshareddata
+│   │           │   │   │   │       └───xcschemes
+│   │           │   │   │   ├───Runner.xcworkspace
+│   │           │   │   │   │   └───xcshareddata
+│   │           │   │   │   │       └───swiftpm
+│   │           │   │   │   │           └───configuration
+│   │           │   │   │   └───RunnerTests
+│   │           │   │   ├───web
+│   │           │   │   │   └───icons
+│   │           │   │   └───windows
+│   │           │   │       ├───flutter
+│   │           │   │       └───runner
+│   │           │   │           └───resources
+│   │           │   ├───ios
+│   │           │   │   └───package_info_plus
+│   │           │   │       └───Sources
+│   │           │   │           └───package_info_plus
+│   │           │   │               └───include
+│   │           │   │                   └───package_info_plus
+│   │           │   ├───lib
+│   │           │   │   └───src
+│   │           │   ├───macos
+│   │           │   │   └───package_info_plus
+│   │           │   │       └───Sources
+│   │           │   │           └───package_info_plus
+│   │           │   │               └───include
+│   │           │   │                   └───package_info_plus
+│   │           │   └───test
+│   │           ├───path_provider_linux
+│   │           │   ├───example
+│   │           │   │   ├───integration_test
+│   │           │   │   ├───lib
+│   │           │   │   ├───linux
+│   │           │   │   │   └───flutter
+│   │           │   │   └───test_driver
+│   │           │   ├───lib
+│   │           │   │   └───src
+│   │           │   └───test
+│   │           ├───shared_preferences_linux
+│   │           │   ├───example
+│   │           │   │   ├───integration_test
+│   │           │   │   ├───lib
+│   │           │   │   ├───linux
+│   │           │   │   │   └───flutter
+│   │           │   │   └───test_driver
+│   │           │   ├───lib
+│   │           │   └───test
+│   │           ├───share_plus
+│   │           │   ├───android
+│   │           │   │   └───src
+│   │           │   │       └───main
+│   │           │   │           ├───kotlin
+│   │           │   │           │   └───dev
+│   │           │   │           │       └───fluttercommunity
+│   │           │   │           │           └───plus
+│   │           │   │           │               └───share
+│   │           │   │           └───res
+│   │           │   │               └───xml
+│   │           │   ├───example
+│   │           │   │   ├───android
+│   │           │   │   │   ├───app
+│   │           │   │   │   │   └───src
+│   │           │   │   │   │       └───main
+│   │           │   │   │   │           ├───java
+│   │           │   │   │   │           │   └───io
+│   │           │   │   │   │           │       └───flutter
+│   │           │   │   │   │           │           └───plugins
+│   │           │   │   │   │           └───res
+│   │           │   │   │   │               ├───mipmap-hdpi
+│   │           │   │   │   │               ├───mipmap-mdpi
+│   │           │   │   │   │               ├───mipmap-xhdpi
+│   │           │   │   │   │               ├───mipmap-xxhdpi
+│   │           │   │   │   │               └───mipmap-xxxhdpi
+│   │           │   │   │   └───gradle
+│   │           │   │   │       └───wrapper
+│   │           │   │   ├───assets
+│   │           │   │   ├───integration_test
+│   │           │   │   ├───ios
+│   │           │   │   │   ├───Flutter
+│   │           │   │   │   ├───Runner
+│   │           │   │   │   │   ├───Assets.xcassets
+│   │           │   │   │   │   │   ├───AppIcon.appiconset
+│   │           │   │   │   │   │   └───LaunchImage.imageset
+│   │           │   │   │   │   └───Base.lproj
+│   │           │   │   │   ├───Runner.xcodeproj
+│   │           │   │   │   │   ├───project.xcworkspace
+│   │           │   │   │   │   │   └───xcshareddata
+│   │           │   │   │   │   │       └───swiftpm
+│   │           │   │   │   │   │           └───configuration
+│   │           │   │   │   │   └───xcshareddata
+│   │           │   │   │   │       └───xcschemes
+│   │           │   │   │   ├───Runner.xcworkspace
+│   │           │   │   │   │   └───xcshareddata
+│   │           │   │   │   │       └───swiftpm
+│   │           │   │   │   │           └───configuration
+│   │           │   │   │   └───RunnerTests
+│   │           │   │   ├───lib
+│   │           │   │   ├───linux
+│   │           │   │   │   └───flutter
+│   │           │   │   ├───macos
+│   │           │   │   │   ├───Flutter
+│   │           │   │   │   ├───Runner
+│   │           │   │   │   │   ├───Assets.xcassets
+│   │           │   │   │   │   │   └───AppIcon.appiconset
+│   │           │   │   │   │   ├───Base.lproj
+│   │           │   │   │   │   └───Configs
+│   │           │   │   │   ├───Runner.xcodeproj
+│   │           │   │   │   │   ├───project.xcworkspace
+│   │           │   │   │   │   │   └───xcshareddata
+│   │           │   │   │   │   │       └───swiftpm
+│   │           │   │   │   │   │           └───configuration
+│   │           │   │   │   │   └───xcshareddata
+│   │           │   │   │   │       └───xcschemes
+│   │           │   │   │   ├───Runner.xcworkspace
+│   │           │   │   │   │   └───xcshareddata
+│   │           │   │   │   │       └───swiftpm
+│   │           │   │   │   │           └───configuration
+│   │           │   │   │   └───RunnerTests
+│   │           │   │   ├───test_driver
+│   │           │   │   ├───web
+│   │           │   │   │   └───icons
+│   │           │   │   └───windows
+│   │           │   │       ├───flutter
+│   │           │   │       └───runner
+│   │           │   │           └───resources
+│   │           │   ├───ios
+│   │           │   │   └───share_plus
+│   │           │   │       └───Sources
+│   │           │   │           └───share_plus
+│   │           │   │               └───include
+│   │           │   │                   └───share_plus
+│   │           │   ├───lib
+│   │           │   │   └───src
+│   │           │   ├───macos
+│   │           │   │   └───share_plus
+│   │           │   │       └───Sources
+│   │           │   │           └───share_plus
+│   │           │   ├───test
+│   │           │   └───windows
+│   │           │       └───include
+│   │           │           └───share_plus
+│   │           ├───url_launcher_linux
+│   │           │   ├───example
+│   │           │   │   ├───integration_test
+│   │           │   │   ├───lib
+│   │           │   │   ├───linux
+│   │           │   │   │   └───flutter
+│   │           │   │   └───test_driver
+│   │           │   ├───lib
+│   │           │   │   └───src
+│   │           │   ├───linux
+│   │           │   │   ├───include
+│   │           │   │   │   └───url_launcher_linux
+│   │           │   │   └───test
+│   │           │   ├───pigeons
+│   │           │   └───test
+│   │           └───wakelock_plus
+│   │               ├───android
+│   │               │   └───src
+│   │               │       └───main
+│   │               │           └───kotlin
+│   │               │               └───dev
+│   │               │                   └───fluttercommunity
+│   │               │                       └───plus
+│   │               │                           └───wakelock
+│   │               ├───assets
+│   │               ├───example
+│   │               │   ├───android
+│   │               │   │   ├───app
+│   │               │   │   │   └───src
+│   │               │   │   │       ├───debug
+│   │               │   │   │       ├───main
+│   │               │   │   │       │   ├───java
+│   │               │   │   │       │   │   └───io
+│   │               │   │   │       │   │       └───flutter
+│   │               │   │   │       │   │           └───plugins
+│   │               │   │   │       │   ├───kotlin
+│   │               │   │   │       │   │   └───dev
+│   │               │   │   │       │   │       └───fluttercommunity
+│   │               │   │   │       │   │           └───plus
+│   │               │   │   │       │   │               └───wakelock_example
+│   │               │   │   │       │   └───res
+│   │               │   │   │       │       ├───drawable
+│   │               │   │   │       │       ├───drawable-v21
+│   │               │   │   │       │       ├───mipmap-hdpi
+│   │               │   │   │       │       ├───mipmap-mdpi
+│   │               │   │   │       │       ├───mipmap-xhdpi
+│   │               │   │   │       │       ├───mipmap-xxhdpi
+│   │               │   │   │       │       ├───mipmap-xxxhdpi
+│   │               │   │   │       │       ├───values
+│   │               │   │   │       │       └───values-night
+│   │               │   │   │       └───profile
+│   │               │   │   └───gradle
+│   │               │   │       └───wrapper
+│   │               │   ├───integration_test
+│   │               │   ├───ios
+│   │               │   │   ├───Flutter
+│   │               │   │   ├───Runner
+│   │               │   │   │   ├───Assets.xcassets
+│   │               │   │   │   │   ├───AppIcon.appiconset
+│   │               │   │   │   │   └───LaunchImage.imageset
+│   │               │   │   │   └───Base.lproj
+│   │               │   │   ├───Runner.xcodeproj
+│   │               │   │   │   ├───project.xcworkspace
+│   │               │   │   │   │   └───xcshareddata
+│   │               │   │   │   │       └───swiftpm
+│   │               │   │   │   │           └───configuration
+│   │               │   │   │   └───xcshareddata
+│   │               │   │   │       └───xcschemes
+│   │               │   │   ├───Runner.xcworkspace
+│   │               │   │   │   └───xcshareddata
+│   │               │   │   │       └───swiftpm
+│   │               │   │   │           └───configuration
+│   │               │   │   └───RunnerTests
+│   │               │   ├───lib
+│   │               │   ├───linux
+│   │               │   │   └───flutter
+│   │               │   ├───macos
+│   │               │   │   ├───Flutter
+│   │               │   │   ├───Runner
+│   │               │   │   │   ├───Assets.xcassets
+│   │               │   │   │   │   └───AppIcon.appiconset
+│   │               │   │   │   ├───Base.lproj
+│   │               │   │   │   └───Configs
+│   │               │   │   ├───Runner.xcodeproj
+│   │               │   │   │   ├───project.xcworkspace
+│   │               │   │   │   │   └───xcshareddata
+│   │               │   │   │   │       └───swiftpm
+│   │               │   │   │   │           └───configuration
+│   │               │   │   │   └───xcshareddata
+│   │               │   │   │       └───xcschemes
+│   │               │   │   ├───Runner.xcworkspace
+│   │               │   │   │   └───xcshareddata
+│   │               │   │   │       └───swiftpm
+│   │               │   │   │           └───configuration
+│   │               │   │   └───RunnerTests
+│   │               │   ├───test_driver
+│   │               │   ├───web
+│   │               │   │   └───icons
+│   │               │   └───windows
+│   │               │       ├───flutter
+│   │               │       └───runner
+│   │               │           └───resources
+│   │               ├───ios
+│   │               │   └───wakelock_plus
+│   │               │       └───Sources
+│   │               │           └───wakelock_plus
+│   │               │               ├───include
+│   │               │               │   └───wakelock_plus
+│   │               │               └───Resources
+│   │               ├───lib
+│   │               │   └───src
+│   │               │       └───web_impl
+│   │               ├───macos
+│   │               │   └───wakelock_plus
+│   │               │       └───Sources
+│   │               │           └───wakelock_plus
+│   │               │               └───Resources
+│   │               ├───pigeons
+│   │               └───test
+│   └───runner
+├───macos
+│   ├───Flutter
+│   │   └───ephemeral
+│   ├───Runner
+│   │   ├───Assets.xcassets
+│   │   │   └───AppIcon.appiconset
+│   │   ├───Base.lproj
+│   │   └───Configs
+│   ├───Runner.xcodeproj
+│   │   ├───project.xcworkspace
+│   │   │   └───xcshareddata
+│   │   └───xcshareddata
+│   │       └───xcschemes
+│   ├───Runner.xcworkspace
+│   │   └───xcshareddata
+│   └───RunnerTests
+├───test
+├───web
+│   └───icons
+└───windows
+    ├───flutter
+    │   └───ephemeral
+    │       └───.plugin_symlinks
+    │           ├───audioplayers_windows
+    │           │   └───windows
+    │           │       └───include
+    │           │           └───audioplayers_windows
+    │           ├───device_info_plus
+    │           │   ├───android
+    │           │   │   └───src
+    │           │   │       └───main
+    │           │   │           └───kotlin
+    │           │   │               └───dev
+    │           │   │                   └───fluttercommunity
+    │           │   │                       └───plus
+    │           │   │                           └───device_info
+    │           │   ├───example
+    │           │   │   ├───android
+    │           │   │   │   ├───app
+    │           │   │   │   │   └───src
+    │           │   │   │   │       ├───debug
+    │           │   │   │   │       ├───main
+    │           │   │   │   │       │   ├───java
+    │           │   │   │   │       │   │   └───io
+    │           │   │   │   │       │   │       └───flutter
+    │           │   │   │   │       │   │           └───plugins
+    │           │   │   │   │       │   ├───kotlin
+    │           │   │   │   │       │   │   └───io
+    │           │   │   │   │       │   │       └───flutter
+    │           │   │   │   │       │   │           └───plugins
+    │           │   │   │   │       │   │               └───deviceinfoexample
+    │           │   │   │   │       │   │                   └───example
+    │           │   │   │   │       │   └───res
+    │           │   │   │   │       │       ├───drawable
+    │           │   │   │   │       │       ├───mipmap-hdpi
+    │           │   │   │   │       │       ├───mipmap-mdpi
+    │           │   │   │   │       │       ├───mipmap-xhdpi
+    │           │   │   │   │       │       ├───mipmap-xxhdpi
+    │           │   │   │   │       │       ├───mipmap-xxxhdpi
+    │           │   │   │   │       │       └───values
+    │           │   │   │   │       └───profile
+    │           │   │   │   └───gradle
+    │           │   │   │       └───wrapper
+    │           │   │   ├───integration_test
+    │           │   │   ├───ios
+    │           │   │   │   ├───Flutter
+    │           │   │   │   ├───Runner
+    │           │   │   │   │   ├───Assets.xcassets
+    │           │   │   │   │   │   ├───AppIcon.appiconset
+    │           │   │   │   │   │   └───LaunchImage.imageset
+    │           │   │   │   │   └───Base.lproj
+    │           │   │   │   ├───Runner.xcodeproj
+    │           │   │   │   │   ├───project.xcworkspace
+    │           │   │   │   │   │   └───xcshareddata
+    │           │   │   │   │   │       └───swiftpm
+    │           │   │   │   │   │           └───configuration
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───xcschemes
+    │           │   │   │   ├───Runner.xcworkspace
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───swiftpm
+    │           │   │   │   │           └───configuration
+    │           │   │   │   └───RunnerTests
+    │           │   │   ├───lib
+    │           │   │   ├───linux
+    │           │   │   │   └───flutter
+    │           │   │   ├───macos
+    │           │   │   │   ├───Flutter
+    │           │   │   │   ├───Runner
+    │           │   │   │   │   ├───Assets.xcassets
+    │           │   │   │   │   │   └───AppIcon.appiconset
+    │           │   │   │   │   ├───Base.lproj
+    │           │   │   │   │   └───Configs
+    │           │   │   │   ├───Runner.xcodeproj
+    │           │   │   │   │   ├───project.xcworkspace
+    │           │   │   │   │   │   └───xcshareddata
+    │           │   │   │   │   │       └───swiftpm
+    │           │   │   │   │   │           └───configuration
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───xcschemes
+    │           │   │   │   ├───Runner.xcworkspace
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───swiftpm
+    │           │   │   │   │           └───configuration
+    │           │   │   │   └───RunnerTests
+    │           │   │   ├───web
+    │           │   │   │   └───icons
+    │           │   │   └───windows
+    │           │   │       ├───flutter
+    │           │   │       └───runner
+    │           │   │           └───resources
+    │           │   ├───ios
+    │           │   │   └───device_info_plus
+    │           │   │       └───Sources
+    │           │   │           └───device_info_plus
+    │           │   │               └───include
+    │           │   │                   └───device_info_plus
+    │           │   ├───lib
+    │           │   │   └───src
+    │           │   │       └───model
+    │           │   ├───macos
+    │           │   │   └───device_info_plus
+    │           │   │       └───Sources
+    │           │   │           └───device_info_plus
+    │           │   └───test
+    │           │       └───model
+    │           ├───file_picker
+    │           │   ├───android
+    │           │   │   ├───gradle
+    │           │   │   │   └───wrapper
+    │           │   │   └───src
+    │           │   │       └───main
+    │           │   │           └───kotlin
+    │           │   │               └───com
+    │           │   │                   └───mr
+    │           │   │                       └───flutter
+    │           │   │                           └───plugin
+    │           │   │                               └───filepicker
+    │           │   ├───example
+    │           │   │   ├───android
+    │           │   │   │   ├───app
+    │           │   │   │   │   └───src
+    │           │   │   │   │       ├───debug
+    │           │   │   │   │       ├───main
+    │           │   │   │   │       │   ├───kotlin
+    │           │   │   │   │       │   │   └───com
+    │           │   │   │   │       │   │       └───mr
+    │           │   │   │   │       │   │           └───flutter
+    │           │   │   │   │       │   │               └───plugin
+    │           │   │   │   │       │   │                   └───filepicker
+    │           │   │   │   │       │   │                       └───file_picker_example
+    │           │   │   │   │       │   └───res
+    │           │   │   │   │       │       ├───drawable
+    │           │   │   │   │       │       ├───drawable-v21
+    │           │   │   │   │       │       ├───mipmap-hdpi
+    │           │   │   │   │       │       ├───mipmap-mdpi
+    │           │   │   │   │       │       ├───mipmap-xhdpi
+    │           │   │   │   │       │       ├───mipmap-xxhdpi
+    │           │   │   │   │       │       ├───mipmap-xxxhdpi
+    │           │   │   │   │       │       ├───values
+    │           │   │   │   │       │       └───values-night
+    │           │   │   │   │       └───profile
+    │           │   │   │   └───gradle
+    │           │   │   │       └───wrapper
+    │           │   │   ├───ios
+    │           │   │   │   ├───Flutter
+    │           │   │   │   ├───Runner
+    │           │   │   │   │   ├───Assets.xcassets
+    │           │   │   │   │   │   ├───AppIcon.appiconset
+    │           │   │   │   │   │   └───LaunchImage.imageset
+    │           │   │   │   │   └───Base.lproj
+    │           │   │   │   ├───Runner.xcodeproj
+    │           │   │   │   │   ├───project.xcworkspace
+    │           │   │   │   │   │   └───xcshareddata
+    │           │   │   │   │   │       └───swiftpm
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───xcschemes
+    │           │   │   │   └───Runner.xcworkspace
+    │           │   │   │       └───xcshareddata
+    │           │   │   ├───lib
+    │           │   │   │   └───src
+    │           │   │   ├───linux
+    │           │   │   │   └───flutter
+    │           │   │   ├───macos
+    │           │   │   │   ├───Flutter
+    │           │   │   │   ├───Runner
+    │           │   │   │   │   ├───Assets.xcassets
+    │           │   │   │   │   │   └───AppIcon.appiconset
+    │           │   │   │   │   ├───Base.lproj
+    │           │   │   │   │   └───Configs
+    │           │   │   │   ├───Runner.xcodeproj
+    │           │   │   │   │   ├───project.xcworkspace
+    │           │   │   │   │   │   └───xcshareddata
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───xcschemes
+    │           │   │   │   ├───Runner.xcworkspace
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   └───RunnerTests
+    │           │   │   ├───screenshots
+    │           │   │   ├───web
+    │           │   │   │   └───icons
+    │           │   │   └───windows
+    │           │   │       ├───flutter
+    │           │   │       └───runner
+    │           │   │           └───resources
+    │           │   ├───ios
+    │           │   │   └───file_picker
+    │           │   │       └───Sources
+    │           │   │           └───file_picker
+    │           │   │               └───include
+    │           │   │                   └───file_picker
+    │           │   ├───lib
+    │           │   │   ├───src
+    │           │   │   │   ├───linux
+    │           │   │   │   └───windows
+    │           │   │   └───_internal
+    │           │   ├───macos
+    │           │   │   └───file_picker
+    │           │   │       └───Sources
+    │           │   │           └───file_picker
+    │           │   └───test
+    │           │       ├───linux
+    │           │       └───test_files
+    │           ├───file_selector_windows
+    │           │   ├───example
+    │           │   │   ├───lib
+    │           │   │   └───windows
+    │           │   │       ├───flutter
+    │           │   │       └───runner
+    │           │   │           └───resources
+    │           │   ├───lib
+    │           │   │   └───src
+    │           │   ├───pigeons
+    │           │   ├───test
+    │           │   └───windows
+    │           │       ├───include
+    │           │       │   └───file_selector_windows
+    │           │       └───test
+    │           ├───firebase_core
+    │           │   ├───android
+    │           │   │   ├───gradle
+    │           │   │   │   └───wrapper
+    │           │   │   └───src
+    │           │   │       └───main
+    │           │   │           └───java
+    │           │   │               └───io
+    │           │   │                   └───flutter
+    │           │   │                       └───plugins
+    │           │   │                           └───firebase
+    │           │   │                               └───core
+    │           │   ├───example
+    │           │   │   ├───android
+    │           │   │   │   ├───app
+    │           │   │   │   │   └───src
+    │           │   │   │   │       ├───debug
+    │           │   │   │   │       ├───main
+    │           │   │   │   │       │   ├───java
+    │           │   │   │   │       │   │   └───io
+    │           │   │   │   │       │   │       └───flutter
+    │           │   │   │   │       │   │           └───plugins
+    │           │   │   │   │       │   ├───kotlin
+    │           │   │   │   │       │   │   └───io
+    │           │   │   │   │       │   │       └───flutter
+    │           │   │   │   │       │   │           └───plugins
+    │           │   │   │   │       │   │               └───firebasecoreexample
+    │           │   │   │   │       │   └───res
+    │           │   │   │   │       │       ├───drawable
+    │           │   │   │   │       │       ├───drawable-v21
+    │           │   │   │   │       │       ├───mipmap-hdpi
+    │           │   │   │   │       │       ├───mipmap-mdpi
+    │           │   │   │   │       │       ├───mipmap-xhdpi
+    │           │   │   │   │       │       ├───mipmap-xxhdpi
+    │           │   │   │   │       │       ├───mipmap-xxxhdpi
+    │           │   │   │   │       │       ├───values
+    │           │   │   │   │       │       └───values-night
+    │           │   │   │   │       └───profile
+    │           │   │   │   └───gradle
+    │           │   │   │       └───wrapper
+    │           │   │   ├───ios
+    │           │   │   │   ├───Flutter
+    │           │   │   │   ├───Runner
+    │           │   │   │   │   ├───Assets.xcassets
+    │           │   │   │   │   │   ├───AppIcon.appiconset
+    │           │   │   │   │   │   └───LaunchImage.imageset
+    │           │   │   │   │   └───Base.lproj
+    │           │   │   │   ├───Runner.xcodeproj
+    │           │   │   │   │   ├───project.xcworkspace
+    │           │   │   │   │   │   └───xcshareddata
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───xcschemes
+    │           │   │   │   └───Runner.xcworkspace
+    │           │   │   │       └───xcshareddata
+    │           │   │   ├───lib
+    │           │   │   ├───macos
+    │           │   │   │   ├───Flutter
+    │           │   │   │   ├───Runner
+    │           │   │   │   │   ├───Assets.xcassets
+    │           │   │   │   │   │   └───AppIcon.appiconset
+    │           │   │   │   │   ├───Base.lproj
+    │           │   │   │   │   └───Configs
+    │           │   │   │   ├───Runner.xcodeproj
+    │           │   │   │   │   ├───project.xcworkspace
+    │           │   │   │   │   │   └───xcshareddata
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───xcschemes
+    │           │   │   │   └───Runner.xcworkspace
+    │           │   │   │       └───xcshareddata
+    │           │   │   ├───web
+    │           │   │   │   └───icons
+    │           │   │   └───windows
+    │           │   │       ├───flutter
+    │           │   │       └───runner
+    │           │   │           └───resources
+    │           │   ├───ios
+    │           │   │   └───firebase_core
+    │           │   │       └───Sources
+    │           │   │           └───firebase_core
+    │           │   │               ├───include
+    │           │   │               │   └───firebase_core
+    │           │   │               └───Resources
+    │           │   ├───lib
+    │           │   │   └───src
+    │           │   ├───macos
+    │           │   │   └───firebase_core
+    │           │   │       └───Sources
+    │           │   │           └───firebase_core
+    │           │   │               ├───include
+    │           │   │               │   └───firebase_core
+    │           │   │               └───Resources
+    │           │   ├───test
+    │           │   └───windows
+    │           │       └───include
+    │           │           └───firebase_core
+    │           ├───flutter_inappwebview_windows
+    │           │   ├───example
+    │           │   │   ├───integration_test
+    │           │   │   ├───lib
+    │           │   │   ├───test
+    │           │   │   └───windows
+    │           │   │       ├───flutter
+    │           │   │       └───runner
+    │           │   │           └───resources
+    │           │   ├───lib
+    │           │   │   └───src
+    │           │   │       ├───find_interaction
+    │           │   │       ├───in_app_browser
+    │           │   │       ├───in_app_webview
+    │           │   │       ├───print_job
+    │           │   │       ├───webview_environment
+    │           │   │       ├───web_message
+    │           │   │       └───web_storage
+    │           │   ├───test
+    │           │   └───windows
+    │           │       ├───custom_platform_view
+    │           │       │   └───util
+    │           │       │       └───cpuid
+    │           │       │           └───detail
+    │           │       ├───headless_in_app_webview
+    │           │       ├───include
+    │           │       │   └───flutter_inappwebview_windows
+    │           │       ├───in_app_browser
+    │           │       ├───in_app_webview
+    │           │       ├───plugin_scripts_js
+    │           │       ├───test
+    │           │       ├───types
+    │           │       ├───utils
+    │           │       └───webview_environment
+    │           ├───flutter_local_notifications_windows
+    │           │   ├───lib
+    │           │   │   └───src
+    │           │   │       ├───details
+    │           │   │       │   └───xml
+    │           │   │       ├───ffi
+    │           │   │       ├───msix
+    │           │   │       └───plugin
+    │           │   ├───src
+    │           │   ├───test
+    │           │   └───windows
+    │           ├───flutter_secure_storage_windows
+    │           │   ├───example
+    │           │   │   ├───integration_test
+    │           │   │   ├───lib
+    │           │   │   └───windows
+    │           │   │       ├───flutter
+    │           │   │       └───runner
+    │           │   │           └───resources
+    │           │   ├───lib
+    │           │   │   └───src
+    │           │   ├───test
+    │           │   └───windows
+    │           │       └───include
+    │           │           └───flutter_secure_storage_windows
+    │           ├───image_picker_windows
+    │           │   ├───example
+    │           │   │   ├───lib
+    │           │   │   └───windows
+    │           │   │       ├───flutter
+    │           │   │       └───runner
+    │           │   │           └───resources
+    │           │   ├───lib
+    │           │   └───test
+    │           ├───package_info_plus
+    │           │   ├───android
+    │           │   │   └───src
+    │           │   │       └───main
+    │           │   │           └───kotlin
+    │           │   │               └───dev
+    │           │   │                   └───fluttercommunity
+    │           │   │                       └───plus
+    │           │   │                           └───packageinfo
+    │           │   ├───example
+    │           │   │   ├───android
+    │           │   │   │   ├───app
+    │           │   │   │   │   └───src
+    │           │   │   │   │       ├───androidTest
+    │           │   │   │   │       │   └───java
+    │           │   │   │   │       │       └───io
+    │           │   │   │   │       │           └───flutter
+    │           │   │   │   │       │               └───plugins
+    │           │   │   │   │       │                   └───packageinfoexample
+    │           │   │   │   │       └───main
+    │           │   │   │   │           ├───java
+    │           │   │   │   │           │   └───io
+    │           │   │   │   │           │       └───flutter
+    │           │   │   │   │           │           └───plugins
+    │           │   │   │   │           └───res
+    │           │   │   │   │               ├───mipmap-hdpi
+    │           │   │   │   │               ├───mipmap-mdpi
+    │           │   │   │   │               ├───mipmap-xhdpi
+    │           │   │   │   │               ├───mipmap-xxhdpi
+    │           │   │   │   │               └───mipmap-xxxhdpi
+    │           │   │   │   └───gradle
+    │           │   │   │       └───wrapper
+    │           │   │   ├───integration_test
+    │           │   │   ├───ios
+    │           │   │   │   ├───Flutter
+    │           │   │   │   ├───Runner
+    │           │   │   │   │   ├───Assets.xcassets
+    │           │   │   │   │   │   ├───AppIcon.appiconset
+    │           │   │   │   │   │   └───LaunchImage.imageset
+    │           │   │   │   │   └───Base.lproj
+    │           │   │   │   ├───Runner.xcodeproj
+    │           │   │   │   │   ├───project.xcworkspace
+    │           │   │   │   │   │   └───xcshareddata
+    │           │   │   │   │   │       └───swiftpm
+    │           │   │   │   │   │           └───configuration
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───xcschemes
+    │           │   │   │   ├───Runner.xcworkspace
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───swiftpm
+    │           │   │   │   │           └───configuration
+    │           │   │   │   └───RunnerTests
+    │           │   │   ├───lib
+    │           │   │   ├───linux
+    │           │   │   │   └───flutter
+    │           │   │   ├───macos
+    │           │   │   │   ├───Flutter
+    │           │   │   │   ├───Runner
+    │           │   │   │   │   ├───Assets.xcassets
+    │           │   │   │   │   │   └───AppIcon.appiconset
+    │           │   │   │   │   ├───Base.lproj
+    │           │   │   │   │   └───Configs
+    │           │   │   │   ├───Runner.xcodeproj
+    │           │   │   │   │   ├───project.xcworkspace
+    │           │   │   │   │   │   └───xcshareddata
+    │           │   │   │   │   │       └───swiftpm
+    │           │   │   │   │   │           └───configuration
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───xcschemes
+    │           │   │   │   ├───Runner.xcworkspace
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───swiftpm
+    │           │   │   │   │           └───configuration
+    │           │   │   │   └───RunnerTests
+    │           │   │   ├───web
+    │           │   │   │   └───icons
+    │           │   │   └───windows
+    │           │   │       ├───flutter
+    │           │   │       └───runner
+    │           │   │           └───resources
+    │           │   ├───ios
+    │           │   │   └───package_info_plus
+    │           │   │       └───Sources
+    │           │   │           └───package_info_plus
+    │           │   │               └───include
+    │           │   │                   └───package_info_plus
+    │           │   ├───lib
+    │           │   │   └───src
+    │           │   ├───macos
+    │           │   │   └───package_info_plus
+    │           │   │       └───Sources
+    │           │   │           └───package_info_plus
+    │           │   │               └───include
+    │           │   │                   └───package_info_plus
+    │           │   └───test
+    │           ├───path_provider_windows
+    │           │   ├───example
+    │           │   │   ├───integration_test
+    │           │   │   ├───lib
+    │           │   │   ├───test_driver
+    │           │   │   └───windows
+    │           │   │       ├───flutter
+    │           │   │       └───runner
+    │           │   │           └───resources
+    │           │   ├───lib
+    │           │   │   └───src
+    │           │   └───test
+    │           ├───shared_preferences_windows
+    │           │   ├───example
+    │           │   │   ├───integration_test
+    │           │   │   ├───lib
+    │           │   │   ├───test_driver
+    │           │   │   └───windows
+    │           │   │       ├───flutter
+    │           │   │       └───runner
+    │           │   │           └───resources
+    │           │   ├───lib
+    │           │   └───test
+    │           ├───share_plus
+    │           │   ├───android
+    │           │   │   └───src
+    │           │   │       └───main
+    │           │   │           ├───kotlin
+    │           │   │           │   └───dev
+    │           │   │           │       └───fluttercommunity
+    │           │   │           │           └───plus
+    │           │   │           │               └───share
+    │           │   │           └───res
+    │           │   │               └───xml
+    │           │   ├───example
+    │           │   │   ├───android
+    │           │   │   │   ├───app
+    │           │   │   │   │   └───src
+    │           │   │   │   │       └───main
+    │           │   │   │   │           ├───java
+    │           │   │   │   │           │   └───io
+    │           │   │   │   │           │       └───flutter
+    │           │   │   │   │           │           └───plugins
+    │           │   │   │   │           └───res
+    │           │   │   │   │               ├───mipmap-hdpi
+    │           │   │   │   │               ├───mipmap-mdpi
+    │           │   │   │   │               ├───mipmap-xhdpi
+    │           │   │   │   │               ├───mipmap-xxhdpi
+    │           │   │   │   │               └───mipmap-xxxhdpi
+    │           │   │   │   └───gradle
+    │           │   │   │       └───wrapper
+    │           │   │   ├───assets
+    │           │   │   ├───integration_test
+    │           │   │   ├───ios
+    │           │   │   │   ├───Flutter
+    │           │   │   │   ├───Runner
+    │           │   │   │   │   ├───Assets.xcassets
+    │           │   │   │   │   │   ├───AppIcon.appiconset
+    │           │   │   │   │   │   └───LaunchImage.imageset
+    │           │   │   │   │   └───Base.lproj
+    │           │   │   │   ├───Runner.xcodeproj
+    │           │   │   │   │   ├───project.xcworkspace
+    │           │   │   │   │   │   └───xcshareddata
+    │           │   │   │   │   │       └───swiftpm
+    │           │   │   │   │   │           └───configuration
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───xcschemes
+    │           │   │   │   ├───Runner.xcworkspace
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───swiftpm
+    │           │   │   │   │           └───configuration
+    │           │   │   │   └───RunnerTests
+    │           │   │   ├───lib
+    │           │   │   ├───linux
+    │           │   │   │   └───flutter
+    │           │   │   ├───macos
+    │           │   │   │   ├───Flutter
+    │           │   │   │   ├───Runner
+    │           │   │   │   │   ├───Assets.xcassets
+    │           │   │   │   │   │   └───AppIcon.appiconset
+    │           │   │   │   │   ├───Base.lproj
+    │           │   │   │   │   └───Configs
+    │           │   │   │   ├───Runner.xcodeproj
+    │           │   │   │   │   ├───project.xcworkspace
+    │           │   │   │   │   │   └───xcshareddata
+    │           │   │   │   │   │       └───swiftpm
+    │           │   │   │   │   │           └───configuration
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───xcschemes
+    │           │   │   │   ├───Runner.xcworkspace
+    │           │   │   │   │   └───xcshareddata
+    │           │   │   │   │       └───swiftpm
+    │           │   │   │   │           └───configuration
+    │           │   │   │   └───RunnerTests
+    │           │   │   ├───test_driver
+    │           │   │   ├───web
+    │           │   │   │   └───icons
+    │           │   │   └───windows
+    │           │   │       ├───flutter
+    │           │   │       └───runner
+    │           │   │           └───resources
+    │           │   ├───ios
+    │           │   │   └───share_plus
+    │           │   │       └───Sources
+    │           │   │           └───share_plus
+    │           │   │               └───include
+    │           │   │                   └───share_plus
+    │           │   ├───lib
+    │           │   │   └───src
+    │           │   ├───macos
+    │           │   │   └───share_plus
+    │           │   │       └───Sources
+    │           │   │           └───share_plus
+    │           │   ├───test
+    │           │   └───windows
+    │           │       └───include
+    │           │           └───share_plus
+    │           ├───url_launcher_windows
+    │           │   ├───example
+    │           │   │   ├───integration_test
+    │           │   │   ├───lib
+    │           │   │   ├───test_driver
+    │           │   │   └───windows
+    │           │   │       ├───flutter
+    │           │   │       └───runner
+    │           │   │           └───resources
+    │           │   ├───lib
+    │           │   │   └───src
+    │           │   ├───pigeons
+    │           │   ├───test
+    │           │   └───windows
+    │           │       ├───include
+    │           │       │   └───url_launcher_windows
+    │           │       └───test
+    │           └───wakelock_plus
+    │               ├───android
+    │               │   └───src
+    │               │       └───main
+    │               │           └───kotlin
+    │               │               └───dev
+    │               │                   └───fluttercommunity
+    │               │                       └───plus
+    │               │                           └───wakelock
+    │               ├───assets
+    │               ├───example
+    │               │   ├───android
+    │               │   │   ├───app
+    │               │   │   │   └───src
+    │               │   │   │       ├───debug
+    │               │   │   │       ├───main
+    │               │   │   │       │   ├───java
+    │               │   │   │       │   │   └───io
+    │               │   │   │       │   │       └───flutter
+    │               │   │   │       │   │           └───plugins
+    │               │   │   │       │   ├───kotlin
+    │               │   │   │       │   │   └───dev
+    │               │   │   │       │   │       └───fluttercommunity
+    │               │   │   │       │   │           └───plus
+    │               │   │   │       │   │               └───wakelock_example
+    │               │   │   │       │   └───res
+    │               │   │   │       │       ├───drawable
+    │               │   │   │       │       ├───drawable-v21
+    │               │   │   │       │       ├───mipmap-hdpi
+    │               │   │   │       │       ├───mipmap-mdpi
+    │               │   │   │       │       ├───mipmap-xhdpi
+    │               │   │   │       │       ├───mipmap-xxhdpi
+    │               │   │   │       │       ├───mipmap-xxxhdpi
+    │               │   │   │       │       ├───values
+    │               │   │   │       │       └───values-night
+    │               │   │   │       └───profile
+    │               │   │   └───gradle
+    │               │   │       └───wrapper
+    │               │   ├───integration_test
+    │               │   ├───ios
+    │               │   │   ├───Flutter
+    │               │   │   ├───Runner
+    │               │   │   │   ├───Assets.xcassets
+    │               │   │   │   │   ├───AppIcon.appiconset
+    │               │   │   │   │   └───LaunchImage.imageset
+    │               │   │   │   └───Base.lproj
+    │               │   │   ├───Runner.xcodeproj
+    │               │   │   │   ├───project.xcworkspace
+    │               │   │   │   │   └───xcshareddata
+    │               │   │   │   │       └───swiftpm
+    │               │   │   │   │           └───configuration
+    │               │   │   │   └───xcshareddata
+    │               │   │   │       └───xcschemes
+    │               │   │   ├───Runner.xcworkspace
+    │               │   │   │   └───xcshareddata
+    │               │   │   │       └───swiftpm
+    │               │   │   │           └───configuration
+    │               │   │   └───RunnerTests
+    │               │   ├───lib
+    │               │   ├───linux
+    │               │   │   └───flutter
+    │               │   ├───macos
+    │               │   │   ├───Flutter
+    │               │   │   ├───Runner
+    │               │   │   │   ├───Assets.xcassets
+    │               │   │   │   │   └───AppIcon.appiconset
+    │               │   │   │   ├───Base.lproj
+    │               │   │   │   └───Configs
+    │               │   │   ├───Runner.xcodeproj
+    │               │   │   │   ├───project.xcworkspace
+    │               │   │   │   │   └───xcshareddata
+    │               │   │   │   │       └───swiftpm
+    │               │   │   │   │           └───configuration
+    │               │   │   │   └───xcshareddata
+    │               │   │   │       └───xcschemes
+    │               │   │   ├───Runner.xcworkspace
+    │               │   │   │   └───xcshareddata
+    │               │   │   │       └───swiftpm
+    │               │   │   │           └───configuration
+    │               │   │   └───RunnerTests
+    │               │   ├───test_driver
+    │               │   ├───web
+    │               │   │   └───icons
+    │               │   └───windows
+    │               │       ├───flutter
+    │               │       └───runner
+    │               │           └───resources
+    │               ├───ios
+    │               │   └───wakelock_plus
+    │               │       └───Sources
+    │               │           └───wakelock_plus
+    │               │               ├───include
+    │               │               │   └───wakelock_plus
+    │               │               └───Resources
+    │               ├───lib
+    │               │   └───src
+    │               │       └───web_impl
+    │               ├───macos
+    │               │   └───wakelock_plus
+    │               │       └───Sources
+    │               │           └───wakelock_plus
+    │               │               └───Resources
+    │               ├───pigeons
+    │               └───test
+    └───runner
+        └───resources

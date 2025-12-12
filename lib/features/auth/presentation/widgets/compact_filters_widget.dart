@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Widget de filtres compacts pour le classement (2 lignes comme React)
-/// Ligne 1 : Période + Recherche  
-/// Ligne 2 : Formation + Formateur + Tri + Réinitialiser
-class CompactFiltersWidget extends StatelessWidget {
+/// Widget de filtres simplifié et intuitif pour le classement
+/// Conçu pour être léger et facile à utiliser
+class CompactFiltersWidget extends StatefulWidget {
   final String selectedPeriod;
   final Function(String) onPeriodChanged;
   final String searchQuery;
@@ -44,214 +43,214 @@ class CompactFiltersWidget extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<CompactFiltersWidget> createState() => _CompactFiltersWidgetState();
+}
+
+class _CompactFiltersWidgetState extends State<CompactFiltersWidget> {
+  late FocusNode _searchFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchFocusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  int _countActiveFilters() {
+    int count = 0;
+    if (widget.searchQuery.isNotEmpty) count++;
+    if (widget.selectedFormation != null) count++;
+    if (widget.selectedFormateur != null) count++;
+    return count;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Ligne 1 : Période + Recherche
-        Row(
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Filtres période
-            Wrap(
-              spacing: 8,
-              children: [
-                _buildPeriodChip(context, 'Semaine', 'week'),
-                _buildPeriodChip(context, 'Mois', 'month'),
-                _buildPeriodChip(context, 'Tout', 'all'),
-              ],
-            ),
-            const SizedBox(width: 12),
             // Barre de recherche
-            Expanded(
-              child: SizedBox(
-                height: 36,
-                child: TextField(
-                  onChanged: onSearchChanged,
-                  style: const TextStyle(fontSize: 12),
-                  decoration: InputDecoration(
-                    hintText: 'Rechercher...',
-                    hintStyle: TextStyle(fontSize: 12, color: Colors.grey[400]),
-                    prefixIcon: Icon(Icons.search, size: 16, color: Colors.grey[400]),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Colors.blue, width: 2),
-                    ),
+            SizedBox(
+              width: isMobile ? screenWidth - 32 : 260,
+              height: 40,
+              child: TextField(
+                focusNode: _searchFocusNode,
+                onChanged: widget.onSearchChanged,
+                style: const TextStyle(fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'Chercher...',
+                  hintStyle: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                  prefixIcon: Icon(Icons.search, size: 16, color: Colors.grey[400]),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Colors.blue, width: 1.5),
                   ),
                 ),
               ),
             ),
+            const SizedBox(width: 8),
+            // Period selector (compact chips)
+            Wrap(
+              spacing: 6,
+              children: [
+                ChoiceChip(
+                  label: const Text('Semaine', style: TextStyle(fontSize: 12)),
+                  selected: widget.selectedPeriod == 'week',
+                  onSelected: (s) {
+                    if (s) widget.onPeriodChanged('week');
+                  },
+                ),
+                ChoiceChip(
+                  label: const Text('Mois', style: TextStyle(fontSize: 12)),
+                  selected: widget.selectedPeriod == 'month',
+                  onSelected: (s) {
+                    if (s) widget.onPeriodChanged('month');
+                  },
+                ),
+                ChoiceChip(
+                  label: const Text('Tout', style: TextStyle(fontSize: 12)),
+                  selected: widget.selectedPeriod == 'all',
+                  onSelected: (s) {
+                    if (s) widget.onPeriodChanged('all');
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(width: 8),
+            // Formation filter
+            _buildSimpleDropdown(
+              value: widget.selectedFormation,
+              hint: 'Formation',
+              items: widget.formations,
+              onChanged: widget.onFormationChanged,
+              icon: Icons.school,
+            ),
+            const SizedBox(width: 8),
+            // Formateur filter
+            _buildSimpleDropdown(
+              value: widget.selectedFormateur,
+              hint: 'Formateur',
+              items: widget.formateurs,
+              onChanged: widget.onFormateurChanged,
+              icon: Icons.person,
+            ),
+            const SizedBox(width: 8),
+            // Reset button
+            if (widget.hasActiveFilters)
+              _buildResetButton(),
           ],
-        ),
-        const SizedBox(height: 12),
-
-        // Ligne 2 : Formation + Formateur + Tri
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            // Formation dropdown
-            _buildCompactDropdown(
-              context,
-              value: selectedFormation,
-              hint: 'Toutes formations',
-              items: formations,
-              onChanged: onFormationChanged,
-            ),
-
-            // Formateur dropdown
-            _buildCompactDropdown(
-              context,
-              value: selectedFormateur,
-              hint: 'Tous formateurs',
-              items: formateurs,
-              onChanged: onFormateurChanged,
-            ),
-
-            // Séparateur
-            Container(
-              height: 20,
-              width: 1,
-              color: Colors.grey[300],
-            ),
-
-            // Tri par
-            _buildCompactDropdown(
-              context,
-              value: sortBy,
-              hint: 'Trier par',
-              items: sortOptions,
-              onChanged: (val) => onSortChanged(val ?? 'rang'),
-              showValue: true,
-            ),
-
-            // Bouton ordre
-            InkWell(
-              onTap: onSortOrderToggle,
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.white,
-                ),
-                child: Icon(
-                  sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
-                  size: 16,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ),
-
-            // Bouton réinitialiser si filtres actifs
-            if (hasActiveFilters) ...[
-              Container(
-                height: 20,
-                width: 1,
-                color: Colors.grey[300],
-              ),
-              InkWell(
-                onTap: onResetFilters,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.close, size: 12, color: Colors.blue[600]),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Réinit.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.blue[600],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPeriodChip(BuildContext context, String label, String value) {
-    final isSelected = selectedPeriod == value;
-    
-    return InkWell(
-      onTap: () => onPeriodChanged(value),
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.orange : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected ? Colors.orange : Colors.grey[300]!,
-          ),
-          boxShadow: isSelected
-              ? [BoxShadow(color: Colors.orange.withOpacity(0.3), blurRadius: 4)]
-              : null,
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            color: isSelected ? Colors.white : Colors.grey[700],
-          ),
         ),
       ),
     );
   }
 
-  Widget _buildCompactDropdown(
-    BuildContext context, {
+  Widget _buildSimpleDropdown({
     required String? value,
     required String hint,
     required List<Map<String, dynamic>> items,
     required Function(String?) onChanged,
-    bool showValue = false,
+    required IconData icon,
   }) {
+    final isActive = value != null;
+
     return Container(
-      height: 32,
+      height: 40,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(
+          color: isActive ? Colors.blue[300]! : Colors.grey[300]!,
+          width: isActive ? 1.5 : 1,
+        ),
         borderRadius: BorderRadius.circular(8),
-        color: Colors.white,
+        color: isActive ? Colors.blue[50] : Colors.white,
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          hint: Text(
-            hint,
-            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-          ),
-          items: [
-            DropdownMenuItem(value: null, child: Text(hint, style: const TextStyle(fontSize: 12))),
-            ...items.map((item) => DropdownMenuItem(
-              value: item['id'].toString(),
-              child: Text(
-                showValue ? item['value'] ?? item['label'] : item['label'],
-                style: const TextStyle(fontSize: 12),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: isActive ? Colors.blue[600] : Colors.grey[600]),
+          const SizedBox(width: 6),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              hint: Text(hint, style: const TextStyle(fontSize: 12)),
+              items: [
+                DropdownMenuItem(
+                  value: null,
+                  child: Text(hint, style: const TextStyle(fontSize: 12)),
+                ),
+                ...items.map((item) => DropdownMenuItem(
+                  value: item['id'].toString(),
+                  child: Text(
+                    item['label'],
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                )),
+              ],
+              onChanged: onChanged,
+              icon: Icon(
+                Icons.arrow_drop_down,
+                size: 18,
+                color: isActive ? Colors.blue[600] : Colors.grey[600],
               ),
-            )),
+              isDense: true,
+              isExpanded: false,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResetButton() {
+    final activeCount = _countActiveFilters();
+
+    return InkWell(
+      onTap: widget.onResetFilters,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.red[50],
+          border: Border.all(color: Colors.red[300]!),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.close, size: 14, color: Colors.red[600]),
+            const SizedBox(width: 4),
+            Text(
+              activeCount > 0 ? 'Réinit. ($activeCount)' : 'Réinit.',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.red[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
-          onChanged: onChanged,
-          icon: Icon(Icons.arrow_drop_down, size: 20, color: Colors.grey[600]),
-          isDense: true,
-          style: TextStyle(fontSize: 12, color: Colors.grey[900]),
         ),
       ),
     );

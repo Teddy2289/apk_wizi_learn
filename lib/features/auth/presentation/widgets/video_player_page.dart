@@ -407,9 +407,9 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                                 : isWatched
                                     ? colorScheme.onSurface.withOpacity(0.7)
                                     : null,
-                            decoration: isWatched && !isSelected
-                                ? TextDecoration.lineThrough
-                                : null,
+                            // decoration: isWatched && !isSelected
+                            //     ? TextDecoration.lineThrough
+                            //     : null,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
