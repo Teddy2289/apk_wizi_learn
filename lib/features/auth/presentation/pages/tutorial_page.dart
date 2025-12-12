@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/universal_video_player_page.dart';
-}
+
 
 class _TutorialPageState extends State<TutorialPage> {
   late final MediaRepository _mediaRepository;

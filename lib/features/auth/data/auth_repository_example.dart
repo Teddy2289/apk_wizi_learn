@@ -1,6 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import '../network/dio_client.dart';
+import 'package:wizi_learn/core/network/dio_client.dart';
 
 /// Example Auth Repository with refresh token support
 class AuthRepository {

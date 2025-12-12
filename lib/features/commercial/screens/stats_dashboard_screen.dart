@@ -7,7 +7,7 @@ import '../models/stats_data.dart';
 import '../services/commercial_service.dart';
 import '../widgets/stat_card.dart';
 import 'package:dio/dio.dart';
-import '../../../core/constants/app_constants.dart';
+import 'package:wizi_learn/core/constants/app_constants.dart';
 
 class StatsDashboardScreen extends StatefulWidget {
   const StatsDashboardScreen({super.key});
