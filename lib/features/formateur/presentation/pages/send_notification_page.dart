@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../../../core/network/api_client.dart';
+import 'package:wizi_learn/core/network/api_client.dart';
 
 class SendNotificationPage extends StatefulWidget {
   const SendNotificationPage({Key? key}) : super(key: key);
