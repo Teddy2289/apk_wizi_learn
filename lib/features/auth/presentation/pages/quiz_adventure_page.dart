@@ -427,14 +427,14 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     final intermediaire = quizzes.where((q) => normalizeLevel(q.niveau) == 'intermédiaire').toList();
     final avance = quizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
 
-    // Appliquer les règles de filtrage progressif
+    // Simplified 3-tier quiz filtering system:
+    // < 50 points: beginner only
+    // 50-99 points: beginner + intermediate
+    // >= 100 points: all levels
     List<quiz_model.Quiz> result;
     
-    if (userPoints < 20) {
-      // Moins de 20 points : seulement 5 quiz débutants
-      result = debutant.take(5).toList();
-    } else if (userPoints < 50) {
-      // 20-49 points : tous les quiz débutants
+    if (userPoints < 50) {
+      // Moins de 50 points : tous les quiz débutants
       result = debutant;
     } else if (userPoints < 100) {
       // 50-99 points : débutants + intermédiaires

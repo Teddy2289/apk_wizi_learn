@@ -168,21 +168,21 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
         setState(() => _selectedFormateurId = id != null ? int.tryParse(id) : null);
       },
       
-      // // Tri
-      // sortBy: _sortBy,
-      // sortOptions: const [
-      //   {'id': 'rang', 'label': 'Rang', 'value': 'Rang'},
-      //   {'id': 'score', 'label': 'Points', 'value': 'Points'},
-      //   {'id': 'quiz', 'label': 'Quiz', 'value': 'Quiz'},
-      //   {'id': 'name', 'label': 'Nom', 'value': 'Nom'},
-      // ],
-      // onSortChanged: (sort) {
-      //   setState(() => _sortBy = sort);
-      // },
-      // sortAscending: _sortAscending,
-      // onSortOrderToggle: () {
-      //   setState(() => _sortAscending = !_sortAscending);
-      // },
+      // Tri
+      sortBy: _sortBy,
+      sortOptions: const [
+        {'id': 'rang', 'label': 'Rang', 'value': 'Rang'},
+        {'id': 'score', 'label': 'Points', 'value': 'Points'},
+        {'id': 'quiz', 'label': 'Quiz', 'value': 'Quiz'},
+        {'id': 'name', 'label': 'Nom', 'value': 'Nom'},
+      ],
+      onSortChanged: (sort) {
+        setState(() => _sortBy = sort);
+      },
+      sortAscending: _sortAscending,
+      onSortOrderToggle: () {
+        setState(() => _sortAscending = !_sortAscending);
+      },
       
       // Réinitialiser
       onResetFilters: () {

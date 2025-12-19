@@ -57,7 +57,8 @@ class _QuizPageState extends State<QuizPage> {
   String? _scrollToQuizId;
   bool _didRedirectToAdventure = false;
   // Optimisation: cache des listes filtrées pour éviter les FutureBuilder imbriqués
-  List<quiz_model.Quiz> _baseQuizzes = [];
+  List<quiz_model.Quiz> _allQuizzes = []; // All quizzes without point filtering
+  List<quiz_model.Quiz> _baseQuizzes = []; // Quizzes filtered by points
   List<quiz_model.Quiz> _visiblePlayed = [];
   List<quiz_model.Quiz> _visibleUnplayed = [];
   List<QuizHistory> _quizHistoryList = [];
@@ -461,6 +462,7 @@ class _QuizPageState extends State<QuizPage> {
       // METTRE À JOUR L'ÉTAT IMMÉDIATEMENT
       if (mounted) {
         setState(() {
+          _allQuizzes = quizzes; // Store all quizzes for played quiz history
           _baseQuizzes = filteredQuizzes;
           _futureQuizzes = Future.value(filteredQuizzes);
         });
@@ -567,14 +569,14 @@ class _QuizPageState extends State<QuizPage> {
     final intermediaire = quizzes.where((q) => normalizeLevel(q.niveau) == 'intermédiaire').toList();
     final avance = quizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
 
-    // Appliquer les règles de filtrage progressif
+    // Simplified 3-tier quiz filtering system:
+    // < 50 points: beginner only
+    // 50-99 points: beginner + intermediate
+    // >= 100 points: all levels
     List<quiz_model.Quiz> result;
     
-    if (userPoints < 20) {
-      // Moins de 20 points : seulement 5 quiz débutants
-      result = debutant.take(5).toList();
-    } else if (userPoints < 50) {
-      // 20-49 points : tous les quiz débutants
+    if (userPoints < 50) {
+      // Moins de 50 points : tous les quiz débutants
       result = debutant;
     } else if (userPoints < 100) {
       // 50-99 points : débutants + intermédiaires
@@ -614,10 +616,21 @@ class _QuizPageState extends State<QuizPage> {
 
     // S'assurer que _playedQuizIds est initialisé
     final playedIds = _playedQuizIds;
-    final played =
-        list.where((q) => playedIds.contains(q.id.toString())).toList();
-    final unplayed =
-        list.where((q) => !playedIds.contains(q.id.toString())).toList();
+    
+    // For played quizzes: use _allQuizzes to show ALL played quizzes regardless of point filtering
+    // This ensures users can always see their full quiz history
+    List<quiz_model.Quiz> playedList = _allQuizzes.isNotEmpty ? [..._allQuizzes] : [...list];
+    
+    // Apply formation and level filters to played quizzes
+    if (_selectedLevel != null) {
+      playedList = playedList.where((q) => q.niveau == _selectedLevel).toList();
+    }
+    if (_selectedFormation != null) {
+      playedList = playedList.where((q) => q.formation.titre == _selectedFormation).toList();
+    }
+    
+    final played = playedList.where((q) => playedIds.contains(q.id.toString())).toList();
+    final unplayed = list.where((q) => !playedIds.contains(q.id.toString())).toList();
 
     // Trier l'historique seulement si les données sont disponibles
     if (_quizHistoryList.isNotEmpty && played.isNotEmpty) {
@@ -876,11 +889,30 @@ class _QuizPageState extends State<QuizPage> {
     ThemeData theme, {
     required bool isPlayed,
   }) {
-    // Déterminer le nombre de colonnes en fonction de la largeur d'écran
     final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth >= 600 && screenWidth < 1024;
-    final crossAxisCount =
-        isTablet ? 1 : 2; // 1 colonne sur tablette pour taille uniforme
+    final isTablet = screenWidth > 600;
+    
+    // Responsive column count based on screen width
+    int crossAxisCount;
+    double childAspectRatio;
+    
+    if (screenWidth > 1200) {
+      // Large screens (desktop): 3 columns
+      crossAxisCount = 3;
+      childAspectRatio = 1.1;
+    } else if (screenWidth > 800) {
+      // Medium tablets: 2 columns
+      crossAxisCount = 2;
+      childAspectRatio = 1.0;
+    } else if (screenWidth > 600) {
+      // Small tablets: 2 columns
+      crossAxisCount = 2;
+      childAspectRatio = 0.95;
+    } else {
+      // Mobile: 1 column for better readability
+      crossAxisCount = 1;
+      childAspectRatio = 1.2;
+    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -891,7 +923,7 @@ class _QuizPageState extends State<QuizPage> {
           crossAxisCount: crossAxisCount,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: 0.95,
+          childAspectRatio: childAspectRatio,
         ),
         itemCount: quizzes.length,
         itemBuilder: (context, index) {
