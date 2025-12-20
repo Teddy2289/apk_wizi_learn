@@ -546,7 +546,7 @@ class _QuizPageState extends State<QuizPage> {
       if (lvl.contains('inter') || lvl.contains('moyen')) {
         return 'intermédiaire';
       }
-      if (lvl.contains('avancé') || lvl.contains('expert') || lvl.contains('avance')) {
+      if (lvl.contains('avanc') || lvl.contains('expert') || lvl.contains('difficile')) {
         return 'avancé';
       }
       return 'débutant';

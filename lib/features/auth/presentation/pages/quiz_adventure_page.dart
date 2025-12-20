@@ -416,7 +416,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
       if (lvl.contains('inter') || lvl.contains('moyen')) {
         return 'intermédiaire';
       }
-      if (lvl.contains('avancé') || lvl.contains('expert') || lvl.contains('avance')) {
+      if (lvl.contains('avanc') || lvl.contains('expert') || lvl.contains('difficile')) {
         return 'avancé';
       }
       return 'débutant';
@@ -426,7 +426,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     final debutant = quizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
     final intermediaire = quizzes.where((q) => normalizeLevel(q.niveau) == 'intermédiaire').toList();
     final avance = quizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
-    debugPrint('📋 Quiz reçus: ${quizzes.length} - Débutant: ${debutant.length}, Intermédiaire: ${intermediaire.length}, Avancé: ${avance.length}');
+    
     // Simplified 3-tier quiz filtering system:
     // < 50 points: beginner only
     // 50-99 points: beginner + intermediate
