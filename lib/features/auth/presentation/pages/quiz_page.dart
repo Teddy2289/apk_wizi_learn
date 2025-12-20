@@ -444,8 +444,8 @@ class _QuizPageState extends State<QuizPage> {
       final filteredQuizzes = _filterQuizzesByPoints(quizzes, _userPoints);
       // debugPrint('✅ Quiz filtrés: ${filteredQuizzes.length} quiz');
 
-      // Extraire / actualiser les formations (cachées une fois par jour)
-      await _extractAvailableFilters(filteredQuizzes);
+      // Extraire / actualiser les formations (toujours à jour)
+      await _extractAvailableFilters(quizzes);
 
       // METTRE À JOUR L'ÉTAT IMMÉDIATEMENT
       if (mounted) {
@@ -470,67 +470,23 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   Future<void> _extractAvailableFilters(List<quiz_model.Quiz> quizzes) async {
-    // Cacher la liste des formations en local et n'actualiser qu'une fois par jour.
-    const cacheKey = 'cached_formations';
-    const refreshKey = 'formations_last_refresh';
-
-    final prefs = await SharedPreferences.getInstance();
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final last = prefs.getInt(refreshKey) ?? 0;
-    final cachedJson = prefs.getString(cacheKey) ?? '';
-
-    // Si le cache est absent ou expiré (> 24h), recalculer et sauvegarder
-    if (cachedJson.isEmpty ||
-        (now - last) >= Duration(days: 1).inMilliseconds) {
-      final formations = <String>{};
-      final levels = <String>{};
-      for (final quiz in quizzes) {
-        if (quiz.niveau.isNotEmpty) levels.add(quiz.niveau);
-        final title = quiz.formation.titre;
-        if (title.isNotEmpty) formations.add(title);
-      }
-
-      final formationsList = formations.toList()..sort();
-      final levelsList = levels.toList()..sort();
-
-      await prefs.setString(cacheKey, jsonEncode(formationsList));
-      await prefs.setInt(refreshKey, now);
-
-      if (mounted) {
-        setState(() {
-          _availableFormations = formationsList;
-          _availableLevels = levelsList;
-        });
-      }
-      return;
+    final formations = <String>{};
+    final levels = <String>{};
+    
+    for (final quiz in quizzes) {
+      if (quiz.niveau.isNotEmpty) levels.add(quiz.niveau);
+      final title = quiz.formation.titre;
+      if (title.isNotEmpty) formations.add(title);
     }
 
-    // Sinon, charger depuis le cache
-    try {
-      final decoded = jsonDecode(cachedJson) as List<dynamic>;
-      final cachedList = decoded.map((e) => e.toString()).toList();
-      if (mounted) {
-        setState(() => _availableFormations = cachedList..sort());
-      }
-    } catch (e) {
-      // Si le cache est corrompu, recalculer rapidement
-      final formations = <String>{};
-      final levels = <String>{};
-      for (final quiz in quizzes) {
-        if (quiz.niveau.isNotEmpty) levels.add(quiz.niveau);
-        final title = quiz.formation.titre;
-        if (title.isNotEmpty) formations.add(title);
-      }
-      final formationsList = formations.toList()..sort();
-      final levelsList = levels.toList()..sort();
-      await prefs.setString(cacheKey, jsonEncode(formationsList));
-      await prefs.setInt(refreshKey, now);
-      if (mounted) {
-        setState(() {
-          _availableFormations = formationsList;
-          _availableLevels = levelsList;
-        });
-      }
+    final formationsList = formations.toList()..sort();
+    final levelsList = levels.toList()..sort();
+
+    if (mounted) {
+      setState(() {
+        _availableFormations = formationsList;
+        _availableLevels = levelsList;
+      });
     }
   }
 
