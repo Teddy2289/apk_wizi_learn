@@ -796,7 +796,6 @@ class _QuizPageState extends State<QuizPage> {
     }
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600;
     final unplayed = _visibleUnplayed;
     final played = _visiblePlayed;
 
@@ -806,11 +805,10 @@ class _QuizPageState extends State<QuizPage> {
       delegate: SliverChildListDelegate([
         if (unplayed.isNotEmpty) ...[
           _buildSectionTitle('Quiz disponibles', theme),
-          if (isTablet)
-            _buildQuizGrid(unplayed, theme, isPlayed: false)
-          else
-            ...unplayed.map(
-              (quiz) => Padding(
+          ...unplayed.map(
+            (quiz) => Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 800),
                 padding: const EdgeInsets.only(bottom: 12),
                 child: _buildQuizCard(
                   quiz,
@@ -819,19 +817,20 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
             ),
+          ),
           const SizedBox(height: 16),
         ],
         if (played.isNotEmpty) ...[
           _buildSectionTitle('Historique de vos quiz déjà terminé', theme),
-          if (isTablet)
-            _buildQuizGrid(displayedPlayed, theme, isPlayed: true)
-          else
-            ...displayedPlayed.map(
-              (quiz) => Padding(
+          ...displayedPlayed.map(
+            (quiz) => Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 800),
                 padding: const EdgeInsets.only(bottom: 12),
                 child: _buildPlayedQuizCard(quiz, theme),
               ),
             ),
+          ),
           if (played.length > 5)
             Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -853,365 +852,6 @@ class _QuizPageState extends State<QuizPage> {
     );
   }
 
-  Widget _buildQuizGrid(
-    List<quiz_model.Quiz> quizzes,
-    ThemeData theme, {
-    required bool isPlayed,
-  }) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600;
-    
-    // Responsive column count based on screen width
-    int crossAxisCount;
-    double childAspectRatio;
-    
-    if (screenWidth > 1200) {
-      // Large screens (desktop): 4 columns
-      crossAxisCount = 4;
-      childAspectRatio = 1.3;
-    } else if (screenWidth > 900) {
-      // Large tablets / Small desktops: 3 columns
-      crossAxisCount = 3;
-      childAspectRatio = 1.2;
-    } else if (screenWidth > 600) {
-      // Small/Medium tablets: 2 columns
-      crossAxisCount = 2;
-      childAspectRatio = 1.4;
-    } else {
-      // Mobile: 1 column
-      crossAxisCount = 1;
-      childAspectRatio = 2.5;
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAxisCount,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: childAspectRatio,
-        ),
-        itemCount: quizzes.length,
-        itemBuilder: (context, index) {
-          final quiz = quizzes[index];
-          return isPlayed
-              ? _buildPlayedQuizCardCompact(quiz, theme)
-              : _buildQuizCardCompact(quiz, theme);
-        },
-      ),
-    );
-  }
-
-  Widget _buildQuizCardCompact(quiz_model.Quiz quiz, ThemeData theme) {
-    final categoryColor = _getCategoryColor(quiz.formation.categorie, theme);
-
-    return InkWell(
-      onTap: () => _startQuiz(quiz),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header avec icône et titre
-            Row(
-              children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [categoryColor.withOpacity(0.8), categoryColor],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.quiz, color: Colors.white, size: 14),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    quiz.titre,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-
-            // Formation et niveau sur une ligne
-            Row(
-              children: [
-                Icon(Icons.school, size: 10, color: categoryColor),
-                const SizedBox(width: 3),
-                Expanded(
-                  child: Text(
-                    quiz.formation.titre,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: categoryColor,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 11,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Icon(Icons.assessment, size: 10, color: categoryColor),
-                const SizedBox(width: 3),
-                Text(
-                  quiz.niveau,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-
-            // Description (si disponible) - plus compacte
-            if (quiz.description != null && quiz.description!.isNotEmpty)
-              Text(
-                _removeHtmlTags(quiz.description!),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                  fontSize: 10,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            const Spacer(),
-
-            // Points et bouton
-            Row(
-              children: [
-                Icon(Icons.star, size: 12, color: categoryColor),
-                const SizedBox(width: 3),
-                Text(
-                  '${min(quiz.questions.length * 2, 10)} pts',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: categoryColor,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 11,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: categoryColor,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Participer',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 2),
-                      Icon(Icons.play_arrow, size: 10, color: Colors.white),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlayedQuizCardCompact(quiz_model.Quiz quiz, ThemeData theme) {
-    final categoryColor = _getCategoryColor(quiz.formation.categorie, theme);
-
-    return FutureBuilder<List<QuizHistory>>(
-      future: _futureQuizHistory,
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const SizedBox();
-
-        final history = snapshot.data!.firstWhere(
-          (h) => h.quiz.id.toString() == quiz.id.toString(),
-          orElse:
-              () => QuizHistory(
-                id: '',
-                quiz: quiz_model.Quiz(
-                  id: 0,
-                  titre: '',
-                  description: '',
-                  duree: '',
-                  niveau: '',
-                  status: '',
-                  nbPointsTotal: 0,
-                  formation: quiz.formation,
-                  questions: const [],
-                ),
-                score: 0,
-                completedAt: '',
-                timeSpent: 0,
-                totalQuestions: 0,
-                correctAnswers: 0,
-              ),
-        );
-
-        final scorePercentage =
-            (history.totalQuestions == 0)
-                ? 0
-                : (history.correctAnswers / history.totalQuestions * 100)
-                    .round();
-
-        return InkWell(
-          onTap: () => _startQuiz(quiz),
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: theme.cardColor,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header avec score et titre
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        value: scorePercentage / 100,
-                        backgroundColor: categoryColor.withOpacity(0.1),
-                        color: categoryColor,
-                        strokeWidth: 2.5,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        quiz.titre,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-
-                // Score et formation sur une ligne
-                Row(
-                  children: [
-                    Text(
-                      '$scorePercentage%',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: categoryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        quiz.formation.titre,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: categoryColor,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 11,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-
-                // Rejouer avec bouton stylisé
-                Row(
-                  children: [
-                    Icon(Icons.replay, size: 12, color: categoryColor),
-                    const SizedBox(width: 3),
-                    Expanded(
-                      child: Text(
-                        'Refaire le quiz',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: categoryColor,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: categoryColor,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Replay',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(width: 2),
-                          Icon(Icons.replay, size: 10, color: Colors.white),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   Widget _buildSectionTitle(String title, ThemeData theme) {
     return Padding(
