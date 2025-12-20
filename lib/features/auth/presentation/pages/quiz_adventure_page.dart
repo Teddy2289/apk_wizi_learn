@@ -574,9 +574,13 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                     activeTrackColor: Colors.black,
                     inactiveThumbColor: Colors.black,
                     inactiveTrackColor: Colors.white,
-                    onChanged: (v) {
+                    onChanged: (v) async {
                       if (v) return;
-                      _goToQuizList();
+                      // Navigate directly to quiz list page (not through dashboard)
+                      await Navigator.pushReplacementNamed(
+                        context,
+                        RouteConstants.quiz,
+                      );
                     },
                   ),
                 ),

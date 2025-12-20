@@ -317,23 +317,10 @@ class _QuizPageState extends State<QuizPage> {
                     inactiveTrackColor: Colors.white,
                     onChanged: (v) async {
                       if (!v) return;
-                      // Sauvegarder la préférence utilisateur pour la vue aventure
-                      await _saveQuizViewPreference(true);
-
-                      Navigator.pushReplacement(
+                      // Navigate directly to quiz adventure page (not through dashboard)
+                      await Navigator.pushReplacementNamed(
                         context,
-                        PageRouteBuilder(
-                          pageBuilder:
-                              (_, __, ___) => const QuizAdventurePage(
-                                quizAdventureEnabled: true,
-                              ),
-                          transitionsBuilder:
-                              (_, animation, __, child) => FadeTransition(
-                                opacity: animation,
-                                child: child,
-                              ),
-                          transitionDuration: const Duration(milliseconds: 250),
-                        ),
+                        RouteConstants.quizAdventure,
                       );
                     },
                   ),
