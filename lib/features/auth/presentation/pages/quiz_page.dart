@@ -173,6 +173,7 @@ class _QuizPageState extends State<QuizPage> {
 
   @override
   void dispose() {
+    _refreshTimer?.cancel(); // Fix memory leak
     _scrollController.dispose();
     super.dispose();
   }
@@ -603,36 +604,18 @@ class _QuizPageState extends State<QuizPage> {
       return;
     }
 
-    List<quiz_model.Quiz> list = [..._baseQuizzes];
-
-    // Appliquer les filtres uniquement si les données sont prêtes
-    if (_selectedLevel != null) {
-      list = list.where((q) => q.niveau == _selectedLevel).toList();
-    }
-    if (_selectedFormation != null) {
-      list =
-          list.where((q) => q.formation.titre == _selectedFormation).toList();
-    }
-
     // S'assurer que _playedQuizIds est initialisé
     final playedIds = _playedQuizIds;
     
     // For played quizzes: use _allQuizzes to show ALL played quizzes regardless of point filtering
-    // This ensures users can always see their full quiz history
-    List<quiz_model.Quiz> playedList = _allQuizzes.isNotEmpty ? [..._allQuizzes] : [...list];
+    final played = _allQuizzes.isNotEmpty 
+        ? _allQuizzes.where((q) => playedIds.contains(q.id.toString())).toList()
+        : <quiz_model.Quiz>[];
     
-    // Apply formation and level filters to played quizzes
-    if (_selectedLevel != null) {
-      playedList = playedList.where((q) => q.niveau == _selectedLevel).toList();
-    }
-    if (_selectedFormation != null) {
-      playedList = playedList.where((q) => q.formation.titre == _selectedFormation).toList();
-    }
-    
-    final played = playedList.where((q) => playedIds.contains(q.id.toString())).toList();
-    final unplayed = list.where((q) => !playedIds.contains(q.id.toString())).toList();
+    // For unplayed quizzes: use _baseQuizzes (already filtered by points)
+    final unplayed = _baseQuizzes.where((q) => !playedIds.contains(q.id.toString())).toList();
 
-    // Trier l'historique seulement si les données sont disponibles
+    // Trier l'historique par date (plus récent en premier)
     if (_quizHistoryList.isNotEmpty && played.isNotEmpty) {
       played.sort((a, b) {
         try {
@@ -644,7 +627,7 @@ class _QuizPageState extends State<QuizPage> {
           );
           final da = DateTime.parse(ha.completedAt);
           final db = DateTime.parse(hb.completedAt);
-          return db.compareTo(da);
+          return db.compareTo(da); // Plus récent en premier
         } catch (_) {
           return 0;
         }
@@ -655,12 +638,11 @@ class _QuizPageState extends State<QuizPage> {
       _visiblePlayed = played;
       _visibleUnplayed = unplayed;
       _expandedQuizzes.clear();
-      for (var quiz in list) {
+      for (var quiz in [...played, ...unplayed]) {
         _expandedQuizzes.putIfAbsent(quiz.id, () => false);
       }
       _showAllPlayed = false;
     });
-
     // Maintenant que tout est chargé, on peut sélectionner la formation
     _selectFormationFromLastPlayedIfAny();
   }

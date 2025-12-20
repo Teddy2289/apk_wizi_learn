@@ -37,17 +37,17 @@ class QuizRepository {
       }
 
       // Logique de limitation si score < 10
-      if (stagiaireId != null && quizzes.isNotEmpty) {
-        try {
-          final ranking = await _getStagiaireRanking(stagiaireId);
-          if (ranking != null && (ranking['totalPoints'] as int? ?? 0) < 10) {
-            quizzes.shuffle();
-            return quizzes.take(2).toList();
-          }
-        } catch (e) {
-          debugPrint('Error checking ranking: $e');
-        }
-      }
+      // if (stagiaireId != null && quizzes.isNotEmpty) {
+      //   try {
+      //     final ranking = await _getStagiaireRanking(stagiaireId);
+      //     if (ranking != null && (ranking['totalPoints'] as int? ?? 0) < 10) {
+      //       quizzes.shuffle();
+      //       return quizzes.take(2).toList();
+      //     }
+      //   } catch (e) {
+      //     debugPrint('Error checking ranking: $e');
+      //   }
+      // }
 
       return quizzes;
     } catch (e, stack) {
