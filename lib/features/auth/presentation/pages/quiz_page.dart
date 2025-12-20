@@ -595,12 +595,18 @@ class _QuizPageState extends State<QuizPage> {
     final playedIds = _playedQuizIds;
     
     // For played quizzes: use _allQuizzes to show ALL played quizzes regardless of point filtering
-    final played = _allQuizzes.isNotEmpty 
+    var played = _allQuizzes.isNotEmpty 
         ? _allQuizzes.where((q) => playedIds.contains(q.id.toString())).toList()
         : <quiz_model.Quiz>[];
     
     // For unplayed quizzes: use _baseQuizzes (already filtered by points)
-    final unplayed = _baseQuizzes.where((q) => !playedIds.contains(q.id.toString())).toList();
+    var unplayed = _baseQuizzes.where((q) => !playedIds.contains(q.id.toString())).toList();
+
+    // Appliquer le filtre par formation si sélectionné
+    if (_selectedFormation != null) {
+      played = played.where((q) => q.formation.titre == _selectedFormation).toList();
+      unplayed = unplayed.where((q) => q.formation.titre == _selectedFormation).toList();
+    }
 
     // Trier l'historique par date (plus récent en premier)
     if (_quizHistoryList.isNotEmpty && played.isNotEmpty) {
