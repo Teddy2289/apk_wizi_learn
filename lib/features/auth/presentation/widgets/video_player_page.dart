@@ -37,6 +37,10 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   bool _isLoading = true;
   Set<int> _watchedMediaIds = {};
   late MediaRepository _mediaRepository;
+  
+  // Zoom state
+  final TransformationController _transformationController = TransformationController();
+  double _currentScale = 1.0;
 
   @override
   void initState() {
@@ -50,6 +54,14 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
     _initializeVideoPlayer(currentVideo);
     
+    _transformationController.addListener(() {
+      if (mounted) {
+        setState(() {
+          _currentScale = _transformationController.value.getMaxScaleOnAxis();
+        });
+      }
+    });
+
     Future.microtask(() {
       _loadWatchedMediaIds();
     });
@@ -226,6 +238,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     _videoPlayerController?.removeListener(_videoListener);
     _videoPlayerController?.dispose();
     _chewieController?.dispose();
+    _transformationController.dispose();
     super.dispose();
   }
 
@@ -266,7 +279,53 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                       child: CircularProgressIndicator(),
                     )
                   : _chewieController != null
-                      ? Chewie(controller: _chewieController!)
+                      ? Stack(
+                          children: [
+                            Positioned.fill(
+                              child: InteractiveViewer(
+                                transformationController: _transformationController,
+                                minScale: 1.0,
+                                maxScale: 5.0,
+                                boundaryMargin: const EdgeInsets.all(20),
+                                child: Center(
+                                  child: AspectRatio(
+                                    aspectRatio: 16 / 9,
+                                    child: Chewie(controller: _chewieController!),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (_currentScale > 1.1)
+                              Positioned(
+                                top: 10,
+                                right: 10,
+                                child: Material(
+                                  color: Colors.black54,
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: InkWell(
+                                    onTap: () {
+                                      _transformationController.value = Matrix4.identity();
+                                    },
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: const [
+                                          Icon(Icons.zoom_out_map, color: Colors.white, size: 16),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            'Réinitialiser zoom',
+                                            style: TextStyle(color: Colors.white, fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        )
                       : const Center(
                           child: Text(
                             'Erreur de chargement',

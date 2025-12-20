@@ -866,21 +866,21 @@ class _QuizPageState extends State<QuizPage> {
     double childAspectRatio;
     
     if (screenWidth > 1200) {
-      // Large screens (desktop): 3 columns
+      // Large screens (desktop): 4 columns
+      crossAxisCount = 4;
+      childAspectRatio = 1.3;
+    } else if (screenWidth > 900) {
+      // Large tablets / Small desktops: 3 columns
       crossAxisCount = 3;
-      childAspectRatio = 1.1;
-    } else if (screenWidth > 800) {
-      // Medium tablets: 2 columns
-      crossAxisCount = 2;
-      childAspectRatio = 1.0;
-    } else if (screenWidth > 600) {
-      // Small tablets: 2 columns
-      crossAxisCount = 2;
-      childAspectRatio = 0.95;
-    } else {
-      // Mobile: 1 column for better readability
-      crossAxisCount = 1;
       childAspectRatio = 1.2;
+    } else if (screenWidth > 600) {
+      // Small/Medium tablets: 2 columns
+      crossAxisCount = 2;
+      childAspectRatio = 1.4;
+    } else {
+      // Mobile: 1 column
+      crossAxisCount = 1;
+      childAspectRatio = 2.5;
     }
 
     return Padding(

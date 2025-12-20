@@ -1180,7 +1180,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
   List<quiz_model.Quiz> _getDisplayQuizzes() {
     if (_selectedFormationTitle == null) return [];
     final full =
-        _allQuizzes
+        _quizzes
             .where((q) => q.formation.titre == _selectedFormationTitle)
             .toList();
     // Trier: quiz déjà joués en haut, puis par ordre de progression
@@ -1243,7 +1243,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
   int _effectiveListLength() {
     if (_selectedFormationTitle == null) return 0;
     final full =
-        _allQuizzes
+        _quizzes
             .where((q) => q.formation.titre == _selectedFormationTitle)
             .toList();
     if (_showAllForFormation) return full.length;
