@@ -1198,43 +1198,126 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
   }
 
   void _showFormationPicker() {
-    showModalBottomSheet(
+    showGeneralDialog(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) {
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
         final items = [..._availableFormationTitles];
-        return ListView.separated(
-          shrinkWrap: true,
-          padding: const EdgeInsets.all(8),
-          itemBuilder: (_, i) {
-            final title = items[i];
-            final selected = (_selectedFormationTitle == title);
-            return ListTile(
-              leading: Icon(
-                Icons.school,
-                color: selected ? Theme.of(context).colorScheme.primary : null,
+        final theme = Theme.of(context);
+        
+        return Align(
+          alignment: Alignment.topCenter,
+          child: Container(
+            width: double.infinity,
+            margin: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + kToolbarHeight - 10,
+              left: 12,
+              right: 12,
+            ),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.4,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          Icon(Icons.school, color: theme.colorScheme.primary),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Filtrer par formation',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    Flexible(
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: items.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1, indent: 50),
+                        itemBuilder: (_, i) {
+                          final title = items[i];
+                          final selected = (_selectedFormationTitle == title);
+                          return ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: selected ? theme.colorScheme.primary.withOpacity(0.1) : Colors.transparent,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.school_outlined,
+                                size: 20,
+                                color: selected ? theme.colorScheme.primary : theme.hintColor,
+                              ),
+                            ),
+                            title: Text(
+                              title,
+                              style: TextStyle(
+                                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                                color: selected ? theme.colorScheme.primary : null,
+                              ),
+                            ),
+                            trailing: selected
+                                ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
+                                : null,
+                            onTap: () {
+                              setState(() {
+                                _selectedFormationTitle = title;
+                                _showAllForFormation = false;
+                              });
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              title: Text(title),
-              trailing:
-                  selected
-                      ? Icon(
-                        Icons.check,
-                        color: Theme.of(context).colorScheme.primary,
-                      )
-                      : null,
-              onTap: () {
-                setState(() {
-                  _selectedFormationTitle = title;
-                  _showAllForFormation = false;
-                });
-                Navigator.pop(context);
-              },
-            );
-          },
-          separatorBuilder: (_, __) => const Divider(height: 1),
-          itemCount: items.length,
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, -1),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          )),
+          child: child,
         );
       },
     );
