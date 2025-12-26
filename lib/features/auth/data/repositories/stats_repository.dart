@@ -18,9 +18,11 @@ class StatsRepository {
   }
 
   Future<List<GlobalRanking>> getGlobalRanking({String period = 'all'}) async {
-    final response = await apiClient.get('${AppConstants.globalRanking}?period=$period');
+    final response = await apiClient.get(
+      AppConstants.globalRanking,
+      queryParameters: {'period': period},
+    );
     final data = response.data as List;
-    // debugPrint('Global Ranking Data: $data'); // Debug print
     return data.map((e) => GlobalRanking.fromJson(e)).toList();
   }
 

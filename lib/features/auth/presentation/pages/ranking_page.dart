@@ -428,16 +428,7 @@ class _RankingPageState extends State<RankingPage>
       padding: EdgeInsets.all(isLandscape ? 8 : 16),
       child: Column(
         children: [
-          // // Period filter chips
-          // PeriodFilterChips(
-          //   selectedPeriod: _selectedPeriod,
-          //   onPeriodChanged: (period) {
-          //     setState(() {
-          //       _selectedPeriod = period;
-          //     });
-          //     _loadAllData();
-          //   },
-          // ),
+          // Period filter is now integrated inside GlobalRankingWidget via CompactFiltersWidget
           // const SizedBox(height: 16),
           // Ranking content
           Expanded(
@@ -461,6 +452,13 @@ class _RankingPageState extends State<RankingPage>
                   child: GlobalRankingWidget(
                     key: ValueKey(_selectedPeriod), // reset filtres quand période change
                     rankings: snapshot.data!,
+                    selectedPeriod: _selectedPeriod,
+                    onPeriodChanged: (period) {
+                      setState(() {
+                        _selectedPeriod = period;
+                      });
+                      _loadAllData();
+                    },
                   ),
                 );
               },

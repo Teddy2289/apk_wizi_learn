@@ -18,6 +18,7 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
 
   List<dynamic> _ranking = [];
   bool _loading = true;
+  String _selectedPeriod = 'all';
 
   @override
   void initState() {
@@ -28,7 +29,10 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
   Future<void> _loadRanking() async {
     setState(() => _loading = true);
     try {
-      final response = await _apiClient.get('/formateur/classement/mes-stagiaires');
+      final response = await _apiClient.get(
+        '/formateur/classement/mes-stagiaires',
+        queryParameters: {'period': _selectedPeriod},
+      );
       setState(() {
         _ranking = response.data['ranking'] ?? [];
         _loading = false;
@@ -46,69 +50,105 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
         title: const Text('Classement Stagiaires'),
         backgroundColor: const Color(0xFFF7931E),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadRanking,
-              child: _ranking.isEmpty
-                  ? const Center(child: Text('Aucun classement disponible'))
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16.0),
-                      itemCount: _ranking.length,
-                      itemBuilder: (context, index) {
-                        final stagiaire = _ranking[index];
-                        final rank = stagiaire['rank'];
-                        
-                        return Card(
-                          color: _getRankColor(rank),
-                          margin: const EdgeInsets.only(bottom: 8.0),
-                          child: ListTile(
-                            leading: _buildRankIcon(rank),
-                            title: Text(
-                              '${stagiaire['prenom']} ${stagiaire['nom']}',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(stagiaire['email']),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Chip(
-                                      label: Text('${stagiaire['total_points']} pts'),
-                                      backgroundColor: Colors.blue.shade100,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text('${stagiaire['total_quiz']} quiz'),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            trailing: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: stagiaire['avg_score'] >= 70
-                                    ? Colors.green
-                                    : Colors.grey,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                '${stagiaire['avg_score']}%',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildPeriodChip('all', 'Tout'),
+                _buildPeriodChip('month', 'Mois'),
+                _buildPeriodChip('week', 'Semaine'),
+              ],
             ),
+          ),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+                    onRefresh: _loadRanking,
+                    child: _ranking.isEmpty
+                        ? const Center(child: Text('Aucun classement disponible'))
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                            itemCount: _ranking.length,
+                            itemBuilder: (context, index) {
+                              final stagiaire = _ranking[index];
+                              final rank = stagiaire['rank'];
+                              
+                              return Card(
+                                color: _getRankColor(rank),
+                                margin: const EdgeInsets.only(bottom: 8.0),
+                                child: ListTile(
+                                  leading: _buildRankIcon(rank),
+                                  title: Text(
+                                    '${stagiaire['prenom']} ${stagiaire['nom']}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(stagiaire['email']),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          Chip(
+                                            label: Text('${stagiaire['total_points']} pts'),
+                                            backgroundColor: Colors.blue.shade100,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text('${stagiaire['total_quiz']} quiz'),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  trailing: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: stagiaire['avg_score'] >= 70
+                                          ? Colors.green
+                                          : Colors.grey,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${stagiaire['avg_score']}%',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodChip(String value, String label) {
+    final isSelected = _selectedPeriod == value;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        if (selected) {
+          setState(() => _selectedPeriod = value);
+          _loadRanking();
+        }
+      },
+      selectedColor: const Color(0xFFF7931E).withOpacity(0.2),
+      labelStyle: TextStyle(
+        color: isSelected ? const Color(0xFFF7931E) : Colors.black,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
     );
   }
 

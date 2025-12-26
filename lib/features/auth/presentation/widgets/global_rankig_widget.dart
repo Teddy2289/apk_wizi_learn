@@ -13,8 +13,15 @@ import 'package:wizi_learn/features/auth/presentation/widgets/stagiaire_details_
 
 class GlobalRankingWidget extends StatefulWidget {
   final List<GlobalRanking> rankings;
+  final String selectedPeriod;
+  final Function(String)? onPeriodChanged;
 
-  const GlobalRankingWidget({super.key, required this.rankings});
+  const GlobalRankingWidget({
+    super.key,
+    required this.rankings,
+    this.selectedPeriod = 'all',
+    this.onPeriodChanged,
+  });
 
   @override
   State<GlobalRankingWidget> createState() => _GlobalRankingWidgetState();
@@ -30,7 +37,6 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
   int? _selectedFormateurId;
   
   // Nouveaux états pour filtres compacts
-  String _selectedPeriod = 'all';
   String _searchQuery = '';
   String _sortBy = 'rang';
   bool _sortAscending = true;
@@ -142,10 +148,11 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
   Widget _buildFilters(bool isSmallScreen) {
     return CompactFiltersWidget(
       // Période
-      selectedPeriod: _selectedPeriod,
+      selectedPeriod: widget.selectedPeriod,
       onPeriodChanged: (period) {
-        setState(() => _selectedPeriod = period);
-        // Recharger si nécessaire
+        if (widget.onPeriodChanged != null) {
+          widget.onPeriodChanged!(period);
+        }
       },
       
       // Recherche
