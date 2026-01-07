@@ -177,7 +177,7 @@ class QuizResume extends StatelessWidget {
                     theme,
                     Icons.star,
                     'Score',
-                    '${score} pts',
+                    '$score pts',
                     Colors.indigo,
                   ),
                   const SizedBox(height: 8),

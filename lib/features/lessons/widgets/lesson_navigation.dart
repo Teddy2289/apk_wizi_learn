@@ -9,14 +9,14 @@ class LessonNavigation extends StatelessWidget {
   final String previousLabel;
 
   const LessonNavigation({
-    Key? key,
+    super.key,
     this.onPrevious,
     this.onNext,
     this.hasPrevious = true,
     this.hasNext = true,
     this.nextLabel = 'Leçon suivante',
     this.previousLabel = 'Précédent',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

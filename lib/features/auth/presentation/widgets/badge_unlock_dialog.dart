@@ -114,17 +114,17 @@ class BadgeUnlockDialog extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (badge.description != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      badge.description!,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.orange.shade800,
-                      ),
-                      textAlign: TextAlign.center,
+                  ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    badge.description,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.orange.shade800,
                     ),
-                  ],
+                    textAlign: TextAlign.center,
+                  ),
+                ],
                 ],
               ),
             ),

@@ -6,10 +6,10 @@ class PeriodFilterChips extends StatelessWidget {
   final Function(String) onPeriodChanged;
 
   const PeriodFilterChips({
-    Key? key,
+    super.key,
     required this.selectedPeriod,
     required this.onPeriodChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

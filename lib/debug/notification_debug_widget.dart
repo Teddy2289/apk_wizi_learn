@@ -3,7 +3,7 @@ import 'package:wizi_learn/core/services/notification_manager.dart';
 import 'package:wizi_learn/features/auth/data/models/notification_model.dart';
 
 class NotificationDebugWidget extends StatelessWidget {
-  const NotificationDebugWidget({Key? key}) : super(key: key);
+  const NotificationDebugWidget({super.key});
 
   @override
   Widget build(BuildContext context) {

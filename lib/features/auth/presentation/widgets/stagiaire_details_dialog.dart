@@ -44,7 +44,7 @@ class StagiaireDetailsDialog extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                            '${stagiaireData['firstname']} ${(stagiaireData['name'] as String).isNotEmpty ? (stagiaireData['name'] as String)[0]+'.' : ''}',
+                            '${stagiaireData['firstname']} ${(stagiaireData['name'] as String).isNotEmpty ? '${(stagiaireData['name'] as String)[0]}.' : ''}',
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -201,7 +201,7 @@ class StagiaireDetailsDialog extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            '$prenom ${nom.isNotEmpty ? nom[0]+'.' : ""}',
+            '$prenom ${nom.isNotEmpty ? '${nom[0]}.' : ""}',
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
         ],

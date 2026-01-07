@@ -94,7 +94,7 @@ class _StatsDashboardScreenState extends State<StatsDashboardScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            value: _selectedRange,
+                            initialValue: _selectedRange,
                             decoration: const InputDecoration(
                               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               border: OutlineInputBorder(),
@@ -115,7 +115,7 @@ class _StatsDashboardScreenState extends State<StatsDashboardScreen> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _selectedMetric,
+                      initialValue: _selectedMetric,
                       decoration: const InputDecoration(
                         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         border: OutlineInputBorder(),

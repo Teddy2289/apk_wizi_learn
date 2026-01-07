@@ -4,8 +4,27 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
+import 'package:wizi_learn/features/auth/data/models/formation_with_medias_model.dart';
+import 'package:wizi_learn/features/auth/data/models/media_model.dart';
+import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
+import 'package:wizi_learn/features/auth/data/repositories/media_repository.dart';
+import 'package:wizi_learn/features/auth/data/sources/auth_remote_data_source.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/universal_video_player_page.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+import 'package:wizi_learn/core/utils/normalize_youtube_url.dart';
+import 'package:wizi_learn/core/widgets/custom_scaffold.dart';
+import 'package:wizi_learn/core/router/route_constants.dart';
+import 'package:wizi_learn/core/theme/app_colors.dart';
+import 'package:flutter_html/flutter_html.dart';
 
+class TutorialPage extends StatefulWidget {
+  const TutorialPage({super.key});
+
+  @override
+  State<TutorialPage> createState() => _TutorialPageState();
+}
 
 class _TutorialPageState extends State<TutorialPage> {
   late final MediaRepository _mediaRepository;
@@ -104,8 +123,10 @@ class _TutorialPageState extends State<TutorialPage> {
         if (formations.isEmpty || !mounted) return;
 
         final mediaId = args['media_id'] ?? args['mediaId'];
-        final Media mediaToOpen = _findMediaToOpen(formations, mediaId);
+        final Media? mediaToOpen = _findMediaToOpen(formations, mediaId);
+        if (mediaToOpen == null) return;
         final formation = _findFormationForMedia(formations, mediaToOpen);
+        if (formation == null) return;
 
         Navigator.push(
           context,
@@ -124,30 +145,32 @@ class _TutorialPageState extends State<TutorialPage> {
     }
   }
 
-  Media _findMediaToOpen(
+  Media? _findMediaToOpen(
     List<FormationWithMedias> formations,
     dynamic mediaId,
   ) {
     final allMedias = formations.expand((f) => f.medias).toList();
-    if (allMedias.isEmpty) throw Exception('Aucun média trouvé');
+    if (allMedias.isEmpty) return null;
 
     if (mediaId != null) {
       return allMedias.firstWhere(
         (m) => m.id.toString() == mediaId.toString(),
-        orElse: () => allMedias.first,
       );
     }
     return allMedias.first;
   }
 
-  FormationWithMedias _findFormationForMedia(
+  FormationWithMedias? _findFormationForMedia(
     List<FormationWithMedias> formations,
     Media media,
   ) {
-    return formations.firstWhere(
-      (f) => f.medias.any((m) => m.id == media.id),
-      orElse: () => formations.first,
-    );
+    try {
+ return formations.firstWhere(
+ (f) => f.medias.any((m) => m.id == media.id),
+ );
+    } catch (e) {
+ return null;
+    }
   }
 
   Media _createMediaCopyWithNormalizedUrl(Media media) {
@@ -186,6 +209,20 @@ class _TutorialPageState extends State<TutorialPage> {
     return title
         .replaceAll(RegExp(r'microsoft', caseSensitive: false), '')
         .trim();
+  }
+
+  String? _convertUrlToId(String url) {
+    try {
+      final uri = Uri.parse(url);
+      if (uri.host.contains('youtube.com')) {
+        return uri.queryParameters['v'];
+      } else if (uri.host.contains('youtu.be')) {
+        return uri.pathSegments.first;
+      }
+    } catch (e) {
+      return null;
+    }
+    return null;
   }
 
   String _getRandomThumbnailUrl(String youtubeUrl) {

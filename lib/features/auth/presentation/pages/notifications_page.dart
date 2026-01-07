@@ -1,9 +1,5 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/notification_model.dart';
-import 'package:wizi_learn/features/auth/data/repositories/notification_repository.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:provider/provider.dart';
 import '../providers/notification_provider.dart';

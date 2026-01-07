@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget>? actions;

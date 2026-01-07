@@ -38,41 +38,6 @@ class Question {
   });
 
   factory Question.fromJson(Map<String, dynamic> json) {
-    final answers = (json['answers'] ?? json['reponses']) as List<dynamic>?;
-
-    dynamic correctAnswers;
-    if (json['correctAnswers'] != null || json['correct_answers'] != null) {
-      final rawCorrectAnswers = json['correctAnswers'] ?? json['correct_answers'];
-
-      if (rawCorrectAnswers is Map) {
-        correctAnswers = Map<String, String>.from(rawCorrectAnswers);
-      } else if (rawCorrectAnswers is List) {
-        // Cas des paires left/right
-        correctAnswers = rawCorrectAnswers.fold<Map<String, dynamic>>({}, (map, item) {
-          if (item is Map && item['left'] != null && item['right'] != null) {
-            map[item['left'].toString()] = item['right'].toString();
-          }
-          return map;
-        });
-      } else if (rawCorrectAnswers is String) {
-        correctAnswers = [rawCorrectAnswers];
-      }
-    }
-
-    // Conversion des réponses sélectionnées
-    dynamic selectedAnswers;
-    if (json['selectedAnswers'] != null || json['selected_answers'] != null) {
-      final rawSelectedAnswers = json['selectedAnswers'] ?? json['selected_answers'];
-
-      if (rawSelectedAnswers is Map) {
-        selectedAnswers = Map<String, String>.from(rawSelectedAnswers);
-      } else if (rawSelectedAnswers is List) {
-        selectedAnswers = rawSelectedAnswers;
-      } else if (rawSelectedAnswers is String) {
-        selectedAnswers = [rawSelectedAnswers];
-      }
-    }
-
     return Question(
       id: json['id'].toString(),
       text: json['text'],

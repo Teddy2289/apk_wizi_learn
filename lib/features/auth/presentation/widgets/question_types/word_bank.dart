@@ -72,13 +72,12 @@ class _WordBankState extends State<WordBankQuestion> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // CORRECTION: Afficher la question réelle
-            if (widget.question.text != null &&
-                widget.question.text!.isNotEmpty)
+            if (widget.question.text.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.question.text!,
+                    widget.question.text,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: Theme.of(context).colorScheme.onSurface,

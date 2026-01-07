@@ -184,7 +184,7 @@ class _MatchingQuestionState extends State<MatchingQuestion> {
                       Expanded(
                         flex: 3,
                         child: DropdownButtonFormField<String>(
-                          value: selectedValue,
+                          initialValue: selectedValue,
                           items: [
                             DropdownMenuItem(
                               value: "_empty",

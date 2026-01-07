@@ -1126,7 +1126,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                                     ],
                                   ),
                                 );
-                              }).toList(),
+                              }),
                             ],
                           ],
                         ),

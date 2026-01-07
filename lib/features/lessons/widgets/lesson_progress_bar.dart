@@ -6,11 +6,11 @@ class LessonProgressBar extends StatelessWidget {
   final double percentage;
 
   const LessonProgressBar({
-    Key? key,
+    super.key,
     required this.current,
     required this.total,
     required this.percentage,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

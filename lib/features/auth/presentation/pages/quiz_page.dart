@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:math';
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -311,7 +309,7 @@ class _QuizPageState extends State<QuizPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Switch(
                     value: false,
-                    activeColor: Colors.white,
+                    activeThumbColor: Colors.white,
                     activeTrackColor: Colors.black,
                     inactiveThumbColor: Colors.black,
                     inactiveTrackColor: Colors.white,
@@ -419,7 +417,7 @@ class _QuizPageState extends State<QuizPage> {
           _quizHistoryList = history;
         });
       }
-    } catch (e, stack) {
+    } catch (e) {
       // debugPrint('❌ Erreur historique: $e');
       // debugPrint('Stack: $stack');
 
@@ -455,7 +453,7 @@ class _QuizPageState extends State<QuizPage> {
           _futureQuizzes = Future.value(filteredQuizzes);
         });
       }
-    } catch (e, stack) {
+    } catch (e) {
       // debugPrint('❌ Erreur chargement quiz: $e');
       // debugPrint('Stack: $stack');
 
@@ -530,7 +528,7 @@ class _QuizPageState extends State<QuizPage> {
       result = [...debutant, ...intermediaire, ...avance];
     }
 
-    debugPrint('🔒 Filtrage quiz: ${quizzes.length} quiz → ${result.length} accessibles (${userPoints} pts)');
+    debugPrint('🔒 Filtrage quiz: ${quizzes.length} quiz → ${result.length} accessibles ($userPoints pts)');
     
     return result;
   }
@@ -1516,7 +1514,7 @@ class _QuizPageState extends State<QuizPage> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: _selectedLevel,
+                        initialValue: _selectedLevel,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(
@@ -1554,7 +1552,7 @@ class _QuizPageState extends State<QuizPage> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: _selectedFormation,
+                        initialValue: _selectedFormation,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(

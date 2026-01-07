@@ -152,7 +152,7 @@ class _ContactFAQPageState extends State<ContactFaqPage> {
 
   Widget _buildProblemTypeDropdown() {
     return DropdownButtonFormField<String>(
-      value: _selectedProblemType,
+      initialValue: _selectedProblemType,
       decoration: const InputDecoration(
         labelText: 'Type de problème',
         border: OutlineInputBorder(),

@@ -61,17 +61,6 @@ class ContactRepository {
   // SUPPRIMER cette méthode car elle n'est plus nécessaire
   // Contact _parseContactWithUser(Map<String, dynamic> data, String type) { ... }
 
-  Future<List<MultipartFile>> _prepareAttachments(
-    List<PlatformFile> files,
-  ) async {
-    return files.map((platformFile) {
-      return MultipartFile.fromBytes(
-        platformFile.bytes!,
-        filename: platformFile.name,
-      );
-    }).toList();
-  }
-
   Future<void> sendContactForm({
     required String email,
     required String subject,

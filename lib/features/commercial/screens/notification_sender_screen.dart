@@ -111,7 +111,7 @@ class _NotificationSenderScreenState extends State<NotificationSenderScreen> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _selectedSegment,
+                      initialValue: _selectedSegment,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),

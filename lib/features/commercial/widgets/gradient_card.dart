@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/commercial_colors.dart';
 
 class GradientCard extends StatelessWidget {
   final Widget child;

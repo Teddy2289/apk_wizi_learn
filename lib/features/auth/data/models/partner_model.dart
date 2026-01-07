@@ -76,7 +76,7 @@ class Partner extends Equatable {
             ? rawContacts
                 .whereType<Map<String, dynamic>>()
                 .map<PartnerContact>(
-                  (e) => PartnerContact.fromJson(e as Map<String, dynamic>),
+                  (e) => PartnerContact.fromJson(e),
                 )
                 .toList()
             : <PartnerContact>[];

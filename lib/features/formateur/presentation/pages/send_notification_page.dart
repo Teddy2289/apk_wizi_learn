@@ -4,7 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 
 class SendNotificationPage extends StatefulWidget {
-  const SendNotificationPage({Key? key}) : super(key: key);
+  const SendNotificationPage({super.key});
 
   @override
   State<SendNotificationPage> createState() => _SendNotificationPageState();

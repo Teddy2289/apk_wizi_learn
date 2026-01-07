@@ -8,7 +8,7 @@ import 'package:wizi_learn/features/profile/presentation/widgets/profile_edit_fo
 
 /// Exemple d'utilisation du ProfileEditForm dans une page
 class ProfileEditPage extends StatefulWidget {
-  const ProfileEditPage({Key? key}) : super(key: key);
+  const ProfileEditPage({super.key});
 
   @override
   State<ProfileEditPage> createState() => _ProfileEditPageState();

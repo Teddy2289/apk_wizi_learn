@@ -127,8 +127,7 @@ class Formation {
       nombreParticipants:
           json['nombre_participants'] is int
               ? json['nombre_participants']
-              : (int.tryParse(json['nombre_participants']?.toString() ?? '') ??
-                  null),
+              : (int.tryParse(json['nombre_participants']?.toString() ?? '')),
       category: FormationCategory.fromJson(rawCategory),
       stagiaires:
           rawStagiaires

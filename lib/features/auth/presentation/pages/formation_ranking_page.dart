@@ -12,8 +12,8 @@ class FormationRankingPage extends StatefulWidget {
   const FormationRankingPage({
     required this.formationId,
     required this.formationTitle,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<FormationRankingPage> createState() => _FormationRankingPageState();

@@ -12,9 +12,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
-import 'package:wizi_learn/core/constants/route_constants.dart';
-import 'package:wizi_learn/features/auth/presentation/widgets/period_filter_chips.dart';
-import 'package:wizi_learn/features/auth/presentation/widgets/profile_stats.dart';
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});

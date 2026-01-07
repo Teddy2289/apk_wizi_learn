@@ -444,7 +444,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
       result = [...debutant, ...intermediaire, ...avance];
     }
 
-    debugPrint('🔒 Filtrage quiz adventure: ${quizzes.length} quiz → ${result.length} accessibles (${userPoints} pts)');
+    debugPrint('🔒 Filtrage quiz adventure: ${quizzes.length} quiz → ${result.length} accessibles ($userPoints pts)');
     
     return result;
   }
@@ -570,7 +570,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Switch(
                     value: true,
-                    activeColor: Colors.white,
+                    activeThumbColor: Colors.white,
                     activeTrackColor: Colors.black,
                     inactiveThumbColor: Colors.black,
                     inactiveTrackColor: Colors.white,
@@ -1600,7 +1600,6 @@ class _AnimatedQuizStep extends StatefulWidget {
     required this.label,
     required this.isCompleted,
     required this.isUnlocked,
-    super.key,
   });
 
   @override

@@ -90,8 +90,7 @@ class FormationRepository {
                 cursusPdf: catalogue['cursus_pdf'],
                 cursusPdfUrl:
                     catalogue['cursusPdfUrl'] ??
-                    catalogue['cursus_pdf'] ??
-                    null,
+                    catalogue['cursus_pdf'],
                 tarif:
                     double.tryParse(catalogue['tarif']?.toString() ?? '0') ?? 0,
                 certification: catalogue['certification'],

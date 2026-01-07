@@ -22,7 +22,7 @@ class CompactFiltersWidget extends StatefulWidget {
   final bool hasActiveFilters;
 
   const CompactFiltersWidget({
-    Key? key,
+    super.key,
     required this.selectedPeriod,
     required this.onPeriodChanged,
     required this.searchQuery,
@@ -40,7 +40,7 @@ class CompactFiltersWidget extends StatefulWidget {
     required this.onSortOrderToggle,
     required this.onResetFilters,
     required this.hasActiveFilters,
-  }) : super(key: key);
+  });
 
   @override
   State<CompactFiltersWidget> createState() => _CompactFiltersWidgetState();

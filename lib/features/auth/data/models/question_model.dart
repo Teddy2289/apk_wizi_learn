@@ -211,13 +211,10 @@ class Question {
     for (final left in leftItems) {
       final right = rightItems.firstWhere(
         (r) => r.bankGroup == left.bankGroup,
-        orElse:
-            () =>
-                null
-                    as Answer, // This line will still cause a warning, so let's fix it properly below
+        orElse: () => null as Answer,
       );
       pairs[left.text] = right.text;
-    }
+        }
     return pairs;
   }
 

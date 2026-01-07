@@ -30,7 +30,7 @@ class QuizNavigationControls extends StatelessWidget {
         final iconSize = isCompact ? 18.0 : 22.0;
         final borderRadius = isCompact ? 10.0 : 12.0;
 
-        return Container(
+        return SizedBox(
           height: buttonHeight,
           child: Row(
             children: [

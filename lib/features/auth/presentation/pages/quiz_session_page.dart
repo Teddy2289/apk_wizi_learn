@@ -3,7 +3,6 @@ import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 import 'package:wizi_learn/features/auth/data/models/quiz_model.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_navigation_controls.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_progress_bar.dart';
-import 'package:wizi_learn/features/auth/presentation/components/quiz_timer_display.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/quiz_session/quiz_session_manager.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/question_type_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';

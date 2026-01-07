@@ -274,8 +274,8 @@ class CustomDrawer extends StatelessWidget {
                       // Déterminer si l'utilisateur a accès commercial
                       final hasCommercialAccess = state is Authenticated &&
                           ['commercial', 'formateur', 'admin'].contains(
-                            state.user.stagiaire?.role?.toLowerCase() ??
-                                state.user.role?.toLowerCase(),
+                            state.user.stagiaire?.role.toLowerCase() ??
+                                state.user.role.toLowerCase(),
                           );
 
                       return _buildMenuSection(

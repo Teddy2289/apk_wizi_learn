@@ -34,7 +34,7 @@ class Contact extends Equatable {
       telephone: json['telephone'] ?? '',
       email: json['email'] ?? '',
       formations: json['formations'],
-      image: json['image'] ?? json['avatar'] ?? null,
+      image: json['image'] ?? json['avatar'],
       civilite: json['civilite'],
       role: json['role'],
     );

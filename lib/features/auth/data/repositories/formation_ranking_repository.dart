@@ -9,7 +9,7 @@ class FormationRankingRepository {
   /// Obtenir le classement complet d'une formation
   Future<FormationRanking> getFormationRanking(int formationId) async {
     try {
-      final response = await apiClient.dio.get('/formations/$formationId/classement');
+      final response = await apiClient.get('/formations/$formationId/classement');
       return FormationRanking.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
       throw Exception('Erreur lors de la récupération du classement: $e');
@@ -19,7 +19,7 @@ class FormationRankingRepository {
   /// Obtenir le rang de l'utilisateur connecté dans une formation
   Future<UserFormationRanking> getMyRanking(int formationId) async {
     try {
-      final response = await apiClient.dio.get('/stagiaire/formations/$formationId/classement');
+      final response = await apiClient.get('/stagiaire/formations/$formationId/classement');
       return UserFormationRanking.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
       throw Exception('Erreur lors de la récupération de votre classement: $e');

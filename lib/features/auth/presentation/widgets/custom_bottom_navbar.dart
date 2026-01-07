@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:wizi_learn/features/auth/presentation/constants/bar_clipper.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;

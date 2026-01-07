@@ -6,11 +6,11 @@ class ProfileStats extends StatelessWidget {
   final bool loading;
 
   const ProfileStats({
-    Key? key,
+    super.key,
     this.profile,
     this.stats,
     this.loading = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

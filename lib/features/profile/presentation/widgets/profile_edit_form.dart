@@ -8,11 +8,11 @@ class ProfileEditForm extends StatefulWidget {
   final VoidCallback? onCancel;
 
   const ProfileEditForm({
-    Key? key,
+    super.key,
     required this.repository,
     this.onSuccess,
     this.onCancel,
-  }) : super(key: key);
+  });
 
   @override
   State<ProfileEditForm> createState() => _ProfileEditFormState();

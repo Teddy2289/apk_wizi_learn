@@ -20,7 +20,6 @@ import 'package:wizi_learn/features/auth/presentation/pages/dashboard_page.dart'
 import 'package:wizi_learn/features/auth/presentation/components/quiz_question_card.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_score_header.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/quiz_session_page.dart';
-import 'package:wizi_learn/features/auth/presentation/widgets/achievement_badge_widget.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/badge_unlock_dialog.dart';
 
 class QuizSummaryPage extends StatefulWidget {
@@ -257,7 +256,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
                 .where(
                   (quiz) =>
                       quiz.niveau == currentQuiz!.niveau &&
-                      quiz.formation.titre == currentQuiz!.formation.titre,
+                      quiz.formation.titre == currentQuiz.formation.titre,
                 )
                 .toList();
 
@@ -946,7 +945,7 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
                     ),
                     const Spacer(),
                     Text(
-                      '${calculatedCorrectAnswers}/${answeredQuestions.length} correctes',
+                      '$calculatedCorrectAnswers/${answeredQuestions.length} correctes',
                       style: TextStyle(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w600,

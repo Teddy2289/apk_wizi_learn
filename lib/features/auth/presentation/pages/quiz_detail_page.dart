@@ -129,7 +129,7 @@ class QuizDetailPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          if (playedQuestions.length > 0)
+          if (playedQuestions.isNotEmpty)
             Text(
               'Questions jouées (${playedQuestions.length})',
               style: theme.textTheme.titleMedium?.copyWith(
@@ -137,7 +137,7 @@ class QuizDetailPage extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 12),
-          if (playedQuestions.isNotEmpty || playedQuestions.length > 0)
+          if (playedQuestions.isNotEmpty || playedQuestions.isNotEmpty)
             ...playedQuestions.map((q) => _buildQuestionFeedback(q, theme)),
           const SizedBox(height: 24),
           _buildAdviceSection(theme, percent),

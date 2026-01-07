@@ -5,10 +5,10 @@ class LessonTabs extends StatefulWidget {
   final Widget? resourcesContent;
 
   const LessonTabs({
-    Key? key,
+    super.key,
     this.notesContent,
     this.resourcesContent,
-  }) : super(key: key);
+  });
 
   @override
   State<LessonTabs> createState() => _LessonTabsState();

@@ -15,7 +15,7 @@ class LessonInfoCard extends StatelessWidget {
   final bool hasNext;
 
   const LessonInfoCard({
-    Key? key,
+    super.key,
     required this.currentLesson,
     required this.totalLessons,
     required this.progress,
@@ -25,7 +25,7 @@ class LessonInfoCard extends StatelessWidget {
     this.onNext,
     this.hasPrevious = true,
     this.hasNext = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -94,11 +94,13 @@ class _ChallengePageState extends State<ChallengePage>
     return FutureBuilder<List<ChallengeEntry>>(
       future: _leaderboardFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting)
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        }
         final list = snapshot.data ?? [];
-        if (list.isEmpty)
+        if (list.isEmpty) {
           return const Center(child: Text('Aucun participant pour le moment'));
+        }
         // Sort by duration ascending
         final sorted = [...list]
           ..sort((a, b) => a.duration.compareTo(b.duration));
@@ -147,11 +149,13 @@ class _ChallengePageState extends State<ChallengePage>
     return FutureBuilder<List<ChallengeEntry>>(
       future: _leaderboardFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting)
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        }
         final list = snapshot.data ?? [];
-        if (list.isEmpty)
+        if (list.isEmpty) {
           return const Center(child: Text('Aucun participant pour le moment'));
+        }
         // Sort by points descending
         final sorted = [...list]..sort((a, b) => b.points.compareTo(a.points));
         final top3 = sorted.take(3).toList();
@@ -196,7 +200,7 @@ class _ChallengePageState extends State<ChallengePage>
 
   Widget _buildPodium(List<ChallengeEntry> top, {required bool isTime}) {
     // Basic podium visuals: 2-1-3 columns
-    final a = top.length > 0 ? top[0] : null;
+    final a = top.isNotEmpty ? top[0] : null;
     final b = top.length > 1 ? top[1] : null;
     final c = top.length > 2 ? top[2] : null;
     return Container(

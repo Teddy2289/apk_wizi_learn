@@ -38,7 +38,7 @@ class AppUsageService {
       final info = await deviceInfo.androidInfo;
       final manufacturer = info.manufacturer.trim();
       final model = info.model.trim();
-      deviceModel = (manufacturer + ' ' + model).trim();
+      deviceModel = ('$manufacturer $model').trim();
       osVersion = info.version.release;
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
       platform = 'ios';

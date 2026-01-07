@@ -2,6 +2,7 @@
 ///
 /// Ce fichier montre comment intégrer et utiliser le widget QuizResume
 /// dans votre application Flutter
+library;
 
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_resume.dart';

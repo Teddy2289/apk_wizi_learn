@@ -78,17 +78,9 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
       });
 
       final user = await _authRepository.getMe();
-      final connectedUserId = user.id?.toString();
+      final connectedUserId = user.id.toString();
 
-      if (connectedUserId == null) {
-        setState(() {
-          _userError = 'Impossible de récupérer votre identifiant utilisateur';
-          _isLoadingUser = false;
-        });
-        return;
-      }
-
-      final userName = user.name?.toUpperCase() ?? '';
+      final userName = user.name.toUpperCase() ?? '';
       final stagiairePrenom = user.stagiaire?.prenom ?? '';
       final fullName =
           userName.isNotEmpty && stagiairePrenom.isNotEmpty

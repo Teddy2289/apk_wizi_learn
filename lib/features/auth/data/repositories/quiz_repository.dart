@@ -50,7 +50,7 @@ class QuizRepository {
       // }
 
       return quizzes;
-    } catch (e, stack) {
+    } catch (e) {
       // debugPrint('Error in getQuizzesForStagiaire: $e\n$stack');
       return [];
     }
@@ -96,7 +96,7 @@ class QuizRepository {
       final randomQuestions = allQuestions.take(5).toList();
 
       return randomQuestions;
-    } catch (e, stack) {
+    } catch (e) {
       // debugPrint('Error loading questions: $e\n$stack');
       return [];
     }
@@ -130,7 +130,7 @@ class QuizRepository {
       }
 
       return response.data;
-    } catch (e, stack) {
+    } catch (e) {
       // debugPrint('Error submitting quiz results: $e\n$stack');
       throw Exception('Échec de la soumission: ${e.toString()}');
     }

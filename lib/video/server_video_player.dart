@@ -3,7 +3,7 @@ import 'package:video_player/video_player.dart';
 
 class ServerVideoPlayer extends StatefulWidget {
   final String url;
-  const ServerVideoPlayer({Key? key, required this.url}) : super(key: key);
+  const ServerVideoPlayer({super.key, required this.url});
 
   @override
   State<ServerVideoPlayer> createState() => _ServerVideoPlayerState();
@@ -29,8 +29,9 @@ class _ServerVideoPlayerState extends State<ServerVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_controller.value.isInitialized)
+    if (!_controller.value.isInitialized) {
       return const Center(child: CircularProgressIndicator());
+    }
     return AspectRatio(
       aspectRatio: _controller.value.aspectRatio,
       child: Stack(
