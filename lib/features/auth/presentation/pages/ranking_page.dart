@@ -218,6 +218,29 @@ class _RankingPageState extends State<RankingPage>
     );
   }
 
+  Future<void> _shareRanking() async {
+    final rankings = await _rankingFuture;
+    final stats = await _statsFuture;
+    if (rankings != null && stats != null) {
+      final myRanking = rankings.firstWhere(
+        (r) =>
+            r.stagiaire.id == stats.levelProgress.debutant.completed.toString(),
+        orElse: () => rankings.first,
+      );
+      final rang = myRanking.rang;
+      final points = myRanking.totalPoints;
+
+      String medal = "";
+      if (rang == 1) medal = " 🥇";
+      else if (rang == 2) medal = " 🥈";
+      else if (rang == 3) medal = " 🥉";
+
+      final msg =
+          "Je suis classé $rang${rang == 1 ? 'er' : 'e'}$medal avec $points points sur Wizi Learn ! 🏆\nRejoins-moi pour progresser !";
+      await Share.share(msg);
+    }
+  }
+
   AppBar _buildPortraitAppBar() {
     return AppBar(
       title: Text(
@@ -250,23 +273,7 @@ class _RankingPageState extends State<RankingPage>
           key: _keyShare,
           icon: const Icon(Icons.share),
           tooltip: 'Partager mon classement',
-          onPressed: () async {
-            final rankings = await _rankingFuture;
-            final stats = await _statsFuture;
-            if (rankings != null && stats != null) {
-              final myRanking = rankings.firstWhere(
-                    (r) =>
-                r.stagiaire.id ==
-                    stats.levelProgress.debutant.completed.toString(),
-                orElse: () => rankings.first,
-              );
-              final rang = myRanking.rang;
-              final points = myRanking.totalPoints;
-              final msg =
-                  "Je suis classé $rang${rang == 1 ? 'er' : 'e'} avec $points points sur Wizi Learn ! 🏆\nRejoins-moi pour progresser !";
-              await Share.share(msg);
-            }
-          },
+          onPressed: _shareRanking,
         ),
         IconButton(
           icon: const Icon(Icons.help_outline),
@@ -350,23 +357,7 @@ class _RankingPageState extends State<RankingPage>
                 key: _keyShare,
                 icon: const Icon(Icons.share, size: 18),
                 tooltip: 'Partager mon classement',
-                onPressed: () async {
-                  final rankings = await _rankingFuture;
-                  final stats = await _statsFuture;
-                  if (rankings != null && stats != null) {
-                    final myRanking = rankings.firstWhere(
-                          (r) =>
-                      r.stagiaire.id ==
-                          stats.levelProgress.debutant.completed.toString(),
-                      orElse: () => rankings.first,
-                    );
-                    final rang = myRanking.rang;
-                    final points = myRanking.totalPoints;
-                    final msg =
-                        "Je suis classé $rang${rang == 1 ? 'er' : 'e'} avec $points points sur Wizi Learn ! 🏆\nRejoins-moi pour progresser !";
-                    await Share.share(msg);
-                  }
-                },
+                onPressed: _shareRanking,
               ),
               IconButton(
                 icon: const Icon(Icons.help_outline, size: 18),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 import 'package:wizi_learn/features/auth/data/models/quiz_model.dart';
 import 'package:wizi_learn/features/auth/presentation/components/quiz_navigation_controls.dart';
@@ -334,6 +335,41 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                       ],
                     ),
                   ),
+
+                  // Bouton Partager
+                  ValueListenableBuilder<int>(
+                    valueListenable: _sessionManager.currentQuestionIndex,
+                    builder: (_, index, __) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.share_rounded,
+                            size: isLandscape ? 16 : 18,
+                            color: colorScheme.primary,
+                          ),
+                          onPressed: () {
+                            final question = widget.questions[index];
+                            final shareText = '''
+🧠 Quiz: ${widget.quiz.titre}
+
+❓ Question ${index + 1}/${widget.questions.length}:
+${question.text}
+
+Téléchargez Wizi Learn pour tester vos connaissances !
+''';
+                            Share.share(shareText);
+                          },
+                          tooltip: 'Partager',
+                          padding: EdgeInsets.all(isLandscape ? 8 : 12),
+                        ),
+                      );
+                    },
+                  ),
+                  SizedBox(width: isLandscape ? 8 : 12),
 
                   // Badge de progression compact
                   ValueListenableBuilder<int>(

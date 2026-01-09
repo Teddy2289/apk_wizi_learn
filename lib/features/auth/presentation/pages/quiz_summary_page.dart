@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:confetti/confetti.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:wizi_learn/features/auth/data/models/achievement_model.dart';
@@ -119,6 +123,46 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
         debugPrint('Challenge reporting failed (non-blocking): $e');
       }
     })();
+  }
+
+
+
+  Future<void> _shareResult() async {
+    try {
+      final calculatedScore =
+          widget.questions.where((q) => q.isCorrect == true).length * 2;
+      final calculatedCorrectAnswers =
+          widget.questions.where((q) => q.isCorrect == true).length;
+      final total = widget.questions.length;
+
+      final shareText = '''
+🏆 J'ai obtenu $calculatedScore points !
+
+Quiz: ${widget.quizResult?['quizTitle'] ?? 'Quiz'}
+✅ $calculatedCorrectAnswers/$total bonnes réponses
+
+Téléchargez Wizi Learn pour vous tester !
+''';
+
+      // Load image from assets
+      final byteData = await rootBundle.load('assets/images/share.png');
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/share.png');
+      await file.writeAsBytes(byteData.buffer.asUint8List());
+
+      // Share image and text
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: shareText,
+        subject: 'Mon résultat sur Wizi Learn',
+      );
+    } catch (e) {
+      debugPrint('Erreur lors du partage: $e');
+      // Fallback to text only
+       final calculatedScore =
+          widget.questions.where((q) => q.isCorrect == true).length * 2;
+       Share.share('🏆 J\'ai obtenu $calculatedScore points sur Wizi Learn !');
+    }
   }
 
   // [Les autres méthodes _filterQuizzesByPoints, _loadNextQuiz, _preloadNextQuizQuestions, etc. restent identiques]
@@ -845,6 +889,11 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
               ),
             ),
           IconButton(
+            icon: Icon(Icons.share_rounded, color: theme.colorScheme.primary),
+            tooltip: 'Partager',
+            onPressed: _shareResult,
+          ),
+          IconButton(
             icon: Icon(Icons.home, color: theme.colorScheme.primary),
             tooltip: 'Retour à l\'accueil',
             onPressed:
@@ -858,6 +907,30 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
             children: [
               // Section décompte améliorée
               _buildCountdownInfo(),
+
+              // Bouton Partager (Visible et amélioré)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: SizedBox(
+                   width: double.infinity,
+                   child: ElevatedButton.icon(
+                    onPressed: _shareResult,
+                    icon: const Icon(Icons.share, color: Colors.white),
+                    label: const Text(
+                      'PARTAGER MON RÉSULTAT', 
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 3,
+                    ),
+                  ),
+                ),
+              ),
 
               // En-tête des scores
               QuizScoreHeader(

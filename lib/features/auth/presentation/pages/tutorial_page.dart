@@ -12,6 +12,7 @@ import 'package:wizi_learn/features/auth/data/sources/auth_remote_data_source.da
 import 'package:wizi_learn/features/auth/presentation/widgets/universal_video_player_page.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:wizi_learn/core/utils/normalize_youtube_url.dart';
 import 'package:wizi_learn/core/widgets/custom_scaffold.dart';
@@ -1290,21 +1291,35 @@ class _TutorialPageState extends State<TutorialPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? colorScheme.primary.withOpacity(0.1)
-                            : Colors.black.withOpacity(0.05),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.chevron_right,
-                        color: isSelected
-                            ? colorScheme.primary
-                            : colorScheme.onSurface.withOpacity(0.6),
-                        size: isSmallScreen ? 20 : 24,
-                      ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? colorScheme.primary.withOpacity(0.1)
+                                : Colors.black.withOpacity(0.05),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.chevron_right,
+                            color: isSelected
+                                ? colorScheme.primary
+                                : colorScheme.onSurface.withOpacity(0.6),
+                            size: isSmallScreen ? 20 : 24,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => _downloadMedia(media),
+                          icon: Icon(
+                            Icons.download_rounded,
+                            size: isSmallScreen ? 20 : 24,
+                            color: colorScheme.primary,
+                          ),
+                          tooltip: 'Télécharger',
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -1494,6 +1509,22 @@ class _TutorialPageState extends State<TutorialPage> {
           ),
       ],
     );
+  }
+
+  Future<void> _downloadMedia(Media media) async {
+    final url = media.url;
+    if (url.isEmpty) return;
+
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impossible d\'ouvrir le lien')),
+        );
+      }
+    }
   }
 
   Future<void> _onMediaItemTap(

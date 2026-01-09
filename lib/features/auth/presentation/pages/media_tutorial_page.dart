@@ -14,6 +14,7 @@ import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.da
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MediaTutorialPage extends StatefulWidget {
   const MediaTutorialPage({super.key});
@@ -247,6 +248,22 @@ class _MediaTutorialPageState extends State<MediaTutorialPage> {
       }
     } catch (e) {
       debugPrint('Erreur marquage média comme vu: $e');
+    }
+  }
+
+  Future<void> _downloadMedia(Media media) async {
+    final url = media.url;
+    if (url.isEmpty) return;
+
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impossible d\'ouvrir le lien')),
+        );
+      }
     }
   }
 
@@ -856,6 +873,16 @@ class _MediaTutorialPageState extends State<MediaTutorialPage> {
                               ),
                             ),
                           ],
+                          const Spacer(),
+                          IconButton(
+                            icon: Icon(
+                              Icons.download_rounded,
+                              size: 20,
+                              color: theme.colorScheme.primary,
+                            ),
+                            onPressed: () => _downloadMedia(media),
+                            tooltip: 'Télécharger',
+                          ),
                         ],
                       ),
                     ],
@@ -902,146 +929,162 @@ class _MediaTutorialPageState extends State<MediaTutorialPage> {
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => VideoPlayerPage(
-                  video: media,
-                  videosInSameCategory: allMedias,
-                ),
-              ),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(14.0),
-            child: Row(
-              children: [
-                Stack(
+      child: Stack(
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => VideoPlayerPage(
+                      video: media,
+                      videosInSameCategory: allMedias,
+                    ),
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(14.0),
+                child: Row(
                   children: [
-                    Container(
-                      width: 90,
-                      height: 90,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: isWatched
-                              ? [Colors.grey[300]!, Colors.grey[200]!]
-                              : [
-                                  colorScheme.primary.withOpacity(0.2),
-                                  colorScheme.primary.withOpacity(0.1),
-                                ],
+                    Stack(
+                      children: [
+                        Container(
+                          width: 90,
+                          height: 90,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: isWatched
+                                  ? [Colors.grey[300]!, Colors.grey[200]!]
+                                  : [
+                                      colorScheme.primary.withOpacity(0.2),
+                                      colorScheme.primary.withOpacity(0.1),
+                                    ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.play_circle_fill,
+                            size: 44,
+                            color: isWatched ? colorScheme.primary : Colors.grey[400],
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
+                        if (isWatched)
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.check,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _filterTitle(media.titre),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              height: 1.3,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              _buildCategoryBadge(media.categorie, isSmall: true),
+                              if (media.duree != null) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.access_time,
+                                        size: 12,
+                                        color: Colors.grey[700],
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${media.duree} min',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey[700],
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ],
-                      ),
-                      child: Icon(
-                        Icons.play_circle_fill,
-                        size: 44,
-                        color: isWatched ? colorScheme.primary : Colors.grey[400],
                       ),
                     ),
-                    if (isWatched)
-                      Positioned(
-                        top: 4,
-                        right: 4,
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Color(0xFF10B981), Color(0xFF059669)],
-                            ),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.check,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                        ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.05),
+                        shape: BoxShape.circle,
                       ),
+                      child: Icon(
+                        Icons.chevron_right,
+                        color: colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _filterTitle(media.titre),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          height: 1.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          _buildCategoryBadge(media.categorie, isSmall: true),
-                          if (media.duree != null) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.05),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.access_time,
-                                    size: 12,
-                                    color: Colors.grey[700],
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${media.duree} min',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey[700],
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.05),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.chevron_right,
-                    color: colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+          Positioned(
+            right: 8,
+            bottom: 8,
+            child: IconButton(
+              onPressed: () => _downloadMedia(media),
+              icon: Icon(
+                Icons.download_rounded,
+                color: colorScheme.primary,
+              ),
+              tooltip: 'Télécharger',
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1081,6 +1124,15 @@ class _MediaTutorialPageState extends State<MediaTutorialPage> {
             icon: const Icon(Icons.play_arrow),
             label: const Text('Lire la vidéo'),
             style: ElevatedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 50),
+            ),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => _downloadMedia(media),
+            icon: const Icon(Icons.download_rounded),
+            label: const Text('Télécharger'),
+            style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
             ),
           ),
