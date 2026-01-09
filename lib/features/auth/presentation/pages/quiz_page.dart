@@ -315,7 +315,10 @@ class _QuizPageState extends State<QuizPage> {
                     inactiveTrackColor: Colors.white,
                     onChanged: (v) async {
                       if (!v) return;
+                      // Save preference before navigating
+                      await _saveQuizViewPreference(true); // Adventure mode
                       // Navigate directly to quiz adventure page (not through dashboard)
+                      if (!mounted) return; 
                       await Navigator.pushReplacementNamed(
                         context,
                         RouteConstants.quizAdventure,
@@ -895,12 +898,18 @@ class _QuizPageState extends State<QuizPage> {
             children: [
               // Header
               InkWell(
+                key: ValueKey('played_quiz_header_${quiz.id}'),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(16),
                 ),
-                onTap:
-                    () =>
-                        setState(() => _expandedQuizzes[quiz.id] = !isExpanded),
+                onTap: () {
+                  debugPrint('🔍 Played quiz tapped: ${quiz.id}, current state: $isExpanded');
+                  setState(() {
+                    final newState = !isExpanded;
+                    _expandedQuizzes[quiz.id] = newState;
+                    debugPrint('✅ New state: $newState');
+                  });
+                },
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
@@ -1196,9 +1205,16 @@ class _QuizPageState extends State<QuizPage> {
         children: [
           // Header
           InkWell(
+            key: ValueKey('quiz_header_${quiz.id}'),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            onTap:
-                () => setState(() => _expandedQuizzes[quiz.id] = !isExpanded),
+            onTap: () {
+              debugPrint('🔍 Quiz tapped: ${quiz.id}, current state: $isExpanded');
+              setState(() {
+                final newState = !isExpanded;
+                _expandedQuizzes[quiz.id] = newState;
+                debugPrint('✅ New state: $newState');
+              });
+            },
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(

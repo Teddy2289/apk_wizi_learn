@@ -743,7 +743,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                           backgroundImage:
                               ranking.stagiaire.image.isNotEmpty
                                   ? NetworkImage(
-                                    '${AppConstants.baseUrlImg}/${ranking.stagiaire.image}',
+                                    AppConstants.getUserImageUrl(ranking.stagiaire.image),
                                   )
                                   : null,
                           backgroundColor: Colors.white,
@@ -1013,7 +1013,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                         backgroundImage:
                             ranking.stagiaire.image.isNotEmpty
                                 ? NetworkImage(
-                                  '${AppConstants.baseUrlImg}/${ranking.stagiaire.image}',
+                                  AppConstants.getUserImageUrl(ranking.stagiaire.image),
                                 )
                                 : null,
                         backgroundColor: Colors.white,

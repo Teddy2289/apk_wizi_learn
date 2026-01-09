@@ -1,9 +1,9 @@
 class AppConstants {
   static const String appName = "Wizi Learn";
-  static const String baseUrl = "https://api.wizi-learn.com/api";
-  static const String baseUrlImg = "https://api.wizi-learn.com";
-  // static const String baseUrl = "http://51.75.251.135/api";
-  // static const String baseUrlImg = "http://51.75.251.135/";
+  // static const String baseUrl = "https://api.wizi-learn.com/api";
+  // static const String baseUrlImg = "https://api.wizi-learn.com";
+  static const String baseUrl = "http://127.0.0.1:8000/api";
+  static const String baseUrlImg = "http://127.0.0.1:8000";
   static const String loginEndpoint = "/login";
   static const String logoutEndpoint = "/logout";
   static const String userEndpoint = "/user";
@@ -34,30 +34,33 @@ class AppConstants {
       '$baseUrl/medias/formations/$formationId/tutoriels';
   static const Duration splashDuration = Duration(seconds: 2);
 
-  static String getUserImageUrl(String path) {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      // URL absolue déjà complète: ajouter un cache-busting
-      return path.contains('?') ? '$path&$timestamp' : '$path?$timestamp';
-    }
-    String cleanPath = path.startsWith('/') ? path.substring(1) : path;
-    String cleanBase =
-        baseUrlImg.endsWith('/')
-            ? baseUrlImg.substring(0, baseUrlImg.length - 1)
-            : baseUrlImg;
-    return '$cleanBase/$cleanPath?$timestamp';
+  static String _cleanPath(String path) {
+    return path.startsWith('/') ? path.substring(1) : path;
   }
 
-  static const String quizProgress = '/quiz/stats/progress';
-  // Challenge mode endpoints (admin-configured)
-  static const String challengeConfig = '/challenge/config';
-  static const String challengeLeaderboard = '/challenge/leaderboard';
-  static const String challengeEntries = '/challenge/entries';
+  static String _getCleanBase() {
+    return baseUrlImg.endsWith('/')
+        ? baseUrlImg.substring(0, baseUrlImg.length - 1)
+        : baseUrlImg;
+  }
+
+  /// Get safe media URL without double slashes
+  static String getMediaUrl(String path) {
+    if (path.isEmpty) return "";
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    
+    return '${_getCleanBase()}/${_cleanPath(path)}';
+  }
+
+  static String getUserImageUrl(String path) {
+    if (path.isEmpty) return "";
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final mediaUrl = getMediaUrl(path);
+    return mediaUrl.contains('?') ? '$mediaUrl&$timestamp' : '$mediaUrl?$timestamp';
+  }
 
   static String getAudioStreamUrl(String relativePath) {
-    relativePath =
-        relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
-    return '$baseUrlImg/media/stream/$relativePath';
+    return '${_getCleanBase()}/media/stream/${_cleanPath(relativePath)}';
   }
 
   static String markMediaAsWatched(int mediaId) =>

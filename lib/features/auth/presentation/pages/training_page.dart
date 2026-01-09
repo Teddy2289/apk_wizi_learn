@@ -9,6 +9,7 @@ import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/formation_repository.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/detail_formation_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
+import 'package:share_plus/share_plus.dart';
 
 class TrainingPage extends StatefulWidget {
   const TrainingPage({super.key});
@@ -20,8 +21,6 @@ class TrainingPage extends StatefulWidget {
 enum SortOption {
   nameAsc,
   nameDesc,
-  priceAsc,
-  priceDesc,
   durationAsc,
   durationDesc,
 }
@@ -64,12 +63,6 @@ class _TrainingPageState extends State<TrainingPage> {
       case SortOption.nameDesc:
         formations.sort((a, b) => b.titre.compareTo(a.titre));
         break;
-      case SortOption.priceAsc:
-        formations.sort((a, b) => a.tarif.compareTo(b.tarif));
-        break;
-      case SortOption.priceDesc:
-        formations.sort((a, b) => b.tarif.compareTo(a.tarif));
-        break;
       case SortOption.durationAsc:
         formations.sort((a, b) => a.duree.compareTo(b.duree));
         break;
@@ -110,6 +103,25 @@ class _TrainingPageState extends State<TrainingPage> {
     setState(() {
       _currentPage = 1;
     });
+  }
+
+  /// Partage une formation
+  void _shareFormation(Formation formation) {
+    final cleanDescription = formation.description
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .trim();
+    
+    final text = '''
+📚 Formation: ${formation.titre}
+
+📖 $cleanDescription
+
+⏱️ Durée: ${formation.duree}h
+🎯 Catégorie: ${formation.category.categorie}
+
+👉 Découvrez cette formation sur Wizi Learn!
+''';
+    Share.share(text, subject: formation.titre);
   }
 
   @override
@@ -229,8 +241,6 @@ class _TrainingPageState extends State<TrainingPage> {
                 itemBuilder: (BuildContext context) => [
                   const PopupMenuItem(value: SortOption.nameAsc, child: Text('Nom (A-Z)')),
                   const PopupMenuItem(value: SortOption.nameDesc, child: Text('Nom (Z-A)')),
-                  const PopupMenuItem(value: SortOption.priceAsc, child: Text('Prix (Croissant)')),
-                  const PopupMenuItem(value: SortOption.priceDesc, child: Text('Prix (Décroissant)')),
                   const PopupMenuItem(value: SortOption.durationAsc, child: Text('Durée (Croissante)')),
                   const PopupMenuItem(value: SortOption.durationDesc, child: Text('Durée (Décroissante)')),
                 ],
@@ -521,8 +531,6 @@ class _TrainingPageState extends State<TrainingPage> {
             itemBuilder: (BuildContext context) => [
               const PopupMenuItem(value: SortOption.nameAsc, child: Text('Nom (A-Z)')),
               const PopupMenuItem(value: SortOption.nameDesc, child: Text('Nom (Z-A)')),
-              const PopupMenuItem(value: SortOption.priceAsc, child: Text('Prix (Croissant)')),
-              const PopupMenuItem(value: SortOption.priceDesc, child: Text('Prix (Décroissant)')),
               const PopupMenuItem(value: SortOption.durationAsc, child: Text('Durée (Croissante)')),
               const PopupMenuItem(value: SortOption.durationDesc, child: Text('Durée (Décroissante)')),
             ],
@@ -631,7 +639,7 @@ class _TrainingPageState extends State<TrainingPage> {
                 child: ClipOval(
                   child: formation.imageUrl != null
                       ? CachedNetworkImage(
-                    imageUrl: '${AppConstants.baseUrlImg}/${formation.imageUrl}',
+                    imageUrl: AppConstants.getMediaUrl(formation.imageUrl),
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Center(
                       child: Icon(
@@ -712,24 +720,6 @@ class _TrainingPageState extends State<TrainingPage> {
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.orange.shade500, Colors.orange.shade700],
-                      ),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      '${formatPrice(formation.tarif.toInt())} €',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
                     ),
                   ),
                 ],
@@ -1069,12 +1059,8 @@ class _TrainingPageState extends State<TrainingPage> {
                     child: Text('Nom (Z-A)'),
                   ),
                   const PopupMenuItem(
-                    value: SortOption.priceAsc,
-                    child: Text('Prix (Croissant)'),
-                  ),
-                  const PopupMenuItem(
-                    value: SortOption.priceDesc,
-                    child: Text('Prix (Décroissant)'),
+                    value: SortOption.nameDesc,
+                    child: Text('Nom (Z-A)'),
                   ),
                   const PopupMenuItem(
                     value: SortOption.durationAsc,
@@ -1313,7 +1299,7 @@ class _TrainingPageState extends State<TrainingPage> {
                 formation.imageUrl != null
                     ? CachedNetworkImage(
                       imageUrl:
-                          '${AppConstants.baseUrlImg}/${formation.imageUrl}',
+                          AppConstants.getMediaUrl(formation.imageUrl),
                       fit: BoxFit.cover,
                       placeholder:
                           (context, url) => Center(
@@ -1405,31 +1391,13 @@ class _TrainingPageState extends State<TrainingPage> {
                     ),
                   ),
                   const Spacer(),
-                  // Prix
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isLandscape ? 10 : 12,
-                      vertical: isLandscape ? 4 : 6,
+                  IconButton(
+                    icon: Icon(
+                      Icons.share_outlined,
+                      size: isLandscape ? 18 : 20,
+                      color: categoryColor,
                     ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.orange.shade500,
-                          Colors.orange.shade700,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${formatPrice(formation.tarif.toInt())} €',
-                      style: TextStyle(
-                        fontSize: isLandscape ? 14 : 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                    onPressed: () => _shareFormation(formation),
                   ),
                 ],
               ),
@@ -1472,7 +1440,7 @@ class _TrainingPageState extends State<TrainingPage> {
                     formation.imageUrl != null
                         ? CachedNetworkImage(
                           imageUrl:
-                              '${AppConstants.baseUrlImg}/${formation.imageUrl}',
+                              AppConstants.getMediaUrl(formation.imageUrl),
                           fit: BoxFit.cover,
                           placeholder:
                               (context, url) => Center(
@@ -1571,25 +1539,13 @@ class _TrainingPageState extends State<TrainingPage> {
               ),
             ),
             const Spacer(),
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: isLandscape ? 8 : 10,
-                vertical: isLandscape ? 4 : 5,
+            IconButton(
+              icon: Icon(
+                Icons.share_outlined,
+                size: isLandscape ? 16 : 18,
+                color: categoryColor,
               ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.orange.shade500, Colors.orange.shade700],
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '${formatPrice(formation.tarif.toInt())} €',
-                style: TextStyle(
-                  fontSize: isLandscape ? 12 : 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
+              onPressed: () => _shareFormation(formation),
             ),
           ],
         ),
@@ -1619,10 +1575,4 @@ class _TrainingPageState extends State<TrainingPage> {
   }
 }
 
-String formatPrice(num price) {
-  final formatter = NumberFormat("#,##0.##", "fr_FR");
-  String formatted = formatter.format(price);
-  formatted = formatted.replaceAll(RegExp(r'[\u202F\u00A0]'), ' ');
-  formatted = formatted.replaceAll(' ', ' ');
-  return formatted;
-}
+

@@ -76,11 +76,21 @@ dependencies:
   package_info_plus: ^9.0.0
   fl_chart: ^1.1.1
 
+  # Offline Access & Storage
+  connectivity_plus: ^6.1.2 # Network status detection
+  path_provider: ^2.1.5 # File system paths
+  drift: ^2.14.0 # SQLite database
+  sqlite3_flutter_libs: ^0.5.0 # SQLite native libs
+  hive: ^2.2.3 # Fast key-value cache
+  hive_flutter: ^1.1.0 # Hive Flutter integration
+  permission_handler: ^11.3.1 # Storage permissions
+  flutter_downloader: ^1.11.8 # Background downloads
+
   collection: any
   bloc: any
   provider: any
   youtube_explode_dart: any
-  path_provider: ^2.1.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

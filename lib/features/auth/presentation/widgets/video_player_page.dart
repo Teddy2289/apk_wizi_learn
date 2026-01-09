@@ -98,26 +98,20 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
       // Get video URL - use baseUrlImg for media files, not baseUrl (which includes /api)
       const baseUrl = AppConstants.baseUrlImg;
       
-      // Use videoUrl from backend if available, otherwise construct it
+      // Use getMediaUrl for safe concatenation
       String videoUrl;
       if (media.videoUrl != null && media.videoUrl!.isNotEmpty) {
         // Backend provides video_url like "/api/media/stream/uploads/medias/1764409630.mp4"
-        videoUrl = media.videoUrl!.startsWith('http')
-            ? media.videoUrl!
-            : '$baseUrl/${media.videoUrl!.startsWith('/') ? media.videoUrl!.substring(1) : media.videoUrl!}';
+        videoUrl = AppConstants.getMediaUrl(media.videoUrl!);
       } else {
         // Fallback: construct URL manually
-        // media.url might be "uploads/medias/1764409630.mp4" or full path
         if (media.url.startsWith('http')) {
           videoUrl = media.url;
         } else if (media.url.startsWith('/api/')) {
-          // Already has /api prefix - remove leading slash to avoid double slash
-          videoUrl = '$baseUrl${media.url}';
+          videoUrl = AppConstants.getMediaUrl(media.url);
         } else {
-          // Need to add /api/media/stream/ prefix
-          // Ensure proper slash handling
-          final cleanPath = media.url.startsWith('/') ? media.url.substring(1) : media.url;
-          videoUrl = '$baseUrl/api/media/stream/$cleanPath';
+          // Need to add /api/media/stream/ prefix if it's just a file path
+          videoUrl = AppConstants.getAudioStreamUrl(media.url);
         }
       }
 

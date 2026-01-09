@@ -286,7 +286,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                         tag: 'formation-${formation.id}',
                         child: CachedNetworkImage(
                           imageUrl:
-                              '${AppConstants.baseUrlImg}/${formation.imageUrl}',
+                              AppConstants.getMediaUrl(formation.imageUrl),
                           fit: BoxFit.fitHeight,
                           placeholder:
                               (context, url) => Container(
@@ -357,24 +357,8 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                 ),
                               ),
                               // Prix
-                              // Container(
-                              //   padding: const EdgeInsets.symmetric(
-                              //     horizontal: 16,
-                              //     vertical: 8,
-                              //   ),
-                              //   decoration: BoxDecoration(
-                              //     color: categoryColor,
-                              //     borderRadius: BorderRadius.circular(20),
-                              //   ),
-                              //   // child: Text(
-                              //   //   (' A partir de ${formation.duree} heures'),
-                              //   //   style: const TextStyle(
-                              //   //     fontSize: 18,
-                              //   //     fontWeight: FontWeight.bold,
-                              //   //     color: Colors.white,
-                              //   //   ),
-                              //   // ),
-                              // ),
+                              // Removed as per user request
+
                             ],
                           ),
 
@@ -668,7 +652,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                       ),
                                       onPressed: () async {
                                         final pdfUrl =
-                                            '${AppConstants.baseUrlImg}/${formation.cursusPdf}';
+                                            AppConstants.getMediaUrl(formation.cursusPdf);
                                         print(
                                           '🟡 DEBUG: Tentative d\'ouverture du PDF: $pdfUrl',
                                         );
@@ -898,7 +882,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
       ),
       child: InkWell(
         onTap: () async {
-          final pdfUrl = '${AppConstants.baseUrlImg}/${formation.cursusPdf}';
+          final pdfUrl = AppConstants.getMediaUrl(formation.cursusPdf);
           print('🟡 DEBUG: Tentative d\'ouverture du PDF: $pdfUrl');
           if (await canLaunchUrl(Uri.parse(pdfUrl))) {
             await launchUrl(Uri.parse(pdfUrl));

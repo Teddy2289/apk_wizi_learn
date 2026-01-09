@@ -576,7 +576,10 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                     inactiveTrackColor: Colors.white,
                     onChanged: (v) async {
                       if (v) return;
+                      // Save preference before navigating
+                      await _saveQuizViewPreference(false); // List mode
                       // Navigate directly to quiz list page (not through dashboard)
+                      if (!mounted) return;
                       await Navigator.pushReplacementNamed(
                         context,
                         RouteConstants.quiz,

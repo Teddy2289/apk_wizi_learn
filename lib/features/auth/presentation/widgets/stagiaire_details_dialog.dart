@@ -29,7 +29,7 @@ class StagiaireDetailsDialog extends StatelessWidget {
                   CircleAvatar(
                     radius: 40,
                     backgroundImage: stagiaireData['avatar'] != null && stagiaireData['avatar'].toString().isNotEmpty
-                        ? NetworkImage('${AppConstants.baseUrlImg}/${stagiaireData['avatar']}')
+                        ? NetworkImage(AppConstants.getUserImageUrl(stagiaireData['avatar']))
                         : null,
                     child: stagiaireData['avatar'] == null
                         ? Text(
@@ -196,7 +196,7 @@ class StagiaireDetailsDialog extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 16,
-            backgroundImage: image != null && image.isNotEmpty ? NetworkImage('${AppConstants.baseUrlImg}/$image') : null,
+            backgroundImage: image != null && image.isNotEmpty ? NetworkImage(AppConstants.getMediaUrl(image)) : null,
             child: image == null || image.isEmpty ? Text(prenom[0]) : null,
           ),
           const SizedBox(width: 8),

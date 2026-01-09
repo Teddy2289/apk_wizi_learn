@@ -282,7 +282,7 @@ class _FormationCardState extends State<_FormationCard> {
                                 widget.formation.imageUrl != null
                                     ? CachedNetworkImage(
                                       imageUrl:
-                                          '${AppConstants.baseUrlImg}/${widget.formation.imageUrl}',
+                                          AppConstants.getMediaUrl(widget.formation.imageUrl),
                                       fit: BoxFit.cover,
                                       placeholder:
                                           (context, url) => Center(
@@ -608,7 +608,7 @@ class _FormationCardState extends State<_FormationCard> {
   }
 
   Future<void> _openPdf(BuildContext context) async {
-    final pdfUrl = '${AppConstants.baseUrlImg}/${widget.formation.cursusPdf}';
+    final pdfUrl = AppConstants.getMediaUrl(widget.formation.cursusPdf);
     try {
       if (await canLaunch(pdfUrl)) {
         await launch(pdfUrl);
@@ -622,12 +622,7 @@ class _FormationCardState extends State<_FormationCard> {
     }
   }
 
-  String formatPrice(num price) {
-    final formatter = NumberFormat("#,##0.##", "fr_FR");
-    String formatted = formatter.format(price);
-    formatted = formatted.replaceAll(RegExp(r'[\u202F\u00A0]'), ' ');
-    return "$formatted €";
-  }
+
 
   Color _getCategoryColor(String category) {
     switch (category) {
