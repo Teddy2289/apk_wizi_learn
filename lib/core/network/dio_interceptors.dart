@@ -10,8 +10,10 @@ class AuthInterceptor extends Interceptor {
   Future<void> onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
     final token = await storage.read(key: 'auth_token');
+    print('AuthInterceptor: read token => $token');
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
+      print('AuthInterceptor: set Authorization header');
     }
     return super.onRequest(options, handler);
   }
