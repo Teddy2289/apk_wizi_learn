@@ -38,7 +38,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
         _loading = false;
       });
     } catch (e) {
-      print('Erreur chargement données: $e');
+      debugPrint('Erreur chargement données: $e');
       setState(() => _loading = false);
     }
   }

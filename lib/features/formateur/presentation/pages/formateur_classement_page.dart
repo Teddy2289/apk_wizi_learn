@@ -38,7 +38,7 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
         _loading = false;
       });
     } catch (e) {
-      print('Erreur chargement classement: $e');
+      debugPrint('Erreur chargement classement: $e');
       setState(() => _loading = false);
     }
   }
