@@ -374,14 +374,6 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                   spacing: 12,
                                   runSpacing: 12,
                                   children: [
-                                    if (formation.lieu != null &&
-                                        formation.lieu!.isNotEmpty)
-                                      _buildInfoTile(
-                                        icon: Icons.location_on_outlined,
-                                        label: 'Lieu',
-                                        value: formation.lieu!,
-                                        color: categoryColor,
-                                      ),
                                     if (formation.niveau != null &&
                                         formation.niveau!.isNotEmpty)
                                       _buildInfoTile(
