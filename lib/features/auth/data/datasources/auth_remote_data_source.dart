@@ -39,7 +39,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         data: {'email': email, 'password': password},
       );
 
-      if (response.statusCode != 200) {
+      if (response.statusCode == null || response.statusCode! < 200 || response.statusCode! >= 300) {
         throw ApiException(
           message: 'Échec de la connexion',
           statusCode: response.statusCode,
@@ -48,8 +48,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       final responseData = response.data as Map<String, dynamic>;
 
-      // Validation du token
-      final token = responseData['token'] as String?;
+      // Validation du token (supporte plusieurs clés possibles)
+      final token = (responseData['token'] ?? responseData['access_token'] ?? (responseData['data'] is Map ? responseData['data']['token'] : null)) as String?;
       if (token == null || token.isEmpty) {
         throw ApiException(message: 'Token non reçu ou invalide');
       }

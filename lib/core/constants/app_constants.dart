@@ -2,8 +2,8 @@ class AppConstants {
   static const String appName = "Wizi Learn";
   // static const String baseUrl = "https://api.wizi-learn.com/api";
   // static const String baseUrlImg = "https://api.wizi-learn.com";
-  static const String baseUrl = "http://127.0.0.1:8000/api";
-  static const String baseUrlImg = "http://127.0.0.1:8000";
+  static const String baseUrl = "http://127.0.0.1:3000/api";
+  static const String baseUrlImg = "http://127.0.0.1:3000";
   static const String loginEndpoint = "/login";
   static const String logoutEndpoint = "/logout";
   static const String userEndpoint = "/user";
@@ -44,22 +44,30 @@ class AppConstants {
         : baseUrlImg;
   }
 
-  /// Get safe media URL without double slashes
-  static String getMediaUrl(String path) {
-    if (path.isEmpty) return "";
+  static String getMediaUrl(String? path) {
+    if (path == null || path.isEmpty) return "";
     if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    
+
     return '${_getCleanBase()}/${_cleanPath(path)}';
   }
 
-  static String getUserImageUrl(String path) {
-    if (path.isEmpty) return "";
+  static String getUserImageUrl(String? path) {
+    if (path == null || path.isEmpty) return "";
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final mediaUrl = getMediaUrl(path);
-    return mediaUrl.contains('?') ? '$mediaUrl&$timestamp' : '$mediaUrl?$timestamp';
+    return mediaUrl.contains('?')
+        ? '$mediaUrl&$timestamp'
+        : '$mediaUrl?$timestamp';
   }
 
-  static String getAudioStreamUrl(String relativePath) {
+  static const String quizProgress = '/quiz/stats/progress';
+  // Challenge mode endpoints (admin-configured)
+  static const String challengeConfig = '/challenge/config';
+  static const String challengeLeaderboard = '/challenge/leaderboard';
+  static const String challengeEntries = '/challenge/entries';
+
+  static String getAudioStreamUrl(String? relativePath) {
+    if (relativePath == null || relativePath.isEmpty) return "";
     return '${_getCleanBase()}/media/stream/${_cleanPath(relativePath)}';
   }
 
