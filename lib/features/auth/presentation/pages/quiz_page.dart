@@ -375,7 +375,11 @@ class _QuizPageState extends State<QuizPage> {
 
       // FORCER l'application des filtres après tous les chargements
       if (mounted) {
-        _applyFilters();
+        if (_selectedFormation == null) {
+          _selectFormationFromLastPlayedIfAny();
+        } else {
+          _applyFilters();
+        }
       }
     } catch (e) {
       debugPrint('Erreur chargement initial: $e');
@@ -593,8 +597,6 @@ class _QuizPageState extends State<QuizPage> {
       }
       _showAllPlayed = false;
     });
-    // Maintenant que tout est chargé, on peut sélectionner la formation
-    _selectFormationFromLastPlayedIfAny();
   }
 
   Future<double> _calculatePlayedQuizzesPosition() async {
@@ -1821,6 +1823,7 @@ class _QuizPageState extends State<QuizPage> {
   /// Sélectionne automatiquement la formation du dernier quiz joué si elle existe
   void _selectFormationFromLastPlayedIfAny() {
     try {
+      if (_selectedFormation != null) return;
       DateTime parseDate(String s) =>
           DateTime.tryParse(s) ?? DateTime.fromMillisecondsSinceEpoch(0);
 
