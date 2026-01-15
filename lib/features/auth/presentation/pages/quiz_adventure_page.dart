@@ -54,8 +54,9 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
   int _loginStreak =
       1; // Valeur simulée pour la démo, à remplacer par la vraie valeur API si dispo
   final bool _showMissions = false;
-  String? _selectedFormationTitle;
-  List<String> _availableFormationTitles = [];
+  int? _selectedFormationId; // Utiliser l'ID au lieu du titre pour plus de fiabilité
+  List<int> _availableFormationIds = []; // Stocker les IDs des formations
+  Map<int, String> _formationIdToTitle = {}; // Map pour afficher les titres
   bool _showAllForFormation = false;
   final ScrollController _scrollController = ScrollController();
   bool _showBackToTopButton = false;
@@ -143,18 +144,23 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
         _playedQuizIds = history.map((h) => h.quiz.id.toString()).toList();
         _quizHistory = history;
         _isLoading = false;
-        // Build available formation titles for filter
-        _availableFormationTitles =
-            _allQuizzes
-                .map((q) => q.formation.titre)
-                .where((t) => t.isNotEmpty)
-                .toSet()
-                .toList()
-              ..sort();
+        // Build available formation IDs and title mapping for filter
+        final formationIds = <int>{};
+        final formationIdToTitleMap = <int, String>{};
+        for (final quiz in _allQuizzes) {
+          final formationId = quiz.formation.id;
+          final title = quiz.formation.titre;
+          if (formationId > 0 && title.isNotEmpty) {
+            formationIds.add(formationId);
+            formationIdToTitleMap[formationId] = title;
+          }
+        }
+        _availableFormationIds = formationIds.toList()..sort();
+        _formationIdToTitle = formationIdToTitleMap;
       });
       // Sélection formation par dernier quiz joué si possible
-      if (_selectedFormationTitle == null &&
-          _availableFormationTitles.isNotEmpty) {
+      if (_selectedFormationId == null &&
+          _availableFormationIds.isNotEmpty) {
         DateTime parseDate(String s) =>
             DateTime.tryParse(s) ?? DateTime.fromMillisecondsSinceEpoch(0);
         final sorted = List<stats_model.QuizHistory>.from(history)..sort(
@@ -163,18 +169,18 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
         );
         if (sorted.isNotEmpty) {
           final last = sorted.first;
-          final lastTitle = last.quiz.formation.titre;
-          if (lastTitle.isNotEmpty &&
-              _availableFormationTitles.contains(lastTitle)) {
+          final lastFormationId = last.quiz.formation.id;
+          if (lastFormationId > 0 &&
+              _availableFormationIds.contains(lastFormationId)) {
             setState(() {
-              _selectedFormationTitle = lastTitle;
+              _selectedFormationId = lastFormationId;
               _showAllForFormation = true;
             });
           }
         }
-        // Fallback initial si rien déterminé par l’historique
-        if (_selectedFormationTitle == null) {
-          _selectedFormationTitle = _availableFormationTitles.first;
+        // Fallback initial si rien déterminé par l'historique
+        if (_selectedFormationId == null) {
+          _selectedFormationId = _availableFormationIds.first;
           _showAllForFormation = true;
         }
       }
@@ -612,7 +618,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                     child: LevelUnlockIndicator(userPoints: _userPoints),
                   ),
                   // Formation picker button
-                  if (_availableFormationTitles.isNotEmpty)
+                  if (_availableFormationIds.isNotEmpty)
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -644,9 +650,9 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      _selectedFormationTitle == null
+                                      _selectedFormationId == null
                                           ? 'Choisir une formation'
-                                          : _selectedFormationTitle!,
+                                          : (_formationIdToTitle[_selectedFormationId] ?? 'Formation inconnue'),
                                       style: TextStyle(
                                         color: theme.colorScheme.onSurface
                                             .withOpacity(0.8),
@@ -667,7 +673,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                   // Voir plus when many quizzes
                   SliverToBoxAdapter(
                     child:
-                        (_selectedFormationTitle != null &&
+                        (_selectedFormationId != null &&
                                 !_showAllForFormation &&
                                 _getDisplayQuizzes().length > 10)
                             ? Padding(
@@ -1186,10 +1192,10 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
   }
 
   List<quiz_model.Quiz> _getDisplayQuizzes() {
-    if (_selectedFormationTitle == null) return [];
+    if (_selectedFormationId == null) return [];
     final full =
         _quizzes
-            .where((q) => q.formation.titre == _selectedFormationTitle)
+            .where((q) => q.formation.id == _selectedFormationId)
             .toList();
     // Trier: quiz déjà joués en haut, puis par ordre de progression
     full.sort((a, b) {
@@ -1213,7 +1219,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
       barrierColor: Colors.black54,
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) {
-        final items = [..._availableFormationTitles];
+        final formationIds = [..._availableFormationIds];
         final theme = Theme.of(context);
         
         return Align(
@@ -1270,11 +1276,12 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                       child: ListView.separated(
                         shrinkWrap: true,
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: items.length,
+                        itemCount: formationIds.length,
                         separatorBuilder: (_, __) => const Divider(height: 1, indent: 50),
                         itemBuilder: (_, i) {
-                          final title = items[i];
-                          final selected = (_selectedFormationTitle == title);
+                          final formationId = formationIds[i];
+                          final title = _formationIdToTitle[formationId] ?? 'Formation inconnue';
+                          final selected = (_selectedFormationId == formationId);
                           return ListTile(
                             leading: Container(
                               padding: const EdgeInsets.all(8),
@@ -1300,7 +1307,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                 : null,
                             onTap: () {
                               setState(() {
-                                _selectedFormationTitle = title;
+                                _selectedFormationId = formationId;
                                 _showAllForFormation = false;
                               });
                               Navigator.pop(context);
@@ -1332,10 +1339,10 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
   }
 
   int _effectiveListLength() {
-    if (_selectedFormationTitle == null) return 0;
+    if (_selectedFormationId == null) return 0;
     final full =
         _quizzes
-            .where((q) => q.formation.titre == _selectedFormationTitle)
+            .where((q) => q.formation.id == _selectedFormationId)
             .toList();
     if (_showAllForFormation) return full.length;
     return full.length > 10 ? 10 : full.length;

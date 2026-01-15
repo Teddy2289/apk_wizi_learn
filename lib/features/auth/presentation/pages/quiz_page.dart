@@ -66,9 +66,10 @@ class _QuizPageState extends State<QuizPage> {
 
   // Filtres
   String? _selectedLevel;
-  String? _selectedFormation;
+  int? _selectedFormationId; // Utiliser l'ID au lieu du titre pour plus de fiabilité
   List<String> _availableLevels = [];
-  List<String> _availableFormations = [];
+  List<int> _availableFormationIds = []; // Stocker les IDs des formations
+  Map<int, String> _formationIdToTitle = {}; // Map pour afficher les titres
   // Au début de la classe
   Timer? _refreshTimer;
 
@@ -377,7 +378,7 @@ class _QuizPageState extends State<QuizPage> {
 
       // FORCER l'application des filtres après tous les chargements
       if (mounted) {
-        if (_selectedFormation == null) {
+        if (_selectedFormationId == null) {
           _selectFormationFromLastPlayedIfAny();
         } else {
           _applyFilters();
@@ -477,21 +478,27 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   Future<void> _extractAvailableFilters(List<quiz_model.Quiz> quizzes) async {
-    final formations = <String>{};
+    final formationIds = <int>{};
+    final formationIdToTitleMap = <int, String>{};
     final levels = <String>{};
     
     for (final quiz in quizzes) {
       if (quiz.niveau.isNotEmpty) levels.add(quiz.niveau);
+      final formationId = quiz.formation.id;
       final title = quiz.formation.titre;
-      if (title.isNotEmpty) formations.add(title);
+      if (formationId > 0 && title.isNotEmpty) {
+        formationIds.add(formationId);
+        formationIdToTitleMap[formationId] = title;
+      }
     }
 
-    final formationsList = formations.toList()..sort();
+    final formationIdsList = formationIds.toList()..sort();
     final levelsList = levels.toList()..sort();
 
     if (mounted) {
       setState(() {
-        _availableFormations = formationsList;
+        _availableFormationIds = formationIdsList;
+        _formationIdToTitle = formationIdToTitleMap;
         _availableLevels = levelsList;
       });
     }
@@ -565,10 +572,10 @@ class _QuizPageState extends State<QuizPage> {
     // For unplayed quizzes: use _baseQuizzes (already filtered by points)
     var unplayed = _baseQuizzes.where((q) => !playedIds.contains(q.id.toString())).toList();
 
-    // Appliquer le filtre par formation si sélectionné
-    if (_selectedFormation != null) {
-      played = played.where((q) => q.formation.titre == _selectedFormation).toList();
-      unplayed = unplayed.where((q) => q.formation.titre == _selectedFormation).toList();
+    // Appliquer le filtre par formation si sélectionné (utiliser l'ID pour plus de fiabilité)
+    if (_selectedFormationId != null) {
+      played = played.where((q) => q.formation.id == _selectedFormationId).toList();
+      unplayed = unplayed.where((q) => q.formation.id == _selectedFormationId).toList();
     }
 
     // Trier l'historique par date (plus récent en premier)
@@ -647,7 +654,7 @@ class _QuizPageState extends State<QuizPage> {
         //   ],
         // ),
         const SizedBox(height: 10),
-        if (_availableFormations.isNotEmpty)
+        if (_availableFormationIds.isNotEmpty)
           Row(
             children: [
               Icon(Icons.school, color: theme.colorScheme.primary),
@@ -671,7 +678,9 @@ class _QuizPageState extends State<QuizPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        _selectedFormation ?? 'Choisir une formation',
+                        _selectedFormationId != null 
+                            ? (_formationIdToTitle[_selectedFormationId] ?? 'Formation inconnue')
+                            : 'Choisir une formation',
                         style: TextStyle(
                           color: theme.colorScheme.onSurface.withOpacity(0.8),
                         ),
@@ -684,12 +693,12 @@ class _QuizPageState extends State<QuizPage> {
                   ),
                 ),
               ),
-              if (_selectedFormation != null) ...[
+              if (_selectedFormationId != null) ...[
                 const SizedBox(width: 8),
                 IconButton(
                   tooltip: 'Réinitialiser',
                   onPressed: () {
-                    setState(() => _selectedFormation = null);
+                    setState(() => _selectedFormationId = null);
                     _applyFilters();
                     _scrollController.animateTo(
                       0,
@@ -1575,8 +1584,8 @@ class _QuizPageState extends State<QuizPage> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        initialValue: _selectedFormation,
+                      DropdownButtonFormField<int>(
+                        value: _selectedFormationId,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(
@@ -1586,20 +1595,20 @@ class _QuizPageState extends State<QuizPage> {
                         ),
                         hint: const Text('Toutes les formations'),
                         items: [
-                          const DropdownMenuItem<String>(
+                          const DropdownMenuItem<int>(
                             value: null,
                             child: Text('Toutes les formations'),
                           ),
-                          ..._availableFormations.map(
-                            (formation) => DropdownMenuItem<String>(
-                              value: formation,
-                              child: Text(formation),
+                          ..._availableFormationIds.map(
+                            (formationId) => DropdownMenuItem<int>(
+                              value: formationId,
+                              child: Text(_formationIdToTitle[formationId] ?? 'Formation inconnue'),
                             ),
                           ),
                         ],
                         onChanged: (value) {
                           setDialogState(() {
-                            _selectedFormation = value;
+                            _selectedFormationId = value;
                           });
                         },
                       ),
@@ -1610,7 +1619,7 @@ class _QuizPageState extends State<QuizPage> {
                       onPressed: () {
                         setDialogState(() {
                           _selectedLevel = null;
-                          _selectedFormation = null;
+                          _selectedFormationId = null;
                         });
                       },
                       style: TextButton.styleFrom(
@@ -1654,7 +1663,7 @@ class _QuizPageState extends State<QuizPage> {
       barrierColor: Colors.black54,
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) {
-        final items = [..._availableFormations];
+        final formationIds = [..._availableFormationIds];
         final theme = Theme.of(context);
         
         return Align(
@@ -1711,11 +1720,12 @@ class _QuizPageState extends State<QuizPage> {
                       child: ListView.separated(
                         shrinkWrap: true,
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: items.length,
+                        itemCount: formationIds.length,
                         separatorBuilder: (_, __) => const Divider(height: 1, indent: 50),
                         itemBuilder: (_, i) {
-                          final title = items[i];
-                          final selected = (_selectedFormation == title);
+                          final formationId = formationIds[i];
+                          final title = _formationIdToTitle[formationId] ?? 'Formation inconnue';
+                          final selected = (_selectedFormationId == formationId);
                           return ListTile(
                             leading: Container(
                               padding: const EdgeInsets.all(8),
@@ -1741,7 +1751,7 @@ class _QuizPageState extends State<QuizPage> {
                                 : null,
                             onTap: () {
                               setState(() {
-                                _selectedFormation = title;
+                                _selectedFormationId = formationId;
                               });
                               _applyFilters();
                               _scrollController.animateTo(
@@ -1829,7 +1839,7 @@ class _QuizPageState extends State<QuizPage> {
   /// Sélectionne automatiquement la formation du dernier quiz joué si elle existe
   void _selectFormationFromLastPlayedIfAny() {
     try {
-      if (_selectedFormation != null) return;
+      if (_selectedFormationId != null) return;
       DateTime parseDate(String s) =>
           DateTime.tryParse(s) ?? DateTime.fromMillisecondsSinceEpoch(0);
 
@@ -1840,14 +1850,14 @@ class _QuizPageState extends State<QuizPage> {
       );
 
       final last = sorted.first;
-      final lastFormationTitle = last.quiz.formation.titre;
+      final lastFormationId = last.quiz.formation.id;
 
-      if (lastFormationTitle.isNotEmpty &&
-          _availableFormations.contains(lastFormationTitle)) {
+      if (lastFormationId > 0 &&
+          _availableFormationIds.contains(lastFormationId)) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             setState(() {
-              _selectedFormation = lastFormationTitle;
+              _selectedFormationId = lastFormationId;
             });
             _applyFilters();
           }
