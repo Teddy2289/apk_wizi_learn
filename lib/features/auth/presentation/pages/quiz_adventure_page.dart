@@ -23,6 +23,7 @@ import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 import 'package:wizi_learn/features/auth/services/quiz_resume_service.dart';
 import 'package:wizi_learn/features/auth/presentation/components/resume_quiz_dialog.dart';
+import 'package:wizi_learn/features/auth/presentation/components/level_unlock_indicator.dart';
 import 'package:wizi_learn/features/auth/auth_injection_container.dart';
 
 class QuizAdventurePage extends StatefulWidget {
@@ -602,10 +603,14 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
               )
               : _quizzes.isEmpty
               ? Center(child: Text('Aucun quiz disponible'))
-              : CustomScrollView(
+                : CustomScrollView(
                 key: const PageStorageKey('adventure_scroll'),
                 controller: _scrollController,
                 slivers: [
+                  // Level Unlock Indicator
+                  SliverToBoxAdapter(
+                    child: LevelUnlockIndicator(userPoints: _userPoints),
+                  ),
                   // Formation picker button
                   if (_availableFormationTitles.isNotEmpty)
                     SliverToBoxAdapter(

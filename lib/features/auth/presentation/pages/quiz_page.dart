@@ -19,7 +19,9 @@ import 'package:wizi_learn/features/auth/presentation/pages/achievement_page.dar
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 import 'package:wizi_learn/features/auth/services/quiz_resume_service.dart';
 import 'package:wizi_learn/features/auth/presentation/components/resume_quiz_dialog.dart';
+import 'package:wizi_learn/features/auth/presentation/components/level_unlock_indicator.dart';
 import 'package:wizi_learn/features/auth/auth_injection_container.dart';
+
 
 class QuizPage extends StatefulWidget {
   final bool scrollToPlayed;
@@ -617,7 +619,11 @@ class _QuizPageState extends State<QuizPage> {
             color: theme.colorScheme.onSurface.withOpacity(0.6),
           ),
         ),
+        const SizedBox(height: 16),
+        // Level Unlock Indicator
+        LevelUnlockIndicator(userPoints: _userPoints),
         const SizedBox(height: 8),
+
         // Row(
         //   children: [
         //     OutlinedButton.icon(
