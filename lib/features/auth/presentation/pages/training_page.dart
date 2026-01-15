@@ -105,22 +105,46 @@ class _TrainingPageState extends State<TrainingPage> {
     });
   }
 
-  /// Partage une formation
+  /// Partage une formation avec détails riches
   void _shareFormation(Formation formation) {
     final cleanDescription = formation.description
         .replaceAll(RegExp(r'<[^>]*>'), '')
         .trim();
-    
-    final text = '''
-📚 Formation: ${formation.titre}
 
-📖 $cleanDescription
+    final truncatedDescription = cleanDescription.length > 200
+        ? '${cleanDescription.substring(0, 200)}...'
+        : cleanDescription;
 
-⏱️ Durée: ${formation.duree}h
-🎯 Catégorie: ${formation.category.categorie}
+    String? cleanObjectives;
+    if (formation.objectifs != null && formation.objectifs!.isNotEmpty) {
+      cleanObjectives = formation.objectifs!
+          .replaceAll(RegExp(r'<[^>]*>'), '')
+          .trim();
+      if (cleanObjectives.length > 150) {
+        cleanObjectives = '${cleanObjectives.substring(0, 150)}...';
+      }
+    }
 
-👉 Découvrez cette formation sur Wizi Learn!
-''';
+    String pdfLink = '';
+    if (formation.cursusPdfUrl != null && formation.cursusPdfUrl!.isNotEmpty) {
+      pdfLink = formation.cursusPdfUrl!;
+    } else if (formation.cursusPdf != null && formation.cursusPdf!.isNotEmpty) {
+      pdfLink = AppConstants.getMediaUrl(formation.cursusPdf!);
+    }
+
+    String text = '🎓 *Formation : ${formation.titre}*\n\n';
+    text += '📝 *Description :*\n$truncatedDescription\n\n';
+
+    if (cleanObjectives != null && cleanObjectives.isNotEmpty) {
+      text += '🎯 *Objectifs :*\n$cleanObjectives\n\n';
+    }
+
+    if (pdfLink.isNotEmpty) {
+      text += '📄 *Programme complet (PDF) :*\n$pdfLink\n\n';
+    }
+
+    text += '🔗 *Lien vers la formation :*\nhttps://wizi-learn.com/catalogue-formation/${formation.id}';
+
     Share.share(text, subject: formation.titre);
   }
 

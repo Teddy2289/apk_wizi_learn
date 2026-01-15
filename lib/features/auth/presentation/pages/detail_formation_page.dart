@@ -9,6 +9,7 @@ import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/formation_repository.dart';
+import 'package:share_plus/share_plus.dart';
 
 class FormationDetailPage extends StatefulWidget {
   final int formationId;
@@ -153,6 +154,49 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     }
   }
 
+  /// Partage une formation avec détails riches
+  void _shareFormation(Formation formation) {
+    final cleanDescription = formation.description
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .trim();
+
+    final truncatedDescription = cleanDescription.length > 200
+        ? '${cleanDescription.substring(0, 200)}...'
+        : cleanDescription;
+
+    String? cleanObjectives;
+    if (formation.objectifs != null && formation.objectifs!.isNotEmpty) {
+      cleanObjectives = formation.objectifs!
+          .replaceAll(RegExp(r'<[^>]*>'), '')
+          .trim();
+      if (cleanObjectives.length > 150) {
+        cleanObjectives = '${cleanObjectives.substring(0, 150)}...';
+      }
+    }
+
+    String pdfLink = '';
+    if (formation.cursusPdfUrl != null && formation.cursusPdfUrl!.isNotEmpty) {
+      pdfLink = formation.cursusPdfUrl!;
+    } else if (formation.cursusPdf != null && formation.cursusPdf!.isNotEmpty) {
+      pdfLink = AppConstants.getMediaUrl(formation.cursusPdf!);
+    }
+
+    String text = '🎓 *Formation : ${formation.titre}*\n\n';
+    text += '📝 *Description :*\n$truncatedDescription\n\n';
+
+    if (cleanObjectives != null && cleanObjectives.isNotEmpty) {
+      text += '🎯 *Objectifs :*\n$cleanObjectives\n\n';
+    }
+
+    if (pdfLink.isNotEmpty) {
+      text += '📄 *Programme complet (PDF) :*\n$pdfLink\n\n';
+    }
+
+    text += '🔗 *Lien vers la formation :*\nhttps://wizi-learn.com/catalogue-formation/${formation.id}';
+
+    Share.share(text, subject: formation.titre);
+  }
+
   void _closeSuccessModal() {
     setState(() {
       _showSuccessModal = false;
@@ -191,6 +235,28 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
           ),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          FutureBuilder<Formation>(
+            future: _futureFormation,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.share, color: Colors.white),
+                  ),
+                  onPressed: () => _shareFormation(snapshot.data!),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Stack(
         children: [
