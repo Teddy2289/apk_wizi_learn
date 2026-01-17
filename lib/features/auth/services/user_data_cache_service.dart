@@ -21,18 +21,18 @@ class UserDataCacheService {
   UserDataCacheService(this._cacheService);
 
   /// Cache le profil utilisateur
-  Future<void> cacheUserProfile(User user) async {
+  Future<void> cacheUserProfile(UserModel user) async {
     await _cacheService.put(_userProfileKey, user.toJson());
   }
 
   /// Récupère le profil utilisateur du cache
-  User? getCachedUserProfile() {
+  UserModel? getCachedUserProfile() {
     if (!_cacheService.isCacheValid(_userProfileKey, _profileCacheDuration)) {
       return null;
     }
     
     final json = _cacheService.get<Map<String, dynamic>>(_userProfileKey);
-    return json != null ? User.fromJson(json) : null;
+    return json != null ? UserModel.fromJson(json) : null;
   }
 
   /// Cache les statistiques utilisateur

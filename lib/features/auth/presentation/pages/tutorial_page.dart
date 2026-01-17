@@ -4,20 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
-import 'package:wizi_learn/features/auth/data/models/formation_with_medias_model.dart';
+import 'package:wizi_learn/features/auth/data/models/formation_with_medias.dart';
 import 'package:wizi_learn/features/auth/data/models/media_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/media_repository.dart';
-import 'package:wizi_learn/features/auth/data/sources/auth_remote_data_source.dart';
+import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:wizi_learn/features/auth/domain/user_entity.dart';
+import 'package:wizi_learn/features/auth/domain/stagiaire_entity.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/universal_video_player_page.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:wizi_learn/core/utils/normalize_youtube_url.dart';
-import 'package:wizi_learn/core/widgets/custom_scaffold.dart';
-import 'package:wizi_learn/core/router/route_constants.dart';
-import 'package:wizi_learn/core/theme/app_colors.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
+import 'package:wizi_learn/core/constants/route_constants.dart';
+import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
 import 'package:flutter_html/flutter_html.dart';
 
 class TutorialPage extends StatefulWidget {
