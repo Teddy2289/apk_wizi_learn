@@ -1134,8 +1134,6 @@ class _QuizPageState extends State<QuizPage> {
             quizTitle: quiz.titre,
             questionCount: questions.length,
             currentIndex: sessionData['currentIndex'] ?? 0,
-            onResume: () => Navigator.pop(context, true),
-            onDismiss: () => Navigator.pop(context, false),
           ),
         );
 

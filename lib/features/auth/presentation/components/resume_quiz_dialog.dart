@@ -4,16 +4,12 @@ class ResumeQuizDialog extends StatelessWidget {
   final String quizTitle;
   final int questionCount;
   final int currentIndex;
-  final VoidCallback onResume;
-  final VoidCallback onDismiss;
 
   const ResumeQuizDialog({
     super.key,
     required this.quizTitle,
     required this.questionCount,
     required this.currentIndex,
-    required this.onResume,
-    required this.onDismiss,
   });
 
   @override
@@ -76,17 +72,22 @@ class ResumeQuizDialog extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Annuler'),
+                ),
+                const SizedBox(width: 4),
                 TextButton.icon(
-                  onPressed: onDismiss,
-                  icon: const Icon(Icons.close, size: 18),
-                  label: const Text('Ignorer'),
+                  onPressed: () => Navigator.pop(context, false),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Recommencer'),
                   style: TextButton.styleFrom(
                     foregroundColor: theme.colorScheme.error,
                   ),
                 ),
                 const SizedBox(width: 8),
                 FilledButton.icon(
-                  onPressed: onResume,
+                  onPressed: () => Navigator.pop(context, true),
                   icon: const Icon(Icons.play_arrow, size: 18),
                   label: const Text('Reprendre'),
                 ),
