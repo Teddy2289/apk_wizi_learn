@@ -6,6 +6,7 @@ val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -38,10 +39,16 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("my-release-key.jks")
-            storePassword = "123456"
-            keyAlias = "wizi"
-            keyPassword = "123456"
+            // Tentative de lecture depuis key.properties, sinon fallback sur Cle-Wizi-learn.jks dans le root
+            val keystorePath = keystoreProperties.getProperty("storeFile") ?: "../../Cle-Wizi-learn.jks"
+            val keystorePassword = keystoreProperties.getProperty("storePassword") ?: "123456"
+            val alias = keystoreProperties.getProperty("keyAlias") ?: "key0"
+            val aliasPassword = keystoreProperties.getProperty("keyPassword") ?: "123456"
+
+            storeFile = file(keystorePath)
+            storePassword = keystorePassword
+            keyAlias = alias
+            keyPassword = aliasPassword
         }
     }
     buildTypes {

@@ -20,29 +20,51 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   late int _currentIndex;
   bool _initialized = false;
-      if (args is int) {
-        targetIndex = args;
-      } else if (args is Map<String, dynamic>) {
-        targetIndex = args['selectedTabIndex'] ?? _currentIndex;
-      }
-      
-      if (targetIndex == 2) {
-        // Redirection vers la page Quiz indépendante
-        _currentIndex = 0; // Default to Home underneath
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          Navigator.pushNamed(context, RouteConstants.quiz);
-        });
-      } else {
-        _currentIndex = targetIndex;
-      }
-      
+  
+  final List<Widget> _pages = [
+    const HomePage(),
+    const TrainingPage(),
+    const MediaTutorialPage(),
+    const RankingPage(),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex ?? 0;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initializeFromArguments();
       _initialized = true;
     }
   }
 
+  void _initializeFromArguments() {
+    final args = widget.arguments ?? ModalRoute.of(context)?.settings.arguments;
+    int targetIndex = _currentIndex;
+    
+    if (args is int) {
+      targetIndex = args;
+    } else if (args is Map<String, dynamic>) {
+      targetIndex = args['selectedTabIndex'] ?? _currentIndex;
+    }
+    
+    if (targetIndex == 2) {
+      // Redirection vers la page Quiz indépendante
+      _currentIndex = 0; // Default to Home underneath
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushNamed(context, RouteConstants.quiz);
+      });
+    } else {
+      _currentIndex = targetIndex;
+    }
+  }
+
   void _onTabSelected(int index) {
-    // Si on clique sur l'onglet Quiz (index 2), on navigue vers la page dédiée
-    // au lieu de l'afficher dans le dashboard (pour éviter le double Scaffold/NavBar)
     if (index == 2) {
       Navigator.pushNamed(context, RouteConstants.quiz);
       return;

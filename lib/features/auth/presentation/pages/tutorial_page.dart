@@ -348,15 +348,6 @@ class _TutorialPageState extends State<TutorialPage> {
     return hours > 0 ? "$hours:$minutes:$seconds" : "$minutes:$seconds";
   }
 
-  Future<void> _checkTutorialSeen() async {
-    final prefs = await SharedPreferences.getInstance();
-    final seen = prefs.getBool('hasSeenTutorial') ?? false;
-    if (!seen && mounted) {
-      setState(() {
-        _showTutorial = true;
-      });
-    }
-  }
 
   YoutubePlayerController _getYoutubeController(String videoId, Media media) {
     if (!_youtubeControllers.containsKey(media.id)) {

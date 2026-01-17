@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/avatar_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/avatar_repository.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 class AvatarShopPage extends StatefulWidget {
@@ -23,6 +24,56 @@ class _AvatarShopPageState extends State<AvatarShopPage> {
   final GlobalKey _keyGrid = GlobalKey();
   final GlobalKey _keyFirstAvatar = GlobalKey();
   final GlobalKey _keyUnlock = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    final apiClient = ApiClient(
+      dio: Dio(),
+      storage: const FlutterSecureStorage(),
+    );
+    _repo = AvatarRepository(apiClient: apiClient);
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final allAvatars = await _repo.getAllAvatars();
+      final unlockedAvatars = await _repo.getUnlockedAvatars();
+      setState(() {
+        _all = allAvatars;
+        _unlocked = unlockedAvatars;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading avatars: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _selectAvatar(String image) async {
+    // Dans une version complète, on appellerait l'API pour mettre à jour le profil
+    setState(() {
+      _selectedAvatar = image;
+    });
+    // Optionnel: persister localement ou via API
+  }
+
+  Future<void> _unlockAvatar(Avatar avatar) async {
+    try {
+      await _repo.unlockAvatar(avatar.id);
+      await _loadData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${avatar.name} débloqué !')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error unlocking avatar: $e');
+    }
+  }
+
   void _showTutorial() {
     TutorialCoachMark(
       targets: _buildTargets(),

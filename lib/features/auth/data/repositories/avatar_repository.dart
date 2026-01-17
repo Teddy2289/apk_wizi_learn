@@ -1,13 +1,13 @@
-import 'package:dio/dio.dart';
+import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/avatar_model.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
 
 class AvatarRepository {
-  final Dio dio;
-  AvatarRepository({required this.dio});
+  final ApiClient apiClient;
+  AvatarRepository({required this.apiClient});
 
   Future<List<Avatar>> getAllAvatars() async {
-    final response = await dio.get('/avatars');
+    final response = await apiClient.get('/avatars');
     if (response.data == null || response.data['avatars'] == null) {
       return [];
     }
@@ -16,7 +16,7 @@ class AvatarRepository {
   }
 
   Future<List<Avatar>> getUnlockedAvatars() async {
-    final response = await dio.get('/my-avatars');
+    final response = await apiClient.get('/my-avatars');
     if (response.data == null || response.data['avatars'] == null) {
       return [];
     }
@@ -25,7 +25,7 @@ class AvatarRepository {
   }
 
   Future<void> unlockAvatar(int avatarId) async {
-    await dio.post('/avatars/$avatarId/unlock');
+    await apiClient.post('/avatars/$avatarId/unlock');
   }
 
   Future<bool> uploadUserPhoto(String filePath, String token) async {

@@ -49,7 +49,6 @@ class _RankingPageState extends State<RankingPage>
     _repository = StatsRepository(apiClient: apiClient);
     _tabController = TabController(length: 3, vsync: this);
     _loadAllData();
-    _checkAndShowTutorial();
   }
 
   @override
@@ -83,14 +82,6 @@ class _RankingPageState extends State<RankingPage>
     }
   }
 
-  Future<void> _checkAndShowTutorial() async {
-    final prefs = await SharedPreferences.getInstance();
-    final seen = prefs.getBool('ranking_tutorial_seen') ?? false;
-    // if (!seen) {
-    //   WidgetsBinding.instance.addPostFrameCallback((_) => _showTutorial());
-    //   await prefs.setBool('ranking_tutorial_seen', true);
-    // }
-  }
 
   void _showTutorial() {
     final tutorial = TutorialCoachMark(

@@ -208,15 +208,3 @@ class _AchievementPageState extends State<AchievementPage> {
 
 }
 
-class _MissionViewModel {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final String dateLabel;
-  _MissionViewModel({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.dateLabel,
-  });
-}
