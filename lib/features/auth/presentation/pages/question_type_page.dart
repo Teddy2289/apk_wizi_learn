@@ -26,7 +26,6 @@ class QuestionTypePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isFillBlank = question.type == "remplir le champ vide";
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Padding(

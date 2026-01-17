@@ -63,8 +63,6 @@ class _HomePageState extends State<HomePage> {
   List<Contact> _contacts = [];
   List<Formation> _randomFormations = [];
   bool _isLoading = true;
-  String? _prenom;
-  String? _nom;
   bool _isLoadingUser = true;
   int _loginStreak = 0;
   bool _showStreakModal = false;
@@ -195,8 +193,6 @@ class _HomePageState extends State<HomePage> {
 
       if (mounted) {
         setState(() {
-          _prenom = user.stagiaire?.prenom;
-          _nom = user.name;
           _loginStreak = loginStreak;
           _isLoadingUser = false;
         });
@@ -551,58 +547,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildWelcomeSection(bool isTablet) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isTablet ? 32 : 16),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [kPrimaryBlueLight, kAccentPurpleLight],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: kPrimaryBlue.withOpacity(0.1),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: isTablet ? 60 : 48,
-              height: isTablet ? 60 : 48,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [kPrimaryBlue, kAccentPurple],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: kPrimaryBlue.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Icon(
-                LucideIcons.megaphone,
-                color: kNeutralWhite,
-                size: isTablet ? 28 : 22,
-              ),
-            ),
-            const SizedBox(width: 16),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildSectionTitle(
     BuildContext context, {
@@ -840,34 +784,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildFeatureChip(String text, bool isTablet) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isTablet ? 14 : 12,
-        vertical: isTablet ? 8 : 6,
-      ),
-      decoration: BoxDecoration(
-        color: kNeutralWhite,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: kPrimaryBlue.withOpacity(0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: isTablet ? 12 : 10,
-          fontWeight: FontWeight.w600,
-          color: kPrimaryBlueDark,
-        ),
-      ),
-    );
-  }
 }
 
 class _InscriptionSuccessModal extends StatelessWidget {

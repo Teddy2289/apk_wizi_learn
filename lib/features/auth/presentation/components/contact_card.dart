@@ -616,11 +616,6 @@ class ContactCard extends StatelessWidget {
     }
   }
 
-  Color _getAvailabilityColor() {
-    // Logique simplifiée pour la démonstration
-    // En production, vous pourriez avoir un champ de disponibilité
-    return kSuccessGreen;
-  }
 
   // Méthodes de lancement
   Future<void> _launchEmail(BuildContext context) async {

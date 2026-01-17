@@ -34,7 +34,6 @@ class _LoginPageState extends State<LoginPage> {
 
     // Palette de couleurs harmonisée avec splash_page.dart
     const Color kYellowLight = Color(0xFFFFF9C4); // jaune très clair
-    const Color kYellow = Color(0xFFFFEB3B); // jaune
     const Color kOrange = Color(0xFFFF9800); // orange
     const Color kBrown = Color(0xFF8D6E63); // marron
     const Color kWhite = Colors.white;

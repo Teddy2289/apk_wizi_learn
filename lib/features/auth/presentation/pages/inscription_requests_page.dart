@@ -18,14 +18,6 @@ class _InscriptionRequestsPageState extends State<InscriptionRequestsPage> {
     // _loadRequests();
   }
 
-  Future<void> _loadRequests() async {
-    // setState(() => _isLoading = true);
-    // final requests = await _repository.list();
-    // setState(() {
-    //   _requests = requests;
-    //   _isLoading = false;
-    // });
-  }
 
   @override
   Widget build(BuildContext context) {

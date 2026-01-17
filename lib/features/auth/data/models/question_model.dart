@@ -209,12 +209,11 @@ class Question {
     final rightItems = answers.where((a) => a.matchPair == 'right');
 
     for (final left in leftItems) {
-      final right = rightItems.firstWhere(
-        (r) => r.bankGroup == left.bankGroup,
-        orElse: () => null as Answer,
-      );
-      pairs[left.text] = right.text;
-        }
+      final matches = rightItems.where((r) => r.bankGroup == left.bankGroup);
+      if (matches.isNotEmpty) {
+        pairs[left.text] = matches.first.text;
+      }
+    }
     return pairs;
   }
 

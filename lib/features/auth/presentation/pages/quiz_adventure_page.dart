@@ -216,24 +216,6 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
       await _audioPlayer.play(AssetSource(asset));
     } catch (e) {
       // ignore errors silently
-      int loginStreak = await _fetchLoginStreakFromBackend().catchError((
-        _,
-      ) async {
-        try {
-          final prefs = await SharedPreferences.getInstance();
-          return prefs.getInt('login_streak') ?? 0;
-        } catch (_) {
-          return 0;
-        }
-      });
-
-      if (mounted) {
-        setState(() {
-          _loginStreak = loginStreak;
-        });
-      }
-    } catch (e) {
-      debugPrint('Erreur en chargeant login streak: $e');
     }
   }
 

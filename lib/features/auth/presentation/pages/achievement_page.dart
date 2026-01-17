@@ -27,7 +27,6 @@ class _AchievementPageState extends State<AchievementPage> {
   final GlobalKey _keyAllBadges = GlobalKey();
   final GlobalKey _keyBadgeGrid = GlobalKey();
   final GlobalKey _keyFirstBadge = GlobalKey();
-  TutorialCoachMark? _tutorialCoachMark;
 
   @override
   void initState() {
@@ -59,7 +58,7 @@ class _AchievementPageState extends State<AchievementPage> {
   }
 
   void _showTutorial() {
-    _tutorialCoachMark = TutorialCoachMark(
+    TutorialCoachMark(
       targets: _buildTargets(),
       colorShadow: Colors.black,
       textSkip: 'Passer',
@@ -69,7 +68,7 @@ class _AchievementPageState extends State<AchievementPage> {
       onSkip: () {
         return true;
       },
-    )..show(context: context);
+    ).show(context: context);
   }
 
   List<TargetFocus> _buildTargets() {
@@ -207,127 +206,6 @@ class _AchievementPageState extends State<AchievementPage> {
     );
   }
 
-  Widget _buildCompletedMissionsTab(ThemeData theme) {
-    final missions =
-        _achievements
-            .where((a) => a.unlockedAt != null)
-            .map(_mapAchievementToMission)
-            .where((m) => m != null)
-            .cast<_MissionViewModel>()
-            .toList();
-
-    if (missions.isEmpty) {
-      return Center(
-        child: Text(
-          'Aucune mission accomplie pour le moment.',
-          style: theme.textTheme.bodyMedium,
-        ),
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: missions.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, i) {
-        final m = missions[i];
-        return Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: theme.dividerColor.withOpacity(0.2)),
-          ),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-              child: Icon(m.icon, color: theme.colorScheme.primary),
-            ),
-            title: Text(
-              m.title,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            subtitle: Text(m.subtitle, style: theme.textTheme.bodySmall),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                const Icon(Icons.check_circle, color: Colors.green, size: 16),
-                const SizedBox(height: 4),
-                Text(
-                  m.dateLabel,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  _MissionViewModel? _mapAchievementToMission(Achievement a) {
-    final date = a.unlockedAt;
-    final dateLabel =
-        date != null ? '${date.day}/${date.month}/${date.year}' : '';
-    switch (a.type.toLowerCase()) {
-      case 'connexion_serie':
-        return _MissionViewModel(
-          icon: Icons.local_fire_department,
-          title: 'Série de connexion',
-          subtitle: a.name,
-          dateLabel: dateLabel,
-        );
-      case 'quiz':
-        return _MissionViewModel(
-          icon: Icons.quiz,
-          title: 'Premier quiz',
-          subtitle: a.description,
-          dateLabel: dateLabel,
-        );
-      case 'quiz_level':
-        return _MissionViewModel(
-          icon: Icons.trending_up,
-          title: 'Premier quiz (${a.level ?? 'Niveau'})',
-          subtitle: a.name,
-          dateLabel: dateLabel,
-        );
-      case 'quiz_all':
-      case 'quiz_all_level':
-        return _MissionViewModel(
-          icon: Icons.emoji_events,
-          title: 'Tous les quiz',
-          subtitle: a.name,
-          dateLabel: dateLabel,
-        );
-      case 'points':
-        return _MissionViewModel(
-          icon: Icons.star,
-          title: 'Points cumulés',
-          subtitle: a.name,
-          dateLabel: dateLabel,
-        );
-      case 'parrainage':
-        return _MissionViewModel(
-          icon: Icons.handshake,
-          title: 'Parrainage',
-          subtitle: a.description,
-          dateLabel: dateLabel,
-        );
-      case 'action':
-        return _MissionViewModel(
-          icon: Icons.get_app,
-          title: 'Action',
-          subtitle: a.description,
-          dateLabel: dateLabel,
-        );
-      default:
-        return null;
-    }
-  }
 }
 
 class _MissionViewModel {

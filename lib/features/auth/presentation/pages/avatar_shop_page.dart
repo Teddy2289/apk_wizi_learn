@@ -23,59 +23,8 @@ class _AvatarShopPageState extends State<AvatarShopPage> {
   final GlobalKey _keyGrid = GlobalKey();
   final GlobalKey _keyFirstAvatar = GlobalKey();
   final GlobalKey _keyUnlock = GlobalKey();
-  TutorialCoachMark? _tutorialCoachMark;
-
-  @override
-  void initState() {
-    super.initState();
-    _repo = AvatarRepository(dio: Dio());
-    _loadAvatars();
-    _loadSelectedAvatar();
-    _checkAndShowTutorial();
-  }
-
-  Future<void> _loadAvatars() async {
-    setState(() => _isLoading = true);
-    final all = await _repo.getAllAvatars();
-    final unlocked = await _repo.getUnlockedAvatars();
-    setState(() {
-      _all = all;
-      _unlocked = unlocked;
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _loadSelectedAvatar() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _selectedAvatar = prefs.getString('selected_avatar');
-    });
-  }
-
-  Future<void> _selectAvatar(String path) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('selected_avatar', path);
-    setState(() {
-      _selectedAvatar = path;
-    });
-  }
-
-  Future<void> _unlockAvatar(Avatar avatar) async {
-    await _repo.unlockAvatar(avatar.id);
-    await _loadAvatars();
-  }
-
-  Future<void> _checkAndShowTutorial() async {
-    final prefs = await SharedPreferences.getInstance();
-    final seen = prefs.getBool('avatarshop_tutorial_seen') ?? false;
-    if (!seen) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _showTutorial());
-      await prefs.setBool('avatarshop_tutorial_seen', true);
-    }
-  }
-
   void _showTutorial() {
-    _tutorialCoachMark = TutorialCoachMark(
+    TutorialCoachMark(
       targets: _buildTargets(),
       colorShadow: Colors.black,
       textSkip: 'Passer',
@@ -85,7 +34,7 @@ class _AvatarShopPageState extends State<AvatarShopPage> {
       onSkip: () {
         return true;
       },
-    )..show(context: context);
+    ).show(context: context);
   }
 
   List<TargetFocus> _buildTargets() {

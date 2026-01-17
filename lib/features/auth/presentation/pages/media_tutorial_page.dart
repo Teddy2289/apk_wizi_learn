@@ -223,33 +223,7 @@ class _MediaTutorialPageState extends State<MediaTutorialPage> {
     }
   }
 
-  Future<void> _checkTutorialSeen() async {
-    final prefs = await SharedPreferences.getInstance();
-    final seen = prefs.getBool('hasSeenTutorial') ?? false;
-    if (!seen && mounted) {
-      setState(() {
-        _showTutorial = true;
-      });
-    }
-  }
 
-  Future<void> _markMediaAsWatched(Media media) async {
-    try {
-      final resp = await _mediaRepository.markMediaAsWatchedWithResponse(
-        media.id,
-      );
-      final success = resp['success'] == true;
-      if (success && mounted) {
-        _loadWatchedMediaIds();
-        final newAchievements = (resp['newAchievements'] as List?) ?? [];
-        if (newAchievements.isNotEmpty) {
-          _showNewBadgesDialog(context, newAchievements);
-        }
-      }
-    } catch (e) {
-      debugPrint('Erreur marquage média comme vu: $e');
-    }
-  }
 
   Future<void> _downloadMedia(Media media) async {
     final url = media.url;

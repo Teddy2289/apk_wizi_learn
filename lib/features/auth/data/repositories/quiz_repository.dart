@@ -36,19 +36,6 @@ class QuizRepository {
         }
       }
 
-      // Logique de limitation si score < 10
-      // if (stagiaireId != null && quizzes.isNotEmpty) {
-      //   try {
-      //     final ranking = await _getStagiaireRanking(stagiaireId);
-      //     if (ranking != null && (ranking['totalPoints'] as int? ?? 0) < 10) {
-      //       quizzes.shuffle();
-      //       return quizzes.take(2).toList();
-      //     }
-      //   } catch (e) {
-      //     debugPrint('Error checking ranking: $e');
-      //   }
-      // }
-
       return quizzes;
     } catch (e) {
       // debugPrint('Error in getQuizzesForStagiaire: $e\n$stack');
@@ -56,27 +43,10 @@ class QuizRepository {
     }
   }
 
-  Future<Map<String, dynamic>?> _getStagiaireRanking(int stagiaireId) async {
-    try {
-      final response = await apiClient.get(AppConstants.globalRanking);
-      final List<dynamic> ranking = response.data is List ? response.data : [];
-      return ranking.firstWhere(
-        (entry) =>
-            entry is Map &&
-            entry['stagiaire'] is Map &&
-            entry['stagiaire']['id']?.toString() == stagiaireId.toString(),
-        orElse: () => null,
-      );
-    } catch (e) {
-      debugPrint('Error getting ranking: $e');
-      return null;
-    }
-  }
 
   Future<List<Question>> getQuizQuestions(int quizId) async {
     try {
       final response = await apiClient.get('/quiz/$quizId/questions');
-      final formattedJson = const JsonEncoder.withIndent('  ').convert(response.data);
 
       if (response.data == null || response.data['data'] == null) return [];
 
