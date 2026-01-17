@@ -10,31 +10,52 @@ class MediaRepository {
   MediaRepository({required this.apiClient});
 
   Future<List<Media>> getAstuces(int formationId) async {
-    final response = await apiClient.get(
-      AppConstants.astucesByFormation(formationId),
-    );
-    print('Astuces reçues : ${response.data}');
+    try {
+      final response = await apiClient.get(
+        AppConstants.astucesByFormation(formationId),
+      );
+      
+      final dynamic data = response.data;
+      if (data == null) return [];
 
-    if (response.data is List) {
-      return (response.data as List).map((e) => Media.fromJson(e)).toList();
-    } else {
-      print('⚠ La réponse des astuces n’est pas une liste : ${response.data}');
+      // Harmonisation: Node might return { data: [...] }, Laravel directly [...]
+      final List<dynamic> list;
+      if (data is Map<String, dynamic> && data.containsKey('data')) {
+        list = data['data'] as List;
+      } else if (data is List) {
+        list = data;
+      } else {
+        return [];
+      }
+
+      return list.map((e) => Media.fromJson(e)).toList();
+    } catch (e) {
+      debugPrint('Error fetching astuces: $e');
       return [];
     }
   }
 
   Future<List<Media>> getTutoriels(int formationId) async {
-    final response = await apiClient.get(
-      AppConstants.tutorielsByFormation(formationId),
-    );
-    print('Tutoriels reçus : ${response.data}');
-
-    if (response.data is List) {
-      return (response.data as List).map((e) => Media.fromJson(e)).toList();
-    } else {
-      print(
-        '⚠ La réponse des tutoriels n’est pas une liste : ${response.data}',
+    try {
+      final response = await apiClient.get(
+        AppConstants.tutorielsByFormation(formationId),
       );
+      
+      final dynamic data = response.data;
+      if (data == null) return [];
+
+      final List<dynamic> list;
+      if (data is Map<String, dynamic> && data.containsKey('data')) {
+        list = data['data'] as List;
+      } else if (data is List) {
+        list = data;
+      } else {
+        return [];
+      }
+
+      return list.map((e) => Media.fromJson(e)).toList();
+    } catch (e) {
+      debugPrint('Error fetching tutoriels: $e');
       return [];
     }
   }
@@ -42,44 +63,34 @@ class MediaRepository {
   Future<List<FormationWithMedias>> getFormationsAvecMedias(int userId) async {
     try {
       final response = await apiClient.get('/stagiaire/$userId/formations');
+      
+      final dynamic data = response.data;
+      if (data == null) return [];
 
-      if (response.data == null) {
-        // debugPrint("Réponse nulle du serveur");
+      final List<dynamic> list;
+      if (data is Map<String, dynamic> && data.containsKey('data')) {
+        list = data['data'] as List;
+      } else if (data is List) {
+        list = data;
+      } else {
         return [];
       }
 
-      final data = response.data;
-      if (data is! Map<String, dynamic>) {
-        // debugPrint("Format de réponse invalide: ${data.runtimeType}");
-        return [];
-      }
-
-      final formationsJson = data['data'] as List?;
-
-      if (formationsJson == null) {
-        // debugPrint("Aucune donnée de formation trouvée");
-        return [];
-      }
-
-      return formationsJson
-          .map((json) => FormationWithMedias.fromJson(json))
-          .toList();
+      return list.map((json) => FormationWithMedias.fromJson(json)).toList();
     } catch (e) {
-      // debugPrint("Erreur lors de la récupération des formations: $e");
+      debugPrint('Error fetching formations: $e');
       return [];
     }
   }
 
   Future<bool> markMediaAsWatched(int mediaId) async {
     try {
-      final response = await apiClient.post(
-        '/medias/$mediaId/watched',
-        data:
-            {}, // Pas besoin de body car le backend récupère le stagiaire du token
-      );
-      return response.data['success'] == true;
+      final response = await apiClient.post('/medias/$mediaId/watched');
+      final data = response.data;
+      return (data is Map && data['success'] == true) || 
+             (data is Map && data['message'] != null);
     } catch (e) {
-      // debugPrint("Erreur lors du marquage comme vu: $e");
+      debugPrint('Error marking media as watched: $e');
       return false;
     }
   }
@@ -105,33 +116,34 @@ class MediaRepository {
   Future<Set<int>> getWatchedMediaIds() async {
     try {
       final response = await apiClient.get('/medias/formations-with-status');
-      // debugPrint('Erreur lors du marquage comme vu (avec réponse 2): $response');
+      final dynamic data = response.data;
+      
+      if (data is! List) return {};
 
-      if (response.data is List) {
-        final formations = response.data as List;
-        final watchedMediaIds = <int>{};
+      final watchedMediaIds = <int>{};
+      for (final formation in data) {
+        final medias = formation['medias'] as List?;
+        if (medias == null) continue;
 
-        for (final formation in formations) {
-          final medias = formation['medias'] as List?;
-          if (medias != null) {
-            for (final media in medias) {
-              final stagiaires = media['stagiaires'] as List?;
-              if (stagiaires != null && stagiaires.isNotEmpty) {
-                for (final stagiaire in stagiaires) {
-                  final pivot = stagiaire['pivot'] as Map<String, dynamic>?;
-                  if (pivot != null && pivot['is_watched'] == 1) {
-                    watchedMediaIds.add(media['id'] as int);
-                  }
-                }
+        for (final media in medias) {
+          final id = media['id'] as int?;
+          if (id == null) continue;
+
+          // Laravel returns stagiaires list, Node might return pivot directly or formatted
+          final stagiaires = media['stagiaires'] as List?;
+          if (stagiaires != null && stagiaires.isNotEmpty) {
+            for (final stagiaire in stagiaires) {
+              final pivot = stagiaire['pivot'] as Map<String, dynamic>?;
+              if (pivot != null && (pivot['is_watched'] == 1 || pivot['is_watched'] == true)) {
+                watchedMediaIds.add(id);
               }
             }
           }
         }
-        return watchedMediaIds;
       }
-      return {};
+      return watchedMediaIds;
     } catch (e) {
-      // debugPrint("Erreur lors de la récupération des médias vus: $e");
+      debugPrint('Error fetching watched media IDs: $e');
       return {};
     }
   }
