@@ -48,6 +48,12 @@ class AppConstants {
     if (path == null || path.isEmpty) return "";
     if (path.startsWith('http://') || path.startsWith('https://')) return path;
 
+    // Si le chemin commence par /api/medias/stream, il vient probablement de Node
+    if (path.contains('/api/medias/stream/')) {
+      final cleanBase = baseUrl.endsWith('/api') ? baseUrl.substring(0, baseUrl.length - 4) : baseUrl;
+      return '$cleanBase/${_cleanPath(path)}';
+    }
+
     return '${_getCleanBase()}/${_cleanPath(path)}';
   }
 

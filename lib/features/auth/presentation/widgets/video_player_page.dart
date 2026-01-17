@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
@@ -117,13 +118,47 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
       debugPrint('Loading video: $videoUrl');
 
-      // Initialize video player controller
-      _videoPlayerController = VideoPlayerController.networkUrl(
-        Uri.parse(videoUrl),
-        httpHeaders: {
-          'Accept': 'video/mp4,video/*',
-        },
+      // Initialize video player controller with caching for 'astuces'
+      final videoPlayerOptions = VideoPlayerOptions(
+        allowBackgroundPlayback: false,
+        mixWithOthers: true,
       );
+
+      if (media.categorie == 'astuce') {
+        final cacheManager = DefaultCacheManager();
+        final fileInfo = await cacheManager.getFileFromCache(videoUrl);
+        
+        if (fileInfo != null) {
+          debugPrint('Playing from cache: $videoUrl');
+          _videoPlayerController = VideoPlayerController.file(
+            fileInfo.file,
+            videoPlayerOptions: videoPlayerOptions,
+          );
+        } else {
+          debugPrint('Playing from network and caching: $videoUrl');
+          _videoPlayerController = VideoPlayerController.networkUrl(
+            Uri.parse(videoUrl),
+            videoPlayerOptions: videoPlayerOptions,
+            httpHeaders: {
+              'Accept': 'video/mp4,video/*',
+            },
+          );
+          // Start background caching
+          cacheManager.downloadFile(videoUrl).then((_) {
+            debugPrint('Video cached successfully: $videoUrl');
+          }).catchError((e) {
+            debugPrint('Failed to cache video: $e');
+          });
+        }
+      } else {
+        _videoPlayerController = VideoPlayerController.networkUrl(
+          Uri.parse(videoUrl),
+          videoPlayerOptions: videoPlayerOptions,
+          httpHeaders: {
+            'Accept': 'video/mp4,video/*',
+          },
+        );
+      }
 
       await _videoPlayerController!.initialize();
 
