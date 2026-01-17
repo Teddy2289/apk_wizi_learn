@@ -17,6 +17,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
   );
 
   Map<String, dynamic>? _stats;
+  Map<String, dynamic>? _trends;
   List<dynamic> _inactiveStagiaires = [];
   bool _loading = true;
 
@@ -31,10 +32,12 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
     try {
       final stats = await _apiClient.get('/formateur/dashboard/stats');
       final inactive = await _apiClient.get('/formateur/stagiaires/inactive?days=7');
+      final trends = await _apiClient.get('/formateur/trends');
 
       setState(() {
         _stats = stats.data;
         _inactiveStagiaires = inactive.data['inactive_stagiaires'] ?? [];
+        _trends = trends.data;
         _loading = false;
       });
     } catch (e) {
@@ -63,6 +66,16 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                     // Stats Cards Grid
                     if (_stats != null) ...[
                       _buildStatsGrid(),
+                      const SizedBox(height: 24),
+                    ],
+
+                    // Quick Actions
+                    _buildQuickActions(),
+                    const SizedBox(height: 24),
+
+                    // Trends Section (Simplified)
+                    if (_trends != null) ...[
+                      _buildTrendsSummary(),
                       const SizedBox(height: 24),
                     ],
 
@@ -237,6 +250,88 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
               },
             ),
         ],
+      ),
+    );
+  Widget _buildQuickActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () {
+              // TODO: Navigate to rankings
+            },
+            icon: const Icon(Icons.leaderboard),
+            label: const Text('Classement'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () {
+              // TODO: Navigate to announcements
+            },
+            icon: const Icon(Icons.announcement),
+            label: const Text('Annonces'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTrendsSummary() {
+    final quizTrends = _trends?['quiz_trends'] as List<dynamic>? ?? [];
+    
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Tendances des quiz (30j)',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            if (quizTrends.isEmpty)
+              const Center(child: Text('Aucune donnée de tendance'))
+            else
+              SizedBox(
+                height: 100,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: quizTrends.take(10).map((t) {
+                    final double score = (t['avg_score'] ?? 0).toDouble();
+                    // Scale score 0-100 to height 0-80
+                    final double height = (score / 100) * 80;
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Container(
+                          width: 20,
+                          height: height > 5 ? height : 5, // Min height
+                          color: Colors.green.withOpacity(0.6),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          t['date'].toString().substring(8),
+                          style: const TextStyle(fontSize: 8),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

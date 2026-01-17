@@ -55,7 +55,7 @@ class CommercialService {
   }) async {
     try {
       final response = await _dio.get(
-        '$baseUrl/stats',
+        '$baseUrl/commercial/stats/dashboard',
         queryParameters: {
           'range': range,
           'metric': metric,
