@@ -9,14 +9,10 @@ import 'package:wizi_learn/features/auth/data/models/media_model.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/features/auth/data/repositories/media_repository.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:wizi_learn/features/auth/domain/user_entity.dart';
-import 'package:wizi_learn/features/auth/domain/stagiaire_entity.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/universal_video_player_page.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
-import 'package:wizi_learn/core/utils/normalize_youtube_url.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
@@ -156,9 +152,13 @@ class _TutorialPageState extends State<TutorialPage> {
     if (allMedias.isEmpty) return null;
 
     if (mediaId != null) {
-      return allMedias.firstWhere(
-        (m) => m.id.toString() == mediaId.toString(),
-      );
+      try {
+        return allMedias.firstWhere(
+          (m) => m.id.toString() == mediaId.toString(),
+        );
+      } catch (e) {
+        return allMedias.first;
+      }
     }
     return allMedias.first;
   }
@@ -168,12 +168,20 @@ class _TutorialPageState extends State<TutorialPage> {
     Media media,
   ) {
     try {
- return formations.firstWhere(
- (f) => f.medias.any((m) => m.id == media.id),
- );
+      return formations.firstWhere(
+        (f) => f.medias.any((m) => m.id == media.id),
+      );
     } catch (e) {
- return null;
+      return null;
     }
+  }
+
+  String normalizeYoutubeUrl(String url) {
+    if (url.contains('youtu.be/')) {
+      final id = url.split('youtu.be/').last.split('?').first;
+      return 'https://www.youtube.com/watch?v=$id';
+    }
+    return url;
   }
 
   Media _createMediaCopyWithNormalizedUrl(Media media) {
@@ -1293,35 +1301,21 @@ class _TutorialPageState extends State<TutorialPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? colorScheme.primary.withOpacity(0.1)
-                                : Colors.black.withOpacity(0.05),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.chevron_right,
-                            color: isSelected
-                                ? colorScheme.primary
-                                : colorScheme.onSurface.withOpacity(0.6),
-                            size: isSmallScreen ? 20 : 24,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => _downloadMedia(media),
-                          icon: Icon(
-                            Icons.download_rounded,
-                            size: isSmallScreen ? 20 : 24,
-                            color: colorScheme.primary,
-                          ),
-                          tooltip: 'Télécharger',
-                        ),
-                      ],
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? colorScheme.primary.withOpacity(0.1)
+                            : Colors.black.withOpacity(0.05),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.chevron_right,
+                        color: isSelected
+                            ? colorScheme.primary
+                            : colorScheme.onSurface.withOpacity(0.6),
+                        size: isSmallScreen ? 20 : 24,
+                      ),
                     ),
                   ],
                 ),
@@ -1511,22 +1505,6 @@ class _TutorialPageState extends State<TutorialPage> {
           ),
       ],
     );
-  }
-
-  Future<void> _downloadMedia(Media media) async {
-    final url = media.url;
-    if (url.isEmpty) return;
-
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Impossible d\'ouvrir le lien')),
-        );
-      }
-    }
   }
 
   Future<void> _onMediaItemTap(
