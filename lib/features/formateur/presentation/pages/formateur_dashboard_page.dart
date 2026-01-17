@@ -252,6 +252,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
         ],
       ),
     );
+  }
   Widget _buildQuickActions() {
     return Row(
       children: [

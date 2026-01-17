@@ -6,7 +6,7 @@ import 'package:wizi_learn/features/auth/data/models/media_model.dart';
 /// Service de téléchargement et gestion de vidéos hors ligne
 class VideoDownloadService {
   final Dio _dio;
-  final Map<int, CancelToken> _activeDow nloads = {};
+  final Map<int, CancelToken> _activeDownloads = {};
   final Map<int, double> _downloadProgress = {};
 
   VideoDownloadService(this._dio);
