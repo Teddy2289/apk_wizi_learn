@@ -28,6 +28,7 @@ import 'package:wizi_learn/features/formateur/presentation/pages/formateur_class
 import 'package:wizi_learn/features/formateur/presentation/pages/send_notification_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/gestion_formations_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/analytiques_page.dart';
+import 'package:wizi_learn/features/formateur/presentation/pages/quiz_creator_page.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -132,6 +133,10 @@ class AppRouter {
       case '/formateur/analytiques':
         return MaterialPageRoute(
           builder: (_) => const AnalytiquesPage(),
+        );
+      case '/formateur/quiz-creator':
+        return MaterialPageRoute(
+          builder: (_) => const QuizCreatorPage(),
         );
 
       default:
