@@ -75,7 +75,7 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
                   items: const [
                     DropdownMenuItem(value: 'debutant', child: Text('Débutant')),
                     DropdownMenuItem(value: 'intermediaire', child: Text('Intermédiaire')),
-                    DropdownMenuItem(value: 'avance', child: Text: Text('Avancé')),
+                    DropdownMenuItem(value: 'avance', child: Text('Avancé')),
                   ],
                   onChanged: (v) => setDialogState(() => niveau = v!),
                 ),
