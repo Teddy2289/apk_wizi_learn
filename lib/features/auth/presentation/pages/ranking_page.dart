@@ -10,7 +10,6 @@ import 'package:wizi_learn/features/auth/presentation/widgets/quiz_history_widge
 import 'package:wizi_learn/features/auth/presentation/widgets/quiz_stats_widget.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 
 class RankingPage extends StatefulWidget {
@@ -269,17 +268,7 @@ class _RankingPageState extends State<RankingPage>
         IconButton(
           icon: const Icon(Icons.help_outline),
           tooltip: 'Voir le tutoriel',
-          onPressed: () => showStandardHelpDialog(
-            context,
-            title: 'Comment utiliser cette page ?',
-            steps: const [
-              'Naviguez entre Classement, Statistiques et Historique via les onglets.',
-              'Consultez le podium et votre position dans la liste.',
-              'Dans Statistiques, explorez vos performances et votre progression.',
-              'Dans Historique, retrouvez vos quiz passés.',
-              'Utilisez le bouton Partager pour défier vos amis.',
-            ],
-          ),
+          onPressed: _showTutorial,
         ),
       ],
     );
@@ -353,17 +342,7 @@ class _RankingPageState extends State<RankingPage>
               IconButton(
                 icon: const Icon(Icons.help_outline, size: 18),
                 tooltip: 'Voir le tutoriel',
-                onPressed: () => showStandardHelpDialog(
-                  context,
-                  title: 'Comment utiliser cette page ?',
-                  steps: const [
-                    'Naviguez entre Classement, Statistiques et Historique via les onglets.',
-                    'Consultez le podium et votre position dans la liste.',
-                    'Dans Statistiques, explorez vos performances et votre progression.',
-                    'Dans Historique, retrouvez vos quiz passés.',
-                    'Utilisez le bouton Partager pour défier vos amis.',
-                  ],
-                ),
+                onPressed: _showTutorial,
               ),
             ],
           ),

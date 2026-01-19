@@ -940,12 +940,12 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
       child: InkWell(
         onTap: () async {
           final pdfUrl = AppConstants.getMediaUrl(formation.cursusPdf);
-          print('🟡 DEBUG: Tentative d\'ouverture du PDF: $pdfUrl');
+          debugPrint('🟡 DEBUG: Tentative d\'ouverture du PDF: $pdfUrl');
           if (await canLaunchUrl(Uri.parse(pdfUrl))) {
             await launchUrl(Uri.parse(pdfUrl));
-            print('🟢 DEBUG: PDF ouvert avec succès');
+            debugPrint('🟢 DEBUG: PDF ouvert avec succès');
           } else {
-            print('🔴 DEBUG: Impossible d\'ouvrir le PDF');
+            debugPrint('🔴 DEBUG: Impossible d\'ouvrir le PDF');
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Impossible d\'ouvrir le PDF.'),

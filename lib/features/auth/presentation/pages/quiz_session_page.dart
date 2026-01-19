@@ -248,7 +248,6 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     final colorScheme = theme.colorScheme;
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return WillPopScope(
       onWillPop: () async {

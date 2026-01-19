@@ -15,10 +15,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/mission_card.dart';
 import 'package:wizi_learn/features/auth/data/models/mission_model.dart';
-import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:wizi_learn/features/auth/presentation/pages/quiz_page.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 import 'package:wizi_learn/features/auth/services/quiz_resume_service.dart';
@@ -64,11 +62,7 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
   // GlobalKeys pour le tutoriel interactif
   // Clés liées à la boutique/avatar supprimées
   final GlobalKey _keyBadges = GlobalKey();
-  final GlobalKey _keyProgress = GlobalKey();
   final GlobalKey _keyMission = GlobalKey();
-  final GlobalKey _keyQuiz = GlobalKey();
-  // TutorialCoachMark? _tutorialCoachMark; // Unused field removed
-  // bool _tutorialShown = false; // Unused field removed
 
   @override
   void initState() {
@@ -88,7 +82,6 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     _loadLoginStreak();
     // Chargement avatar supprimé
     _loadInitialData();
-    // _checkAndShowTutorial();
   }
 
   void _initializeRepositories() {
@@ -947,50 +940,6 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
                                 ),
                               ),
                             ),
-                            // Mini stats si historique disponible
-                            // if (_quizHistory.isNotEmpty)
-                            //   ...(() {
-                            //     final h = _quizHistory.firstWhere(
-                            //       (qH) =>
-                            //           qH.quiz.id.toString() ==
-                            //           quiz.id.toString(),
-                            //       orElse:
-                            //           () => stats_model.QuizHistory(
-                            //             id: '',
-                            //             quiz: quiz,
-                            //             score: 0,
-                            //             completedAt: '',
-                            //             timeSpent: 0,
-                            //             totalQuestions: 0,
-                            //             correctAnswers: 0,
-                            //           ),
-                            //     );
-                            //     if (h.totalQuestions == 0) return <Widget>[];
-                            //     final percent =
-                            //         ((h.correctAnswers / h.totalQuestions) *
-                            //                 100)
-                            //             .round();
-                            //     return <Widget>[
-                            //         const SizedBox(width: 10),
-                            //         Container(
-                            //           padding: const EdgeInsets.symmetric(
-                            //             horizontal: 6,
-                            //             vertical: 2,
-                            //           ),
-                            //           decoration: BoxDecoration(
-                            //             color: Colors.blue.shade50,
-                            //             borderRadius: BorderRadius.circular(10),
-                            //           ),
-                            //           child: Text(
-                            //             '$percent% • ${h.correctAnswers}/${h.totalQuestions}',
-                            //             style: theme.textTheme.bodySmall
-                            //                 ?.copyWith(
-                            //                   color: Colors.blue.shade700,
-                            //                 ),
-                            //           ),
-                            //         ),
-                            //     ];
-                            //   }()),
                           ],
                         ),
                         if (isPlayed)

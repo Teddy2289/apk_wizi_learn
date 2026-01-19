@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
+import 'package:wizi_learn/features/formateur/presentation/pages/stagiaire_profile_page.dart';
 
 class FormateurClassementPage extends StatefulWidget {
   const FormateurClassementPage({super.key});
@@ -81,6 +82,16 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
                                 color: _getRankColor(rank),
                                 margin: const EdgeInsets.only(bottom: 8.0),
                                 child: ListTile(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => StagiaireProfilePage(
+                                          stagiaireId: stagiaire['id'] as int,
+                                        ),
+                                      ),
+                                    );
+                                  },
                                   leading: _buildRankIcon(rank),
                                   title: Text(
                                     '${stagiaire['prenom']} ${stagiaire['nom']}',

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
+import 'package:wizi_learn/features/formateur/presentation/pages/stagiaire_profile_page.dart';
 
 class FormateurDashboardPage extends StatefulWidget {
   const FormateurDashboardPage({super.key});
@@ -214,6 +215,16 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                 final neverConnected = stagiaire['never_connected'] ?? false;
 
                 return ListTile(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => StagiaireProfilePage(
+                          stagiaireId: stagiaire['id'] as int,
+                        ),
+                      ),
+                    );
+                  },
                   leading: CircleAvatar(
                     backgroundColor: neverConnected ? Colors.red : Colors.orange,
                     child: Text(

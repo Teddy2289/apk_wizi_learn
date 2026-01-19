@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:wizi_learn/core/network/dio_client.dart';
 
 /// Example Auth Repository with refresh token support
@@ -28,9 +29,9 @@ class AuthRepository {
       await _prefs.setString('refresh_token', refreshToken);
       await _prefs.setString('user', jsonEncode(userData));
 
-      print('✅ Login successful');
+      debugPrint('✅ Login successful');
     } catch (e) {
-      print('❌ Login failed: $e');
+      debugPrint('❌ Login failed: $e');
       throw Exception('Login failed: ${e.toString()}');
     }
   }
@@ -57,9 +58,9 @@ class AuthRepository {
       // Reset Dio instance
       DioClient.reset();
 
-      print('✅ Logout successful');
+      debugPrint('✅ Logout successful');
     } catch (e) {
-      print('⚠️ Logout error (tokens cleared anyway): $e');
+      debugPrint('⚠️ Logout error (tokens cleared anyway): $e');
       
       // Always clear tokens even if request fails
       await _prefs.remove('access_token');
@@ -82,7 +83,7 @@ class AuthRepository {
     try {
       return jsonDecode(userJson) as Map<String, dynamic>;
     } catch (e) {
-      print('Error parsing user data: $e');
+      debugPrint('Error parsing user data: $e');
       return null;
     }
   }

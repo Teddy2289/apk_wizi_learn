@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -39,7 +40,7 @@ class _SendNotificationPageState extends State<SendNotificationPage> {
         _loading = false;
       });
     } catch (e) {
-      print('Erreur chargement stagiaires: $e');
+      debugPrint('Erreur chargement stagiaires: $e');
       setState(() => _loading = false);
     }
   }
