@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -38,9 +39,10 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   Set<int> _watchedMediaIds = {};
   late MediaRepository _mediaRepository;
   
-  // Zoom state
+  // Zoom and Orientation state
   final TransformationController _transformationController = TransformationController();
   double _currentScale = 1.0;
+  BoxFit _fitMode = BoxFit.contain;
 
   @override
   void initState() {
@@ -199,6 +201,17 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
           handleColor: Theme.of(context).colorScheme.primary,
           bufferedColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
         ),
+        aspectRatio: _videoPlayerController!.value.aspectRatio,
+        deviceOrientationsAfterFullScreen: [
+          DeviceOrientation.portraitUp,
+          DeviceOrientation.portraitDown,
+        ],
+        deviceOrientationsOnEnterFullScreen: [
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+          DeviceOrientation.portraitUp,
+          DeviceOrientation.portraitDown,
+        ],
       );
 
       // Listen for video progress to mark as watched
@@ -299,7 +312,9 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
         children: [
           // Video Player
           AspectRatio(
-            aspectRatio: 16 / 9,
+            aspectRatio: _videoPlayerController != null && _videoPlayerController!.value.isInitialized
+                ? _videoPlayerController!.value.aspectRatio
+                : 16 / 9,
             child: Container(
               color: Colors.black,
               child: _isLoading
@@ -316,9 +331,47 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                                 maxScale: 5.0,
                                 boundaryMargin: const EdgeInsets.all(20),
                                 child: Center(
-                                  child: AspectRatio(
-                                    aspectRatio: 16 / 9,
-                                    child: Chewie(controller: _chewieController!),
+                                  child: FittedBox(
+                                    fit: _fitMode,
+                                    child: SizedBox(
+                                      width: _videoPlayerController!.value.size.width,
+                                      height: _videoPlayerController!.value.size.height,
+                                      child: Chewie(controller: _chewieController!),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 10,
+                              left: 10,
+                              child: Material(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(20),
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _fitMode = _fitMode == BoxFit.contain ? BoxFit.cover : BoxFit.contain;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          _fitMode == BoxFit.cover ? Icons.fullscreen_exit : Icons.fullscreen,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          _fitMode == BoxFit.cover ? 'FIT' : 'FILL',
+                                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
