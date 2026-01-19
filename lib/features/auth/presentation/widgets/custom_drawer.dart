@@ -606,6 +606,7 @@ class CustomDrawer extends StatelessWidget {
               ),
             ),
           ),
+          ...items.map(
             (item) => _buildDrawerItem(
               context,
               icon: item.icon,
