@@ -55,7 +55,6 @@ class _QuizPageState extends State<QuizPage> {
   List<String> _playedQuizIds = [];
   String? _scrollToQuizId;
   bool _didRedirectToAdventure = false;
-  bool _fromNotification = false;
   // Optimisation: cache des listes filtrées pour éviter les FutureBuilder imbriqués
   List<quiz_model.Quiz> _allQuizzes = []; // All quizzes without point filtering
   List<quiz_model.Quiz> _baseQuizzes = []; // Quizzes filtered by points
@@ -69,16 +68,12 @@ class _QuizPageState extends State<QuizPage> {
   int? _selectedFormationId; // Utiliser l'ID au lieu du titre pour plus de fiabilité
   List<String> _availableLevels = [];
   List<int> _availableFormationIds = []; // Stocker les IDs des formations
-  Map<int, String> _formationIdToTitle = {}; // Map pour afficher les titres
-  // Au début de la classe
+  Map<int, String> _formationIdToTitle = {}; // Map pour afficher titres
   Timer? _refreshTimer;
-
-  // Dans _loadInitialData() ou les méthodes de rafraîchissement
 
   @override
   void initState() {
     super.initState();
-    // debugPrint('QuizPage params - scrollToPlayed: ${widget.scrollToPlayed}');
     _initializeRepositories();
     _loadInitialData();
     _scrollController.addListener(_scrollListener);
@@ -87,7 +82,6 @@ class _QuizPageState extends State<QuizPage> {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map<String, dynamic>) {
         setState(() {
-          _fromNotification = args['fromNotification'] ?? false;
           _scrollToQuizId = args['scrollToQuizId'];
         });
       }
@@ -127,7 +121,6 @@ class _QuizPageState extends State<QuizPage> {
   void _checkAutoSelectNextQuiz() {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is Map<String, dynamic> && args['autoSelectNextQuiz'] == true) {
-      // Attendre que les données soient chargées puis sélectionner le premier quiz disponible
       Future.delayed(const Duration(milliseconds: 500), () {
         if (_visibleUnplayed.isNotEmpty && mounted) {
           _startQuiz(_visibleUnplayed.first);
@@ -137,22 +130,20 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   Future<void> _scrollToQuiz(String quizId) async {
-    // debugPrint('Srolling to quiz with ID: $quizId');
     if (_scrollController.hasClients && _futureQuizzes != null) {
       try {
         final quizzes = await _futureQuizzes!;
         final quizIndex = quizzes.indexWhere((q) => q.id.toString() == quizId);
 
         if (quizIndex != -1) {
-          // Calcul plus précis de la position
           final RenderBox renderBox = context.findRenderObject() as RenderBox;
           final double itemHeight =
-              renderBox.size.height / 5; // Estimation de la hauteur d'un item
+              renderBox.size.height / 5;
           final double position = quizIndex * itemHeight;
 
           await Future.delayed(
             const Duration(milliseconds: 500),
-          ); // Délai supplémentaire
+          );
 
           if (_scrollController.hasClients) {
             _scrollController.animateTo(
@@ -170,7 +161,7 @@ class _QuizPageState extends State<QuizPage> {
 
   @override
   void dispose() {
-    _refreshTimer?.cancel(); // Fix memory leak
+    _refreshTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -199,7 +190,7 @@ class _QuizPageState extends State<QuizPage> {
   Future<bool> _loadQuizViewPreference() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('quiz_view_preference') ??
-        true; // Par défaut: aventure
+        true;
   }
 
   @override
@@ -225,7 +216,6 @@ class _QuizPageState extends State<QuizPage> {
     final bool scrollToPlayed =
         args?['scrollToPlayed'] ?? widget.scrollToPlayed;
 
-    // Contenu principal (header + liste optimisée)
     Widget content = RefreshIndicator(
       onRefresh: _loadInitialData,
       child: CustomScrollView(
@@ -245,7 +235,6 @@ class _QuizPageState extends State<QuizPage> {
       ),
     );
 
-    // Gestion scroll ciblé
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollToQuizId != null) {
         _scrollToQuiz(_scrollToQuizId!);
@@ -298,11 +287,10 @@ class _QuizPageState extends State<QuizPage> {
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Row(
               children: [
-                // const Text('Liste'),
                 const SizedBox(width: 6),
                 Container(
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.08),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -314,9 +302,7 @@ class _QuizPageState extends State<QuizPage> {
                     inactiveTrackColor: Colors.white,
                     onChanged: (v) async {
                       if (!v) return;
-                      // Save preference before navigating
-                      await _saveQuizViewPreference(true); // Adventure mode
-                      // Navigate directly to quiz adventure page (not through dashboard)
+                      await _saveQuizViewPreference(true);
                       if (!mounted) return; 
                       await Navigator.pushReplacementNamed(
                         context,
@@ -349,7 +335,7 @@ class _QuizPageState extends State<QuizPage> {
   Future<void> _loadInitialData() async {
     setState(() {
       _isInitialLoad = true;
-      _baseQuizzes = []; // Réinitialiser explicitement
+      _baseQuizzes = [];
       _visiblePlayed = [];
       _visibleUnplayed = [];
     });
@@ -365,14 +351,12 @@ class _QuizPageState extends State<QuizPage> {
         return;
       }
 
-      // Chargement PARALLÈLE mais avec gestion d'état correcte
       await Future.wait([
         _loadUserPoints(),
         _loadQuizzes(),
         _loadQuizHistory(),
       ], eagerError: true);
 
-      // FORCER l'application des filtres après tous les chargements
       if (mounted) {
         if (_selectedFormationId == null) {
           _selectFormationFromLastPlayedIfAny();
@@ -382,7 +366,6 @@ class _QuizPageState extends State<QuizPage> {
       }
     } catch (e) {
       debugPrint('Erreur chargement initial: $e');
-      // Même en cas d'erreur, mettre à jour l'état
       if (mounted) {
         setState(() {
           _baseQuizzes = [];
@@ -408,13 +391,8 @@ class _QuizPageState extends State<QuizPage> {
 
   Future<void> _loadQuizHistory() async {
     try {
-      // debugPrint('🔄 Chargement historique...');
-
       final history = await _statsRepository.getQuizHistory();
-      // debugPrint('✅ Historique chargé: ${history.length} entrées');
-
       final playedIds = history.map((h) => h.quiz.id.toString()).toList();
-      // debugPrint('✅ Quiz joués: $playedIds');
 
       if (mounted) {
         setState(() {
@@ -424,9 +402,6 @@ class _QuizPageState extends State<QuizPage> {
         });
       }
     } catch (e) {
-      // debugPrint('❌ Erreur historique: $e');
-      // debugPrint('Stack: $stack');
-
       if (mounted) {
         setState(() {
           _futureQuizHistory = Future.value([]);
@@ -443,27 +418,18 @@ class _QuizPageState extends State<QuizPage> {
         stagiaireId: _connectedStagiaireId!,
       );
 
-      // debugPrint('✅ Quiz chargés: ${quizzes.length} quiz');
-
       final filteredQuizzes = _filterQuizzesByPoints(quizzes, _userPoints);
-      // debugPrint('✅ Quiz filtrés: ${filteredQuizzes.length} quiz');
 
-      // Extraire / actualiser les formations (toujours à jour)
       await _extractAvailableFilters(quizzes);
 
-      // METTRE À JOUR L'ÉTAT IMMÉDIATEMENT
       if (mounted) {
         setState(() {
-          _allQuizzes = quizzes; // Store all quizzes for played quiz history
+          _allQuizzes = quizzes;
           _baseQuizzes = filteredQuizzes;
           _futureQuizzes = Future.value(filteredQuizzes);
         });
       }
     } catch (e) {
-      // debugPrint('❌ Erreur chargement quiz: $e');
-      // debugPrint('Stack: $stack');
-
-      // Même en cas d'erreur, mettre à jour l'état
       if (mounted) {
         setState(() {
           _baseQuizzes = [];
@@ -500,12 +466,9 @@ class _QuizPageState extends State<QuizPage> {
     }
   }
 
-  /// Filtre les quiz en fonction des points totaux de l'utilisateur
-  /// pour un déverrouillage progressif par niveau
   List<quiz_model.Quiz> _filterQuizzesByPoints(List<quiz_model.Quiz> quizzes, int userPoints) {
     if (quizzes.isEmpty) return [];
 
-    // Normaliser les niveaux pour gérer les variations de casse/format
     String normalizeLevel(String? level) {
       if (level == null || level.isEmpty) return 'débutant';
       final lvl = level.toLowerCase().trim();
@@ -518,25 +481,17 @@ class _QuizPageState extends State<QuizPage> {
       return 'débutant';
     }
 
-    // Séparer les quiz par niveau
     final debutant = quizzes.where((q) => normalizeLevel(q.niveau) == 'débutant').toList();
     final intermediaire = quizzes.where((q) => normalizeLevel(q.niveau) == 'intermédiaire').toList();
     final avance = quizzes.where((q) => normalizeLevel(q.niveau) == 'avancé').toList();
 
-    // Simplified 3-tier quiz filtering system:
-    // < 50 points: beginner only
-    // 50-99 points: beginner + intermediate
-    // >= 100 points: all levels
     List<quiz_model.Quiz> result;
     
     if (userPoints < 50) {
-      // Moins de 50 points : tous les quiz débutants
       result = debutant;
     } else if (userPoints < 100) {
-      // 50-99 points : débutants + intermédiaires
       result = [...debutant, ...intermediaire];
     } else {
-      // 100+ points : tous les niveaux
       result = [...debutant, ...intermediaire, ...avance];
     }
 
@@ -545,10 +500,7 @@ class _QuizPageState extends State<QuizPage> {
     return result;
   }
 
-  // _separateQuizzes supprimé: remplacé par _applyFilters()
-
   void _applyFilters() {
-    // Vérifier que les données de base sont disponibles
     if (_baseQuizzes.isEmpty) {
       setState(() {
         _visiblePlayed = [];
@@ -557,24 +509,19 @@ class _QuizPageState extends State<QuizPage> {
       return;
     }
 
-    // S'assurer que _playedQuizIds est initialisé
     final playedIds = _playedQuizIds;
     
-    // For played quizzes: use _allQuizzes to show ALL played quizzes regardless of point filtering
     var played = _allQuizzes.isNotEmpty 
         ? _allQuizzes.where((q) => playedIds.contains(q.id.toString())).toList()
         : <quiz_model.Quiz>[];
     
-    // For unplayed quizzes: use _baseQuizzes (already filtered by points)
     var unplayed = _baseQuizzes.where((q) => !playedIds.contains(q.id.toString())).toList();
 
-    // Appliquer le filtre par formation si sélectionné (utiliser l'ID pour plus de fiabilité)
     if (_selectedFormationId != null) {
       played = played.where((q) => q.formation.id == _selectedFormationId).toList();
       unplayed = unplayed.where((q) => q.formation.id == _selectedFormationId).toList();
     }
 
-    // Trier l'historique par date (plus récent en premier)
     if (_quizHistoryList.isNotEmpty && played.isNotEmpty) {
       played.sort((a, b) {
         try {
@@ -586,7 +533,7 @@ class _QuizPageState extends State<QuizPage> {
           );
           final da = DateTime.parse(ha.completedAt);
           final db = DateTime.parse(hb.completedAt);
-          return db.compareTo(da); // Plus récent en premier
+          return db.compareTo(da);
         } catch (_) {
           return 0;
         }
@@ -619,36 +566,13 @@ class _QuizPageState extends State<QuizPage> {
         Text(
           'Testez vos connaissances avec ces quiz',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
         const SizedBox(height: 16),
-        // Level Unlock Indicator
         LevelUnlockIndicator(userPoints: _userPoints),
         const SizedBox(height: 8),
 
-        // Row(
-        //   children: [
-        //     OutlinedButton.icon(
-        //       onPressed: () async {
-        //         // Scroll to available section (top)
-        //         _scrollController.animateTo(
-        //           0,
-        //           duration: const Duration(milliseconds: 500),
-        //           curve: Curves.easeInOut,
-        //         );
-        //       },
-        //       icon: const Icon(Icons.playlist_add_check),
-        //       label: const Text('Disponibles'),
-        //     ),
-        //     const SizedBox(width: 8),
-        //     OutlinedButton.icon(
-        //       onPressed: _scrollToPlayedQuizzes,
-        //       icon: const Icon(Icons.history),
-        //       label: const Text('Déjà joués'),
-        //     ),
-        //   ],
-        // ),
         const SizedBox(height: 10),
         if (_availableFormationIds.isNotEmpty)
           Row(
@@ -664,7 +588,7 @@ class _QuizPageState extends State<QuizPage> {
                       horizontal: 12,
                     ),
                     side: BorderSide(
-                      color: theme.colorScheme.primary.withOpacity(0.5),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.5),
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -678,7 +602,7 @@ class _QuizPageState extends State<QuizPage> {
                             ? (_formationIdToTitle[_selectedFormationId] ?? 'Formation inconnue')
                             : 'Choisir une formation',
                         style: TextStyle(
-                          color: theme.colorScheme.onSurface.withOpacity(0.8),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                         ),
                       ),
                       Icon(
@@ -707,57 +631,6 @@ class _QuizPageState extends State<QuizPage> {
               ],
             ],
           ),
-        // if (_selectedLevel != null || _selectedFormation != null) ...[
-        //   const SizedBox(height: 8),
-        //   Container(
-        //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        //     decoration: BoxDecoration(
-        //       color: theme.colorScheme.primary.withOpacity(0.1),
-        //       borderRadius: BorderRadius.circular(20),
-        //       border: Border.all(
-        //         color: theme.colorScheme.primary.withOpacity(0.3),
-        //       ),
-        //     ),
-        //     child: Row(
-        //       mainAxisSize: MainAxisSize.min,
-        //       children: [
-        //         Icon(
-        //           Icons.filter_list,
-        //           size: 16,
-        //           color: theme.colorScheme.primary,
-        //         ),
-        //         const SizedBox(width: 6),
-        //         Text(
-        //           _buildFilterText(),
-        //           style: theme.textTheme.bodySmall?.copyWith(
-        //             color: theme.colorScheme.primary,
-        //             fontWeight: FontWeight.w500,
-        //           ),
-        //         ),
-        //         const SizedBox(width: 8),
-        //         GestureDetector(
-        //           onTap: () {
-        //             setState(() {
-        //               _selectedLevel = null;
-        //               _selectedFormation = null;
-        //             });
-        //             _applyFilters();
-        //             _scrollController.animateTo(
-        //               0,
-        //               duration: const Duration(milliseconds: 400),
-        //               curve: Curves.easeInOut,
-        //             );
-        //           },
-        //           child: Icon(
-        //             Icons.close,
-        //             size: 16,
-        //             color: theme.colorScheme.primary,
-        //           ),
-        //         ),
-        //       ],
-        //     ),
-        //   ),
-        // ],
         const SizedBox(height: 16),
       ],
     );
@@ -771,7 +644,6 @@ class _QuizPageState extends State<QuizPage> {
       return SliverFillRemaining(child: _buildEmptyState(theme));
     }
 
-    final screenWidth = MediaQuery.of(context).size.width;
     final unplayed = _visibleUnplayed;
     final played = _visiblePlayed;
 
@@ -875,14 +747,12 @@ class _QuizPageState extends State<QuizPage> {
               ),
         );
 
-        // Correction NaN : si totalQuestions == 0, afficher 0%
         final scorePercentage =
             (history.totalQuestions == 0)
                 ? 0
                 : (history.correctAnswers / history.totalQuestions * 100)
                     .round();
 
-        // Gestion du format de date invalide + debug valeur brute
         String formattedDate;
         String debugDate = history.completedAt;
         try {
@@ -901,7 +771,7 @@ class _QuizPageState extends State<QuizPage> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -909,7 +779,6 @@ class _QuizPageState extends State<QuizPage> {
           ),
           child: Column(
             children: [
-              // Header
               InkWell(
                 key: ValueKey('played_quiz_header_${quiz.id}'),
                 borderRadius: const BorderRadius.vertical(
@@ -927,7 +796,6 @@ class _QuizPageState extends State<QuizPage> {
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      // Score circle
                       Stack(
                         alignment: Alignment.center,
                         children: [
@@ -936,7 +804,7 @@ class _QuizPageState extends State<QuizPage> {
                             height: 48,
                             child: CircularProgressIndicator(
                               value: scorePercentage / 100,
-                              backgroundColor: categoryColor.withOpacity(0.1),
+                              backgroundColor: categoryColor.withValues(alpha: 0.1),
                               color: categoryColor,
                               strokeWidth: 4,
                             ),
@@ -952,7 +820,6 @@ class _QuizPageState extends State<QuizPage> {
                         ],
                       ),
                       const SizedBox(width: 16),
-                      // Title and date
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -976,24 +843,19 @@ class _QuizPageState extends State<QuizPage> {
                             Text(
                               quiz.niveau,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(
-                                  0.6,
-                                ),
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               formattedDate,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(
-                                  0.6,
-                                ),
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      // Chevron
                       Icon(
                         isExpanded ? Icons.expand_less : Icons.expand_more,
                         color: categoryColor,
@@ -1003,7 +865,6 @@ class _QuizPageState extends State<QuizPage> {
                 ),
               ),
 
-              // Expanded content
               AnimatedCrossFade(
                 duration: const Duration(milliseconds: 250),
                 crossFadeState:
@@ -1015,9 +876,8 @@ class _QuizPageState extends State<QuizPage> {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: Column(
                     children: [
-                      Divider(color: theme.dividerColor.withOpacity(0.2)),
+                      Divider(color: theme.dividerColor.withValues(alpha: 0.2)),
                       const SizedBox(height: 12),
-                      // Stats
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
@@ -1045,7 +905,6 @@ class _QuizPageState extends State<QuizPage> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      // Retry button
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton(
@@ -1100,7 +959,7 @@ class _QuizPageState extends State<QuizPage> {
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
       ],
@@ -1115,7 +974,6 @@ class _QuizPageState extends State<QuizPage> {
         return;
       }
 
-      // Check for resume
       final resumeService = sl<QuizResumeService>();
       debugPrint('🔍 Checking for saved session: quizId=${quiz.id}');
       final sessionData = await resumeService.getSession(quiz.id.toString());
@@ -1133,7 +991,7 @@ class _QuizPageState extends State<QuizPage> {
           ),
         );
 
-        if (shouldResume == null) return; // Cancelled
+        if (shouldResume == null) return;
 
         if (shouldResume) {
           debugPrint('▶️ User chose to resume');
@@ -1146,7 +1004,6 @@ class _QuizPageState extends State<QuizPage> {
         debugPrint('❌ No saved session found or widget not mounted');
       }
 
-      // Mettre à jour l'état pour indiquer que le quiz a été joué
       if (mounted) {
         setState(() {
           _playedQuizIds.add(quiz.id.toString());
@@ -1169,7 +1026,6 @@ class _QuizPageState extends State<QuizPage> {
         ),
       );
 
-      // Rafraîchir les données si le quiz a été complété
       if (result == true) {
         await _loadInitialData();
       }
@@ -1206,7 +1062,7 @@ class _QuizPageState extends State<QuizPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1214,7 +1070,6 @@ class _QuizPageState extends State<QuizPage> {
       ),
       child: Column(
         children: [
-          // Header
           InkWell(
             key: ValueKey('quiz_header_${quiz.id}'),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
@@ -1230,22 +1085,20 @@ class _QuizPageState extends State<QuizPage> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  // Icon with gradient
                   Container(
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [categoryColor.withOpacity(0.8), categoryColor],
+                        colors: [categoryColor.withValues(alpha: 0.8), categoryColor],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.quiz, color: Colors.white),
+                    child: const Icon(Icons.quiz, color: Colors.white),
                   ),
                   const SizedBox(width: 16),
-                  // Title and subtitle - now takes full available width
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1271,13 +1124,12 @@ class _QuizPageState extends State<QuizPage> {
                         Text(
                           quiz.niveau,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  // Chevron only in header now
                   Icon(
                     isExpanded ? Icons.expand_less : Icons.expand_more,
                     color: categoryColor,
@@ -1287,7 +1139,6 @@ class _QuizPageState extends State<QuizPage> {
             ),
           ),
 
-          // Expandable content
           AnimatedCrossFade(
             duration: const Duration(milliseconds: 250),
             crossFadeState:
@@ -1299,9 +1150,8 @@ class _QuizPageState extends State<QuizPage> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 children: [
-                  Divider(color: theme.dividerColor.withOpacity(0.2)),
+                  Divider(color: theme.dividerColor.withValues(alpha: 0.2)),
                   const SizedBox(height: 12),
-                  // Quiz details - Points badge moved here
                   Row(
                     children: [
                       Icon(Icons.star, size: 20, color: categoryColor),
@@ -1313,9 +1163,7 @@ class _QuizPageState extends State<QuizPage> {
                             Text(
                               'Points à gagner',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(
-                                  0.6,
-                                ),
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -1359,7 +1207,6 @@ class _QuizPageState extends State<QuizPage> {
                     iconColor: categoryColor,
                   ),
                   const SizedBox(height: 16),
-                  // Start button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -1413,7 +1260,7 @@ class _QuizPageState extends State<QuizPage> {
                 Text(
                   label,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -1477,7 +1324,7 @@ class _QuizPageState extends State<QuizPage> {
           Icon(
             Icons.quiz_outlined,
             size: 48,
-            color: theme.colorScheme.primary.withOpacity(0.5),
+            color: theme.colorScheme.primary.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text('Aucun quiz disponible', style: theme.textTheme.titleMedium),
@@ -1491,10 +1338,6 @@ class _QuizPageState extends State<QuizPage> {
       ),
     );
   }
-
-  // _buildErrorState supprimé (flux simplifié)
-
-  // _buildQuizShimmer supprimé (flux simplifié)
 
   void _scrollToPlayedQuizzes() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -1532,7 +1375,6 @@ class _QuizPageState extends State<QuizPage> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Filtre par niveau
                       Text(
                         'Niveau',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -1541,7 +1383,7 @@ class _QuizPageState extends State<QuizPage> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: _selectedLevel,
+                        initialValue: _selectedLevel,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(
@@ -1570,7 +1412,6 @@ class _QuizPageState extends State<QuizPage> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Filtre par formation
                       Text(
                         'Formation',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -1629,7 +1470,7 @@ class _QuizPageState extends State<QuizPage> {
                       onPressed: () {
                         setState(
                           () {},
-                        ); // Rafraîchir l'affichage avec les filtres
+                        );
                         _applyFilters();
                         Navigator.pop(context);
                       },
@@ -1674,7 +1515,7 @@ class _QuizPageState extends State<QuizPage> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withValues(alpha: 0.2),
                   blurRadius: 15,
                   offset: const Offset(0, 5),
                 ),
@@ -1724,7 +1565,7 @@ class _QuizPageState extends State<QuizPage> {
                             leading: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: selected ? theme.colorScheme.primary.withOpacity(0.1) : Colors.transparent,
+                                color: selected ? theme.colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -1806,10 +1647,10 @@ class _QuizPageState extends State<QuizPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.1),
+        color: theme.colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.6),
+          color: theme.colorScheme.primary.withValues(alpha: 0.6),
           width: 1,
         ),
       ),
@@ -1830,7 +1671,6 @@ class _QuizPageState extends State<QuizPage> {
     );
   }
 
-  /// Sélectionne automatiquement la formation du dernier quiz joué si elle existe
   void _selectFormationFromLastPlayedIfAny() {
     try {
       if (_selectedFormationId != null) return;

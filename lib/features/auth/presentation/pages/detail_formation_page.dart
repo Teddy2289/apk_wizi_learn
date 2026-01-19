@@ -227,7 +227,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.arrow_back, color: Colors.white),
@@ -243,7 +243,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.share, color: Colors.white),
@@ -366,7 +366,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                               ),
                           errorWidget:
                               (context, url, error) => Container(
-                                color: categoryColor.withOpacity(0.1),
+                                color: categoryColor.withValues(alpha: 0.1),
                                 child: Center(
                                   child: Icon(
                                     Icons.school,
@@ -409,7 +409,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                     const SizedBox(height: 8),
                                     Chip(
                                       backgroundColor: categoryColor
-                                          .withOpacity(0.2),
+                                          .withValues(alpha: 0.2),
                                       label: Text(
                                         formation.category.categorie,
                                         style: TextStyle(
@@ -754,7 +754,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 elevation: 4,
-                                shadowColor: categoryColor.withOpacity(0.3),
+                                shadowColor: categoryColor.withValues(alpha: 0.3),
                               ),
                               onPressed:
                                   _isLoading ? null : _inscrireAFormation,
@@ -806,7 +806,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Colors.red.withOpacity(0.1),
+                                color: Colors.red.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(color: Colors.red),
                               ),
@@ -889,7 +889,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -934,7 +934,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: categoryColor.withOpacity(0.1),
+        color: categoryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(

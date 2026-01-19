@@ -270,7 +270,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
         Expanded(
           child: ElevatedButton.icon(
             onPressed: () {
-              // TODO: Navigate to rankings
+              Navigator.pushNamed(context, '/formateur/classement');
             },
             icon: const Icon(Icons.leaderboard),
             label: const Text('Classement'),
@@ -284,7 +284,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
         Expanded(
           child: ElevatedButton.icon(
             onPressed: () {
-              // TODO: Navigate to announcements
+              Navigator.pushNamed(context, '/formateur/send-notification');
             },
             icon: const Icon(Icons.announcement),
             label: const Text('Annonces'),

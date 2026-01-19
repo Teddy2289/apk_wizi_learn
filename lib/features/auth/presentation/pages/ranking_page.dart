@@ -10,7 +10,6 @@ import 'package:wizi_learn/features/auth/presentation/widgets/quiz_history_widge
 import 'package:wizi_learn/features/auth/presentation/widgets/quiz_stats_widget.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
-import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});

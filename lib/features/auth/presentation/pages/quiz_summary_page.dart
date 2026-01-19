@@ -59,7 +59,6 @@ class _QuizSummaryPageState extends State<QuizSummaryPage> {
   int _viewResultsSeconds = 60;
   int _nextQuizSeconds = 5;
 
-  bool _showViewResultsCountdown = true;
   bool _showNextQuizCountdown = false;
 
   List<Quiz>? _availableQuizzes;
@@ -404,7 +403,6 @@ Téléchargez Wizi Learn pour vous tester !
 
   void _startNextQuizCountdown() {
     setState(() {
-      _showViewResultsCountdown = false;
       _showNextQuizCountdown = true;
       _nextQuizSeconds = 5;
     });
@@ -550,9 +548,6 @@ Téléchargez Wizi Learn pour vous tester !
 
   // NOUVELLE MÉTHODE : Widget de décompte amélioré
   Widget _buildCountdownInfo() {
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
-
     if (_showNextQuizCountdown) {
       return Container(
         width: double.infinity,
@@ -623,7 +618,7 @@ Téléchargez Wizi Learn pour vous tester !
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.green.withOpacity(0.3),
+                        color: Colors.green.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -768,7 +763,7 @@ Téléchargez Wizi Learn pour vous tester !
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.green.withOpacity(0.4),
+                        color: Colors.green.withValues(alpha: 0.4),
                         blurRadius: 20,
                         offset: const Offset(0, 6),
                       ),
@@ -857,14 +852,14 @@ Téléchargez Wizi Learn pour vous tester !
         backgroundColor:
             isDarkMode ? theme.appBarTheme.backgroundColor : Colors.white,
         elevation: 2,
-        shadowColor: Colors.black.withOpacity(0.1),
+        shadowColor: Colors.black.withValues(alpha: 0.1),
         actions: [
           if (widget.quizResult?['isLocal'] == true)
             Container(
               margin: const EdgeInsets.only(right: 12),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.orange, width: 1.5),
               ),
@@ -946,9 +941,9 @@ Téléchargez Wizi Learn pour vous tester !
                   margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.08),
+                    color: Colors.orange.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                    border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
@@ -995,7 +990,7 @@ Téléchargez Wizi Learn pour vous tester !
                   color: isDarkMode ? theme.cardColor : Colors.white,
                   border: Border(
                     bottom: BorderSide(
-                      color: theme.dividerColor.withOpacity(0.1),
+                      color: theme.dividerColor.withValues(alpha: 0.1),
                       width: 1,
                     ),
                   ),
@@ -1012,7 +1007,7 @@ Téléchargez Wizi Learn pour vous tester !
                       'Détail des questions',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: isDarkMode ? Colors.white : Colors.black87,
+                        color: isDarkMode ? theme.textTheme.bodyLarge?.color : Colors.black87,
                         fontSize: 16,
                       ),
                     ),
@@ -1040,7 +1035,7 @@ Téléchargez Wizi Learn pour vous tester !
                               end: Alignment.bottomCenter,
                               colors: [
                                 theme.scaffoldBackgroundColor,
-                                theme.scaffoldBackgroundColor.withOpacity(0.95),
+                                theme.scaffoldBackgroundColor.withValues(alpha: 0.95),
                               ],
                             )
                             : LinearGradient(

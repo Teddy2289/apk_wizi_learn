@@ -132,25 +132,6 @@ class _OnSplashPage extends State<SplashPage> {
     return RouteConstants.dashboard;
   }
 
-  Future<bool> _isAuthenticated() async {
-    try {
-      final dio = Dio();
-      const storage = FlutterSecureStorage();
-      final apiClient = ApiClient(dio: dio, storage: storage);
-      final authRepo = AuthRepository(
-        remoteDataSource: AuthRemoteDataSourceImpl(
-          apiClient: apiClient,
-          storage: storage,
-        ),
-        storage: storage,
-      );
-      final user = await authRepo.getMe();
-      return user.stagiaire != null;
-    } catch (_) {
-      return false;
-    }
-  }
-
   void _goToNextPage() {
     if (_currentPage < _onboardingData.length - 1) {
       _pageController.nextPage(
@@ -160,10 +141,6 @@ class _OnSplashPage extends State<SplashPage> {
     } else {
       _navigateToAuth();
     }
-  }
-
-  void _skipOnboarding() {
-    _navigateToAuth();
   }
 
   void _navigateToAuth() async {
@@ -186,6 +163,7 @@ class _OnSplashPage extends State<SplashPage> {
         // ne pas bloquer la navigation en cas d'erreur réseau
       }
     }
+    if (!mounted) return;
     Navigator.pushReplacementNamed(context, RouteConstants.login);
   }
 
@@ -234,20 +212,6 @@ class _OnSplashPage extends State<SplashPage> {
                 ),
               ),
               const SizedBox(height: 8),
-              // Skip Button (top right)
-              // Align(
-              //   alignment: Alignment.topRight,
-              //   child: TextButton(
-              //     onPressed: _skipOnboarding,
-              //     child: Text(
-              //       'Passer',
-              //       style: theme.textTheme.bodyLarge?.copyWith(
-              //         color: Colors.orange,
-              //         fontWeight: FontWeight.w600,
-              //       ),
-              //     ),
-              //   ),
-              // ),
 
               // Page View Content
               Expanded(
@@ -276,7 +240,7 @@ class _OnSplashPage extends State<SplashPage> {
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
+                                    color: Colors.black.withValues(alpha: 0.2),
                                     blurRadius: 15,
                                     offset: const Offset(0, 5),
                                   ),
@@ -363,7 +327,7 @@ class _OnSplashPage extends State<SplashPage> {
                     ),
                     minimumSize: Size(size.width * 0.7, 50),
                     elevation: 5,
-                    shadowColor: Colors.black.withOpacity(0.2),
+                    shadowColor: Colors.black.withValues(alpha: 0.2),
                   ),
                   child: Text(
                     _currentPage == _onboardingData.length - 1
