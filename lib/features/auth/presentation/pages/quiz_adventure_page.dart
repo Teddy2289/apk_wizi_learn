@@ -120,13 +120,13 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
       final quizzes = await _quizRepository.getQuizzesForStagiaire(
         stagiaireId: _connectedStagiaireId,
       );
-      print('--- QUIZZES RECUS ---');
+      debugPrint('--- QUIZZES RECUS ---');
       for (var q in quizzes) {
-        print(
+        debugPrint(
           'id= [32m${q.id} [0m, titre=${q.titre}, niveau=${q.niveau}, status=${q.status}',
         );
       }
-      print('---------------------');
+      debugPrint('---------------------');
       final history = await _statsRepository.getQuizHistory(
         page: 1,
         limit: 100,
@@ -301,97 +301,6 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     await prefs.setBool('quiz_view_preference', isAdventureMode);
   }
 
-  Future<bool> _loadQuizViewPreference() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('quiz_view_preference') ??
-        true; // Par défaut: aventure
-  }
-
-  // Sélection d'avatar supprimée
-
-  // Sélection d'avatar supprimée
-
-  Future<void> _checkAndShowTutorial() async {
-    final prefs = await SharedPreferences.getInstance();
-    final seen = prefs.getBool('adventure_tutorial_seen') ?? false;
-    if (!seen) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _showTutorial());
-      await prefs.setBool('adventure_tutorial_seen', true);
-    }
-  }
-
-  void _showTutorial() {
-    TutorialCoachMark(
-      targets: _buildTargets(),
-      colorShadow: Colors.black,
-      textSkip: 'Passer',
-      paddingFocus: 8,
-      opacityShadow: 0.8,
-      onFinish: () {},
-      onSkip: () {
-        return true;
-      },
-    ).show(context: context);
-  }
-
-  List<TargetFocus> _buildTargets() {
-    return [
-      // Targets boutique/avatar supprimés
-      TargetFocus(
-        identify: 'badges',
-        keyTarget: _keyBadges,
-        contents: [
-          TargetContent(
-            align: ContentAlign.bottom,
-            child: const Text(
-              'Ici, retrouve tous tes badges débloqués !',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ],
-      ),
-      TargetFocus(
-        identify: 'progress',
-        keyTarget: _keyProgress,
-        contents: [
-          TargetContent(
-            align: ContentAlign.bottom,
-            child: const Text(
-              'Suis ta progression dans l’aventure quiz.',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ],
-      ),
-      TargetFocus(
-        identify: 'mission',
-        keyTarget: _keyMission,
-        contents: [
-          TargetContent(
-            align: ContentAlign.bottom,
-            child: const Text(
-              'Accomplis des missions pour gagner des récompenses !',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ],
-      ),
-      TargetFocus(
-        identify: 'quiz',
-        keyTarget: _keyQuiz,
-        contents: [
-          TargetContent(
-            align: ContentAlign.top,
-            child: const Text(
-              'Clique sur un quiz débloqué pour commencer à participer.',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-        ],
-      ),
-      // Target avatarAnim supprimé
-    ];
-  }
 
   /// Filtre les quiz en fonction des points totaux de l'utilisateur
   /// pour un déverrouillage progressif par niveau
@@ -929,27 +838,6 @@ class _QuizAdventurePageState extends State<QuizAdventurePage>
     );
   }
 
-  void _goToQuizList() async {
-    if (!widget.quizAdventureEnabled) {
-      // Adventure mode is disabled, stay in current page
-      return;
-    }
-    // Sauvegarder la préférence utilisateur pour la vue liste
-    await _saveQuizViewPreference(false);
-
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder:
-            (_, __, ___) =>
-                QuizPage(quizAdventureEnabled: false, forceList: true),
-        transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 250),
-      ),
-    );
-  }
 
   Widget _buildStepCard(
     quiz_model.Quiz quiz,

@@ -12,7 +12,7 @@ class ContactRepository {
 
   Future<List<Contact>> getContacts() async {
     final response = await apiClient.get(AppConstants.contact);
-    print('Données reçues : ${response.data}');
+    debugPrint('Données reçues : ${response.data}');
 
     final data = response.data;
     List<Contact> contacts = [];
@@ -26,26 +26,26 @@ class ContactRepository {
     if (commerciaux is List) {
       contacts.addAll(commerciaux.map((e) => Contact.fromJson(e)).toList());
     } else {
-      print('⚠ commerciaux n\'est pas une liste : $commerciaux');
+      debugPrint('⚠ commerciaux n\'est pas une liste : $commerciaux');
     }
 
     if (formateurs is List) {
       contacts.addAll(formateurs.map((e) => Contact.fromJson(e)).toList());
     } else {
-      print('⚠ formateurs n\'est pas une liste : $formateurs');
+      debugPrint('⚠ formateurs n\'est pas une liste : $formateurs');
     }
 
     if (poleRelation is List) {
       contacts.addAll(poleRelation.map((e) => Contact.fromJson(e)).toList());
       // debugPrint('Contacts du pôle relation : $poleRelation');
     } else {
-      print('⚠ pole_relation n\'est pas une liste : $poleRelation');
+      debugPrint('⚠ pole_relation n\'est pas une liste : $poleRelation');
     }
 
     if (poleSav is List) {
       contacts.addAll(poleSav.map((e) => Contact.fromJson(e)).toList());
     } else {
-      print('⚠ pole_sav n\'est pas une liste : $poleSav');
+      debugPrint('⚠ pole_sav n\'est pas une liste : $poleSav');
     }
 
     // Filtrer les doublons par email

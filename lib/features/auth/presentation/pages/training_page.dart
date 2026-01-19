@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:intl/intl.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/formation_model.dart';
@@ -471,105 +470,8 @@ class _TrainingPageState extends State<TrainingPage> {
     );
   }
 
-  Widget _buildCompactFilterSection(List<Formation> formations) {
-    final categoryFormations = formations
-        .where((formation) => formation.category.categorie == _selectedCategory)
-        .toList();
-    final sortedFormations = _sortFormations(categoryFormations);
-    final totalItems = sortedFormations.length;
-    final totalPages = (totalItems / _itemsPerPage).ceil();
-    final displayedItems = _paginateFormations(sortedFormations);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-      ),
-      child: Row(
-        children: [
-          // Compteur compact
-          Text(
-            '${displayedItems.length}/$totalItems',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey.shade700,
-            ),
-          ),
-          const Spacer(),
-
-          // Pagination compacte
-          if (totalPages > 1) ...[
-            Row(
-              children: [
-                IconButton(
-                  icon: Icon(
-                    Icons.chevron_left,
-                    size: 18,
-                    color: _currentPage > 1 ? Colors.blue : Colors.grey.shade400,
-                  ),
-                  onPressed: _currentPage > 1
-                      ? () {
-                    setState(() {
-                      _currentPage--;
-                    });
-                  }
-                      : null,
-                ),
-                Text(
-                  '$_currentPage/$totalPages',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.chevron_right,
-                    size: 18,
-                    color: _currentPage < totalPages ? Colors.blue : Colors.grey.shade400,
-                  ),
-                  onPressed: _currentPage < totalPages
-                      ? () {
-                    setState(() {
-                      _currentPage++;
-                    });
-                  }
-                      : null,
-                ),
-              ],
-            ),
-            const SizedBox(width: 8),
-          ],
-
-          // Menu de tri compact
-          PopupMenuButton<SortOption>(
-            icon: Icon(Icons.sort, color: Colors.grey.shade700, size: 18),
-            onSelected: (SortOption value) {
-              setState(() {
-                _selectedSort = value;
-                _resetPagination();
-              });
-            },
-            itemBuilder: (BuildContext context) => [
-              const PopupMenuItem(value: SortOption.nameAsc, child: Text('Nom (A-Z)')),
-              const PopupMenuItem(value: SortOption.nameDesc, child: Text('Nom (Z-A)')),
-              const PopupMenuItem(value: SortOption.durationAsc, child: Text('Durée (Croissante)')),
-              const PopupMenuItem(value: SortOption.durationDesc, child: Text('Durée (Décroissante)')),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
 
-  Widget _buildLandscapeContent(List<Formation> formations, double screenHeight) {
-    return Expanded(
-      child: _buildCompactFormationsList(formations, screenHeight),
-    );
-  }
 
   Widget _buildCompactFormationsList(List<Formation> formations, double screenHeight) {
     final categoryFormations = formations
@@ -1156,7 +1058,6 @@ class _TrainingPageState extends State<TrainingPage> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final width = constraints.maxWidth;
-                final height = constraints.maxHeight;
 
                 // Calcul dynamique adapté à l'orientation
                 final crossAxisCount =

@@ -179,7 +179,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadConnectedUser() async {
     try {
-      final user = await _authRepository.getMe();
+      await _authRepository.getMe();
       int loginStreak = await _fetchLoginStreakFromBackend().catchError((
         _,
       ) async {

@@ -10,7 +10,7 @@ class AppConstants {
   static const String meEndpoint = "/me";
   static const String tokenKey = "auth_token";
   static const String userKey = "auth_user";
-  static const String catalogue_formation = "/catalogueFormations/formations";
+  static const String catalogueFormation = "/catalogueFormations/formations";
   static const String formationStagiaire = "/stagiaire/formations";
   static const String contact = "/stagiaire/contacts";
   static const String partner = "/stagiaire/partner";

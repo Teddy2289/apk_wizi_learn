@@ -12,7 +12,7 @@ class FormationRepository {
   FormationRepository({required this.apiClient});
 
   Future<List<Formation>> getFormations() async {
-    final response = await apiClient.get(AppConstants.catalogue_formation);
+    final response = await apiClient.get(AppConstants.catalogueFormation);
     final data = response.data;
 
     if (data is List) {
@@ -36,7 +36,7 @@ class FormationRepository {
 
   Future<Formation> getFormationDetail(int id) async {
     final response = await apiClient.get(
-      '${AppConstants.catalogue_formation}/$id',
+      '${AppConstants.catalogueFormation}/$id',
     );
     final data = response.data['catalogueFormation'];
 
@@ -157,10 +157,10 @@ class FormationRepository {
 
   Future<Map<String, dynamic>> inscrireAFormation(int formationId) async {
     try {
-      print(
+      debugPrint(
         '🟡 DEBUG: Appel API vers /stagiaire/inscription-catalogue-formation',
       );
-      print(
+      debugPrint(
         '🟡 DEBUG: Données envoyées: {"catalogue_formation_id": $formationId}',
       );
 
@@ -169,8 +169,8 @@ class FormationRepository {
         data: {'catalogue_formation_id': formationId},
       );
 
-      print('🟢 DEBUG: Réponse reçue - Status: ${response.statusCode}');
-      print('🟢 DEBUG: Données de réponse: ${response.data}');
+      debugPrint('🟢 DEBUG: Réponse reçue - Status: ${response.statusCode}');
+      debugPrint('🟢 DEBUG: Données de réponse: ${response.data}');
 
       // Accepter les codes 200, 201
       if (response.statusCode! >= 200 && response.statusCode! < 300) {
@@ -183,7 +183,7 @@ class FormationRepository {
         );
       }
     } catch (e) {
-      print('🔴 DEBUG: Erreur dans inscrireAFormation: $e');
+      debugPrint('🔴 DEBUG: Erreur dans inscrireAFormation: $e');
       rethrow;
     }
   }

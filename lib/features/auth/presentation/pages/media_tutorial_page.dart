@@ -241,43 +241,6 @@ class _MediaTutorialPageState extends State<MediaTutorialPage> {
     }
   }
 
-  void _showNewBadgesDialog(
-    BuildContext context,
-    List<dynamic> newAchievements,
-  ) {
-    if (newAchievements.isEmpty) return;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Nouveaux Badges !'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: newAchievements.map((achievement) {
-                return ListTile(
-                  leading: const Icon(
-                    Icons.emoji_events,
-                    color: Colors.amber,
-                  ),
-                  title: Text(achievement['name'] ?? 'Badge'),
-                  subtitle: Text(
-                    achievement['badgeType'] ?? 'Type inconnu',
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

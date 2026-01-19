@@ -52,7 +52,6 @@ class _QuizPageState extends State<QuizPage> {
   bool _isInitialLoad = true;
   int? _connectedStagiaireId;
   int _userPoints = 0;
-  bool _fromNotification = false;
   List<String> _playedQuizIds = [];
   String? _scrollToQuizId;
   bool _didRedirectToAdventure = false;
@@ -74,10 +73,6 @@ class _QuizPageState extends State<QuizPage> {
   Timer? _refreshTimer;
 
   // Dans _loadInitialData() ou les méthodes de rafraîchissement
-  void _scheduleRefresh() {
-    _refreshTimer?.cancel();
-    _refreshTimer = Timer(const Duration(milliseconds: 500), _loadInitialData);
-  }
 
   @override
   void initState() {

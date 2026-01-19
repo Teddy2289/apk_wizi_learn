@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
+import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_event.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_state.dart';
@@ -62,7 +63,10 @@ class CustomDrawer extends StatelessWidget {
                             if (pickedFile != null) {
                               try {
                                 final token = await _getToken(context);
-                                final avatarRepo = AvatarRepository(dio: Dio());
+                                final dio = Dio();
+                                const storage = FlutterSecureStorage();
+                                final apiClient = ApiClient(dio: dio, storage: storage);
+                                final avatarRepo = AvatarRepository(apiClient: apiClient);
                                 final success = await avatarRepo
                                     .uploadUserPhoto(pickedFile.path, token);
                                 if (success) {
@@ -647,6 +651,6 @@ class _MenuItem {
 
 // Helper pour récupérer le token (à adapter selon ta logique d'authentification)
 Future<String> _getToken(BuildContext context) async {
-  final storage = const FlutterSecureStorage();
+  const storage = FlutterSecureStorage();
   return await storage.read(key: 'auth_token') ?? '';
 }

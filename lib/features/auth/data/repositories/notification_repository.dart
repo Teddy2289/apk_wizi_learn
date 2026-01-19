@@ -2,6 +2,7 @@ import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/features/auth/data/models/notification_model.dart';
 import 'package:wizi_learn/core/services/firebase_notification_service.dart';
+import 'package:flutter/foundation.dart';
 
 class NotificationRepository {
   final ApiClient apiClient;
@@ -70,7 +71,7 @@ class NotificationRepository {
         },
       );
     } catch (e) {
-      print('Erreur lors de l\'envoi de la notification de test: $e');
+      debugPrint('Erreur lors de l\'envoi de la notification de test: $e');
     }
   }
 }

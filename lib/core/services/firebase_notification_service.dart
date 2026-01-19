@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/core/services/navigation_service.dart';
@@ -39,14 +40,14 @@ class FirebaseNotificationService {
 
     // Gérer les taps sur les notifications (lorsque l'app est en background ou cold start)
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('Notification tap (onMessageOpenedApp): ${message.messageId}');
+      debugPrint('Notification tap (onMessageOpenedApp): ${message.messageId}');
       _handleMessageNavigation(message.data);
     });
 
     // Cold start: vérifier si l'app a été ouverte par une notification
     FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
       if (message != null) {
-        print('App ouverte depuis une notification (initialMessage): ${message.messageId}');
+        debugPrint('App ouverte depuis une notification (initialMessage): ${message.messageId}');
         _handleMessageNavigation(message.data);
       }
     });
@@ -98,46 +99,46 @@ class FirebaseNotificationService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('Permissions accordées');
+      debugPrint('Permissions accordées');
     } else {
-      print('Permissions refusées');
+      debugPrint('Permissions refusées');
     }
 
     // Obtenir le token FCM
     String? token = await _firebaseMessaging.getToken();
     if (token != null) {
       // Ne pas envoyer le token ici, juste le stocker localement
-      print('[FCM] Token obtenu après permission, stocké localement en attente de login: $token');
+      debugPrint('[FCM] Token obtenu après permission, stocké localement en attente de login: $token');
       await _storage.write(key: 'pending_fcm_token', value: token);
     }
 
     // Écouter les changements de token
     _firebaseMessaging.onTokenRefresh.listen((String refreshedToken) async {
-      print('[FCM] Nouveau token FCM reçu (refresh), stocké localement en attente de login: $refreshedToken');
+      debugPrint('[FCM] Nouveau token FCM reçu (refresh), stocké localement en attente de login: $refreshedToken');
       await _storage.write(key: 'pending_fcm_token', value: refreshedToken);
     });
   }
 
   Future<void> _sendTokenToServer(String token) async {
     if (_apiClient == null) {
-      print('ApiClient non disponible, token stocké localement: $token');
+      debugPrint('ApiClient non disponible, token stocké localement: $token');
       await _storage.write(key: 'pending_fcm_token', value: token);
       return;
     }
 
     try {
-      print('[FCM] Tentative d\'envoi du token au backend:');
-      print('  URL: /fcm-token');
+      debugPrint('[FCM] Tentative d\'envoi du token au backend:');
+      debugPrint('  URL: /fcm-token');
       // Impossible d'afficher les headers car ApiClient n'expose pas 'options'.
-      print('  Headers: (non affichés, structure ApiClient inconnue)');
-      print('  Data: {token: $token}');
+      debugPrint('  Headers: (non affichés, structure ApiClient inconnue)');
+      debugPrint('  Data: {token: $token}');
       final response = await _apiClient!.post('/fcm-token', data: {'token': token});
-      print('Réponse backend: statusCode=${response.statusCode}, data=${response.data}');
-      print('Token FCM envoyé au serveur: $token');
+      debugPrint('Réponse backend: statusCode=${response.statusCode}, data=${response.data}');
+      debugPrint('Token FCM envoyé au serveur: $token');
       // Si l'envoi a réussi, supprime le token stocké
       await _storage.delete(key: 'pending_fcm_token');
     } catch (e) {
-      print('Erreur lors de l\'envoi du token FCM: $e');
+      debugPrint('Erreur lors de l\'envoi du token FCM: $e');
       // En cas d'échec, stocke le token pour un nouvel essai
       await _storage.write(key: 'pending_fcm_token', value: token);
     }
@@ -145,7 +146,7 @@ class FirebaseNotificationService {
 
   void _setupForegroundMessageHandler() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Message reçu en premier plan: ${message.messageId}');
+      debugPrint('Message reçu en premier plan: ${message.messageId}');
 
       // Créer une notification locale
       _showLocalNotification(message);
@@ -202,13 +203,13 @@ class FirebaseNotificationService {
 
   void _onNotificationTapped(NotificationResponse response) {
     // Gérer le tap sur la notification venant de flutter_local_notifications
-    print('Notification tapée (local): ${response.payload}');
+    debugPrint('Notification tapée (local): ${response.payload}');
     if (response.payload != null && response.payload!.isNotEmpty) {
       try {
         final Map<String, dynamic> data = jsonDecode(response.payload!);
         _handleMessageNavigation(data);
       } catch (e) {
-        print('Impossible de parser le payload de la notification: $e');
+        debugPrint('Impossible de parser le payload de la notification: $e');
       }
     }
   }
@@ -216,17 +217,17 @@ class FirebaseNotificationService {
   void _handleMessageNavigation(Map<String, dynamic> data) {
     if (data.containsKey('link') && data['link'] != null && data['link'].toString().isNotEmpty) {
       final String link = data['link'].toString();
-      print('Navigation vers: $link');
+      debugPrint('Navigation vers: $link');
       // Try to navigate. navigatorKey may be null if UI not ready yet.
       try {
         navigatorKey.currentState?.pushNamed(link);
       } catch (e) {
-        print('Erreur lors de la navigation depuis la notification: $e');
+        debugPrint('Erreur lors de la navigation depuis la notification: $e');
       }
     } else if (data.containsKey('type')) {
       // Map types to routes if you use semantic types rather than full links
       final String type = data['type'].toString();
-      print('Notification type: $type');
+      debugPrint('Notification type: $type');
       // Example mapping: adapt to your actual routes
       if (type == 'quiz' && data.containsKey('quiz_id')) {
         navigatorKey.currentState?.pushNamed('/quiz', arguments: {'id': data['quiz_id']});
@@ -256,7 +257,7 @@ class FirebaseNotificationService {
   Future<void> _sendPendingFcmTokenIfAny() async {
     final token = await _storage.read(key: 'pending_fcm_token');
     if (token != null && _apiClient != null) {
-      print('Envoi du token FCM stocké localement après login: $token');
+      debugPrint('Envoi du token FCM stocké localement après login: $token');
       await _sendTokenToServer(token);
     }
   }
@@ -265,7 +266,7 @@ class FirebaseNotificationService {
 // Handler pour les messages en arrière-plan (doit être en dehors de la classe)
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print('Message reçu en arrière-plan: ${message.messageId}');
+  debugPrint('Message reçu en arrière-plan: ${message.messageId}');
   // Ici vous pouvez traiter les notifications en arrière-plan
 }
 
@@ -276,7 +277,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandlerShow(RemoteMessage message) async {
   try {
-    print('Background handler (with local notif) for message: ${message.messageId}');
+    debugPrint('Background handler (with local notif) for message: ${message.messageId}');
 
     final FlutterLocalNotificationsPlugin fln = FlutterLocalNotificationsPlugin();
 
@@ -313,6 +314,6 @@ Future<void> _firebaseMessagingBackgroundHandlerShow(RemoteMessage message) asyn
       payload: payload,
     );
   } catch (e) {
-    print('Erreur dans background handler show notification: $e');
+    debugPrint('Erreur dans background handler show notification: $e');
   }
 }

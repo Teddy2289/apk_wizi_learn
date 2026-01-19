@@ -46,7 +46,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> {
 
   void _handleDiscover() {
     // Navigation vers la page manuel
-    print('User clicked discover platform');
+    debugPrint('User clicked discover platform');
   }
 
   @override

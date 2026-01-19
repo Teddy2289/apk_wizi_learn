@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/models/avatar_model.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
@@ -35,14 +36,15 @@ class AvatarRepository {
         filename: filePath.split('/').last,
       ),
     });
-    final response = await dio.post(
-      AppConstants.baseUrl + AppConstants.updateUserPhotoEndpoint,
+    final response = await apiClient.post(
+      AppConstants.updateUserPhotoEndpoint,
       data: formData,
       options: Options(
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
         },
+        contentType: 'multipart/form-data',
       ),
     );
     return response.data['success'] == true;

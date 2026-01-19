@@ -1,33 +1,33 @@
 class NotificationConstants {
   // Types de notifications
-  static const String QUIZ_TYPE = 'quiz';
-  static const String FORMATION_TYPE = 'formation';
-  static const String MEDIA_TYPE = 'media';
-  static const String BADGE_TYPE = 'badge';
-  static const String SYSTEM_TYPE = 'system';
+  static const String quizType = 'quiz';
+  static const String formationType = 'formation';
+  static const String mediaType = 'media';
+  static const String badgeType = 'badge';
+  static const String systemType = 'system';
 
   // Topics FCM
-  static const String QUIZ_TOPIC = 'quiz_notifications';
-  static const String FORMATION_TOPIC = 'formation_notifications';
-  static const String MEDIA_TOPIC = 'media_notifications';
-  static const String GENERAL_TOPIC = 'general_notifications';
+  static const String quizTopic = 'quiz_notifications';
+  static const String formationTopic = 'formation_notifications';
+  static const String mediaTopic = 'media_notifications';
+  static const String generalTopic = 'general_notifications';
 
   // Actions de notifications
-  static const String ACTION_VIEW_QUIZ = 'view_quiz';
-  static const String ACTION_VIEW_FORMATION = 'view_formation';
-  static const String ACTION_VIEW_MEDIA = 'view_media';
-  static const String ACTION_VIEW_BADGE = 'view_badge';
+  static const String actionViewQuiz = 'view_quiz';
+  static const String actionViewFormation = 'view_formation';
+  static const String actionViewMedia = 'view_media';
+  static const String actionViewBadge = 'view_badge';
 
   // Messages par défaut
-  static const String DEFAULT_TITLE = 'Nouvelle notification';
-  static const String DEFAULT_MESSAGE = 'Vous avez reçu une nouvelle notification';
+  static const String defaultTitle = 'Nouvelle notification';
+  static const String defaultMessage = 'Vous avez reçu une nouvelle notification';
 
   // Configuration des notifications locales
-  static const String CHANNEL_ID = 'high_importance_channel';
-  static const String CHANNEL_NAME = 'Notifications importantes';
-  static const String CHANNEL_DESCRIPTION = 'Canal pour les notifications importantes';
+  static const String channelId = 'high_importance_channel';
+  static const String channelName = 'Notifications importantes';
+  static const String channelDescription = 'Canal pour les notifications importantes';
 
   // Durées
-  static const int NOTIFICATION_DURATION_SECONDS = 5;
-  static const int TOAST_DURATION_SECONDS = 3;
+  static const int notificationDurationSeconds = 5;
+  static const int toastDurationSeconds = 3;
 } 

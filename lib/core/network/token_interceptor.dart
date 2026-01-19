@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 
 /// Interceptor to handle JWT token refresh automatically
 class TokenInterceptor extends Interceptor {
@@ -52,7 +53,7 @@ class TokenInterceptor extends Interceptor {
           throw Exception('No refresh token available');
         }
 
-        print('🔄 Token expired, refreshing...');
+        debugPrint('🔄 Token expired, refreshing...');
 
         // Call refresh endpoint
         final response = await dio.post(
@@ -65,7 +66,7 @@ class TokenInterceptor extends Interceptor {
         // Save new token
         await prefs.setString('access_token', newToken);
         
-        print('✅ New token received and saved');
+        debugPrint('✅ New token received and saved');
 
         // Retry original request with new token
         err.requestOptions.headers['Authorization'] = 'Bearer $newToken';
@@ -76,7 +77,7 @@ class TokenInterceptor extends Interceptor {
 
         handler.resolve(retryResponse);
       } catch (refreshError) {
-        print('❌ Refresh failed: $refreshError');
+        debugPrint('❌ Refresh failed: $refreshError');
         
         // Refresh failed, logout user
         await _logout();

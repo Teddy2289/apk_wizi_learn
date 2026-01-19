@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 class ApiException implements Exception {
   final String message;
@@ -27,11 +28,11 @@ class ApiException implements Exception {
           return ApiException(message: "Pas de connexion Internet");
         }
         // Ajout de logging pour les erreurs inconnues
-        print('UNKNOWN DIO ERROR:');
-        print('Type: ${dioError.type}');
-        print('Error: ${dioError.error}');
-        print('Message: ${dioError.message}');
-        print('Stacktrace: ${dioError.stackTrace}');
+        debugPrint('UNKNOWN DIO ERROR:');
+        debugPrint('Type: ${dioError.type}');
+        debugPrint('Error: ${dioError.error}');
+        debugPrint('Message: ${dioError.message}');
+        debugPrint('Stacktrace: ${dioError.stackTrace}');
         return ApiException(
           message: "Erreur inconnue: ${dioError.message ?? 'Pas de message'}",
         );

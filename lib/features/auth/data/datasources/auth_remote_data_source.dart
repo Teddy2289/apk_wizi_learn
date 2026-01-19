@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/exceptions/api_exception.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -49,11 +50,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final responseData = response.data as Map<String, dynamic>;
 
       // Debug: log raw login response for troubleshooting
-      print('login response: $responseData');
+      debugPrint('login response: $responseData');
 
       // Validation du token (supporte plusieurs clés possibles)
       final token = (responseData['token'] ?? responseData['access_token'] ?? (responseData['data'] is Map ? responseData['data']['token'] : null)) as String?;
-      print('extracted token: $token');
+      debugPrint('extracted token: $token');
       if (token == null || token.isEmpty) {
         throw ApiException(message: 'Token non reçu ou invalide');
       }

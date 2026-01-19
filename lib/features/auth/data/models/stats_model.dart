@@ -1,7 +1,8 @@
 import 'package:wizi_learn/core/utils/quiz_utils.dart';
 import 'package:wizi_learn/features/auth/data/models/question_model.dart';
 import 'package:wizi_learn/features/auth/data/models/quiz_model.dart';
-import 'package:wizi_learn/features/auth/data/models/extended_formateur_model.dart'; // ← Ajoutez cette importation
+import 'package:wizi_learn/features/auth/data/models/extended_formateur_model.dart';
+import 'package:flutter/foundation.dart';
 
 class QuizHistory {
   List<Question> get questions => quiz.questions;
@@ -59,7 +60,7 @@ class GlobalRanking {
       if (value == null) return fallback;
       final parsed = int.tryParse(value.toString());
       if (parsed == null) {
-        print('GlobalRanking: champ "$field" non convertible en int: $value');
+        debugPrint('GlobalRanking: champ "$field" non convertible en int: $value');
         return fallback;
       }
       return parsed;
@@ -69,7 +70,7 @@ class GlobalRanking {
       if (value == null) return fallback;
       final parsed = double.tryParse(value.toString());
       if (parsed == null) {
-        print(
+        debugPrint(
           'GlobalRanking: champ "$field" non convertible en double: $value',
         );
         return fallback;
@@ -173,7 +174,7 @@ class QuizStats {
       if (value == null) return fallback;
       final parsed = int.tryParse(value.toString());
       if (parsed == null) {
-        print('QuizStats: champ "$field" non convertible en int: $value');
+        debugPrint('QuizStats: champ "$field" non convertible en int: $value');
         return fallback;
       }
       return parsed;
@@ -183,7 +184,7 @@ class QuizStats {
       if (value == null) return fallback;
       final parsed = double.tryParse(value.toString());
       if (parsed == null) {
-        print('QuizStats: champ "$field" non convertible en double: $value');
+        debugPrint('QuizStats: champ "$field" non convertible en double: $value');
         return fallback;
       }
       return parsed;
@@ -219,7 +220,7 @@ class CategoryStat {
       if (value == null) return fallback;
       final parsed = int.tryParse(value.toString());
       if (parsed == null) {
-        print('CategoryStat: champ "$field" non convertible en int: $value');
+        debugPrint('CategoryStat: champ "$field" non convertible en int: $value');
         return fallback;
       }
       return parsed;
@@ -229,7 +230,7 @@ class CategoryStat {
       if (value == null) return fallback;
       final parsed = double.tryParse(value.toString());
       if (parsed == null) {
-        print('CategoryStat: champ "$field" non convertible en double: $value');
+        debugPrint('CategoryStat: champ "$field" non convertible en double: $value');
         return fallback;
       }
       return parsed;
@@ -274,7 +275,7 @@ class LevelData {
       if (value == null) return fallback;
       final parsed = int.tryParse(value.toString());
       if (parsed == null) {
-        print('LevelData: champ "$field" non convertible en int: $value');
+        debugPrint('LevelData: champ "$field" non convertible en int: $value');
         return fallback;
       }
       return parsed;
@@ -288,7 +289,7 @@ class LevelData {
       if (value == null) return fallback;
       final parsed = double.tryParse(value.toString());
       if (parsed == null) {
-        print('LevelData: champ "$field" non convertible en double: $value');
+        debugPrint('LevelData: champ "$field" non convertible en double: $value');
         return fallback;
       }
       return parsed;

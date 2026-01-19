@@ -49,17 +49,17 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     });
 
     try {
-      print(
+      debugPrint(
         '🟡 DEBUG: Début de l\'inscription pour la formation ${widget.formationId}',
       );
-      print('🟡 DEBUG: Formation ID: ${widget.formationId}');
+      debugPrint('🟡 DEBUG: Formation ID: ${widget.formationId}');
 
       // Appel à l'API d'inscription
       final response = await _repository.inscrireAFormation(widget.formationId);
 
       // DEBUG: Afficher la réponse de l'API
-      print('🟢 DEBUG: Réponse complète: $response');
-      print('🟢 DEBUG: Type de réponse: ${response.runtimeType}');
+      debugPrint('🟢 DEBUG: Réponse complète: $response');
+      debugPrint('🟢 DEBUG: Type de réponse: ${response.runtimeType}');
 
       // Vérifier le succès dans la réponse
       if (response['success'] == true) {
@@ -70,7 +70,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
               'Inscription réussie, mails et notification envoyés.';
           _showSuccessModal = true;
         });
-        print('🟢 DEBUG: Inscription réussie - Modal affiché');
+        debugPrint('🟢 DEBUG: Inscription réussie - Modal affiché');
       } else {
         throw Exception(
           response['error'] ?? 'Erreur inconnue lors de l\'inscription',
@@ -78,18 +78,18 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
       }
     } catch (e) {
       // DEBUG détaillé de l'erreur
-      print('🔴 DEBUG: ERREUR lors de l\'inscription:');
-      print('🔴 DEBUG: Type d\'erreur: ${e.runtimeType}');
-      print('🔴 DEBUG: Message d\'erreur: $e');
+      debugPrint('🔴 DEBUG: ERREUR lors de l\'inscription:');
+      debugPrint('🔴 DEBUG: Type d\'erreur: ${e.runtimeType}');
+      debugPrint('🔴 DEBUG: Message d\'erreur: $e');
 
       // Si c'est une erreur Dio, afficher plus de détails
       if (e is DioException) {
-        print('🔴 DEBUG: Erreur Dio détectée:');
-        print('🔴 DEBUG: - Type: ${e.type}');
-        print('🔴 DEBUG: - Message: ${e.message}');
-        print('🔴 DEBUG: - Response: ${e.response}');
-        print('🔴 DEBUG: - Status Code: ${e.response?.statusCode}');
-        print('🔴 DEBUG: - Data: ${e.response?.data}');
+        debugPrint('🔴 DEBUG: Erreur Dio détectée:');
+        debugPrint('🔴 DEBUG: - Type: ${e.type}');
+        debugPrint('🔴 DEBUG: - Message: ${e.message}');
+        debugPrint('🔴 DEBUG: - Response: ${e.response}');
+        debugPrint('🔴 DEBUG: - Status Code: ${e.response?.statusCode}');
+        debugPrint('🔴 DEBUG: - Data: ${e.response?.data}');
 
         // Extraire le message d'erreur de la réponse
         final errorData = e.response?.data;
@@ -99,13 +99,13 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
           final serverMessage = errorData['message'] ?? serverError;
           _successMessage = serverMessage.toString();
 
-          print('🔴 DEBUG: Message d\'erreur du serveur: $_successMessage');
+          debugPrint('🔴 DEBUG: Message d\'erreur du serveur: $_successMessage');
         }
 
         // Analyser le statut HTTP
         if (e.response != null) {
           final statusCode = e.response!.statusCode;
-          print('🔴 DEBUG: Status Code: $statusCode');
+          debugPrint('🔴 DEBUG: Status Code: $statusCode');
 
           // Messages d'erreur spécifiques selon le statut
           if (statusCode == 401) {
@@ -150,7 +150,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
       setState(() {
         _isLoading = false;
       });
-      print('🟡 DEBUG: Chargement terminé - isLoading: $_isLoading');
+      debugPrint('🟡 DEBUG: Chargement terminé - isLoading: $_isLoading');
     }
   }
 
@@ -217,7 +217,6 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -265,12 +264,12 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
             builder: (context, snapshot) {
               // DEBUG du chargement des données de formation
               if (snapshot.connectionState == ConnectionState.waiting) {
-                print('🟡 DEBUG: Chargement des détails de la formation...');
+                debugPrint('🟡 DEBUG: Chargement des détails de la formation...');
                 return const Center(child: CircularProgressIndicator());
               }
 
               if (snapshot.hasError) {
-                print(
+                debugPrint(
                   '🔴 DEBUG: Erreur lors du chargement des détails: ${snapshot.error}',
                 );
                 return Center(
@@ -295,7 +294,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                       const SizedBox(height: 24),
                       ElevatedButton(
                         onPressed: () {
-                          print('🟡 DEBUG: Réessai du chargement des détails');
+                          debugPrint('🟡 DEBUG: Réessai du chargement des détails');
                           setState(() {
                             _futureFormation = _repository.getFormationDetail(
                               widget.formationId,
@@ -310,7 +309,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
               }
 
               if (!snapshot.hasData) {
-                print('🔴 DEBUG: Aucune donnée de formation disponible');
+                debugPrint('🔴 DEBUG: Aucune donnée de formation disponible');
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -336,7 +335,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                 formation.category.categorie,
               );
 
-              print('🟢 DEBUG: Formation chargée - ${formation.titre}');
+              debugPrint('🟢 DEBUG: Formation chargée - ${formation.titre}');
 
               return CustomScrollView(
                 slivers: [
@@ -711,18 +710,18 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                                       onPressed: () async {
                                         final pdfUrl =
                                             AppConstants.getMediaUrl(formation.cursusPdf);
-                                        print(
+                                        debugPrint(
                                           '🟡 DEBUG: Tentative d\'ouverture du PDF: $pdfUrl',
                                         );
                                         if (await canLaunchUrl(
                                           Uri.parse(pdfUrl),
                                         )) {
                                           await launchUrl(Uri.parse(pdfUrl));
-                                          print(
+                                          debugPrint(
                                             '🟢 DEBUG: PDF ouvert avec succès',
                                           );
                                         } else {
-                                          print(
+                                          debugPrint(
                                             '🔴 DEBUG: Impossible d\'ouvrir le PDF',
                                           );
                                           ScaffoldMessenger.of(

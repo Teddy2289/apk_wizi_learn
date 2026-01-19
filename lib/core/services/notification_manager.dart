@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_app_badger/flutter_app_badger.dart';
 import 'package:wizi_learn/core/services/navigation_service.dart';
@@ -47,9 +48,9 @@ class NotificationManager {
         _updateAppBadge();
       };
 
-      print('NotificationManager initialisé avec succès');
+      debugPrint('NotificationManager initialisé avec succès');
     } catch (e) {
-      print('Erreur lors de l\'initialisation du NotificationManager: $e');
+      debugPrint('Erreur lors de l\'initialisation du NotificationManager: $e');
     }
   }
 
@@ -134,7 +135,7 @@ class NotificationManager {
   }
 
   void _onNotificationTapped(NotificationResponse response) {
-    print('Notification tapée: ${response.payload}');
+    debugPrint('Notification tapée: ${response.payload}');
     // Parse simple map-like payloads produced above and navigate
     if (response.payload != null && response.payload!.isNotEmpty) {
       try {
@@ -162,7 +163,7 @@ class NotificationManager {
           navigatorKey.currentState?.pushNamed(link);
         }
       } catch (e) {
-        print('Erreur lors du parsing du payload local: $e');
+        debugPrint('Erreur lors du parsing du payload local: $e');
       }
     }
   }
@@ -233,7 +234,7 @@ class NotificationManager {
       }
     } catch (e) {
       // Some launchers/platforms may not support badges — ignore errors
-      print('Erreur lors de la mise à jour du badge: $e');
+      debugPrint('Erreur lors de la mise à jour du badge: $e');
     }
   }
 

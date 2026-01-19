@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -52,11 +53,11 @@ class _AudioQuestionState extends State<AudioQuestion> {
 
       // Corrige l'URL pour qu'elle soit complète
       final fullAudioUrl = AppConstants.getAudioStreamUrl(mediaUrl);
-      print('🟣 Audio full URL = $fullAudioUrl');
+      debugPrint('🟣 Audio full URL = $fullAudioUrl');
 
       await _audioPlayer.setSource(UrlSource(fullAudioUrl));
     } catch (e) {
-      print('Erreur lors du chargement audio: $e');
+      debugPrint('Erreur lors du chargement audio: $e');
       if (mounted) {
         setState(() {
           _audioError = true;

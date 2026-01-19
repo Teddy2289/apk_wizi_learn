@@ -80,7 +80,7 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
       final user = await _authRepository.getMe();
       final connectedUserId = user.id.toString();
 
-      final userName = user.name.toUpperCase() ?? '';
+      final userName = user.name.toUpperCase();
       final stagiairePrenom = user.stagiaire?.prenom ?? '';
       final fullName =
           userName.isNotEmpty && stagiairePrenom.isNotEmpty
@@ -94,7 +94,7 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
       setState(() {
         _parrainId = connectedUserId;
         _userName = fullName;
-        _userEmail = user.email ?? 'Non renseigné';
+        _userEmail = user.email;
         _userPhone = user.stagiaire?.telephone ?? 'Non renseigné';
         _isLoadingUser = false;
       });
@@ -169,13 +169,6 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
     }
   }
 
-  void _resetForm() {
-    setState(() {
-      _isSuccess = false;
-      _showSuccessModal = false;
-    });
-    _formKey.currentState!.reset();
-  }
 
   void _goToHome() {
     Navigator.pushReplacementNamed(context, RouteConstants.dashboard);
