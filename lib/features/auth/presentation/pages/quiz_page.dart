@@ -55,6 +55,7 @@ class _QuizPageState extends State<QuizPage> {
   List<String> _playedQuizIds = [];
   String? _scrollToQuizId;
   bool _didRedirectToAdventure = false;
+  bool _fromNotification = false;
   // Optimisation: cache des listes filtrées pour éviter les FutureBuilder imbriqués
   List<quiz_model.Quiz> _allQuizzes = []; // All quizzes without point filtering
   List<quiz_model.Quiz> _baseQuizzes = []; // Quizzes filtered by points
@@ -365,7 +366,7 @@ class _QuizPageState extends State<QuizPage> {
       }
 
       // Chargement PARALLÈLE mais avec gestion d'état correcte
-      final results = await Future.wait([
+      await Future.wait([
         _loadUserPoints(),
         _loadQuizzes(),
         _loadQuizHistory(),
@@ -1540,7 +1541,7 @@ class _QuizPageState extends State<QuizPage> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        initialValue: _selectedLevel,
+                        value: _selectedLevel,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(

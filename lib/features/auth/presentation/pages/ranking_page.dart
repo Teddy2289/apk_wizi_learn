@@ -11,6 +11,7 @@ import 'package:wizi_learn/features/auth/presentation/widgets/quiz_stats_widget.
 import 'package:share_plus/share_plus.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});
@@ -32,6 +33,11 @@ class _RankingPageState extends State<RankingPage>
   String _selectedPeriod = 'all';
 
   // GlobalKeys pour le tutoriel interactif
+  final GlobalKey _keyTabBar = GlobalKey();
+  final GlobalKey _keyTitle = GlobalKey();
+  final GlobalKey _keyPodium = GlobalKey();
+  final GlobalKey _keyMyRank = GlobalKey();
+  final GlobalKey _keyShare = GlobalKey();
 
   @override
   void initState() {
