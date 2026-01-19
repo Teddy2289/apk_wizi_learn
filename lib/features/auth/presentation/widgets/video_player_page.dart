@@ -212,6 +212,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
           DeviceOrientation.portraitUp,
           DeviceOrientation.portraitDown,
         ],
+        locale: const Locale('fr', 'FR'),
       );
 
       // Listen for video progress to mark as watched
@@ -367,7 +368,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
-                                          _fitMode == BoxFit.cover ? 'FIT' : 'FILL',
+                                          _fitMode == BoxFit.cover ? 'ADAPTER' : 'REMPLIR',
                                           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                                         ),
                                       ],
