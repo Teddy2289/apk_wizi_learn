@@ -254,7 +254,8 @@ class CustomDrawer extends StatelessWidget {
                   BlocBuilder<AuthBloc, AuthState>(
                     builder: (context, state) {
                       if (state is Authenticated &&
-                          state.user.stagiaire != null) {
+                          state.user.stagiaire != null &&
+                          state.user.role != 'formateur') {
                         return _buildInfoCard(context, state);
                       }
                       return const SizedBox();
@@ -273,15 +274,56 @@ class CustomDrawer extends StatelessWidget {
                   ),
 
                   // Menu principal
+                  // Menu principal
                   BlocBuilder<AuthBloc, AuthState>(
                     builder: (context, state) {
-                      // Déterminer si l'utilisateur a accès commercial
-                      final hasCommercialAccess = state is Authenticated &&
-                          ['commercial', 'formateur', 'admin'].contains(
-                            state.user.stagiaire?.role.toLowerCase() ??
-                                state.user.role.toLowerCase(),
+                      if (state is! Authenticated) return const SizedBox();
+
+                      final role = state.user.role.toLowerCase();
+                      final isFormateur = role == 'formateur';
+                      final hasCommercialAccess = ['commercial', 'formateur', 'admin'].contains(
+                            state.user.stagiaire?.role.toLowerCase() ?? role,
                           );
 
+                      if (isFormateur) {
+                        return _buildMenuSection(
+                          context,
+                          title: 'Administration',
+                          items: [
+                            _MenuItem(
+                              icon: Icons.dashboard,
+                              label: 'Tableau de bord',
+                              route: RouteConstants.dashboard, // Points to DashboardPage
+                              arguments: {'selectedTabIndex': 0},
+                            ),
+                            _MenuItem(
+                              icon: Icons.school,
+                              label: 'Gestion Formations',
+                              route: RouteConstants.dashboard,
+                              arguments: {'selectedTabIndex': 1},
+                            ),
+                            _MenuItem(
+                              icon: Icons.bar_chart,
+                              label: 'Analytiques',
+                              route: RouteConstants.dashboard,
+                              arguments: {'selectedTabIndex': 3},
+                            ),
+                            _MenuItem(
+                              icon: Icons.quiz,
+                              label: 'Créateur de Quiz',
+                              route: RouteConstants.dashboard,
+                              arguments: {'selectedTabIndex': 4},
+                            ),
+                             _MenuItem(
+                              icon: Icons.edit_outlined,
+                              label: 'Modifier mon profil',
+                              route: RouteConstants.profileEdit,
+                            ),
+                          ],
+                        );
+                      }
+
+                      // Menu Apprenant (Default)
                       return _buildMenuSection(
                         context,
                         title: 'Navigation',
@@ -316,7 +358,6 @@ class CustomDrawer extends StatelessWidget {
                             label: 'Mes Badges',
                             route: RouteConstants.achievement,
                           ),
-                          // Commercial Dashboard - Pour commercial, formateur et admin uniquement
                           if (hasCommercialAccess)
                             _MenuItem(
                               icon: Icons.business_center,
@@ -565,13 +606,16 @@ class CustomDrawer extends StatelessWidget {
               ),
             ),
           ),
-          ...items.map(
             (item) => _buildDrawerItem(
               context,
               icon: item.icon,
               label: item.label,
               onTap: () {
-                Navigator.pushReplacementNamed(context, item.route);
+                Navigator.pushReplacementNamed(
+                  context,
+                  item.route,
+                  arguments: item.arguments,
+                );
               },
             ),
           ),
@@ -645,8 +689,9 @@ class _MenuItem {
   final IconData icon;
   final String label;
   final String route;
+  final Object? arguments;
 
-  _MenuItem({required this.icon, required this.label, required this.route});
+  _MenuItem({required this.icon, required this.label, required this.route, this.arguments});
 }
 
 // Helper pour récupérer le token (à adapter selon ta logique d'authentification)

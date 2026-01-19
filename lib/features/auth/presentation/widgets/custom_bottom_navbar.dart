@@ -9,6 +9,7 @@ class CustomBottomNavBar extends StatelessWidget {
   final Color selectedColor;
   final Color unselectedColor;
   final bool isLandscape;
+  final String role; // 'apprenant', 'formateur', 'admin'
 
   const CustomBottomNavBar({
     super.key,
@@ -18,6 +19,7 @@ class CustomBottomNavBar extends StatelessWidget {
     required this.selectedColor,
     required this.unselectedColor,
     this.isLandscape = false,
+    this.role = 'apprenant',
   });
 
   @override
@@ -126,45 +128,90 @@ class CustomBottomNavBar extends StatelessWidget {
       ) {
     final double fabSpace = _getFabSpace(isTablet, isLandscape, fabSize);
 
-    final navItems = [
-      _buildNavItem(
-        icon: LucideIcons.home,
-        label: "Accueil",
-        index: 0,
-        iconSize: iconSize,
-        labelFontSize: labelFontSize,
-        isLandscape: isLandscape,
-        isTablet: isTablet,
-      ),
-      _buildNavItem(
-        icon: LucideIcons.bookOpen,
-        label: "Formation",
-        index: 1,
-        iconSize: iconSize,
-        labelFontSize: labelFontSize,
-        isLandscape: isLandscape,
-        isTablet: isTablet,
-      ),
-      SizedBox(width: fabSpace),
-      _buildNavItem(
-        icon: LucideIcons.trophy,
-        label: "Classement",
-        index: 3,
-        iconSize: iconSize,
-        labelFontSize: labelFontSize,
-        isLandscape: isLandscape,
-        isTablet: isTablet,
-      ),
-      _buildNavItem(
-        icon: LucideIcons.video,
-        label: _getTutorialLabel(isTablet, isLandscape),
-        index: 4,
-        iconSize: iconSize,
-        labelFontSize: labelFontSize,
-        isLandscape: isLandscape,
-        isTablet: isTablet,
-      ),
-    ];
+    List<Widget> navItems = [];
+
+    if (role == 'formateur') {
+      navItems = [
+        _buildNavItem(
+          icon: LucideIcons.layoutDashboard,
+          label: "Dashboard",
+          index: 0,
+          iconSize: iconSize,
+          labelFontSize: labelFontSize,
+          isLandscape: isLandscape,
+          isTablet: isTablet,
+        ),
+        _buildNavItem(
+          icon: LucideIcons.bookOpen,
+          label: "Formations",
+          index: 1,
+          iconSize: iconSize,
+          labelFontSize: labelFontSize,
+          isLandscape: isLandscape,
+          isTablet: isTablet,
+        ),
+        SizedBox(width: fabSpace),
+        _buildNavItem(
+          icon: LucideIcons.barChart,
+          label: "Analytiques",
+          index: 3,
+          iconSize: iconSize,
+          labelFontSize: labelFontSize,
+          isLandscape: isLandscape,
+          isTablet: isTablet,
+        ),
+        _buildNavItem(
+          icon: LucideIcons.list,
+          label: "Quiz",
+          index: 4,
+          iconSize: iconSize,
+          labelFontSize: labelFontSize,
+          isLandscape: isLandscape,
+          isTablet: isTablet,
+        ),
+      ];
+    } else {
+      // Role Apprenant (default)
+      navItems = [
+        _buildNavItem(
+          icon: LucideIcons.home,
+          label: "Accueil",
+          index: 0,
+          iconSize: iconSize,
+          labelFontSize: labelFontSize,
+          isLandscape: isLandscape,
+          isTablet: isTablet,
+        ),
+        _buildNavItem(
+          icon: LucideIcons.bookOpen,
+          label: "Formation",
+          index: 1,
+          iconSize: iconSize,
+          labelFontSize: labelFontSize,
+          isLandscape: isLandscape,
+          isTablet: isTablet,
+        ),
+        SizedBox(width: fabSpace),
+        _buildNavItem(
+          icon: LucideIcons.trophy,
+          label: "Classement",
+          index: 3,
+          iconSize: iconSize,
+          labelFontSize: labelFontSize,
+          isLandscape: isLandscape,
+          isTablet: isTablet,
+        ),
+        _buildNavItem(
+          icon: LucideIcons.video,
+          label: _getTutorialLabel(isTablet, isLandscape),
+          index: 4,
+          iconSize: iconSize,
+          labelFontSize: labelFontSize,
+          isLandscape: isLandscape,
+          isTablet: isTablet,
+        ),
+      ];
+    }
 
     return Padding(
       padding: _getNavPadding(isTablet, isLandscape, safeAreaBottom),

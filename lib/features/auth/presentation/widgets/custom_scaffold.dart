@@ -27,6 +27,7 @@ class CustomScaffold extends StatefulWidget {
   final VoidCallback? onQuizListPressed;
   final String? appBarTitle;
   final bool showLogo;
+  final String role;
 
   const CustomScaffold({
     super.key,
@@ -42,6 +43,7 @@ class CustomScaffold extends StatefulWidget {
     this.onQuizListPressed,
     this.appBarTitle,
     this.showLogo = true,
+    this.role = 'apprenant',
   });
 
   @override
@@ -149,7 +151,8 @@ class _CustomScaffoldState extends State<CustomScaffold> {
                 backgroundColor: Theme.of(context).colorScheme.surface,
                 selectedColor: Theme.of(context).colorScheme.primary,
                 unselectedColor: Colors.grey.shade600,
-                isLandscape: isLandscape, // Nouveau paramètre
+                isLandscape: isLandscape,
+                role: widget.role,
               )
               : null,
     );
