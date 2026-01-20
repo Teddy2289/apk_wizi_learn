@@ -212,7 +212,6 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
           DeviceOrientation.portraitUp,
           DeviceOrientation.portraitDown,
         ],
-        locale: const Locale('fr', 'FR'),
       );
 
       // Listen for video progress to mark as watched
