@@ -262,31 +262,33 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
           crossAxisSpacing: 12,
           childAspectRatio: aspectRatio,
           children: [
-        _buildStatCard(
-          'Total Stagiaires',
-          _stats!['total_stagiaires'].toString(),
-          Icons.people,
-          const Color(0xFF00A8FF),
-        ),
-        _buildStatCard(
-          'Actifs (7j)',
-          _stats!['active_this_week'].toString(),
-          Icons.trending_up,
-          const Color(0xFF00D084),
-        ),
-        _buildStatCard(
-          'Score Moyen',
-          '${_stats!['avg_quiz_score']}%',
-          Icons.emoji_events,
-          const Color(0xFFFFA500),
-        ),
-        _buildStatCard(
-          'Inactifs',
-          _stats!['inactive_count'].toString(),
-          Icons.trending_down,
-          const Color(0xFFFF6B6B),
-        ),
-      ],
+            _buildStatCard(
+              'Total Stagiaires',
+              _stats!['total_stagiaires'].toString(),
+              Icons.people,
+              const Color(0xFF00A8FF),
+            ),
+            _buildStatCard(
+              'Actifs (7j)',
+              _stats!['active_this_week'].toString(),
+              Icons.trending_up,
+              const Color(0xFF00D084),
+            ),
+            _buildStatCard(
+              'Score Moyen',
+              '${_stats!['avg_quiz_score']}%',
+              Icons.emoji_events,
+              const Color(0xFFFFA500),
+            ),
+            _buildStatCard(
+              'Inactifs',
+              _stats!['inactive_count'].toString(),
+              Icons.trending_down,
+              const Color(0xFFFF6B6B),
+            ),
+          ],
+        );
+      },
     );
   }
 
