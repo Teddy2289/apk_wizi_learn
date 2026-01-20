@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_app_badger/flutter_app_badger.dart';
+import 'package:flutter_new_badger/flutter_new_badger.dart';
 import 'package:wizi_learn/core/services/navigation_service.dart';
 import 'package:wizi_learn/core/services/badge_counter.dart';
 import 'package:wizi_learn/features/auth/data/models/notification_model.dart';
@@ -227,10 +227,10 @@ class NotificationManager {
     try {
       final count = _badgeCounter.count;
       if (count > 0) {
-        FlutterAppBadger.updateBadgeCount(count);
+        FlutterNewBadger.setBadge(count);
       } else {
         // remove badge if there are no unread notifications
-        FlutterAppBadger.removeBadge();
+        FlutterNewBadger.removeBadge();
       }
     } catch (e) {
       // Some launchers/platforms may not support badges — ignore errors
