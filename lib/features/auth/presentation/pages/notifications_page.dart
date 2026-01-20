@@ -115,161 +115,141 @@ class _NotificationsPageState extends State<NotificationsPage> {
       final date = notif.createdAt;
       String dateLabel;
       final now = DateTime.now();
+      
       if (now.difference(date).inDays == 0) {
         dateLabel = "Aujourd'hui";
       } else if (now.difference(date).inDays == 1) {
         dateLabel = "Hier";
       } else {
-        dateLabel =
-            '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+        dateLabel = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
       }
+
       if (dateLabel != lastDateLabel) {
         widgets.add(
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
             child: Text(
-              dateLabel,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
+              dateLabel.toUpperCase(),
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+                letterSpacing: 1.2,
+                color: Colors.blue,
               ),
             ),
           ),
         );
         lastDateLabel = dateLabel;
       }
+
       widgets.add(
         TweenAnimationBuilder<double>(
           tween: Tween(begin: 0, end: 1),
-          duration: Duration(milliseconds: 350 + 30 * min(i, 10)),
-          builder:
-              (context, value, child) => Opacity(
-                opacity: value,
-                child: Transform.translate(
-                  offset: Offset(0, 20 * (1 - value)),
-                  child: child,
-                ),
-              ),
+          duration: Duration(milliseconds: 400 + 40 * min(i, 8)),
+          builder: (context, value, child) => Opacity(
+            opacity: value,
+            child: Transform.translate(
+              offset: Offset(0, 30 * (1 - value)),
+              child: child,
+            ),
+          ),
           child: Dismissible(
             key: ValueKey(notif.id),
             direction: DismissDirection.endToStart,
             background: Container(
-              color: Colors.red,
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(20),
+              ),
               alignment: Alignment.centerRight,
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: const Icon(Icons.delete, color: Colors.white),
+              child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
             ),
             onDismissed: (_) => notifProvider.delete(notif.id),
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color:
-                    notif.read
-                        ? Colors.transparent
-                        : Theme.of(context).primaryColor.withOpacity(0.07),
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                leading: CircleAvatar(
-                  backgroundColor:
-                      notif.read
-                          ? Colors.grey.shade200
-                          : Theme.of(context).primaryColor.withOpacity(0.15),
-                  radius: 22,
-                  child: Icon(
-                    _iconForType(notif.type),
-                    color:
-                        notif.read
-                            ? Colors.grey
-                            : Theme.of(context).primaryColor,
-                    semanticLabel: _labelForType(notif.type),
+            child: GestureDetector(
+              onTap: () {
+                notifProvider.markAsRead(notif.id);
+                _navigateToNotificationPage(context, notif);
+              },
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: notif.read 
+                    ? const Color(0xFF1E1E1E).withOpacity(0.6) 
+                    : const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: notif.read 
+                      ? Colors.white.withOpacity(0.05) 
+                      : Colors.blue.withOpacity(0.3),
+                    width: 1,
                   ),
                 ),
-                title: Text(
-                  notif.title,
-                  style: TextStyle(
-                    fontWeight:
-                        notif.read ? FontWeight.normal : FontWeight.bold,
-                    color:
-                        notif.read
-                            ? Theme.of(context).colorScheme.onSurface
-                            : Theme.of(context).primaryColor,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Column(
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      notif.message,
-                      style: TextStyle(
-                        color:
-                            notif.read
-                                ? Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.7)
-                                : Theme.of(
-                                  context,
-                                ).primaryColor.withOpacity(0.85),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: notif.read 
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                      child: Icon(
+                        _iconForType(notif.type),
+                        color: notif.read ? Colors.grey : Colors.blue,
+                        size: 22,
+                      ),
                     ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 13,
-                          color: Colors.grey.shade500,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          _relativeTime(notif.createdAt),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.between,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  notif.title,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: notif.read ? Colors.grey[400] : Colors.white,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Text(
+                                _relativeTime(notif.createdAt),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 6),
+                          Text(
+                            notif.message,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: notif.read ? Colors.grey[600] : Colors.grey[300],
+                              height: 1.4,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (!notif.read)
-                      Container(
-                        margin: const EdgeInsets.only(top: 4),
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                  ],
-                ),
-                onTap: () {
-                  notifProvider.markAsRead(notif.id);
-                  _navigateToNotificationPage(context, notif);
-                },
-                isThreeLine: true,
-                visualDensity: VisualDensity.compact,
-                minVerticalPadding: 8,
-                minLeadingWidth: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                tileColor:
-                    notif.read
-                        ? Colors.transparent
-                        : Theme.of(context).primaryColor.withOpacity(0.04),
               ),
             ),
           ),
@@ -287,125 +267,31 @@ class _NotificationsPageState extends State<NotificationsPage> {
         final unreadCount = notifProvider.unreadCount;
         final isLoading = notifProvider.isLoading;
         return Scaffold(
+          backgroundColor: const Color(0xFF121212),
           appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: false,
             leading: IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.arrow_back, color: Colors.white),
-              ),
-              onPressed:
-                  () => Navigator.pushReplacementNamed(
-                    context,
-                    RouteConstants.dashboard,
-                  ),
+              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+              onPressed: () => Navigator.pushReplacementNamed(context, RouteConstants.dashboard),
             ),
-            title: Row(
-              children: [
-                const Text(
-                  'Notifications',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                if (unreadCount > 0) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '$unreadCount',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
+            title: const Text(
+              'Notifications',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 22),
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.help_outline),
-                tooltip: 'Voir le tutoriel',
-                onPressed:
-                    () => showStandardHelpDialog(
-                      context,
-                      steps: const [
-                        '1. Balayez une notification pour la supprimer.',
-                        '2. Touchez une notification pour ouvrir la page liée.',
-                        '3. Utilisez les actions en haut pour tout lire/supprimer.',
-                      ],
-                    ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.done_all),
-                tooltip: 'Tout marquer comme lu',
-                onPressed:
-                    unreadCount == 0
-                        ? null
-                        : () => notifProvider.markAllAsRead(),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete_sweep),
-                tooltip: 'Tout supprimer',
-                onPressed:
-                    notifications.isEmpty
-                        ? null
-                        : () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder:
-                                (ctx) => AlertDialog(
-                                  title: const Text(
-                                    'Supprimer toutes les notifications ?',
-                                  ),
-                                  content: const Text(
-                                    'Cette action est irréversible. Confirmer la suppression de toutes les notifications ?',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed:
-                                          () => Navigator.pop(ctx, false),
-                                      child: const Text('Annuler'),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () => Navigator.pop(ctx, true),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red,
-                                      ),
-                                      child: const Text('Supprimer'),
-                                    ),
-                                  ],
-                                ),
-                          );
-                          if (confirm == true) {
-                            showDialog(
-                              context: context,
-                              barrierDismissible: false,
-                              builder:
-                                  (ctx) => const Center(
-                                    child: CircularProgressIndicator(),
-                                  ),
-                            );
-                            await notifProvider.deleteAll();
-                            Navigator.of(context, rootNavigator: true).pop();
-                          }
-                        },
-              ),
+              if (unreadCount > 0)
+                IconButton(
+                  icon: const Icon(Icons.done_all, color: Colors.blue),
+                  onPressed: () => notifProvider.markAllAsRead(),
+                  tooltip: 'Tout marquer comme lu',
+                ),
+              const SizedBox(width: 8),
             ],
           ),
-          body:
-              isLoading && !notifProvider.initialized
-                  ? const Center(child: CircularProgressIndicator())
+          body: isLoading && !notifProvider.initialized
+              ? const Center(child: CircularProgressIndicator(color: Colors.blue))
                   : RefreshIndicator(
                     onRefresh: notifProvider.refresh,
                     child:

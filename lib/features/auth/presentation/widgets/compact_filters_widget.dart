@@ -111,32 +111,22 @@ class _CompactFiltersWidgetState extends State<CompactFiltersWidget> {
               ),
             ),
             const SizedBox(width: 8),
-            // Period selector (compact chips)
-            Wrap(
-              spacing: 6,
-              children: [
-                ChoiceChip(
-                  label: const Text('Semaine', style: TextStyle(fontSize: 12)),
-                  selected: widget.selectedPeriod == 'week',
-                  onSelected: (s) {
-                    if (s) widget.onPeriodChanged('week');
-                  },
-                ),
-                ChoiceChip(
-                  label: const Text('Mois', style: TextStyle(fontSize: 12)),
-                  selected: widget.selectedPeriod == 'month',
-                  onSelected: (s) {
-                    if (s) widget.onPeriodChanged('month');
-                  },
-                ),
-                ChoiceChip(
-                  label: const Text('Tout', style: TextStyle(fontSize: 12)),
-                  selected: widget.selectedPeriod == 'all',
-                  onSelected: (s) {
-                    if (s) widget.onPeriodChanged('all');
-                  },
-                ),
-              ],
+            // Period selector (Premium Segmented Control)
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.withOpacity(0.2)),
+              ),
+              child: Row(
+                children: [
+                   _buildSegmentedButton('Semaine', widget.selectedPeriod == 'week', () => widget.onPeriodChanged('week')),
+                   _buildSegmentedButton('Mois', widget.selectedPeriod == 'month', () => widget.onPeriodChanged('month')),
+                   _buildSegmentedButton('Trimestre', widget.selectedPeriod == 'trimestre', () => widget.onPeriodChanged('trimestre')),
+                   _buildSegmentedButton('Tout', widget.selectedPeriod == 'all', () => widget.onPeriodChanged('all')),
+                ],
+              ),
             ),
             const SizedBox(width: 8),
             // Formation filter
@@ -251,6 +241,31 @@ class _CompactFiltersWidgetState extends State<CompactFiltersWidget> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentedButton(String label, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? Colors.blue.withOpacity(0.3) : Colors.transparent,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? Colors.blue : Colors.grey[600],
+          ),
         ),
       ),
     );
