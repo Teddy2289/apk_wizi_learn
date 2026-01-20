@@ -63,7 +63,7 @@ dependencies:
   firebase_core_web: ^3.2.0
   firebase_messaging_web: ^4.0.3
   flutter_local_notifications: ^19.3.0
-  flutter_app_badger: ^1.5.0
+  flutter_new_badger: ^1.1.1
   flutter_html: ^3.0.0
   youtube_player_iframe: ^5.2.2
   confetti: ^0.8.0
