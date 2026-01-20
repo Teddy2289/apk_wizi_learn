@@ -94,6 +94,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ElevatedButton(
                   onPressed: () async {
                     await _saveSettings();
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Paramètres enregistrés')));
                   },
                   child: const Text('Enregistrer'),
