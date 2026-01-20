@@ -296,30 +296,48 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.1)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color.withOpacity(0.1),
+            Colors.transparent,
+          ],
+        ),
       ),
-      padding: const EdgeInsets.all(12.0),
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 28, color: color),
-          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 24, color: color),
+          ),
+          const SizedBox(height: 12),
           Text(
             value,
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               color: color,
+              letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            title,
+            title.toUpperCase(),
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Colors.grey,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withOpacity(0.5),
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -333,7 +351,8 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
         Expanded(
           child: _buildActionButton(
             icon: Icons.leaderboard,
-            label: 'Classement',
+            label: 'Arène',
+            color: const Color(0xFFF7931E),
             onPressed: () => Navigator.pushNamed(context, '/formateur/classement'),
           ),
         ),
@@ -341,7 +360,8 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
         Expanded(
           child: _buildActionButton(
             icon: Icons.announcement,
-            label: 'Annonces',
+            label: 'Alerte',
+            color: const Color(0xFF00A8FF),
             onPressed: () => Navigator.pushNamed(context, '/formateur/send-notification'),
           ),
         ),
@@ -349,7 +369,8 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
         Expanded(
           child: _buildActionButton(
             icon: Icons.analytics,
-            label: 'Analytics',
+            label: 'Stats',
+            color: const Color(0xFF00D084),
             onPressed: () => Navigator.pushNamed(context, '/formateur/analytics'),
           ),
         ),
@@ -360,31 +381,42 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
   Widget _buildActionButton({
     required IconData icon,
     required String label,
+    required Color color,
     required VoidCallback onPressed,
   }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(8),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onPressed();
+        },
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          height: 80, // High enough for good touch target
           decoration: BoxDecoration(
             color: const Color(0xFF2A2A2A),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.withOpacity(0.2)),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withOpacity(0.3)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: const Color(0xFFF7931E), size: 24),
-              const SizedBox(height: 4),
+              Icon(icon, color: color, size: 28),
+              const SizedBox(height: 6),
               Text(
                 label,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
@@ -468,21 +500,23 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Trainee Progress',
+              'APPRENANTS',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 18,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
               ),
             ),
-            const Spacer(),
             Text(
-              'Detailed View →',
+              '${filteredStagiaires.length} TOTAL',
               style: TextStyle(
-                color: Colors.grey,
+                color: const Color(0xFFF7931E).withOpacity(0.8),
                 fontSize: 12,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
@@ -490,11 +524,21 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
         const SizedBox(height: 16),
         if (filteredStagiaires.isEmpty)
           Container(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(40),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2A2A2A),
+              borderRadius: BorderRadius.circular(12),
+            ),
             alignment: Alignment.center,
-            child: const Text(
-              'Aucun stagiaire trouvé',
-              style: TextStyle(color: Colors.grey),
+            child: Column(
+              children: [
+                Icon(Icons.person_off_outlined, color: Colors.grey.withOpacity(0.3), size: 48),
+                const SizedBox(height: 12),
+                const Text(
+                  'Aucun stagiaire trouvé',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ],
             ),
           )
         else
@@ -505,151 +549,138 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final stagiaire = filteredStagiaires[index];
-              final progress = (stagiaire['progress'] ?? 0).toDouble();
-              final avgScore = (stagiaire['avg_score'] ?? 0).toInt();
+              final double progress = (stagiaire['progress'] ?? 0).toDouble();
+              final int avgScore = (stagiaire['avg_score'] ?? 0).toInt();
 
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => StagiaireProfilePage(
-                        stagiaireId: stagiaire['id'] as int,
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => StagiaireProfilePage(
+                          stagiaireId: stagiaire['id'] as int,
+                        ),
                       ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A2A2A),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withOpacity(0.05)),
                     ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.withOpacity(0.2)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: _getStatusColor(stagiaire),
-                            child: Text(
-                              stagiaire['prenom'][0].toUpperCase(),
-                              style: const TextStyle(color: Colors.white),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: _getStatusColor(stagiaire).withOpacity(0.5), width: 2),
+                              ),
+                              child: CircleAvatar(
+                                radius: 20,
+                                backgroundColor: _getStatusColor(stagiaire).withOpacity(0.2),
+                                backgroundImage: stagiaire['avatar'] != null 
+                                  ? NetworkImage(stagiaire['avatar']) 
+                                  : null,
+                                child: stagiaire['avatar'] == null
+                                  ? Text(
+                                      stagiaire['prenom'][0].toUpperCase(),
+                                      style: TextStyle(color: _getStatusColor(stagiaire), fontWeight: FontWeight.bold),
+                                    )
+                                  : null,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${stagiaire['prenom']} ${stagiaire['nom']}'
-                                      .toUpperCase(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${stagiaire['prenom']} ${stagiaire['nom']}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: -0.3,
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  stagiaire['formation'] ?? 'N/A',
-                                  style: const TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 12,
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    stagiaire['formation'] ?? 'Formation non assignée',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.5),
+                                      fontSize: 12,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      'AVG SCORE',
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                    Text(
-                                      'PENDING',
-                                      style: TextStyle(
-                                        color: Colors.orange,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      '$avgScore%',
-                                      style: const TextStyle(
-                                        color: Colors.blue,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${stagiaire['modules_count']} Modules',
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                            Icon(Icons.chevron_right, color: Colors.white.withOpacity(0.2)),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            _buildMiniStat('PROCESSION', '${progress.toInt()}%', Colors.blue),
+                            const SizedBox(width: 24),
+                            _buildMiniStat('SCORE MOYEN', '$avgScore%', Colors.green),
+                            const Spacer(),
+                            SizedBox(
+                              width: 36,
+                              height: 36,
+                              child: CircularProgressIndicator(
+                                value: progress / 100,
+                                strokeWidth: 3,
+                                backgroundColor: Colors.white.withOpacity(0.05),
+                                valueColor: AlwaysStoppedAnimation<Color>(_getProgressColor(progress)),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          SizedBox(
-                            width: 60,
-                            height: 60,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                CircularProgressIndicator(
-                                  value: progress / 100,
-                                  strokeWidth: 4,
-                                  backgroundColor: Colors.grey.withOpacity(0.2),
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    _getProgressColor(progress),
-                                  ),
-                                ),
-                                Text(
-                                  '${progress.toInt()}%',
-                                  style: const TextStyle(
-                                    color: Colors.blue,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
             },
           ),
+      ],
+    );
+  }
+
+  Widget _buildMiniStat(String label, String value, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.3),
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }

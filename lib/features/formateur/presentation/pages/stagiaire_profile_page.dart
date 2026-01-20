@@ -134,70 +134,215 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_profile?.stagiaire.fullName ?? 'Profil Stagiaire'),
-        backgroundColor: const Color(0xFFF7931E),
-        actions: [
-          if (_profile != null)
-            IconButton(
-              icon: const Icon(Icons.mail),
-              onPressed: _sendMessage,
-              tooltip: 'Envoyer un message',
-            ),
-        ],
-      ),
+      backgroundColor: const Color(0xFF1A1A1A),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFFF7931E)))
           : _error != null
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error, size: 64, color: Colors.red),
+                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
                       const SizedBox(height: 16),
-                      Text(_error!),
+                      Text(_error!, style: const TextStyle(color: Colors.white70)),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _loadProfile,
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF7931E)),
                         child: const Text('Réessayer'),
                       ),
                     ],
                   ),
                 )
               : _profile == null
-                  ? const Center(child: Text('Aucune donnée'))
-                  : Column(
-                      children: [
-                        // Header Section
-                        _buildProfileHeader(),
-                        // Stats Overview
-                        _buildStatsOverview(),
-                        // Tabs
-                        TabBar(
-                          controller: _tabController,
-                          labelColor: const Color(0xFFF7931E),
-                          unselectedLabelColor: Colors.grey,
-                          indicatorColor: const Color(0xFFF7931E),
-                          tabs: const [
-                            Tab(text: 'Progression', icon: Icon(Icons.trending_up)),
-                            Tab(text: 'Engagement', icon: Icon(Icons.calendar_today)),
-                            Tab(text: 'Communication', icon: Icon(Icons.message)),
-                          ],
-                        ),
-                        // Tab Views
-                        Expanded(
-                          child: TabBarView(
-                            controller: _tabController,
-                            children: [
-                              _buildProgressionTab(),
-                              _buildEngagementTab(),
-                              _buildCommunicationTab(),
-                            ],
-                          ),
-                        ),
-                      ],
+                  ? const Center(child: Text('Aucune donnée', style: TextStyle(color: Colors.white54)))
+                  : NestedScrollView(
+                      headerSliverBuilder: (context, innerBoxIsScrolled) {
+                        return [
+                          _buildSliverHeader(),
+                          _buildSliverTabs(),
+                        ];
+                      },
+                      body: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildProgressionTab(),
+                          _buildEngagementTab(),
+                          _buildCommunicationTab(),
+                        ],
+                      ),
                     ),
+      floatingActionButton: _profile != null ? FloatingActionButton.extended(
+        onPressed: _sendMessage,
+        backgroundColor: const Color(0xFFF7931E),
+        icon: const Icon(Icons.send, color: Colors.black),
+        label: const Text('MESSAGE', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+      ) : null,
     );
+  }
+
+  Widget _buildSliverHeader() {
+    final stagiaire = _profile!.stagiaire;
+    final stats = _profile!.stats;
+
+    return SliverAppBar(
+      expandedHeight: 280,
+      pinned: true,
+      backgroundColor: const Color(0xFF1A1A1A),
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+        onPressed: () => Navigator.pop(context),
+      ),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Background Gradient
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFFF7931E),
+                    Color(0xFF1A1A1A),
+                  ],
+                  stops: [0.0, 0.8],
+                ),
+              ),
+            ),
+            // Profile Info Center
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 48),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
+                  ),
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.white.withOpacity(0.1),
+                    backgroundImage: stagiaire.image != null ? NetworkImage(stagiaire.image!) : null,
+                    child: stagiaire.image == null
+                        ? Text(
+                            stagiaire.prenom[0].toUpperCase(),
+                            style: const TextStyle(fontSize: 40, color: Colors.white, fontWeight: FontWeight.bold),
+                          )
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  stagiaire.fullName.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    stats.currentBadge,
+                    style: const TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Mini Stats Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildTopStat('POINTS', stats.totalPoints.toString(), const Color(0xFF00A8FF)),
+                    _buildDivider(),
+                    _buildTopStat('SCORE', '${stats.averageScore.toInt()}%', const Color(0xFF00D084)),
+                    _buildDivider(),
+                    _buildTopStat('COMPLETED', stats.formationsCompleted.toString(), const Color(0xFFF7931E)),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopStat(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
+        ),
+        Text(
+          label,
+          style: TextStyle(fontSize: 9, color: Colors.white.withOpacity(0.4), fontWeight: FontWeight.bold, letterSpacing: 0.5),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      height: 20,
+      width: 1,
+      color: Colors.white.withOpacity(0.1),
+    );
+  }
+
+  Widget _buildSliverTabs() {
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _SliverAppBarDelegate(
+        TabBar(
+          controller: _tabController,
+          indicatorColor: const Color(0xFFF7931E),
+          labelColor: const Color(0xFFF7931E),
+          unselectedLabelColor: Colors.white.withOpacity(0.5),
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 1),
+          tabs: const [
+            Tab(text: 'PROGRESS'),
+            Tab(text: 'ACTIVITY'),
+            Tab(text: 'INFO'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  _SliverAppBarDelegate(this._tabBar);
+
+  final TabBar _tabBar;
+
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: const Color(0xFF1A1A1A),
+      child: _tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return false;
   }
 
   Widget _buildProfileHeader() {
@@ -360,88 +505,138 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
   Widget _buildProgressionTab() {
     return RefreshIndicator(
       onRefresh: _loadProfile,
+      color: const Color(0xFFF7931E),
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         children: [
-          // Formations Section
-          const Text(
-            'FORMATIONS',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
+          Text(
+            'FORMATIONS EN COURS',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.3), letterSpacing: 1),
           ),
-          const SizedBox(height: 8),
-          ..._profile!.formations.map((formation) => Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: Icon(
-                    formation.isCompleted
-                        ? Icons.check_circle
-                        : Icons.play_circle_outline,
-                    color: formation.isCompleted ? Colors.green : Colors.orange,
-                  ),
-                  title: Text(formation.title),
-                  subtitle: LinearProgressIndicator(
-                    value: formation.progress / 100,
-                    backgroundColor: Colors.grey[200],
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      formation.isCompleted ? Colors.green : Colors.orange,
-                    ),
-                  ),
-                  trailing: Text('${formation.progress}%'),
-                ),
-              )),
-
           const SizedBox(height: 16),
+          if (_profile!.formations.isEmpty)
+             const Padding(
+               padding: EdgeInsets.symmetric(vertical: 20),
+               child: Text('Aucune formation active', style: TextStyle(color: Colors.white30)),
+             )
+          else
+            ..._profile!.formations.map((formation) => _buildFormationCard(formation)),
 
-          // Quiz History Section
-          const Text(
-            'QUIZ',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
+          const SizedBox(height: 32),
+
+          Text(
+            'HISTORIQUE DES QUIZ',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.3), letterSpacing: 1),
+          ),
+          const SizedBox(height: 16),
+          if (_profile!.quizHistory.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Text('Aucun quiz complété', style: TextStyle(color: Colors.white30)),
+            )
+          else
+            ..._profile!.quizHistory.map((quiz) => _buildQuizCard(quiz)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormationCard(dynamic formation) {
+    final color = formation.isCompleted ? const Color(0xFF00D084) : const Color(0xFFF7931E);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(formation.isCompleted ? Icons.check_circle : Icons.play_circle_fill, color: color, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  formation.title.toUpperCase(),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text('${formation.progress}%', style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: formation.progress / 100,
+              minHeight: 4,
+              backgroundColor: Colors.white.withOpacity(0.05),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
-          const SizedBox(height: 8),
-          ..._profile!.quizHistory.map((quiz) => Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: quiz.percentage >= 70
-                        ? Colors.green
-                        : quiz.percentage >= 50
-                            ? Colors.orange
-                            : Colors.red,
-                    child: Text(
-                      '${quiz.percentage.toInt()}%',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  title: Text(quiz.title),
-                  subtitle: Text(quiz.category),
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '${quiz.score}/${quiz.maxScore}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        _formatDate(quiz.completedAt),
-                        style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuizCard(dynamic quiz) {
+    final color = quiz.percentage >= 70 ? Colors.green : quiz.percentage >= 50 ? Colors.orange : Colors.red;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '${quiz.percentage.toInt()}%',
+              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  quiz.title,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              )),
+                Text(
+                  quiz.category,
+                  style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${quiz.score}/${quiz.maxScore}',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                _formatDate(quiz.completedAt),
+                style: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 10),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -449,101 +644,104 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
 
   Widget _buildEngagementTab() {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       children: [
-        const Text(
-          'ACTIVITÉ (30 derniers jours)',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey,
-          ),
+        Text(
+          'ACTIVITÉS RÉCENTES',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.3), letterSpacing: 1),
         ),
         const SizedBox(height: 16),
-        // Simple activity calendar placeholder
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Center(
-            child: Text(
-              '📅 Calendrier d\'activité\n(à implémenter)',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        const Text(
-          'ACTIVITÉS RÉCENTES',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey,
-          ),
-        ),
-        const SizedBox(height: 8),
-        ..._profile!.activity.recentActivities.map((activity) => Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: Icon(
-                  _getActivityIcon(activity.type),
-                  color: const Color(0xFFF7931E),
+        if (_profile!.activity.recentActivities.isEmpty)
+          const Center(child: Text('Aucune activité récente', style: TextStyle(color: Colors.white24)))
+        else
+          ..._profile!.activity.recentActivities.map((activity) => Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2A2A2A),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                title: Text(activity.title),
-                subtitle: Text(_formatDate(activity.timestamp)),
-                trailing: activity.score != null
-                    ? Chip(
-                        label: Text('${activity.score}%'),
-                        backgroundColor: Colors.green[50],
-                      )
-                    : null,
-              ),
-            )),
+                child: ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: const Color(0xFFF7931E).withOpacity(0.1), shape: BoxShape.circle),
+                    child: Icon(_getActivityIcon(activity.type), color: const Color(0xFFF7931E), size: 20),
+                  ),
+                  title: Text(activity.title, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                  subtitle: Text(_formatDate(activity.timestamp), style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 11)),
+                  trailing: activity.score != null
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                          child: Text('${activity.score}%', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
+                        )
+                      : null,
+                ),
+              )),
       ],
     );
   }
 
   Widget _buildCommunicationTab() {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       children: [
-        ElevatedButton.icon(
-          onPressed: _sendMessage,
-          icon: const Icon(Icons.send),
-          label: const Text('Envoyer un message'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF7931E),
-            padding: const EdgeInsets.all(16),
-          ),
+        Text(
+          'COORDONNÉES',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.3), letterSpacing: 1),
         ),
-        const SizedBox(height: 24),
-        const Text(
-          'NOTES DU FORMATEUR',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey,
-          ),
+        const SizedBox(height: 16),
+        _buildInfoTile(Icons.email, 'EMAIL', _profile!.stagiaire.email),
+        _buildInfoTile(Icons.phone, 'TELEPHONE', 'Non renseigné'),
+        const SizedBox(height: 32),
+        Text(
+          'NOTES PRIVÉES',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.3), letterSpacing: 1),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(8),
+            color: const Color(0xFF2A2A2A),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
           ),
-          child: const Center(
-            child: Text(
-              '📝 Notes privées\n(à implémenter)',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
-            ),
+          child: Column(
+            children: [
+              Icon(Icons.edit_note_outlined, color: Colors.white.withOpacity(0.2), size: 48),
+              const SizedBox(height: 12),
+              Text(
+                'Ajouter des notes sur cet apprenant pour votre suivi personnel.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13),
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildInfoTile(IconData icon, String label, String value) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2A2A2A),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white.withOpacity(0.3), size: 20),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 9, fontWeight: FontWeight.bold)),
+              Text(value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
