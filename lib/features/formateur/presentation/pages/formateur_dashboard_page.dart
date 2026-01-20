@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/stagiaire_profile_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/widgets/alerts_widget.dart';
+import 'package:wizi_learn/features/formateur/presentation/widgets/dashboard_shimmer.dart';
 
 class FormateurDashboardPage extends StatefulWidget {
   const FormateurDashboardPage({super.key});
@@ -35,16 +37,15 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
   Future<void> _loadData() async {
     setState(() => _loading = true);
     try {
-      final stats = await _apiClient.get('/formateur/dashboard/stats');
-      final inactive = await _apiClient.get('/formateur/stagiaires/inactive?days=7');
-      final trends = await _apiClient.get('/formateur/trends');
-      final progress = await _apiClient.get('/formateur/stagiaires/progress');
+      // Consolidated API call - reduces 4 network requests to 1
+      final response = await _apiClient.get('/formateur/dashboard/home?days=7');
+      final data = response.data;
 
       setState(() {
-        _stats = stats.data;
-        _inactiveStagiaires = inactive.data['inactive_stagiaires'] ?? [];
-        _trends = trends.data;
-        _stagiaireProgress = progress.data['stagiaires'] ?? [];
+        _stats = data['stats'];
+        _inactiveStagiaires = data['inactive_stagiaires'] ?? [];
+        _trends = data['trends'];
+        _stagiaireProgress = data['stagiaires'] ?? [];
         _loading = false;
       });
     } catch (e) {
@@ -90,8 +91,9 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
         elevation: 0,
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const DashboardShimmer()
           : RefreshIndicator(
+              color: const Color(0xFFF7931E),
               onRefresh: _loadData,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -246,14 +248,20 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
   }
 
   Widget _buildStatsGrid() {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.3,
-      children: [
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Use 1 column on very small screens (< 320px), 2 otherwise
+        final int crossAxisCount = constraints.maxWidth < 320 ? 1 : 2;
+        final double aspectRatio = crossAxisCount == 1 ? 2.5 : 1.3;
+        
+        return GridView.count(
+          crossAxisCount: crossAxisCount,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: aspectRatio,
+          children: [
         _buildStatCard(
           'Total Stagiaires',
           _stats!['total_stagiaires'].toString(),
