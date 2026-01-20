@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/features/auth/data/models/formation_model.dart';

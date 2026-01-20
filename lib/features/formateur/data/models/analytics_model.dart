@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 
 /// Simple analytics models for trainers
+library;
 
 class QuizSuccessStats {
   final String quizName;

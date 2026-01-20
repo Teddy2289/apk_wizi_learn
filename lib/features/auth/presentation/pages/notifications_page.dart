@@ -3,7 +3,6 @@ import 'package:wizi_learn/features/auth/data/models/notification_model.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:provider/provider.dart';
 import '../providers/notification_provider.dart';
-import 'package:wizi_learn/features/auth/presentation/widgets/help_dialog.dart';
 import 'dart:math';
 
 class NotificationsPage extends StatefulWidget {

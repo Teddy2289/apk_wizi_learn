@@ -1,5 +1,3 @@
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 
 /// Model representing detailed student profile data
 class StagiaireProfile {

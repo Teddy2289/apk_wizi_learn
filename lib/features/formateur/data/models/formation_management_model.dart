@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 
 /// Model for Formation with assignment stats
 class FormationWithStats {

@@ -1420,7 +1420,7 @@ class _QuizPageState extends State<QuizPage> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<int>(
-                        value: _selectedFormationId,
+                        initialValue: _selectedFormationId,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(

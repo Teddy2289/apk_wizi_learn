@@ -70,7 +70,7 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  value: niveau,
+                  initialValue: niveau,
                   decoration: const InputDecoration(labelText: 'Niveau'),
                   items: const [
                     DropdownMenuItem(value: 'debutant', child: Text('Débutant')),

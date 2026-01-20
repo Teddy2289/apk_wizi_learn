@@ -220,8 +220,9 @@ class _RankingPageState extends State<RankingPage>
       final points = myRanking.totalPoints;
 
       String medal = "";
-      if (rang == 1) medal = " 🥇";
-      else if (rang == 2) medal = " 🥈";
+      if (rang == 1) {
+        medal = " 🥇";
+      } else if (rang == 2) medal = " 🥈";
       else if (rang == 3) medal = " 🥉";
 
       final msg =

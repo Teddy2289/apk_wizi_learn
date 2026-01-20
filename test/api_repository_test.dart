@@ -43,7 +43,7 @@ void main() {
 
       final formation = Formation.fromJson(json);
 
-      expect(formation.description?.length, greaterThanOrEqualTo(250));
+      expect(formation.description.length, greaterThanOrEqualTo(250));
     });
 
     test('Formation handles null optional fields with defaults', () {
