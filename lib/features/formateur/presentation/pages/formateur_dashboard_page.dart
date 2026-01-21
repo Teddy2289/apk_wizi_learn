@@ -10,6 +10,7 @@ import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme
 import 'package:wizi_learn/features/formateur/presentation/widgets/dashboard_shimmer.dart';
 import 'package:wizi_learn/features/formateur/presentation/widgets/formateur_drawer_menu.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
+import 'package:wizi_learn/core/constants/app_constants.dart';
 
 class FormateurDashboardPage extends StatefulWidget {
   const FormateurDashboardPage({super.key});

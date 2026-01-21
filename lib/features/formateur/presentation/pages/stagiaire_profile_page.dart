@@ -5,6 +5,7 @@ import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/formateur/data/models/stagiaire_profile_model.dart';
 import 'package:wizi_learn/features/formateur/data/repositories/stagiaire_profile_repository.dart';
 import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
+import 'package:wizi_learn/core/constants/app_constants.dart';
 
 class StagiaireProfilePage extends StatefulWidget {
   final int stagiaireId;

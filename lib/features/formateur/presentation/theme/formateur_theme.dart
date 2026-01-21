@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.dart';
 
 class FormateurTheme {
   // Main Backgrounds
-  static const Color background = Color(0xFFFDFCFB); // Off-white warm
+  static const Color background = AppColors.background;
   static const Color cardBackground = Colors.white;
   
   // Text Colors
@@ -10,15 +11,15 @@ class FormateurTheme {
   static const Color textSecondary = Color(0xFF64748B); // Slate 500
   static const Color textTertiary = Color(0xFF94A3B8); // Slate 400
   
-  // Accents (Yellow/Orange)
-  static const Color accent = Color(0xFFEAB308); // Yellow 500
-  static const Color accentDark = Color(0xFFCA8A04); // Yellow 600
-  static const Color accentLight = Color(0xFFFEF08A); // Yellow 200
-  static const Color orangeAccent = Color(0xFFF97316); // Orange 500
+  // Accents (Yellow/Orange aligned with Stagiaire)
+  static const Color accent = AppColors.primary;
+  static const Color accentDark = AppColors.primaryDark;
+  static const Color accentLight = AppColors.primaryAccent;
+  static const Color orangeAccent = Color(0xFFF97316); // Keeping specific orange for alerts
   
   // Functional Colors
-  static const Color success = Color(0xFF22C55E); // Green 500
-  static const Color error = Color(0xFFEF4444); // Red 500
+  static const Color success = AppColors.success;
+  static const Color error = AppColors.error;
   static const Color border = Color(0xFFE2E8F0); // Slate 200
   
   // Shadows
