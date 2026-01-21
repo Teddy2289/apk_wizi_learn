@@ -170,17 +170,70 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
           const SizedBox(height: 24),
           
           // Additional Stats Row
-           Row(
-            children: [
-              Expanded(
-                child: _SummaryCard('Formations', _summary!.totalFormations.toString(), Icons.school_outlined, Colors.purple),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _SummaryCard('Heures Vidéo', '${_summary!.totalVideoHours.toStringAsFixed(1)}h', Icons.play_circle_outline, Colors.redAccent),
-              ),
-            ],
-          ),
+          const SizedBox(height: 32),
+
+          // Top Formations Section
+          if (_summary!.formations.isNotEmpty) ...[
+            const Text(
+              'TOP FORMATIONS',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1.5),
+            ),
+            const SizedBox(height: 16),
+            ..._summary!.formations.take(5).map((f) => Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: FormateurTheme.border),
+                    boxShadow: FormateurTheme.cardShadow,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.school_rounded, color: Colors.purple, size: 20),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              f['title'] ?? 'Formation',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: FormateurTheme.textPrimary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (f['stagiaires_count'] != null)
+                            Text(
+                              '${f['stagiaires_count']} apprenants',
+                              style: const TextStyle(fontSize: 11, color: FormateurTheme.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (f['avg_score'] != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: FormateurTheme.success.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${(double.tryParse(f['avg_score'].toString()) ?? 0).toStringAsFixed(0)}%',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: FormateurTheme.success),
+                          ),
+                        ),
+                    ],
+                  ),
+                )),
+          ],
+          
           const SizedBox(height: 32),
         ],
       ),

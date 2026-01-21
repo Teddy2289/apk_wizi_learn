@@ -9,6 +9,7 @@ import 'package:wizi_learn/features/formateur/presentation/pages/stagiaire_profi
 import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
 import 'package:wizi_learn/features/formateur/presentation/widgets/dashboard_shimmer.dart';
 import 'package:wizi_learn/features/formateur/presentation/widgets/formateur_drawer_menu.dart';
+import 'package:wizi_learn/core/constants/route_constants.dart';
 
 class FormateurDashboardPage extends StatefulWidget {
   const FormateurDashboardPage({super.key});
@@ -83,7 +84,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none_rounded),
-            onPressed: () => Navigator.pushNamed(context, '/formateur/send-notification'),
+            onPressed: () => Navigator.pushNamed(context, RouteConstants.notifications),
           ),
           const SizedBox(width: 8),
         ],

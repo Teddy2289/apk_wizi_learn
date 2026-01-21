@@ -58,7 +58,7 @@ class AppUsageService {
 
     try {
       await apiClient.post(
-        '/api/user-app-usage',
+        '/user-app-usage',
         data: {
           'platform': platform,
           'app_version': appVersion,

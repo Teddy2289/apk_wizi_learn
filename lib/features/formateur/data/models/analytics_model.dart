@@ -130,9 +130,18 @@ class DashboardSummary {
       neverConnected: int.tryParse(json['never_connected']?.toString() ?? '0') ?? 0,
       avgQuizScore: double.tryParse(json['avg_quiz_score']?.toString() ?? '0') ?? 0.0,
       totalVideoHours: double.tryParse(json['total_video_hours']?.toString() ?? '0') ?? 0.0,
-      formations: json['formations'] as List<dynamic>? ?? [],
-      formateurs: json['formateurs'] as List<dynamic>? ?? [],
+      formations: _parseList(json['formations']),
+      formateurs: _parseList(json['formateurs']),
     );
+  }
+
+  static List<dynamic> _parseList(dynamic data) {
+    if (data == null) return [];
+    if (data is List) return data;
+    if (data is Map && data.containsKey('data')) {
+      return data['data'] is List ? data['data'] : [];
+    }
+    return [];
   }
 }
 
