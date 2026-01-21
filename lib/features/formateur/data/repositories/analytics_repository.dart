@@ -116,7 +116,7 @@ class AnalyticsRepository {
   Future<List<dynamic>> getStudentsComparison({String? formationId}) async {
     try {
       final response = await apiClient.get(
-        '/formateur/analytics/students-comparison',
+        '/formateur/analytics/performance',
         queryParameters: formationId != null ? {'formation_id': formationId} : null,
       );
       return response.data as List<dynamic>;
