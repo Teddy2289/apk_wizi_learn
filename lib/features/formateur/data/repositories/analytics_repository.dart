@@ -133,10 +133,9 @@ class AnalyticsRepository {
         '/formateur/stagiaires/inactive',
         queryParameters: {'days': days, 'scope': scope},
       );
-      final list = (response.data as List?)
-          ?.map((e) => InactiveStagiaire.fromJson(e))
-          .toList() ?? [];
-      return list;
+      final data = response.data;
+      final list = (data is Map ? data['inactive_stagiaires'] : data) as List?;
+      return list?.map((e) => InactiveStagiaire.fromJson(e)).toList() ?? [];
     } catch (e) {
       debugPrint('❌ Erreur inactifs: $e');
       return [];
@@ -147,10 +146,9 @@ class AnalyticsRepository {
   Future<List<OnlineStagiaire>> getOnlineStagiaires() async {
     try {
       final response = await apiClient.get('/formateur/stagiaires/online');
-      final list = (response.data as List?)
-          ?.map((e) => OnlineStagiaire.fromJson(e))
-          .toList() ?? [];
-      return list;
+      final data = response.data;
+      final list = (data is Map ? data['stagiaires'] : data) as List?;
+      return list?.map((e) => OnlineStagiaire.fromJson(e)).toList() ?? [];
     } catch (e) {
       debugPrint('❌ Erreur en ligne: $e');
       return [];

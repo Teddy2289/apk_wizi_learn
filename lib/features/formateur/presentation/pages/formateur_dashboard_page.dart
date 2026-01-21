@@ -737,8 +737,8 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                            child: CircleAvatar(
                               radius: 22,
                               backgroundColor: FormateurTheme.background,
-                              backgroundImage: stagiaire.avatar != null 
-                                ? NetworkImage(stagiaire.avatar!) 
+                              backgroundImage: stagiaire.avatar != null && stagiaire.avatar!.isNotEmpty
+                                ? NetworkImage(AppConstants.getUserImageUrl(stagiaire.avatar!)) 
                                 : null,
                               child: stagiaire.avatar == null
                                 ? Text(
@@ -892,7 +892,9 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
           CircleAvatar(
             radius: 20,
             backgroundColor: FormateurTheme.accent.withOpacity(0.1),
-            backgroundImage: s.image != null ? NetworkImage(s.image!) : null,
+            backgroundImage: s.image != null && s.image!.isNotEmpty 
+                ? NetworkImage(AppConstants.getUserImageUrl(s.image!)) 
+                : null,
             child: s.image == null
                 ? Text(
                     s.name.isNotEmpty ? s.name[0].toUpperCase() : '?',

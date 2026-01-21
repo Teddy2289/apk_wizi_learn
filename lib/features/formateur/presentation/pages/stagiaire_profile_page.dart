@@ -233,7 +233,9 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
                   child: CircleAvatar(
                     radius: 50,
                     backgroundColor: FormateurTheme.accent.withOpacity(0.1),
-                    backgroundImage: stagiaire.image != null ? NetworkImage(stagiaire.image!) : null,
+                    backgroundImage: stagiaire.image != null && stagiaire.image!.isNotEmpty 
+                        ? NetworkImage(AppConstants.getUserImageUrl(stagiaire.image!)) 
+                        : null,
                     child: stagiaire.image == null
                         ? Text(
                             stagiaire.prenom[0].toUpperCase(),
