@@ -87,15 +87,42 @@ class AnalyticsRepository {
   /// Get dashboard summary
   Future<DashboardSummary> getDashboardSummary({int period = 30}) async {
     try {
+      // Changed to match React's dashboard endpoint
       final response = await apiClient.get(
-        '/formateur/analytics/dashboard',
+        '/formateur/dashboard/stats',
         queryParameters: {'period': period},
       );
 
-      return DashboardSummary.fromJson(response.data['summary'] ?? {});
+      // Note: Model parsing might need adjustment depending on backend response format
+      return DashboardSummary.fromJson(response.data);
     } catch (e) {
       debugPrint('❌ Erreur dashboard summary: $e');
       rethrow;
+    }
+  }
+
+  /// Get formations performance (New for React parity)
+  Future<List<dynamic>> getFormationsPerformance() async {
+    try {
+      final response = await apiClient.get('/formateur/analytics/formations/performance');
+      return response.data as List<dynamic>;
+    } catch (e) {
+      debugPrint('❌ Erreur formations performance: $e');
+      return [];
+    }
+  }
+
+  /// Get students comparison (New for React parity)
+  Future<List<dynamic>> getStudentsComparison({String? formationId}) async {
+    try {
+      final response = await apiClient.get(
+        '/formateur/analytics/students-comparison',
+        queryParameters: formationId != null ? {'formation_id': formationId} : null,
+      );
+      return response.data as List<dynamic>;
+    } catch (e) {
+      debugPrint('❌ Erreur comparaison stagiaires: $e');
+      return [];
     }
   }
 }

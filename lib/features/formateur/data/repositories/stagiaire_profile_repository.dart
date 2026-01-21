@@ -11,7 +11,7 @@ class StagiaireProfileRepository {
   Future<StagiaireProfile> getProfileById(int stagiaireId) async {
     try {
       final response = await apiClient.get(
-        '/formateur/stagiaire/$stagiaireId/profile',
+        '/formateur/stagiaire/$stagiaireId/stats',
       );
       
       debugPrint('📊 Profil stagiaire reçu: ${response.data}');

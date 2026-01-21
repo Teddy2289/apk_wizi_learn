@@ -10,7 +10,7 @@ class FormationManagementRepository {
   /// Get all available formations with stats
   Future<List<FormationWithStats>> getAvailableFormations() async {
     try {
-      final response = await apiClient.get('/formateur/formations/available');
+      final response = await apiClient.get('/formateur/formations');
 
       final formations = (response.data['formations'] as List?)
               ?.map((f) => FormationWithStats.fromJson(f))
