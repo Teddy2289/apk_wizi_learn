@@ -211,3 +211,58 @@ class OnlineStagiaire {
     );
   }
 }
+
+class StagiairePerformance {
+  final int id;
+  final String name;
+  final String email;
+  final String? image;
+  final int totalQuizzes;
+  final int totalLogins;
+  final String? lastQuizAt;
+
+  StagiairePerformance({
+    required this.id,
+    required this.name,
+    required this.email,
+    this.image,
+    required this.totalQuizzes,
+    required this.totalLogins,
+    this.lastQuizAt,
+  });
+
+  factory StagiairePerformance.fromJson(Map<String, dynamic> json) {
+    return StagiairePerformance(
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      name: json['name']?.toString() ?? 'Stagiaire',
+      email: json['email']?.toString() ?? '',
+      image: json['image']?.toString(),
+      totalQuizzes: int.tryParse(json['total_quizzes']?.toString() ?? '0') ?? 0,
+      totalLogins: int.tryParse(json['total_logins']?.toString() ?? '0') ?? 0,
+      lastQuizAt: json['last_quiz_at']?.toString(),
+    );
+  }
+}
+
+class PerformanceRankings {
+  final List<StagiairePerformance> mostQuizzes;
+  final List<StagiairePerformance> mostActive;
+
+  PerformanceRankings({
+    required this.mostQuizzes,
+    required this.mostActive,
+  });
+
+  factory PerformanceRankings.fromJson(Map<String, dynamic> json) {
+    return PerformanceRankings(
+      mostQuizzes: (json['most_quizzes'] as List?)
+              ?.map((e) => StagiairePerformance.fromJson(e))
+              .toList() ??
+          [],
+      mostActive: (json['most_active'] as List?)
+              ?.map((e) => StagiairePerformance.fromJson(e))
+              .toList() ??
+          [],
+    );
+  }
+}

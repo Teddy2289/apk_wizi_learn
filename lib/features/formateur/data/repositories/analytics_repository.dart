@@ -113,16 +113,16 @@ class AnalyticsRepository {
   }
 
   /// Get students comparison (New for React parity)
-  Future<List<dynamic>> getStudentsComparison({String? formationId}) async {
+  Future<Map<String, dynamic>> getStudentsComparison({String? formationId}) async {
     try {
       final response = await apiClient.get(
         '/formateur/analytics/performance',
         queryParameters: formationId != null ? {'formation_id': formationId} : null,
       );
-      return response.data as List<dynamic>;
+      return response.data as Map<String, dynamic>;
     } catch (e) {
       debugPrint('❌ Erreur comparaison stagiaires: $e');
-      return [];
+      return {'performance': [], 'rankings': {'most_quizzes': [], 'most_active': []}};
     }
   }
 

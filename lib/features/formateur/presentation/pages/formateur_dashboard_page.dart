@@ -24,6 +24,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
   DashboardSummary? _summary;
   List<InactiveStagiaire> _inactiveStagiaires = [];
   List<OnlineStagiaire> _onlineStagiaires = [];
+  PerformanceRankings? _rankings;
   bool _loading = true;
   String _selectedFilter = 'all'; // all, active, formation
   String _searchQuery = '';
@@ -46,6 +47,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
         _analyticsRepository.getDashboardSummary(period: 7),
         _analyticsRepository.getInactiveStagiaires(days: 7),
         _analyticsRepository.getOnlineStagiaires(),
+        _analyticsRepository.getStudentsComparison(),
       ]);
 
       if (mounted) {
@@ -53,6 +55,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
           _summary = results[0] as DashboardSummary;
           _inactiveStagiaires = results[1] as List<InactiveStagiaire>;
           _onlineStagiaires = results[2] as List<OnlineStagiaire>;
+          _rankings = PerformanceRankings.fromJson(results[3] as Map<String, dynamic>);
           _loading = false;
         });
       }
@@ -134,7 +137,13 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
 
                     // Online Stagiaires Section
                      _buildOnlineStagiairesSection(),
-                     const SizedBox(height: 40),
+                     const SizedBox(height: 32),
+
+                    // Top Learners Section
+                    if (_rankings != null && _rankings!.mostQuizzes.isNotEmpty) ...[
+                      _buildTopLearnersSection(),
+                      const SizedBox(height: 40),
+                    ],
                   ],
                 ),
               ),
@@ -805,6 +814,139 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
             },
           ),
       ],
+    );
+  }
+
+  Widget _buildTopLearnersSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+             Text(
+              'TOP PERFORMANCE',
+              style: TextStyle(
+                color: FormateurTheme.textTertiary,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.5,
+              ),
+            ),
+             Text(
+              '30 DERNIERS JOURS',
+              style: TextStyle(
+                color: FormateurTheme.textTertiary,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: FormateurTheme.border),
+            boxShadow: FormateurTheme.cardShadow,
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.star_rounded, color: FormateurTheme.orangeAccent, size: 24),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Meilleurs Score Quiz',
+                    style: TextStyle(
+                      color: FormateurTheme.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              ...(_rankings?.mostQuizzes.take(3).map((s) => _buildTopLearnerItem(s)) ?? []),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTopLearnerItem(StagiairePerformance s) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: FormateurTheme.background,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: FormateurTheme.border),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: FormateurTheme.accent.withOpacity(0.1),
+            backgroundImage: s.image != null ? NetworkImage(s.image!) : null,
+            child: s.image == null
+                ? Text(
+                    s.name.isNotEmpty ? s.name[0].toUpperCase() : '?',
+                    style: const TextStyle(color: FormateurTheme.accentDark, fontWeight: FontWeight.bold),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  s.name,
+                  style: const TextStyle(
+                    color: FormateurTheme.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  '${s.totalQuizzes} quiz complétés',
+                  style: const TextStyle(
+                    color: FormateurTheme.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: FormateurTheme.border),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.flash_on_rounded, color: Colors.blue, size: 14),
+                const SizedBox(width: 4),
+                Text(
+                  '${s.totalLogins}',
+                  style: const TextStyle(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

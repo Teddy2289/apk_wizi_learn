@@ -34,8 +34,9 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
   Future<void> _loadData() async {
     setState(() => _loading = true);
     try {
-      // Using student comparison endpoint as it likely returns the list of students with stats
-      final students = await _repository.getStudentsComparison();
+      // Using student comparison endpoint as it returns the list of students with stats
+      final data = await _repository.getStudentsComparison();
+      final List<dynamic> students = data['performance'] as List<dynamic>? ?? [];
       setState(() {
         _stagiaires = students;
         _filteredStagiaires = students;
@@ -54,7 +55,7 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
         _filteredStagiaires = _stagiaires;
       } else {
         _filteredStagiaires = _stagiaires.where((s) {
-          final name = '${s['prenom']} ${s['nom']}'.toLowerCase();
+          final name = (s['name'] ?? '').toString().toLowerCase();
           return name.contains(query.toLowerCase());
         }).toList();
       }
@@ -145,16 +146,16 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
         leading: CircleAvatar(
           radius: 24,
           backgroundColor: FormateurTheme.accent.withOpacity(0.1),
-          backgroundImage: stagiaire['avatar'] != null ? NetworkImage(stagiaire['avatar']) : null,
-          child: stagiaire['avatar'] == null
+          backgroundImage: stagiaire['image'] != null ? NetworkImage(stagiaire['image']) : null,
+          child: (stagiaire['image'] == null && stagiaire['name'] != null && (stagiaire['name'] as String).isNotEmpty)
               ? Text(
-                  (stagiaire['prenom'] as String)[0].toUpperCase(),
+                  (stagiaire['name'] as String)[0].toUpperCase(),
                   style: const TextStyle(color: FormateurTheme.accentDark, fontWeight: FontWeight.bold),
                 )
-              : null,
+              : (stagiaire['image'] == null ? const Icon(Icons.person, color: FormateurTheme.accentDark) : null),
         ),
         title: Text(
-          '${stagiaire['prenom']} ${stagiaire['nom']}',
+          stagiaire['name'] ?? 'Stagiaire',
           style: const TextStyle(fontWeight: FontWeight.bold, color: FormateurTheme.textPrimary),
         ),
         subtitle: Text(

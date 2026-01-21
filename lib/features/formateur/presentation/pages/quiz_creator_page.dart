@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
+import 'package:wizi_learn/features/formateur/presentation/pages/quiz_detail_page.dart';
 
 class QuizCreatorPage extends StatefulWidget {
   const QuizCreatorPage({super.key});
@@ -295,9 +296,24 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
                           onSelected: (value) {
                             if (value == 'delete') {
                               _deleteQuiz(quiz['id']);
+                            } else if (value == 'view') {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => QuizDetailPage(quizId: quiz['id']),
+                                ),
+                              ).then((_) => _loadQuizzes());
                             }
                           },
                         ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => QuizDetailPage(quizId: quiz['id']),
+                            ),
+                          ).then((_) => _loadQuizzes());
+                        },
                       ),
                     );
                   },

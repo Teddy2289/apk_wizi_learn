@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
-import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
+import 'package:wizi_learn/core/constants/app_constants.dart';
 
 class FormateurClassementPage extends StatefulWidget {
   const FormateurClassementPage({super.key});
@@ -339,9 +339,12 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
     );
   }
 
-  Widget _buildRankingRow(dynamic stagiaire, int rank) {
+  Widget _buildRankingRow(dynamic stagiaire, int index) {
+    // Use rank from API if available, otherwise use index + 1
+    final int rank = stagiaire['rank'] != null ? int.parse(stagiaire['rank'].toString()) : index;
     final bool isTop3 = rank <= 3;
-    
+    final String? imagePath = stagiaire['image'] ?? stagiaire['avatar'];
+
     return Container(
       padding: const EdgeInsets.all(16),
       color: Colors.white,
@@ -365,6 +368,34 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
                 fontWeight: FontWeight.w900,
                 fontSize: 14,
               ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // User Avatar
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isTop3 ? _getRankColor(rank) : FormateurTheme.border,
+                width: 2,
+              ),
+            ),
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: FormateurTheme.background,
+              backgroundImage: imagePath != null
+                  ? NetworkImage(AppConstants.getUserImageUrl(imagePath))
+                  : null,
+              child: imagePath == null
+                  ? Text(
+                      (stagiaire['prenom'] as String)[0].toUpperCase(),
+                      style: const TextStyle(
+                        color: FormateurTheme.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
             ),
           ),
           const SizedBox(width: 16),
@@ -397,7 +428,7 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${stagiaire['total_points']}',
+                '${stagiaire['total_points'] ?? 0}',
                 style: const TextStyle(
                   color: FormateurTheme.textPrimary,
                   fontWeight: FontWeight.w900,
@@ -417,6 +448,19 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
         ],
       ),
     );
+  }
+
+  Color _getRankColor(int rank) {
+    switch (rank) {
+      case 1:
+        return const Color(0xFFFFD700);
+      case 2:
+        return const Color(0xFFC0C0C0);
+      case 3:
+        return const Color(0xFFCD7F32);
+      default:
+        return FormateurTheme.border;
+    }
   }
 
   LinearGradient _getRankGradient(int rank) {
