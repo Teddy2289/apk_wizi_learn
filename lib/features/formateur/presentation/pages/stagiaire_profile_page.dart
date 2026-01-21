@@ -553,7 +553,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: FormateurTheme.border),
-            boxStyle: BoxBorder.lerp(null, null, 0), // weird artifact fix? no, just standard
+
           ),
           child: Column(
             children: [

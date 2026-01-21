@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
-import 'package:wizi_learn/features/auth/presentation/widgets/loading_indicator.dart';
+import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
 
 class FormateurClassementPage extends StatefulWidget {
   const FormateurClassementPage({super.key});
@@ -84,7 +84,7 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
         ),
       ),
       body: _loading
-          ? const Center(child: LoadingIndicator())
+          ? const Center(child: CircularProgressIndicator(color: FormateurTheme.accent))
           : RefreshIndicator(
               color: FormateurTheme.accent,
               onRefresh: _loadData,

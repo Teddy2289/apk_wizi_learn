@@ -720,7 +720,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                                 child: stagiaire['avatar'] == null
                                   ? Text(
                                       stagiaire['prenom'][0].toUpperCase(),
-                                      style: TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.black),
+                                      style: TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.w900),
                                     )
                                   : null,
                               ),
