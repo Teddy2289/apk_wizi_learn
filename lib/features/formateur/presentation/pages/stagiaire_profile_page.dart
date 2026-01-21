@@ -320,30 +320,6 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
       ),
     );
   }
-}
-
-class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  _SliverAppBarDelegate(this._tabBar);
-
-  final TabBar _tabBar;
-
-  @override
-  double get minExtent => _tabBar.preferredSize.height;
-  @override
-  double get maxExtent => _tabBar.preferredSize.height;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: const Color(0xFF1A1A1A),
-      child: _tabBar,
-    );
-  }
-
-  @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return false;
-  }
 
   Widget _buildProgressionTab() {
     return RefreshIndicator(
@@ -590,7 +566,6 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
 
   bool _isRecentlyActive() {
     if (_profile?.stagiaire.lastLogin == null) return false;
-    // Consider active if logged in within last 24 hours
     try {
       final lastLogin = DateTime.parse(_profile!.stagiaire.lastLogin!);
       final diff = DateTime.now().difference(lastLogin);
@@ -631,5 +606,29 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
       default:
         return Icons.event;
     }
+  }
+}
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  _SliverAppBarDelegate(this._tabBar);
+
+  final TabBar _tabBar;
+
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: const Color(0xFF1A1A1A),
+      child: _tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return false;
   }
 }

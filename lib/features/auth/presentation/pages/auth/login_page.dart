@@ -4,6 +4,7 @@ import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_event.dart';
 import 'package:wizi_learn/features/auth/presentation/bloc/auth_state.dart';
 import 'package:wizi_learn/features/auth/presentation/pages/auth/forgot_password.dart';
+import 'package:wizi_learn/core/utils/role_router.dart';
 import '../../bloc/auth_bloc.dart';
 import '../../components/auth_text_field.dart';
 
@@ -272,10 +273,9 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   );
                   Future.microtask(() {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      RouteConstants.dashboard,
-                    );
+                    // Role-based redirection
+                    final route = RoleRouter.getRouteForRole(state.user.role);
+                    Navigator.pushReplacementNamed(context, route);
                   });
                 }
               },

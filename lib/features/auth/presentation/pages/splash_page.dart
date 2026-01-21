@@ -8,6 +8,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:wizi_learn/features/auth/data/repositories/auth_repository.dart';
+import 'package:wizi_learn/core/utils/role_router.dart';
 
 const Color kYellowLight = Color(0xFFFFF9C4); // jaune très clair
 const Color kYellow = Color(0xFFFFEB3B); // jaune
@@ -110,26 +111,9 @@ class _OnSplashPage extends State<SplashPage> {
   }
 
   /// Détermine la route selon le rôle de l'utilisateur
+  /// Utilise le RoleRouter centralisé pour la cohérence
   String _getRouteForRole(String? role) {
-    final lowerRole = role?.toLowerCase() ?? '';
-    
-    // Formateurs (masculin et féminin)
-    if (lowerRole == 'formateur' || lowerRole == 'formatrice') {
-      return RouteConstants.commercialDashboard;
-    }
-    
-    // Commerciaux (masculin et féminin)
-    if (lowerRole == 'commercial' || lowerRole == 'commerciale') {
-      return RouteConstants.commercialDashboard;
-    }
-    
-    // Admin
-    if (lowerRole == 'admin') {
-      return RouteConstants.commercialDashboard;
-    }
-    
-    // Stagiaire ou par défaut
-    return RouteConstants.dashboard;
+    return RoleRouter.getRouteForRole(role);
   }
 
   void _goToNextPage() {
