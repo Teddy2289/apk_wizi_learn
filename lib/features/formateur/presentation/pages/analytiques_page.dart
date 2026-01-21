@@ -164,7 +164,7 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
               _SummaryCard('Stagiaires', _summary!.totalStagiaires.toString(), Icons.people_outline, Colors.blue),
               _SummaryCard('Actifs (Semaine)', _summary!.activeThisWeek.toString(), Icons.person_add_alt_1_outlined, FormateurTheme.success),
               _SummaryCard('Quiz Passés', _summary!.totalQuizzesTaken.toString(), Icons.emoji_events_outlined, FormateurTheme.accent),
-              _SummaryCard('Score Moy.', '${_summary!.avgQuizScore.toStringAsFixed(1)}%', Icons.analytics_outlined, FormateurTheme.orangeAccent),
+              _SummaryCard('Score Moy.', '${_summary!.avgQuizScore.toStringAsFixed(1)}%', Icons.analytics_outlined, FormateurTheme.accent),
             ],
           ),
           const SizedBox(height: 24),
@@ -193,10 +193,10 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.purple.withOpacity(0.1),
+                          color: FormateurTheme.accent.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.school_rounded, color: Colors.purple, size: 20),
+                        child: const Icon(Icons.school_rounded, color: FormateurTheme.accent, size: 20),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -428,9 +428,7 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
                     child: Text(
                       '${dropout.dropoutRate.toStringAsFixed(1)}%',
                       style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                        color: dropout.dropoutRate > 50 ? FormateurTheme.error : FormateurTheme.orangeAccent,
+                        color: dropout.dropoutRate > 50 ? FormateurTheme.error : FormateurTheme.accent,
                       ),
                     ),
                   ),
@@ -443,7 +441,7 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
 
   Color _getScoreColor(double score) {
     if (score >= 70) return FormateurTheme.success;
-    if (score >= 50) return FormateurTheme.orangeAccent;
+    if (score >= 50) return FormateurTheme.accent;
     return FormateurTheme.error;
   }
 }

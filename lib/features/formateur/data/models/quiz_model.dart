@@ -20,18 +20,24 @@ class Quiz {
   });
 
   factory Quiz.fromJson(Map<String, dynamic> json) {
+    int parseInt(dynamic v, {int fallback = 0}) =>
+        int.tryParse(v?.toString() ?? '') ?? fallback;
+
+    final parsedQuestions = (json['questions'] as List?)
+            ?.map((q) => Question.fromJson(q as Map<String, dynamic>))
+            .toList() ??
+        [];
+
     return Quiz(
       id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       titre: json['titre']?.toString() ?? '',
       description: json['description']?.toString(),
-      duree: int.tryParse(json['duree']?.toString() ?? '30') ?? 30,
-      niveau: json['niveau']?.toString() ?? 'debutant',
+      duree: parseInt(json['duree'], fallback: 30),
+      niveau: json['niveau']?.toString() ?? 'débutant',
       status: json['status']?.toString() ?? 'brouillon',
-      nbQuestions: int.tryParse(json['nb_questions']?.toString() ?? '0') ?? 0,
-      questions: (json['questions'] as List?)
-              ?.map((q) => Question.fromJson(q))
-              .toList() ??
-          [],
+      // Laravel quiz detail doesn't send nb_questions; derive from questions if missing.
+      nbQuestions: parseInt(json['nb_questions'], fallback: parsedQuestions.length),
+      questions: parsedQuestions,
     );
   }
 }
@@ -52,13 +58,21 @@ class Question {
   });
 
   factory Question.fromJson(Map<String, dynamic> json) {
+    // Support Laravel payload:
+    // { question: "...", type: "...", reponses: [{ reponse: "...", correct: true }] }
+    // and legacy payload:
+    // { content: "...", points: 1, reponses: [{ content: "...", is_correct: 1 }] }
+    int parseInt(dynamic v, {int fallback = 0}) =>
+        int.tryParse(v?.toString() ?? '') ?? fallback;
+
     return Question(
       id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
-      content: json['content']?.toString() ?? '',
-      type: json['type']?.toString() ?? 'qcm',
-      points: int.tryParse(json['points']?.toString() ?? '1') ?? 1,
+      content: (json['content'] ?? json['question'] ?? '').toString(),
+      type: (json['type'] ?? 'qcm').toString(),
+      // Laravel payload doesn't include points; default to 1
+      points: parseInt(json['points'], fallback: 1),
       reponses: (json['reponses'] as List?)
-              ?.map((r) => Reponse.fromJson(r))
+              ?.map((r) => Reponse.fromJson(r as Map<String, dynamic>))
               .toList() ??
           [],
     );
@@ -77,10 +91,13 @@ class Reponse {
   });
 
   factory Reponse.fromJson(Map<String, dynamic> json) {
+    final rawCorrect = json['is_correct'] ?? json['correct'];
     return Reponse(
       id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
-      content: json['content']?.toString() ?? '',
-      isCorrect: json['is_correct'] == true || json['is_correct'] == 1 || json['is_correct'] == '1',
+      content: (json['content'] ?? json['reponse'] ?? '').toString(),
+      isCorrect: rawCorrect == true ||
+          rawCorrect == 1 ||
+          rawCorrect == '1',
     );
   }
 }

@@ -12,9 +12,22 @@ class QuizRepository {
   Future<Quiz> getQuizById(int id) async {
     try {
       final response = await apiClient.get('/formateur/quizzes/$id');
-      // Some endpoints wrap single item in "data" or "quiz"
-      final data = response.data['quiz'] ?? response.data;
-      return Quiz.fromJson(data);
+      // Laravel endpoint returns { quiz: {...}, questions: [...] }
+      // Some endpoints wrap in "data". Support both shapes.
+      final root = (response.data is Map && response.data['data'] is Map)
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+
+      if (root['quiz'] is Map) {
+        final quizJson = Map<String, dynamic>.from(root['quiz'] as Map);
+        if (root['questions'] is List) {
+          quizJson['questions'] = root['questions'];
+        }
+        return Quiz.fromJson(quizJson);
+      }
+
+      // Fallback: API already returns quiz with embedded questions
+      return Quiz.fromJson(root);
     } catch (e) {
       debugPrint('❌ Erreur chargement quiz $id: $e');
       rethrow;
