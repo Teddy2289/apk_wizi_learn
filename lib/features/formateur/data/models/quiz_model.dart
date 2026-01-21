@@ -6,6 +6,7 @@ class Quiz {
   final String niveau;
   final String status;
   final int nbQuestions;
+  final int? formationId;
   final List<Question> questions;
 
   Quiz({
@@ -16,6 +17,7 @@ class Quiz {
     required this.niveau,
     required this.status,
     required this.nbQuestions,
+    this.formationId,
     required this.questions,
   });
 
@@ -35,8 +37,10 @@ class Quiz {
       duree: parseInt(json['duree'], fallback: 30),
       niveau: json['niveau']?.toString() ?? 'débutant',
       status: json['status']?.toString() ?? 'brouillon',
-      // Laravel quiz detail doesn't send nb_questions; derive from questions if missing.
       nbQuestions: parseInt(json['nb_questions'], fallback: parsedQuestions.length),
+      formationId: json['formation_id'] != null 
+          ? int.tryParse(json['formation_id'].toString()) 
+          : null,
       questions: parsedQuestions,
     );
   }

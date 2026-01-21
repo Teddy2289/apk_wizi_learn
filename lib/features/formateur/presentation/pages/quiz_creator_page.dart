@@ -15,7 +15,13 @@ class QuizCreatorPage extends StatefulWidget {
 class _QuizCreatorPageState extends State<QuizCreatorPage> {
   late final ApiClient _apiClient;
   List<Map<String, dynamic>> _quizzes = [];
+  List<Map<String, dynamic>> _formations = [];
   bool _loading = true;
+
+  // Filters
+  String _filterFormationId = '';
+  String _filterStatus = '';
+  String _filterNiveau = '';
 
   @override
   void initState() {
@@ -24,15 +30,20 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
       dio: Dio(),
       storage: const FlutterSecureStorage(),
     );
-    _loadQuizzes();
+    _loadAll();
   }
 
-  Future<void> _loadQuizzes() async {
+  Future<void> _loadAll() async {
     setState(() => _loading = true);
     try {
-      final response = await _apiClient.get('/formateur/quizzes');
+      final responses = await Future.wait([
+        _apiClient.get('/formateur/quizzes'),
+        _apiClient.get('/formateur/formations-list'),
+      ]);
+      
       setState(() {
-        _quizzes = List<Map<String, dynamic>>.from(response.data['quizzes'] ?? []);
+        _quizzes = List<Map<String, dynamic>>.from(responses[0].data['quizzes'] ?? []);
+        _formations = List<Map<String, dynamic>>.from(responses[1].data['formations'] ?? []);
         _loading = false;
       });
     } catch (e) {
@@ -44,6 +55,8 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
       }
     }
   }
+
+  Future<void> _loadQuizzes() async => _loadAll();
 
   Future<void> _createQuiz() async {
     final titleCtrl = TextEditingController();
@@ -178,6 +191,35 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Apply filters then group by formation
+    final filtered = _quizzes.where((q) {
+      final status = (q['status'] ?? '').toString().toLowerCase();
+      final niveau = (q['niveau'] ?? '').toString().toLowerCase();
+      final formationId = (q['formation_id'] ?? '').toString();
+      
+      final okStatus = _filterStatus.isEmpty || status == _filterStatus.toLowerCase();
+      final okNiveau = _filterNiveau.isEmpty || niveau.contains(_filterNiveau.toLowerCase());
+      final okFormation = _filterFormationId.isEmpty || formationId == _filterFormationId;
+      
+      return okStatus && okNiveau && okFormation;
+    }).toList();
+
+    // Grouping for the list display
+    final Map<String, List<Map<String, dynamic>>> grouped = {};
+    for (final q in filtered) {
+      final key = (q['formation_id'] ?? 'none').toString();
+      grouped.putIfAbsent(key, () => []).add(q);
+    }
+
+    String formationName(String id) {
+      if (id == 'none' || id.isEmpty) return 'Sans formation';
+      final formation = _formations.firstWhere(
+        (f) => f['id'].toString() == id,
+        orElse: () => {'titre': 'Formation #$id'},
+      );
+      return (formation['nom'] ?? formation['titre'] ?? 'Formation #$id').toString();
+    }
+
     return Scaffold(
       backgroundColor: FormateurTheme.background,
       appBar: AppBar(
@@ -219,102 +261,129 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
                   ),
                 )
               : ListView.separated(
-                  padding: const EdgeInsets.all(24),
-                  itemCount: _quizzes.length,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: grouped.keys.length + 1,
                   separatorBuilder: (context, index) => const SizedBox(height: 16),
                   itemBuilder: (context, index) {
-                    final quiz = _quizzes[index];
-                    final status = quiz['status'] ?? 'brouillon';
-                    final statusColor = status == 'actif'
-                        ? FormateurTheme.success
-                        : status == 'archive'
-                            ? FormateurTheme.textTertiary
-                            : FormateurTheme.orangeAccent;
+                    // First item: filters UI
+                    if (index == 0) {
+                      return _Filters(
+                        filterStatus: _filterStatus,
+                        filterNiveau: _filterNiveau,
+                        filterFormationId: _filterFormationId,
+                        onStatusChanged: (v) => setState(() => _filterStatus = v),
+                        onNiveauChanged: (v) => setState(() => _filterNiveau = v),
+                        onFormationChanged: (v) => setState(() => _filterFormationId = v),
+                        formations: _formations,
+                      );
+                    }
 
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: FormateurTheme.border),
-                        boxShadow: FormateurTheme.cardShadow,
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(20),
-                        title: Text(
-                          quiz['titre'] ?? '',
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: FormateurTheme.textPrimary),
+                    final key = grouped.keys.elementAt(index - 1);
+                    final items = grouped[key]!;
+                    final label = formationName(key);
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4),
+                          child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: FormateurTheme.textPrimary)),
                         ),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Row(
-                            children: [
-                              Icon(Icons.help_outline, size: 14, color: FormateurTheme.textSecondary),
-                              const SizedBox(width: 4),
-                              Text('${quiz['nb_questions'] ?? 0} questions', style: const TextStyle(fontSize: 12, color: FormateurTheme.textSecondary)),
-                              const SizedBox(width: 16),
-                              Icon(Icons.timer_outlined, size: 14, color: FormateurTheme.textSecondary),
-                              const SizedBox(width: 4),
-                              Text('${quiz['duree'] ?? 0} min', style: const TextStyle(fontSize: 12, color: FormateurTheme.textSecondary)),
-                            ],
-                          ),
-                        ),
-                        leading: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.assignment_outlined, color: statusColor),
-                        ),
-                        trailing: PopupMenuButton(
-                          icon: const Icon(Icons.more_vert, color: FormateurTheme.textSecondary),
-                          color: Colors.white,
-                          elevation: 4,
-                          surfaceTintColor: Colors.white,
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(
-                              value: 'view',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.visibility_outlined, size: 20, color: FormateurTheme.textPrimary),
-                                  SizedBox(width: 12),
-                                  Text('Voir détails'),
-                                ],
-                              ),
+                        ...items.map((quiz) {
+                          final status = quiz['status'] ?? 'brouillon';
+                          final statusColor = status == 'actif'
+                              ? FormateurTheme.success
+                              : status == 'archive'
+                                  ? FormateurTheme.textTertiary
+                                  : FormateurTheme.orangeAccent;
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: FormateurTheme.border),
+                              boxShadow: FormateurTheme.cardShadow,
                             ),
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.delete_outline, size: 20, color: FormateurTheme.error),
-                                  SizedBox(width: 12),
-                                  Text('Supprimer', style: TextStyle(color: FormateurTheme.error)),
-                                ],
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(16),
+                              title: Text(
+                                quiz['titre'] ?? '',
+                                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: FormateurTheme.textPrimary),
                               ),
-                            ),
-                          ],
-                          onSelected: (value) {
-                            if (value == 'delete') {
-                              _deleteQuiz(quiz['id']);
-                            } else if (value == 'view') {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => QuizDetailPage(quizId: quiz['id']),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 6.0),
+                                child: Wrap(
+                                  spacing: 12,
+                                  runSpacing: 6,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    _InfoChip(icon: Icons.help_outline, label: '${quiz['nb_questions'] ?? 0} questions'),
+                                    _InfoChip(icon: Icons.timer_outlined, label: '${quiz['duree'] ?? 0} min'),
+                                    _StatusChip(status: status.toString(), color: statusColor),
+                                  ],
                                 ),
-                              ).then((_) => _loadQuizzes());
-                            }
-                          },
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => QuizDetailPage(quizId: quiz['id']),
+                              ),
+                              leading: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(Icons.assignment_outlined, color: statusColor),
+                              ),
+                              trailing: PopupMenuButton(
+                                icon: const Icon(Icons.more_vert, color: FormateurTheme.textSecondary),
+                                color: Colors.white,
+                                elevation: 4,
+                                surfaceTintColor: Colors.white,
+                                itemBuilder: (context) => [
+                                  const PopupMenuItem(
+                                    value: 'view',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.visibility_outlined, size: 20, color: FormateurTheme.textPrimary),
+                                        SizedBox(width: 12),
+                                        Text('Voir détails'),
+                                      ],
+                                    ),
+                                  ),
+                                  const PopupMenuItem(
+                                    value: 'delete',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.delete_outline, size: 20, color: FormateurTheme.error),
+                                        SizedBox(width: 12),
+                                        Text('Supprimer', style: TextStyle(color: FormateurTheme.error)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                onSelected: (value) {
+                                  if (value == 'delete') {
+                                    _deleteQuiz(quiz['id']);
+                                  } else if (value == 'view') {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => QuizDetailPage(quizId: quiz['id']),
+                                      ),
+                                    ).then((_) => _loadQuizzes());
+                                  }
+                                },
+                              ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => QuizDetailPage(quizId: quiz['id']),
+                                  ),
+                                ).then((_) => _loadQuizzes());
+                              },
                             ),
-                          ).then((_) => _loadQuizzes());
-                        },
-                      ),
+                          );
+                        }).toList(),
+                      ],
                     );
                   },
                 ),
@@ -322,6 +391,147 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
         onPressed: _createQuiz,
         backgroundColor: FormateurTheme.accentDark,
         child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _InfoChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: FormateurTheme.textSecondary),
+        const SizedBox(width: 4),
+        Text(label, style: const TextStyle(fontSize: 12, color: FormateurTheme.textSecondary)),
+      ],
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final String status;
+  final Color color;
+  const _StatusChip({required this.status, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color),
+      ),
+    );
+  }
+}
+
+class _Filters extends StatelessWidget {
+  final String filterStatus;
+  final String filterNiveau;
+  final String filterFormationId;
+  final ValueChanged<String> onStatusChanged;
+  final ValueChanged<String> onNiveauChanged;
+  final ValueChanged<String> onFormationChanged;
+  final List<Map<String, dynamic>> formations;
+
+  const _Filters({
+    required this.filterStatus,
+    required this.filterNiveau,
+    required this.filterFormationId,
+    required this.onStatusChanged,
+    required this.onNiveauChanged,
+    required this.onFormationChanged,
+    required this.formations,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: FormateurTheme.border),
+        boxShadow: FormateurTheme.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Filtres', style: TextStyle(fontWeight: FontWeight.bold, color: FormateurTheme.textPrimary)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              SizedBox(
+                width: 160,
+                child: DropdownButtonFormField<String>(
+                  value: filterFormationId.isEmpty ? null : filterFormationId,
+                  hint: const Text('Formation'),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: FormateurTheme.border)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: '', child: Text('Toutes les formations')),
+                    ...formations.map((f) => DropdownMenuItem(
+                      value: f['id'].toString(), 
+                      child: Text(f['nom'] ?? f['titre'] ?? 'Formation #${f['id']}')
+                    )),
+                  ],
+                  onChanged: (v) => onFormationChanged(v ?? ''),
+                ),
+              ),
+              SizedBox(
+                width: 150,
+                child: DropdownButtonFormField<String>(
+                  value: filterNiveau.isEmpty ? null : filterNiveau,
+                  hint: const Text('Niveau'),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: FormateurTheme.border)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: '', child: Text('Tous')),
+                    DropdownMenuItem(value: 'débutant', child: Text('Débutant')),
+                    DropdownMenuItem(value: 'intermédiaire', child: Text('Intermédiaire')),
+                    DropdownMenuItem(value: 'avancé', child: Text('Avancé')),
+                  ],
+                  onChanged: (v) => onNiveauChanged(v ?? ''),
+                ),
+              ),
+              SizedBox(
+                width: 150,
+                child: DropdownButtonFormField<String>(
+                  value: filterStatus.isEmpty ? null : filterStatus,
+                  hint: const Text('Statut'),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: FormateurTheme.border)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: '', child: Text('Tous')),
+                    DropdownMenuItem(value: 'actif', child: Text('Actif')),
+                    DropdownMenuItem(value: 'brouillon', child: Text('Brouillon')),
+                    DropdownMenuItem(value: 'inactif', child: Text('Inactif')),
+                    DropdownMenuItem(value: 'archive', child: Text('Archivé')),
+                  ],
+                  onChanged: (v) => onStatusChanged(v ?? ''),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -221,66 +221,71 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
             // Background
             Container(color: FormateurTheme.background),
             // Profile Info Center
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 48),
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: FormateurTheme.accent.withOpacity(0.3), width: 2),
+            SingleChildScrollView(
+              physics: const NeverScrollableScrollPhysics(),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 64),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: FormateurTheme.accent.withOpacity(0.3), width: 2),
+                    ),
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundColor: FormateurTheme.accent.withOpacity(0.1),
+                      backgroundImage: stagiaire.image != null && stagiaire.image!.isNotEmpty 
+                          ? NetworkImage(AppConstants.getUserImageUrl(stagiaire.image!)) 
+                          : null,
+                      child: stagiaire.image == null
+                          ? Text(
+                              stagiaire.prenom[0].toUpperCase(),
+                              style: const TextStyle(fontSize: 40, color: FormateurTheme.accentDark, fontWeight: FontWeight.w900),
+                            )
+                          : null,
+                    ),
                   ),
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundColor: FormateurTheme.accent.withOpacity(0.1),
-                    backgroundImage: stagiaire.image != null && stagiaire.image!.isNotEmpty 
-                        ? NetworkImage(AppConstants.getUserImageUrl(stagiaire.image!)) 
-                        : null,
-                    child: stagiaire.image == null
-                        ? Text(
-                            stagiaire.prenom[0].toUpperCase(),
-                            style: const TextStyle(fontSize: 40, color: FormateurTheme.accentDark, fontWeight: FontWeight.w900),
-                          )
-                        : null,
+                  const SizedBox(height: 16),
+                  Text(
+                    stagiaire.fullName.toUpperCase(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: FormateurTheme.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  stagiaire.fullName.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: FormateurTheme.textPrimary,
-                    letterSpacing: -0.5,
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: FormateurTheme.accent.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: FormateurTheme.accent.withOpacity(0.2)),
+                    ),
+                    child: Text(
+                      stats.currentBadge,
+                      style: const TextStyle(color: FormateurTheme.accentDark, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: FormateurTheme.accent.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: FormateurTheme.accent.withOpacity(0.2)),
+                  const SizedBox(height: 16),
+                  // Mini Stats Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildTopStat('POINTS', stats.totalPoints.toString(), Colors.blue),
+                      _buildDivider(),
+                      _buildTopStat('SCORE', '${stats.averageScore.toInt()}%', FormateurTheme.success),
+                      _buildDivider(),
+                      _buildTopStat('COMPLÉTÉS', stats.formationsCompleted.toString(), FormateurTheme.orangeAccent),
+                    ],
                   ),
-                  child: Text(
-                    stats.currentBadge,
-                    style: const TextStyle(color: FormateurTheme.accentDark, fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Mini Stats Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildTopStat('POINTS', stats.totalPoints.toString(), Colors.blue),
-                    _buildDivider(),
-                    _buildTopStat('SCORE', '${stats.averageScore.toInt()}%', FormateurTheme.success),
-                    _buildDivider(),
-                    _buildTopStat('COMPLÉTÉS', stats.formationsCompleted.toString(), FormateurTheme.orangeAccent),
-                  ],
-                ),
-              ],
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ],
         ),
