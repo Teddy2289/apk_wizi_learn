@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
 
 class FormateurDrawerMenu extends StatelessWidget {
   final VoidCallback onLogout;
@@ -12,17 +12,17 @@ class FormateurDrawerMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: Colors.white,
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
-            decoration: BoxDecoration(
-              color: const Color(0xFF2A2A2A),
+            decoration: const BoxDecoration(
+              color: Colors.white,
               border: Border(
                 bottom: BorderSide(
-                  color: const Color(0xFFF7931E).withOpacity(0.3),
-                  width: 2,
+                  color: FormateurTheme.border,
+                  width: 1,
                 ),
               ),
             ),
@@ -32,110 +32,103 @@ class FormateurDrawerMenu extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: const Color(0xFFF7931E),
+                  backgroundColor: FormateurTheme.accent.withOpacity(0.1),
                   child: const Icon(
-                    Icons.person,
-                    size: 40,
-                    color: Colors.white,
+                    Icons.person_outline,
+                    size: 32,
+                    color: FormateurTheme.accentDark,
                   ),
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Trainer Dashboard',
+                  'Tableau de bord',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: FormateurTheme.textPrimary,
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  'Wizi-Learn Platform',
+                 Text(
+                  'Espace Formateur',
                   style: TextStyle(
-                    color: Colors.grey,
+                    color: FormateurTheme.textSecondary,
                     fontSize: 12,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
           ),
-          _buildMenuSection('Main', [
+          _buildMenuSection('PRINCIPAL', [
             _MenuItem(
-              icon: Icons.dashboard,
+              icon: Icons.dashboard_outlined,
               label: 'Dashboard',
               onTap: () => Navigator.pop(context),
             ),
             _MenuItem(
-              icon: Icons.people,
-              label: 'My Trainees',
+              icon: Icons.people_outline,
+              label: 'Mes Stagiaires',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/formateur/stagiaires');
               },
             ),
-            _MenuItem(
-              icon: Icons.trending_up,
-              label: 'Progress Analytics',
+             _MenuItem(
+              icon: Icons.bar_chart_outlined,
+              label: 'Analytiques',
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/formateur/analytics');
+                Navigator.pushNamed(context, '/formateur/analytiques');
               },
             ),
           ]),
-          _buildMenuSection('Management', [
+          _buildMenuSection('GESTION', [
             _MenuItem(
-              icon: Icons.assignment,
-              label: 'Tasks & Assignments',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/formateur/tasks');
-              },
-            ),
-            _MenuItem(
-              icon: Icons.announcement,
-              label: 'Announcements',
+              icon: Icons.campaign_outlined,
+              label: 'Communications',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/formateur/send-notification');
               },
             ),
             _MenuItem(
-              icon: Icons.leaderboard,
-              label: 'Leaderboard',
+              icon: Icons.leaderboard_outlined,
+              label: 'Classement',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/formateur/classement');
               },
             ),
             _MenuItem(
-              icon: Icons.assessment,
-              label: 'Quizzes',
+              icon: Icons.quiz_outlined,
+              label: 'Quiz',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/formateur/quizzes');
               },
             ),
           ]),
-          _buildMenuSection('Settings', [
-            _MenuItem(
-              icon: Icons.settings,
-              label: 'Settings',
+          _buildMenuSection('PARAMÈTRES', [
+             _MenuItem(
+              icon: Icons.settings_outlined,
+              label: 'Configuration',
               onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/formateur/settings');
+                 Navigator.pop(context);
+                // Navigator.pushNamed(context, '/formateur/settings');
+              },
+            ),
+             _MenuItem(
+              icon: Icons.help_outline,
+              label: 'Aide & Support',
+              onTap: () {
+                 Navigator.pop(context);
+                // Navigator.pushNamed(context, '/formateur/help');
               },
             ),
             _MenuItem(
-              icon: Icons.help,
-              label: 'Help & Support',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/formateur/help');
-              },
-            ),
-            _MenuItem(
-              icon: Icons.logout,
-              label: 'Logout',
+              icon: Icons.logout_rounded,
+              label: 'Déconnexion',
               onTap: onLogout,
               isDestructive: true,
             ),
@@ -150,14 +143,14 @@ class FormateurDrawerMenu extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
           child: Text(
             title,
             style: const TextStyle(
-              color: Color(0xFFF7931E),
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1,
+              color: FormateurTheme.textTertiary,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.2,
             ),
           ),
         ),
@@ -168,19 +161,22 @@ class FormateurDrawerMenu extends StatelessWidget {
 
   Widget _buildMenuItem(_MenuItem item) {
     return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
       leading: Icon(
         item.icon,
-        color: item.isDestructive ? Colors.red : const Color(0xFFF7931E),
+        color: item.isDestructive ? FormateurTheme.error : FormateurTheme.textSecondary,
+        size: 22,
       ),
       title: Text(
         item.label,
         style: TextStyle(
-          color: item.isDestructive ? Colors.red : Colors.white,
+          color: item.isDestructive ? FormateurTheme.error : FormateurTheme.textPrimary,
           fontSize: 14,
+          fontWeight: FontWeight.bold,
         ),
       ),
       onTap: item.onTap,
-      hoverColor: Colors.grey.withOpacity(0.1),
+      hoverColor: FormateurTheme.background,
     );
   }
 }

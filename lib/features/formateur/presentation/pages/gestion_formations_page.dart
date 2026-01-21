@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/formateur/data/models/formation_management_model.dart';
 import 'package:wizi_learn/features/formateur/data/repositories/formation_management_repository.dart';
+import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
 
 class GestionFormationsPage extends StatefulWidget {
   const GestionFormationsPage({super.key});
@@ -42,10 +43,10 @@ class _GestionFormationsPageState extends State<GestionFormationsPage> {
         _loading = false;
       });
     } catch (e) {
-      setState(() => _loading = false);
       if (mounted) {
+        setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: ${e.toString()}'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Erreur: ${e.toString()}'), backgroundColor: FormateurTheme.error),
         );
       }
     }
@@ -67,14 +68,13 @@ class _GestionFormationsPageState extends State<GestionFormationsPage> {
   }
 
   Future<void> _showAssignDialog(FormationWithStats formation) async {
-    // Load unassigned stagiaires
     final unassigned = await _repository.getUnassignedStagiaires(formation.id);
     
     if (!mounted) return;
     
     if (unassigned.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tous les stagiaires sont déjà assignés à cette formation')),
+        const SnackBar(content: Text('Tous les stagiaires sont déjà assignés à cette formation'), backgroundColor: FormateurTheme.textSecondary),
       );
       return;
     }
@@ -87,24 +87,33 @@ class _GestionFormationsPageState extends State<GestionFormationsPage> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text('Assigner: ${formation.titre}'),
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          title: Text(
+            'Assigner: ${formation.titre}',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
           content: SizedBox(
             width: double.maxFinite,
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Sélectionnez les stagiaires:', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
+                const Text('SÉLECTIONNEZ LES APPRENANTS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: FormateurTheme.textTertiary, letterSpacing: 1.2)),
+                const SizedBox(height: 12),
                 Flexible(
-                  child: ListView.builder(
+                  child: ListView.separated(
                     shrinkWrap: true,
                     itemCount: unassigned.length,
+                    separatorBuilder: (context, index) => const Divider(height: 1, color: FormateurTheme.border),
                     itemBuilder: (context, index) {
                       final stagiaire = unassigned[index];
                       final isSelected = selected.contains(stagiaire.id);
                       return CheckboxListTile(
-                        title: Text(stagiaire.fullName),
-                        subtitle: Text(stagiaire.email),
+                        contentPadding: EdgeInsets.zero,
+                        activeColor: FormateurTheme.accentDark,
+                        title: Text(stagiaire.fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        subtitle: Text(stagiaire.email, style: const TextStyle(color: FormateurTheme.textSecondary, fontSize: 12)),
                         value: isSelected,
                         onChanged: (value) {
                           setDialogState(() {
@@ -125,7 +134,7 @@ class _GestionFormationsPageState extends State<GestionFormationsPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
+              child: const Text('Annuler', style: TextStyle(color: FormateurTheme.textSecondary)),
             ),
             ElevatedButton(
               onPressed: selected.isEmpty
@@ -144,14 +153,16 @@ class _GestionFormationsPageState extends State<GestionFormationsPage> {
                             content: Text(success
                                 ? '${selected.length} stagiaire(s) assigné(s)'
                                 : 'Erreur d\'assignation'),
-                            backgroundColor: success ? Colors.green : Colors.red,
+                            backgroundColor: success ? FormateurTheme.success : FormateurTheme.error,
                           ),
                         );
                         if (success) _loadFormations();
                       }
                     },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF7931E),
+                backgroundColor: FormateurTheme.accentDark,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: FormateurTheme.textTertiary.withOpacity(0.3),
               ),
               child: const Text('Assigner'),
             ),
@@ -170,57 +181,97 @@ class _GestionFormationsPageState extends State<GestionFormationsPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.7,
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
         builder: (context, scrollController) => Container(
-          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                formation.titre,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: FormateurTheme.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
+              Text(
+                formation.titre.toUpperCase(),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: FormateurTheme.textPrimary, letterSpacing: -0.5),
+              ),
+              const SizedBox(height: 24),
               // Stats Cards
               Row(
                 children: [
-                  _StatCard('Total', stats.totalStagiaires.toString(), Colors.blue),
-                  const SizedBox(width: 8),
-                  _StatCard('Complété', stats.completed.toString(), Colors.green),
-                  const SizedBox(width: 8),
-                  _StatCard('En cours', stats.inProgress.toString(), Colors.orange),
+                  _StatCard('TOTAL', stats.totalStagiaires.toString(), Colors.blue),
+                  const SizedBox(width: 12),
+                  _StatCard('COMPLÉTÉ', stats.completed.toString(), FormateurTheme.success),
+                  const SizedBox(width: 12),
+                  _StatCard('EN COURS', stats.inProgress.toString(), FormateurTheme.orangeAccent),
                 ],
               ),
+              const SizedBox(height: 32),
+              const Text('STAGIAIRES INSCRITS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: FormateurTheme.textTertiary, letterSpacing: 1.5)),
               const SizedBox(height: 16),
-              const Text('Stagiaires inscrits:', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
               Expanded(
-                child: ListView.builder(
+                child: ListView.separated(
                   controller: scrollController,
                   itemCount: stagiaires.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final stagiaire = stagiaires[index];
-                    return Card(
+                    return Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: FormateurTheme.border),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: stagiaire.isActive ? Colors.green : Colors.grey,
-                          child: Text(stagiaire.prenom[0].toUpperCase()),
-                        ),
-                        title: Text(stagiaire.fullName),
-                        subtitle: LinearProgressIndicator(
-                          value: stagiaire.progress / 100,
-                          backgroundColor: Colors.grey[200],
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            stagiaire.progress == 100
-                                ? Colors.green
-                                : Colors.orange,
+                          backgroundColor: stagiaire.isActive ? FormateurTheme.success.withOpacity(0.1) : FormateurTheme.background,
+                          child: Text(
+                            stagiaire.prenom[0].toUpperCase(),
+                            style: TextStyle(
+                              color: stagiaire.isActive ? FormateurTheme.success : FormateurTheme.textTertiary,
+                              fontWeight: FontWeight.bold
+                            ),
                           ),
                         ),
-                        trailing: Text('${stagiaire.progress}%'),
+                        title: Text(stagiaire.fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: stagiaire.progress / 100,
+                                backgroundColor: FormateurTheme.background,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  stagiaire.progress == 100
+                                      ? FormateurTheme.success
+                                      : FormateurTheme.orangeAccent,
+                                ),
+                                minHeight: 6,
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: Text(
+                          '${stagiaire.progress}%',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: FormateurTheme.textPrimary),
+                        ),
                       ),
                     );
                   },
@@ -236,131 +287,176 @@ class _GestionFormationsPageState extends State<GestionFormationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: FormateurTheme.background,
       appBar: AppBar(
-        title: const Text('Gestion des Formations'),
-        backgroundColor: const Color(0xFFF7931E),
+        title: const Text('Mes Formations'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
+        titleTextStyle: const TextStyle(
+            color: FormateurTheme.textPrimary,
+            fontWeight: FontWeight.w900,
+            fontSize: 20,
+            fontFamily: 'Montserrat'
+        ),
+        foregroundColor: FormateurTheme.textPrimary,
       ),
       body: Column(
         children: [
           // Search Bar
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              onChanged: _filterFormations,
-              decoration: InputDecoration(
-                hintText: 'Rechercher une formation...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: FormateurTheme.cardShadow,
+                border: Border.all(color: FormateurTheme.border),
+              ),
+              child: TextField(
+                onChanged: _filterFormations,
+                decoration: const InputDecoration(
+                  hintText: 'Rechercher une formation...',
+                  hintStyle: TextStyle(color: FormateurTheme.textTertiary, fontSize: 14),
+                  prefixIcon: Icon(Icons.search, color: FormateurTheme.textTertiary),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                ),
+                style: const TextStyle(color: FormateurTheme.textPrimary),
               ),
             ),
           ),
           // Formations List
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: CircularProgressIndicator(color: FormateurTheme.accent))
                 : _filteredFormations.isEmpty
-                    ? const Center(child: Text('Aucune formation trouvée'))
+                    ? const Center(child: Text('Aucune formation trouvée', style: TextStyle(color: FormateurTheme.textTertiary)))
                     : RefreshIndicator(
                         onRefresh: _loadFormations,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                        color: FormateurTheme.accent,
+                        child: ListView.separated(
+                          padding: const EdgeInsets.all(24),
                           itemCount: _filteredFormations.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 16),
                           itemBuilder: (context, index) {
                             final formation = _filteredFormations[index];
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              child: InkWell(
-                                onTap: () => _showFormationDetails(formation),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  formation.titre,
-                                                  style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.bold,
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: FormateurTheme.border),
+                                boxShadow: FormateurTheme.cardShadow,
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () => _showFormationDetails(formation),
+                                  borderRadius: BorderRadius.circular(24),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    formation.titre,
+                                                    style: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.w800,
+                                                      color: FormateurTheme.textPrimary,
+                                                    ),
                                                   ),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  formation.categorie,
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.grey[600],
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    formation.categorie.toUpperCase(),
+                                                    style: const TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: FormateurTheme.textTertiary,
+                                                      letterSpacing: 1,
+                                                    ),
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 6,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.blue[50],
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                const Icon(Icons.people, size: 16, color: Colors.blue),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  '${formation.nbStagiaires}',
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.blue,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Row(
-                                        children: [
-                                          Icon(Icons.video_library, size: 16, color: Colors.grey[600]),
-                                          const SizedBox(width: 4),
-                                          Text('${formation.nbVideos} vidéos'),
-                                          const SizedBox(width: 16),
-                                          Icon(Icons.schedule, size: 16, color: Colors.grey[600]),
-                                          const SizedBox(width: 4),
-                                          Text('${formation.dureeEstimee}h'),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: OutlinedButton.icon(
-                                              onPressed: () => _showFormationDetails(formation),
-                                              icon: const Icon(Icons.visibility),
-                                              label: const Text('Voir détails'),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: ElevatedButton.icon(
-                                              onPressed: () => _showAssignDialog(formation),
-                                              icon: const Icon(Icons.add),
-                                              label: const Text('Assigner'),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFFF7931E),
+                                                ],
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 10,
+                                                vertical: 6,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.blue.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  const Icon(Icons.people_outline, size: 16, color: Colors.blue),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '${formation.nbStagiaires}',
+                                                    style: const TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.blue,
+                                                      fontSize: 12
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.video_library_outlined, size: 16, color: FormateurTheme.textSecondary),
+                                            const SizedBox(width: 6),
+                                            Text('${formation.nbVideos} vidéos', style: const TextStyle(fontSize: 12, color: FormateurTheme.textSecondary, fontWeight: FontWeight.w500)),
+                                            const SizedBox(width: 20),
+                                            Icon(Icons.schedule_outlined, size: 16, color: FormateurTheme.textSecondary),
+                                            const SizedBox(width: 6),
+                                            Text('${formation.dureeEstimee}h', style: const TextStyle(fontSize: 12, color: FormateurTheme.textSecondary, fontWeight: FontWeight.w500)),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 20),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: OutlinedButton(
+                                                onPressed: () => _showFormationDetails(formation),
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor: FormateurTheme.textPrimary,
+                                                  side: const BorderSide(color: FormateurTheme.border),
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                                ),
+                                                child: const Text('DÉTAILS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 1)),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: ElevatedButton.icon(
+                                                onPressed: () => _showAssignDialog(formation),
+                                                icon: const Icon(Icons.add, size: 18),
+                                                label: const Text('ASSIGNER', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 1)),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: FormateurTheme.accentDark,
+                                                  foregroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                                  elevation: 0,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -386,11 +482,11 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withOpacity(0.3)),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.2)),
         ),
         child: Column(
           children: [
@@ -398,13 +494,14 @@ class _StatCard extends StatelessWidget {
               value,
               style: TextStyle(
                 fontSize: 20,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w900,
                 color: color,
               ),
             ),
+            const SizedBox(height: 4),
             Text(
               label,
-              style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+              style: const TextStyle(fontSize: 10, color: FormateurTheme.textSecondary, fontWeight: FontWeight.bold, letterSpacing: 0.5),
             ),
           ],
         ),

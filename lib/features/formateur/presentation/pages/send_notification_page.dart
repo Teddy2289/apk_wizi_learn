@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
+import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
 
 class SendNotificationPage extends StatefulWidget {
   const SendNotificationPage({super.key});
@@ -47,14 +48,14 @@ class _SendNotificationPageState extends State<SendNotificationPage> {
   Future<void> _sendNotification() async {
     if (_selectedIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sélectionnez au moins un stagiaire')),
+        const SnackBar(content: Text('Sélectionnez au moins un stagiaire'), backgroundColor: FormateurTheme.error),
       );
       return;
     }
 
     if (_titleController.text.isEmpty || _messageController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Le titre et le message sont requis')),
+        const SnackBar(content: Text('Le titre et le message sont requis'), backgroundColor: FormateurTheme.error),
       );
       return;
     }
@@ -72,7 +73,7 @@ class _SendNotificationPageState extends State<SendNotificationPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Notification envoyée à ${_selectedIds.length} stagiaire(s)'),
-            backgroundColor: Colors.green,
+            backgroundColor: FormateurTheme.success,
           ),
         );
         
@@ -85,7 +86,7 @@ class _SendNotificationPageState extends State<SendNotificationPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Erreur lors de l\'envoi'),
-            backgroundColor: Colors.red,
+            backgroundColor: FormateurTheme.error,
           ),
         );
       }
@@ -102,54 +103,95 @@ class _SendNotificationPageState extends State<SendNotificationPage> {
     }).toList();
 
     return Scaffold(
+      backgroundColor: FormateurTheme.background,
       appBar: AppBar(
         title: const Text('Envoyer Notification'),
-        backgroundColor: const Color(0xFFF7931E),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
+        titleTextStyle: const TextStyle(
+          color: FormateurTheme.textPrimary,
+          fontWeight: FontWeight.w900,
+          fontSize: 20,
+          fontFamily: 'Montserrat'
+        ),
+        foregroundColor: FormateurTheme.textPrimary,
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: FormateurTheme.accent))
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Sélection destinataires
-                  Card(
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: FormateurTheme.border),
+                      boxShadow: FormateurTheme.cardShadow,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(20.0),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text(
-                                'Destinataires',
+                                'DESTINATAIRES',
                                 style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                  color: FormateurTheme.textTertiary,
+                                  letterSpacing: 1.2,
                                 ),
                               ),
-                              Chip(
-                                label: Text('${_selectedIds.length} sélectionné(s)'),
-                                backgroundColor: Colors.blue.shade100,
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: FormateurTheme.accent.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '${_selectedIds.length} sélectionné(s)',
+                                  style: const TextStyle(
+                                    color: FormateurTheme.accentDark,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11
+                                  ),
+                                ),
                               ),
                             ],
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: TextField(
-                            decoration: const InputDecoration(
-                              hintText: 'Rechercher...',
-                              prefixIcon: Icon(Icons.search),
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: FormateurTheme.background,
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            onChanged: (value) => setState(() => _searchQuery = value),
+                            child: TextField(
+                              decoration: const InputDecoration(
+                                hintText: 'Rechercher un stagiaire...',
+                                hintStyle: TextStyle(color: FormateurTheme.textTertiary, fontSize: 14),
+                                prefixIcon: Icon(Icons.search, color: FormateurTheme.textTertiary),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              ),
+                              style: const TextStyle(color: FormateurTheme.textPrimary),
+                              onChanged: (value) => setState(() => _searchQuery = value),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 8),
                         CheckboxListTile(
-                          title: Text('Tous (${filteredStagiaires.length})'),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                          activeColor: FormateurTheme.accentDark,
+                          title: Text('Tous (${filteredStagiaires.length})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: FormateurTheme.textPrimary)),
                           value: _selectedIds.length == filteredStagiaires.length &&
                               filteredStagiaires.isNotEmpty,
                           onChanged: (checked) {
@@ -162,20 +204,32 @@ class _SendNotificationPageState extends State<SendNotificationPage> {
                             });
                           },
                         ),
-                        const Divider(height: 1),
+                        const Divider(height: 1, color: FormateurTheme.border),
                         Container(
-                          constraints: const BoxConstraints(maxHeight: 200),
-                          child: ListView.builder(
+                          constraints: const BoxConstraints(maxHeight: 250),
+                          child: ListView.separated(
                             shrinkWrap: true,
                             itemCount: filteredStagiaires.length,
+                            separatorBuilder: (context, index) => const Divider(height: 1, indent: 20, endIndent: 20, color: FormateurTheme.border),
                             itemBuilder: (context, index) {
                               final stagiaire = filteredStagiaires[index];
                               final id = stagiaire['id'] as int;
+                              final isSelected = _selectedIds.contains(id);
 
                               return CheckboxListTile(
-                                title: Text('${stagiaire['prenom']} ${stagiaire['nom']}'),
-                                subtitle: Text(stagiaire['email']),
-                                value: _selectedIds.contains(id),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                                activeColor: FormateurTheme.accentDark,
+                                tileColor: isSelected ? FormateurTheme.accent.withOpacity(0.05) : null,
+                                title: Text(
+                                  '${stagiaire['prenom']} ${stagiaire['nom']}',
+                                  style: TextStyle(
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                    color: FormateurTheme.textPrimary,
+                                    fontSize: 14
+                                  )
+                                ),
+                                subtitle: Text(stagiaire['email'], style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 12)),
+                                value: isSelected,
                                 onChanged: (checked) {
                                   setState(() {
                                     if (checked == true) {
@@ -192,51 +246,86 @@ class _SendNotificationPageState extends State<SendNotificationPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
 
                   // Titre
-                  TextField(
-                    controller: _titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Titre',
-                      border: OutlineInputBorder(),
+                  const Text('CONTENU DU MESSAGE', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: FormateurTheme.textTertiary, letterSpacing: 1.2)),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: FormateurTheme.border),
+                      boxShadow: FormateurTheme.cardShadow
                     ),
-                    maxLength: 100,
+                    child: TextField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Titre',
+                        labelStyle: TextStyle(color: FormateurTheme.textTertiary),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(16),
+                      ),
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: FormateurTheme.textPrimary),
+                      maxLength: 100,
+                    ),
                   ),
                   const SizedBox(height: 16),
 
                   // Message
-                  TextField(
-                    controller: _messageController,
-                    decoration: const InputDecoration(
-                      labelText: 'Message',
-                      border: OutlineInputBorder(),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: FormateurTheme.border),
+                      boxShadow: FormateurTheme.cardShadow
                     ),
-                    maxLines: 5,
-                    maxLength: 500,
+                    child: TextField(
+                      controller: _messageController,
+                      decoration: const InputDecoration(
+                        labelText: 'Message',
+                        labelStyle: TextStyle(color: FormateurTheme.textTertiary),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(16),
+                        alignLabelWithHint: true,
+                      ),
+                      style: const TextStyle(color: FormateurTheme.textPrimary),
+                      maxLines: 6,
+                      maxLength: 500,
+                    ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
                   // Bouton envoi
                   SizedBox(
                     width: double.infinity,
+                    height: 56,
                     child: ElevatedButton.icon(
                       onPressed: _sending ? null : _sendNotification,
                       icon: _sending
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
-                          : const Icon(Icons.send),
+                          : const Icon(Icons.send_rounded, size: 20),
                       label: Text(
                         _sending
-                            ? 'Envoi en cours...'
-                            : 'Envoyer à ${_selectedIds.length} stagiaire(s)',
+                            ? 'ENVOI EN COURS...'
+                            : 'ENVOYER À ${_selectedIds.length} STAGIAIRE(S)',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.all(16),
-                        backgroundColor: const Color(0xFFF7931E),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: FormateurTheme.accentDark,
+                        foregroundColor: Colors.white,
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        disabledBackgroundColor: FormateurTheme.textTertiary.withOpacity(0.5),
                       ),
                     ),
                   ),

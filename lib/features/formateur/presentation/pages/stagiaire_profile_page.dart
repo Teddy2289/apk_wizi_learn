@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/formateur/data/models/stagiaire_profile_model.dart';
 import 'package:wizi_learn/features/formateur/data/repositories/stagiaire_profile_repository.dart';
+import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
 
 class StagiaireProfilePage extends StatefulWidget {
   final int stagiaireId;
@@ -58,10 +59,12 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
         _loading = false;
       });
     } catch (e) {
-      setState(() {
-        _error = 'Erreur de chargement: ${e.toString()}';
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = 'Erreur de chargement: ${e.toString()}';
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -74,23 +77,32 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Message à ${_profile!.stagiaire.fullName}'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        title: Text(
+          'Message à ${_profile!.stagiaire.fullName}',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: titleController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Titre',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                filled: true,
+                fillColor: FormateurTheme.background,
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: messageController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Message',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                filled: true,
+                fillColor: FormateurTheme.background,
               ),
               maxLines: 4,
             ),
@@ -99,7 +111,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuler'),
+            child: const Text('Annuler', style: TextStyle(color: FormateurTheme.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -115,6 +127,10 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
                 }
               }
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: FormateurTheme.accentDark,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Envoyer'),
           ),
         ],
@@ -125,7 +141,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Message envoyé avec succès'),
-          backgroundColor: Colors.green,
+          backgroundColor: FormateurTheme.success,
         ),
       );
     }
@@ -134,28 +150,30 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: FormateurTheme.background,
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFF7931E)))
+          ? const Center(child: CircularProgressIndicator(color: FormateurTheme.accent))
           : _error != null
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                      const Icon(Icons.error_outline, size: 64, color: FormateurTheme.error),
                       const SizedBox(height: 16),
-                      Text(_error!, style: const TextStyle(color: Colors.white70)),
+                      Text(_error!, style: const TextStyle(color: FormateurTheme.textSecondary)),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _loadProfile,
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF7931E)),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: FormateurTheme.accent,
+                            foregroundColor: Colors.white),
                         child: const Text('Réessayer'),
                       ),
                     ],
                   ),
                 )
               : _profile == null
-                  ? const Center(child: Text('Aucune donnée', style: TextStyle(color: Colors.white54)))
+                  ? const Center(child: Text('Aucune donnée', style: TextStyle(color: FormateurTheme.textSecondary)))
                   : NestedScrollView(
                       headerSliverBuilder: (context, innerBoxIsScrolled) {
                         return [
@@ -174,9 +192,10 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
                     ),
       floatingActionButton: _profile != null ? FloatingActionButton.extended(
         onPressed: _sendMessage,
-        backgroundColor: const Color(0xFFF7931E),
-        icon: const Icon(Icons.send, color: Colors.black),
-        label: const Text('MESSAGE', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        backgroundColor: FormateurTheme.accentDark,
+        elevation: 4,
+        icon: const Icon(Icons.send_rounded, color: Colors.white),
+        label: const Text('MESSAGE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ) : null,
     );
   }
@@ -188,30 +207,18 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
     return SliverAppBar(
       expandedHeight: 280,
       pinned: true,
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: Colors.white,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+        icon: const Icon(Icons.arrow_back_ios_new, color: FormateurTheme.textPrimary, size: 20),
         onPressed: () => Navigator.pop(context),
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
           children: [
-            // Background Gradient
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFFF7931E),
-                    Color(0xFF1A1A1A),
-                  ],
-                  stops: [0.0, 0.8],
-                ),
-              ),
-            ),
+            // Background
+            Container(color: FormateurTheme.background),
             // Profile Info Center
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -221,16 +228,16 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
+                    border: Border.all(color: FormateurTheme.accent.withOpacity(0.3), width: 2),
                   ),
                   child: CircleAvatar(
                     radius: 50,
-                    backgroundColor: Colors.white.withOpacity(0.1),
+                    backgroundColor: FormateurTheme.accent.withOpacity(0.1),
                     backgroundImage: stagiaire.image != null ? NetworkImage(stagiaire.image!) : null,
                     child: stagiaire.image == null
                         ? Text(
                             stagiaire.prenom[0].toUpperCase(),
-                            style: const TextStyle(fontSize: 40, color: Colors.white, fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontSize: 40, color: FormateurTheme.accentDark, fontWeight: FontWeight.w900),
                           )
                         : null,
                   ),
@@ -240,33 +247,34 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
                   stagiaire.fullName.toUpperCase(),
                   style: const TextStyle(
                     fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w900,
+                    color: FormateurTheme.textPrimary,
+                    letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
+                    color: FormateurTheme.accent.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: FormateurTheme.accent.withOpacity(0.2)),
                   ),
                   child: Text(
                     stats.currentBadge,
-                    style: const TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: FormateurTheme.accentDark, fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 // Mini Stats Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildTopStat('POINTS', stats.totalPoints.toString(), const Color(0xFF00A8FF)),
+                    _buildTopStat('POINTS', stats.totalPoints.toString(), Colors.blue),
                     _buildDivider(),
-                    _buildTopStat('SCORE', '${stats.averageScore.toInt()}%', const Color(0xFF00D084)),
+                    _buildTopStat('SCORE', '${stats.averageScore.toInt()}%', FormateurTheme.success),
                     _buildDivider(),
-                    _buildTopStat('COMPLETED', stats.formationsCompleted.toString(), const Color(0xFFF7931E)),
+                    _buildTopStat('COMPLÉTÉS', stats.formationsCompleted.toString(), FormateurTheme.orangeAccent),
                   ],
                 ),
               ],
@@ -282,11 +290,11 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
       children: [
         Text(
           value,
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color),
         ),
         Text(
           label,
-          style: TextStyle(fontSize: 9, color: Colors.white.withOpacity(0.4), fontWeight: FontWeight.bold, letterSpacing: 0.5),
+          style: const TextStyle(fontSize: 10, color: FormateurTheme.textTertiary, fontWeight: FontWeight.bold, letterSpacing: 1),
         ),
       ],
     );
@@ -295,9 +303,9 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
   Widget _buildDivider() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
-      height: 20,
+      height: 24,
       width: 1,
-      color: Colors.white.withOpacity(0.1),
+      color: FormateurTheme.border,
     );
   }
 
@@ -307,13 +315,14 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
       delegate: _SliverAppBarDelegate(
         TabBar(
           controller: _tabController,
-          indicatorColor: const Color(0xFFF7931E),
-          labelColor: const Color(0xFFF7931E),
-          unselectedLabelColor: Colors.white.withOpacity(0.5),
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 1),
+          indicatorColor: FormateurTheme.accentDark,
+          labelColor: FormateurTheme.accentDark,
+          unselectedLabelColor: FormateurTheme.textTertiary,
+          labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 1.2),
+          indicatorSize: TabBarIndicatorSize.label,
           tabs: const [
-            Tab(text: 'PROGRESS'),
-            Tab(text: 'ACTIVITY'),
+            Tab(text: 'PARCOURS'),
+            Tab(text: 'ACTIVITÉ'),
             Tab(text: 'INFO'),
           ],
         ),
@@ -324,35 +333,37 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
   Widget _buildProgressionTab() {
     return RefreshIndicator(
       onRefresh: _loadProfile,
-      color: const Color(0xFFF7931E),
+      color: FormateurTheme.accent,
       child: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         children: [
-          Text(
+          const Text(
             'FORMATIONS EN COURS',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.3), letterSpacing: 1),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1.5),
           ),
           const SizedBox(height: 16),
           if (_profile!.formations.isEmpty)
-             const Padding(
-               padding: EdgeInsets.symmetric(vertical: 20),
-               child: Text('Aucune formation active', style: TextStyle(color: Colors.white30)),
+             Container(
+               padding: const EdgeInsets.all(32),
+               alignment: Alignment.center,
+               child: const Text('Aucune formation active', style: TextStyle(color: FormateurTheme.textTertiary)),
              )
           else
             ..._profile!.formations.map((formation) => _buildFormationCard(formation)),
 
           const SizedBox(height: 32),
 
-          Text(
+          const Text(
             'HISTORIQUE DES QUIZ',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.3), letterSpacing: 1),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1.5),
           ),
           const SizedBox(height: 16),
           if (_profile!.quizHistory.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Text('Aucun quiz complété', style: TextStyle(color: Colors.white30)),
-            )
+            Container(
+               padding: const EdgeInsets.all(32),
+               alignment: Alignment.center,
+               child: const Text('Aucun quiz complété', style: TextStyle(color: FormateurTheme.textTertiary)),
+             )
           else
             ..._profile!.quizHistory.map((quiz) => _buildQuizCard(quiz)),
         ],
@@ -361,40 +372,51 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
   }
 
   Widget _buildFormationCard(dynamic formation) {
-    final color = formation.isCompleted ? const Color(0xFF00D084) : const Color(0xFFF7931E);
+    final color = formation.isCompleted ? FormateurTheme.success : FormateurTheme.accentDark;
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: FormateurTheme.border),
+        boxShadow: FormateurTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(formation.isCompleted ? Icons.check_circle : Icons.play_circle_fill, color: color, size: 20),
+              Icon(formation.isCompleted ? Icons.check_circle : Icons.play_circle_fill, color: color, size: 24),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   formation.title.toUpperCase(),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                  style: const TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.w800, fontSize: 13),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Text('${formation.progress}%', style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${formation.progress}%',
+                  style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: formation.progress / 100,
-              minHeight: 4,
-              backgroundColor: Colors.white.withOpacity(0.05),
+              minHeight: 8,
+              backgroundColor: FormateurTheme.background,
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
@@ -404,13 +426,14 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
   }
 
   Widget _buildQuizCard(dynamic quiz) {
-    final color = quiz.percentage >= 70 ? Colors.green : quiz.percentage >= 50 ? Colors.orange : Colors.red;
+    final color = quiz.percentage >= 70 ? FormateurTheme.success : quiz.percentage >= 50 ? FormateurTheme.orangeAccent : FormateurTheme.error;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: FormateurTheme.border),
       ),
       child: Row(
         children: [
@@ -418,11 +441,11 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
               '${quiz.percentage.toInt()}%',
-              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 14),
             ),
           ),
           const SizedBox(width: 16),
@@ -432,13 +455,13 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
               children: [
                 Text(
                   quiz.title,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   quiz.category,
-                  style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 11),
+                  style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -448,11 +471,11 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
             children: [
               Text(
                 '${quiz.score}/${quiz.maxScore}',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.w900),
               ),
               Text(
                 _formatDate(quiz.completedAt),
-                style: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 10),
+                style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 10),
               ),
             ],
           ),
@@ -463,35 +486,42 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
 
   Widget _buildEngagementTab() {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       children: [
-        Text(
+        const Text(
           'ACTIVITÉS RÉCENTES',
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.3), letterSpacing: 1),
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1.5),
         ),
         const SizedBox(height: 16),
         if (_profile!.activity.recentActivities.isEmpty)
-          const Center(child: Text('Aucune activité récente', style: TextStyle(color: Colors.white24)))
+          const Center(child: Padding(
+            padding: EdgeInsets.all(32.0),
+            child: Text('Aucune activité récente', style: TextStyle(color: FormateurTheme.textTertiary)),
+          ))
         else
           ..._profile!.activity.recentActivities.map((activity) => Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: FormateurTheme.border),
                 ),
                 child: ListTile(
                   leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: const Color(0xFFF7931E).withOpacity(0.1), shape: BoxShape.circle),
-                    child: Icon(_getActivityIcon(activity.type), color: const Color(0xFFF7931E), size: 20),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: FormateurTheme.accent.withOpacity(0.1),
+                      shape: BoxShape.circle
+                    ),
+                    child: Icon(_getActivityIcon(activity.type), color: FormateurTheme.accentDark, size: 20),
                   ),
-                  title: Text(activity.title, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                  subtitle: Text(_formatDate(activity.timestamp), style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 11)),
+                  title: Text(activity.title, style: const TextStyle(color: FormateurTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
+                  subtitle: Text(_formatDate(activity.timestamp), style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 11)),
                   trailing: activity.score != null
                       ? Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-                          child: Text('${activity.score}%', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
+                          decoration: BoxDecoration(color: FormateurTheme.success.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                          child: Text('${activity.score}%', style: const TextStyle(color: FormateurTheme.success, fontWeight: FontWeight.bold, fontSize: 12)),
                         )
                       : null,
                 ),
@@ -502,36 +532,37 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
 
   Widget _buildCommunicationTab() {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       children: [
-        Text(
+        const Text(
           'COORDONNÉES',
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.3), letterSpacing: 1),
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1.5),
         ),
         const SizedBox(height: 16),
-        _buildInfoTile(Icons.email, 'EMAIL', _profile!.stagiaire.email),
-        _buildInfoTile(Icons.phone, 'TELEPHONE', 'Non renseigné'),
+        _buildInfoTile(Icons.email_outlined, 'EMAIL', _profile!.stagiaire.email),
+        _buildInfoTile(Icons.phone_outlined, 'TELEPHONE', 'Non renseigné'),
         const SizedBox(height: 32),
-        Text(
+        const Text(
           'NOTES PRIVÉES',
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.3), letterSpacing: 1),
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1.5),
         ),
         const SizedBox(height: 16),
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color: const Color(0xFF2A2A2A),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: FormateurTheme.border),
+            boxStyle: BoxBorder.lerp(null, null, 0), // weird artifact fix? no, just standard
           ),
           child: Column(
             children: [
-              Icon(Icons.edit_note_outlined, color: Colors.white.withOpacity(0.2), size: 48),
-              const SizedBox(height: 12),
-              Text(
+              const Icon(Icons.edit_note_rounded, color: FormateurTheme.textTertiary, size: 48),
+              const SizedBox(height: 16),
+              const Text(
                 'Ajouter des notes sur cet apprenant pour votre suivi personnel.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13),
+                style: TextStyle(color: FormateurTheme.textSecondary, fontSize: 13),
               ),
             ],
           ),
@@ -543,20 +574,22 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
   Widget _buildInfoTile(IconData icon, String label, String value) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: FormateurTheme.border),
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white.withOpacity(0.3), size: 20),
+          Icon(icon, color: FormateurTheme.textTertiary, size: 24),
           const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 9, fontWeight: FontWeight.bold)),
-              Text(value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
+              Text(label, style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+              const SizedBox(height: 2),
+              Text(value, style: const TextStyle(color: FormateurTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
             ],
           ),
         ],
@@ -598,13 +631,13 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
   IconData _getActivityIcon(String type) {
     switch (type) {
       case 'quiz_completed':
-        return Icons.quiz;
+        return Icons.quiz_outlined;
       case 'formation_started':
-        return Icons.play_arrow;
+        return Icons.play_lesson_outlined;
       case 'formation_completed':
-        return Icons.check;
+        return Icons.check_circle_outline;
       default:
-        return Icons.event;
+        return Icons.calendar_today_outlined;
     }
   }
 }
@@ -622,7 +655,7 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      color: const Color(0xFF1A1A1A),
+      color: Colors.white,
       child: _tabBar,
     );
   }

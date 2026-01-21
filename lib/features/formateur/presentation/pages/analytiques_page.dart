@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/formateur/data/models/analytics_model.dart';
 import 'package:wizi_learn/features/formateur/data/repositories/analytics_repository.dart';
+import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
 
 class AnalytiquesPage extends StatefulWidget {
   const AnalytiquesPage({super.key});
@@ -63,7 +64,7 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
       setState(() => _loading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: FormateurTheme.error),
         );
       }
     }
@@ -77,41 +78,51 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: FormateurTheme.background,
       appBar: AppBar(
-        title: const Text('Analytiques & Rapports'),
-        backgroundColor: const Color(0xFF1A1A1A),
+        title: const Text('Analytiques'), // Shortened for cleaner look
+        backgroundColor: Colors.transparent,
+        foregroundColor: FormateurTheme.textPrimary,
         elevation: 0,
+        centerTitle: false,
+         titleTextStyle: const TextStyle(
+            color: FormateurTheme.textPrimary,
+            fontWeight: FontWeight.w900,
+            fontSize: 20,
+            fontFamily: 'Montserrat'
+        ),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: const Color(0xFFF7931E),
-          labelColor: const Color(0xFFF7931E),
-          unselectedLabelColor: Colors.white.withOpacity(0.5),
+          indicatorColor: FormateurTheme.accent,
+          labelColor: FormateurTheme.accent,
+          unselectedLabelColor: FormateurTheme.textTertiary,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1),
           tabs: const [
             Tab(text: 'OVERVIEW'),
-            Tab(text: 'SUCCESS'),
-            Tab(text: 'ACTIVITY'),
+            Tab(text: 'SUCCÈS'),
+            Tab(text: 'ACTIVITÉ'),
           ],
         ),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFF7931E)))
+          ? const Center(child: CircularProgressIndicator(color: FormateurTheme.accent))
           : Column(
               children: [
-                // Period Selector (Segmented Control style)
-                Container(
+                // Period Selector
+                Padding(
                   padding: const EdgeInsets.all(16),
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2A2A2A),
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: FormateurTheme.border),
                     ),
                     child: Row(
                       children: [
-                        _PeriodChip('30D', 30, _selectedPeriod, _changePeriod),
-                        _PeriodChip('60D', 60, _selectedPeriod, _changePeriod),
-                        _PeriodChip('90D', 90, _selectedPeriod, _changePeriod),
+                        _PeriodChip('30J', 30, _selectedPeriod, _changePeriod),
+                        _PeriodChip('60J', 60, _selectedPeriod, _changePeriod),
+                        _PeriodChip('90J', 90, _selectedPeriod, _changePeriod),
                       ],
                     ),
                   ),
@@ -133,82 +144,97 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
   }
 
   Widget _buildOverviewTab() {
-    if (_summary == null) return const Center(child: Text('Pas de données', style: TextStyle(color: Colors.white54)));
+    if (_summary == null) return const Center(child: Text('Pas de données'));
 
     return RefreshIndicator(
       onRefresh: _loadData,
-      color: const Color(0xFFF7931E),
+      color: FormateurTheme.accent,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         children: [
           // Summary Cards Grid
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
             childAspectRatio: 1.1,
             children: [
-              _SummaryCard('Students', _summary!.totalStagiaires.toString(), Icons.people, const Color(0xFF00A8FF)),
-              _SummaryCard('Active', _summary!.activeStagiaires.toString(), Icons.person_add, const Color(0xFF00D084)),
-              _SummaryCard('Completes', _summary!.totalCompletions.toString(), Icons.star, const Color(0xFFF7931E)),
-              _SummaryCard('Avg Score', '${_summary!.averageScore.toStringAsFixed(1)}%', Icons.analytics, const Color(0xFFFFA500)),
+              _SummaryCard('Stagiaires', _summary!.totalStagiaires.toString(), Icons.people_outline, Colors.blue),
+              _SummaryCard('Actifs', _summary!.activeStagiaires.toString(), Icons.person_add_alt_1_outlined, FormateurTheme.success),
+              _SummaryCard('Complétés', _summary!.totalCompletions.toString(), Icons.emoji_events_outlined, FormateurTheme.accent),
+              _SummaryCard('Score Moy.', '${_summary!.averageScore.toStringAsFixed(1)}%', Icons.analytics_outlined, FormateurTheme.orangeAccent),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
 
           // Trend Card
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF2A2A2A),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.05)),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: FormateurTheme.border),
+              boxShadow: FormateurTheme.cardShadow,
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: (_summary!.trendPercentage >= 0 ? Colors.green : Colors.red).withOpacity(0.1),
+                    color: (_summary!.trendPercentage >= 0 ? FormateurTheme.success : FormateurTheme.error).withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     _summary!.trendPercentage >= 0 ? Icons.trending_up : Icons.trending_down,
-                    color: _summary!.trendPercentage >= 0 ? Colors.green : Colors.red,
-                    size: 24,
+                    color: _summary!.trendPercentage >= 0 ? FormateurTheme.success : FormateurTheme.error,
+                    size: 28,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 20),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'PERFORMANCE TREND',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.3), letterSpacing: 1),
+                      const Text(
+                        'TENDANCE PERFORMANCE',
+                        style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: FormateurTheme.textTertiary,
+                            letterSpacing: 1.2
+                        ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        '${_summary!.trendPercentage >= 0 ? '+' : ''}${_summary!.trendPercentage.toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: _summary!.trendPercentage >= 0 ? Colors.green : Colors.red,
-                        ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            '${_summary!.trendPercentage >= 0 ? '+' : ''}${_summary!.trendPercentage.toStringAsFixed(1)}%',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              color: _summary!.trendPercentage >= 0 ? FormateurTheme.success : FormateurTheme.error,
+                              height: 1,
+                              letterSpacing: -1,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'vs période préc.',
+                            style: TextStyle(fontSize: 12, color: FormateurTheme.textSecondary, fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                Text(
-                  'vs prev.',
-                  style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.2)),
-                ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
         ],
       ),
     );
@@ -217,28 +243,29 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
   Widget _buildSuccessRateTab() {
     return RefreshIndicator(
       onRefresh: _loadData,
-      color: const Color(0xFFF7931E),
+      color: FormateurTheme.accent,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         children: [
-          Text(
-            'QUIZ PERFORMANCE',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.3), letterSpacing: 1),
+          const Text(
+            'PERFORMANCE QUIZ',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1.5),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           if (_successStats.isEmpty)
             const Center(child: Padding(
               padding: EdgeInsets.all(40.0),
-              child: Text('No quiz stats available', style: TextStyle(color: Colors.white24)),
+              child: Text('Aucune donnée de quiz disponible', style: TextStyle(color: FormateurTheme.textTertiary)),
             ))
           else
             ..._successStats.map((stat) => Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withOpacity(0.05)),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: FormateurTheme.border),
+                    boxShadow: FormateurTheme.cardShadow,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,40 +279,46 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
                               children: [
                                 Text(
                                   stat.quizName.toUpperCase(),
-                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                                  style: const TextStyle(fontWeight: FontWeight.w800, color: FormateurTheme.textPrimary, fontSize: 13),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                Text(stat.category, style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.4))),
+                                const SizedBox(height: 4),
+                                Text(stat.category, style: const TextStyle(fontSize: 11, color: FormateurTheme.textSecondary, fontWeight: FontWeight.bold)),
                               ],
                             ),
                           ),
-                          Text(
-                            '${stat.successRate.toStringAsFixed(1)}%',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: stat.successRate >= 70 ? Colors.green : stat.successRate >= 50 ? Colors.orange : Colors.red,
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: _getScoreColor(stat.successRate).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '${stat.successRate.toStringAsFixed(1)}%',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                                color: _getScoreColor(stat.successRate),
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(6),
                         child: LinearProgressIndicator(
                           value: stat.successRate / 100,
-                          minHeight: 6,
-                          backgroundColor: Colors.white.withOpacity(0.05),
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            stat.successRate >= 70 ? Colors.green : stat.successRate >= 50 ? Colors.orange : Colors.red,
-                          ),
+                          minHeight: 8,
+                          backgroundColor: FormateurTheme.background,
+                          valueColor: AlwaysStoppedAnimation<Color>(_getScoreColor(stat.successRate)),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Text(
-                        '${stat.successfulAttempts} of ${stat.totalAttempts} attempts successful',
-                        style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.3), fontWeight: FontWeight.bold),
+                        '${stat.successfulAttempts} réussites sur ${stat.totalAttempts} essais',
+                        style: const TextStyle(fontSize: 11, color: FormateurTheme.textTertiary, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -298,40 +331,42 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
   Widget _buildActivityTab() {
     return RefreshIndicator(
       onRefresh: _loadData,
-      color: const Color(0xFFF7931E),
+      color: FormateurTheme.accent,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         children: [
-          Text(
-            'DAILY ACTIVITY',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.3), letterSpacing: 1),
+          const Text(
+            'ACTIVITÉ QUOTIDIENNE',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1.5),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF2A2A2A),
-              borderRadius: BorderRadius.circular(16),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: FormateurTheme.border),
+               boxShadow: FormateurTheme.cardShadow,
             ),
             child: Column(
               children: _activityByDay.map((day) {
                 final maxCount = _activityByDay.isEmpty ? 1 : _activityByDay.map((d) => d.activityCount).reduce((a, b) => a > b ? a : b);
-                final barWidth = day.activityCount / maxCount;
+                final barWidth = maxCount > 0 ? day.activityCount / maxCount : 0.0;
 
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(bottom: 16),
                   child: Row(
                     children: [
                       SizedBox(
                         width: 40,
-                        child: Text(day.day, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white54)),
+                        child: Text(day.day, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: FormateurTheme.textTertiary)),
                       ),
                       Expanded(
                         child: Container(
-                          height: 12,
+                          height: 10,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(6),
+                            color: FormateurTheme.background,
+                            borderRadius: BorderRadius.circular(5),
                           ),
                           child: FractionallySizedBox(
                             alignment: Alignment.centerLeft,
@@ -339,18 +374,21 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
                             child: Container(
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFFF7931E), Color(0xFFFFB84D)],
+                                  colors: [FormateurTheme.accent, FormateurTheme.accentDark],
                                 ),
-                                borderRadius: BorderRadius.circular(6),
+                                borderRadius: BorderRadius.circular(5),
+                                boxShadow: [
+                                  BoxShadow(color: FormateurTheme.accent.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))
+                                ]
                               ),
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 12),
                       Text(
                         '${day.activityCount}',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                        style: const TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 11),
                       ),
                     ],
                   ),
@@ -358,32 +396,41 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
               }).toList(),
             ),
           ),
-          const SizedBox(height: 24),
-          Text(
-            'DROPOUT BY QUIZ',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.3), letterSpacing: 1),
+          const SizedBox(height: 32),
+          const Text(
+            'TAUX D\'ABANDON',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1.5),
           ),
-          const SizedBox(height: 16),
-          ..._dropoutStats.take(5).map((dropout) => Card(
-                color: const Color(0xFF2A2A2A),
-                elevation: 0,
-                margin: const EdgeInsets.only(bottom: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          const SizedBox(height: 20),
+          ..._dropoutStats.take(5).map((dropout) => Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: FormateurTheme.border),
+                ),
                 child: ListTile(
-                  title: Text(dropout.quizName, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                  subtitle: Text('${dropout.abandoned} abandoned', style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 11)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  title: Text(
+                      dropout.quizName, 
+                      style: const TextStyle(color: FormateurTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)
+                  ),
+                  subtitle: Text(
+                      '${dropout.abandoned} abandons', 
+                      style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 11)
+                  ),
                   trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: (dropout.dropoutRate > 50 ? Colors.red : Colors.orange).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      color: (dropout.dropoutRate > 50 ? FormateurTheme.error : FormateurTheme.orangeAccent).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       '${dropout.dropoutRate.toStringAsFixed(1)}%',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w900,
                         fontSize: 12,
-                        color: dropout.dropoutRate > 50 ? Colors.red : Colors.orange,
+                        color: dropout.dropoutRate > 50 ? FormateurTheme.error : FormateurTheme.orangeAccent,
                       ),
                     ),
                   ),
@@ -392,6 +439,12 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
         ],
       ),
     );
+  }
+
+  Color _getScoreColor(double score) {
+    if (score >= 70) return FormateurTheme.success;
+    if (score >= 50) return FormateurTheme.orangeAccent;
+    return FormateurTheme.error;
   }
 }
 
@@ -412,17 +465,18 @@ class _PeriodChip extends StatelessWidget {
           HapticFeedback.lightImpact();
           onTap(days);
         },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFF7931E) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            color: isSelected ? FormateurTheme.textPrimary : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
           ),
           alignment: Alignment.center,
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.black : Colors.white60,
+              color: isSelected ? Colors.white : FormateurTheme.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
@@ -445,25 +499,39 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.1)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: FormateurTheme.border),
+        boxShadow: FormateurTheme.cardShadow,
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(6),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(shape: BoxShape.circle, color: color.withOpacity(0.1)),
-            child: Icon(icon, size: 20, color: color),
+            child: Icon(icon, size: 24, color: color),
           ),
           const SizedBox(height: 12),
-          Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color, letterSpacing: -0.5)),
+          Text(
+            value, 
+            style: TextStyle(
+              fontSize: 24, 
+              fontWeight: FontWeight.w900, 
+              color: FormateurTheme.textPrimary, 
+              letterSpacing: -1
+            )
+          ),
           const SizedBox(height: 4),
           Text(
             label.toUpperCase(),
-            style: TextStyle(fontSize: 9, color: Colors.white.withOpacity(0.4), fontWeight: FontWeight.bold, letterSpacing: 0.5),
+            style: const TextStyle(
+              fontSize: 10, 
+              color: FormateurTheme.textSecondary, 
+              fontWeight: FontWeight.bold, 
+              letterSpacing: 0.5
+            ),
             textAlign: TextAlign.center,
           ),
         ],

@@ -1,62 +1,64 @@
 import 'package:flutter/material.dart';
+import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
 
 class FormateurBottomMenu extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onItemSelected;
 
   const FormateurBottomMenu({
-    Key? key,
+    super.key,
     required this.selectedIndex,
     required this.onItemSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        border: Border(
+        color: Colors.white,
+        border: const Border(
           top: BorderSide(
-            color: Colors.grey.withOpacity(0.2),
+            color: FormateurTheme.border,
             width: 1,
           ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        boxShadow: FormateurTheme.cardShadow,
       ),
       child: BottomNavigationBar(
         currentIndex: selectedIndex,
         onTap: onItemSelected,
-        backgroundColor: const Color(0xFF1A1A1A),
-        selectedItemColor: const Color(0xFFF7931E),
-        unselectedItemColor: Colors.grey,
+        backgroundColor: Colors.white,
+        selectedItemColor: FormateurTheme.accentDark,
+        unselectedItemColor: FormateurTheme.textTertiary,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 0.5),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 10),
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.trending_up),
-            label: 'Stats',
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard_rounded),
+            label: 'Dashboard',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'Trainees',
+            icon: Icon(Icons.people_outline),
+            activeIcon: Icon(Icons.people_rounded),
+            label: 'Stagiaires',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.more_horiz),
-            label: 'More',
+            icon: Icon(Icons.leaderboard_outlined),
+            activeIcon: Icon(Icons.leaderboard_rounded),
+            label: 'Classement',
+          ),
+           BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart_outlined),
+            activeIcon: Icon(Icons.bar_chart_rounded),
+            label: 'Analytique',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.assignment),
-            label: 'Tasks',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Setup',
+            icon: Icon(Icons.settings_outlined),
+            activeIcon: Icon(Icons.settings_rounded),
+            label: 'Options',
           ),
         ],
       ),

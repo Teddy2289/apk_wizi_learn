@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
+import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
 
 class QuizCreatorPage extends StatefulWidget {
   const QuizCreatorPage({super.key});
@@ -34,10 +35,10 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
         _loading = false;
       });
     } catch (e) {
-      setState(() => _loading = false);
       if (mounted) {
+        setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: FormateurTheme.error),
         );
       }
     }
@@ -53,25 +54,42 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Créer un quiz'),
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          title: const Text('Créer un quiz', style: TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: titleCtrl,
-                  decoration: const InputDecoration(labelText: 'Titre'),
+                  decoration: InputDecoration(
+                    labelText: 'Titre',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    filled: true,
+                    fillColor: FormateurTheme.background,
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
                 TextField(
                   controller: descCtrl,
-                  decoration: const InputDecoration(labelText: 'Description (optionnel)'),
+                  decoration: InputDecoration(
+                    labelText: 'Description (optionnel)',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    filled: true,
+                    fillColor: FormateurTheme.background,
+                  ),
                   maxLines: 2,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  initialValue: niveau,
-                  decoration: const InputDecoration(labelText: 'Niveau'),
+                  value: niveau,
+                  decoration: InputDecoration(
+                    labelText: 'Niveau',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    filled: true,
+                    fillColor: FormateurTheme.background,
+                  ),
                   items: const [
                     DropdownMenuItem(value: 'debutant', child: Text('Débutant')),
                     DropdownMenuItem(value: 'intermediaire', child: Text('Intermédiaire')),
@@ -79,9 +97,14 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
                   ],
                   onChanged: (v) => setDialogState(() => niveau = v!),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
                 TextField(
-                  decoration: const InputDecoration(labelText: 'Durée (minutes)'),
+                  decoration: InputDecoration(
+                    labelText: 'Durée (minutes)',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    filled: true,
+                    fillColor: FormateurTheme.background,
+                  ),
                   keyboardType: TextInputType.number,
                   onChanged: (v) => duree = int.tryParse(v) ?? 30,
                   controller: TextEditingController(text: duree.toString()),
@@ -92,7 +115,7 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
+              child: const Text('Annuler', style: TextStyle(color: FormateurTheme.textSecondary)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -110,19 +133,22 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
 
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Quiz créé'), backgroundColor: Colors.green),
+                      const SnackBar(content: Text('Quiz créé'), backgroundColor: FormateurTheme.success),
                     );
                   }
                   _loadQuizzes();
                 } catch (e) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+                      SnackBar(content: Text('Erreur: $e'), backgroundColor: FormateurTheme.error),
                     );
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF7931E)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: FormateurTheme.accentDark,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Créer'),
             ),
           ],
@@ -136,14 +162,14 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
       await _apiClient.delete('/formateur/quizzes/$quizId');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Quiz supprimé'), backgroundColor: Colors.green),
+          const SnackBar(content: Text('Quiz supprimé'), backgroundColor: FormateurTheme.success),
         );
       }
       _loadQuizzes();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: FormateurTheme.error),
         );
       }
     }
@@ -152,53 +178,119 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: FormateurTheme.background,
       appBar: AppBar(
         title: const Text('Gestion des Quiz'),
-        backgroundColor: const Color(0xFFF7931E),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
+        titleTextStyle: const TextStyle(
+            color: FormateurTheme.textPrimary,
+            fontWeight: FontWeight.w900,
+            fontSize: 20,
+            fontFamily: 'Montserrat'
+        ),
+        foregroundColor: FormateurTheme.textPrimary,
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: FormateurTheme.accent))
           : _quizzes.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.quiz, size: 64, color: Colors.grey[400]),
+                      const Icon(Icons.quiz_outlined, size: 64, color: FormateurTheme.textTertiary),
                       const SizedBox(height: 16),
-                      Text('Aucun quiz créé', style: TextStyle(color: Colors.grey[600])),
-                      const SizedBox(height: 16),
+                      const Text('Aucun quiz créé', style: TextStyle(color: FormateurTheme.textSecondary, fontSize: 16)),
+                      const SizedBox(height: 24),
                       ElevatedButton.icon(
                         onPressed: _createQuiz,
-                        icon: const Icon(Icons.add),
-                        label: const Text('Créer le premier quiz'),
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF7931E)),
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('CRÉER LE PREMIER QUIZ'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: FormateurTheme.accentDark,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          textStyle: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+                        ),
                       ),
                     ],
                   ),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
+              : ListView.separated(
+                  padding: const EdgeInsets.all(24),
                   itemCount: _quizzes.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 16),
                   itemBuilder: (context, index) {
                     final quiz = _quizzes[index];
                     final status = quiz['status'] ?? 'brouillon';
                     final statusColor = status == 'actif'
-                        ? Colors.green
+                        ? FormateurTheme.success
                         : status == 'archive'
-                            ? Colors.grey
-                            : Colors.orange;
+                            ? FormateurTheme.textTertiary
+                            : FormateurTheme.orangeAccent;
 
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: FormateurTheme.border),
+                        boxShadow: FormateurTheme.cardShadow,
+                      ),
                       child: ListTile(
-                        title: Text(quiz['titre'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text(
-                          '${quiz['nb_questions'] ?? 0} questions • ${quiz['niveau'] ?? ''} • ${quiz['duree'] ?? 0} min',
+                        contentPadding: const EdgeInsets.all(20),
+                        title: Text(
+                          quiz['titre'] ?? '',
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: FormateurTheme.textPrimary),
+                        ),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Row(
+                            children: [
+                              Icon(Icons.help_outline, size: 14, color: FormateurTheme.textSecondary),
+                              const SizedBox(width: 4),
+                              Text('${quiz['nb_questions'] ?? 0} questions', style: const TextStyle(fontSize: 12, color: FormateurTheme.textSecondary)),
+                              const SizedBox(width: 16),
+                              Icon(Icons.timer_outlined, size: 14, color: FormateurTheme.textSecondary),
+                              const SizedBox(width: 4),
+                              Text('${quiz['duree'] ?? 0} min', style: const TextStyle(fontSize: 12, color: FormateurTheme.textSecondary)),
+                            ],
+                          ),
+                        ),
+                        leading: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.assignment_outlined, color: statusColor),
                         ),
                         trailing: PopupMenuButton(
+                          icon: const Icon(Icons.more_vert, color: FormateurTheme.textSecondary),
+                          color: Colors.white,
+                          elevation: 4,
+                          surfaceTintColor: Colors.white,
                           itemBuilder: (context) => [
-                            const PopupMenuItem(value: 'view', child: Text('Voir détails')),
-                            const PopupMenuItem(value: 'delete', child: Text('Supprimer')),
+                            const PopupMenuItem(
+                              value: 'view',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.visibility_outlined, size: 20, color: FormateurTheme.textPrimary),
+                                  SizedBox(width: 12),
+                                  Text('Voir détails'),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete_outline, size: 20, color: FormateurTheme.error),
+                                  SizedBox(width: 12),
+                                  Text('Supprimer', style: TextStyle(color: FormateurTheme.error)),
+                                ],
+                              ),
+                            ),
                           ],
                           onSelected: (value) {
                             if (value == 'delete') {
@@ -206,29 +298,14 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
                             }
                           },
                         ),
-                        leading: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            status.toUpperCase(),
-                            style: TextStyle(
-                              color: statusColor,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
                       ),
                     );
                   },
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: _createQuiz,
-        backgroundColor: const Color(0xFFF7931E),
-        child: const Icon(Icons.add),
+        backgroundColor: FormateurTheme.accentDark,
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
       ),
     );
   }
