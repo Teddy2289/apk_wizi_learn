@@ -16,51 +16,73 @@ class FormateurBottomMenu extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        border: const Border(
-          top: BorderSide(
-            color: FormateurTheme.border,
-            width: 1,
-          ),
-        ),
-        boxShadow: FormateurTheme.cardShadow,
-      ),
-      child: BottomNavigationBar(
-        currentIndex: selectedIndex,
-        onTap: onItemSelected,
-        backgroundColor: Colors.white,
-        selectedItemColor: FormateurTheme.accentDark,
-        unselectedItemColor: FormateurTheme.textTertiary,
-        type: BottomNavigationBarType.fixed,
-        elevation: 0,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 0.5),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 10),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard_rounded),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            activeIcon: Icon(Icons.people_rounded),
-            label: 'Stagiaires',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.leaderboard_outlined),
-            activeIcon: Icon(Icons.leaderboard_rounded),
-            label: 'Classement',
-          ),
-           BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            activeIcon: Icon(Icons.bar_chart_rounded),
-            label: 'Analytique',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings_rounded),
-            label: 'Options',
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
           ),
         ],
+      ),
+      child: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          indicatorColor: FormateurTheme.accent.withOpacity(0.15),
+          labelTextStyle: MaterialStateProperty.resolveWith((states) {
+            if (states.contains(MaterialState.selected)) {
+              return const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: FormateurTheme.accentDark,
+              );
+            }
+            return const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: FormateurTheme.textSecondary,
+            );
+          }),
+          iconTheme: MaterialStateProperty.resolveWith((states) {
+            if (states.contains(MaterialState.selected)) {
+              return const IconThemeData(color: FormateurTheme.accentDark, size: 26);
+            }
+            return const IconThemeData(color: FormateurTheme.textTertiary, size: 26);
+          }),
+        ),
+        child: NavigationBar(
+          selectedIndex: selectedIndex,
+          onDestinationSelected: onItemSelected,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          height: 70,
+          animationDuration: const Duration(milliseconds: 300),
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.grid_view_outlined),
+              selectedIcon: Icon(Icons.grid_view_rounded),
+              label: 'Dashboard',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.campaign_outlined),
+              selectedIcon: Icon(Icons.campaign_rounded),
+              label: 'Communications',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.emoji_events_outlined),
+              selectedIcon: Icon(Icons.emoji_events_rounded),
+              label: 'Classement',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.sports_esports_outlined),
+              selectedIcon: Icon(Icons.sports_esports_rounded),
+              label: "L'Arène",
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.videocam_outlined),
+              selectedIcon: Icon(Icons.videocam_rounded),
+              label: 'Vidéos',
+            ),
+          ],
+        ),
       ),
     );
   }
