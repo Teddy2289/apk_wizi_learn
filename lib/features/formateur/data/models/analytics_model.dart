@@ -119,6 +119,7 @@ class DashboardSummary {
     required this.formateurs,
   });
 
+
   factory DashboardSummary.fromJson(Map<String, dynamic> json) {
     return DashboardSummary(
       totalStagiaires: int.tryParse(json['total_stagiaires']?.toString() ?? '0') ?? 0,
@@ -131,6 +132,73 @@ class DashboardSummary {
       totalVideoHours: double.tryParse(json['total_video_hours']?.toString() ?? '0') ?? 0.0,
       formations: json['formations'] as List<dynamic>? ?? [],
       formateurs: json['formateurs'] as List<dynamic>? ?? [],
+    );
+  }
+}
+
+class InactiveStagiaire {
+  final int id;
+  final String prenom;
+  final String nom;
+  final String email;
+  final String? avatar;
+  final String? lastActivityAt;
+  final double daysSinceActivity;
+  final bool neverConnected;
+
+  InactiveStagiaire({
+    required this.id,
+    required this.prenom,
+    required this.nom,
+    required this.email,
+    this.avatar,
+    this.lastActivityAt,
+    required this.daysSinceActivity,
+    required this.neverConnected,
+  });
+
+  factory InactiveStagiaire.fromJson(Map<String, dynamic> json) {
+    return InactiveStagiaire(
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      prenom: json['prenom']?.toString() ?? '',
+      nom: json['nom']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      avatar: json['avatar']?.toString(),
+      lastActivityAt: json['last_activity_at']?.toString(),
+      daysSinceActivity: double.tryParse(json['days_since_activity']?.toString() ?? '0') ?? 0.0,
+      neverConnected: json['never_connected'] == true || json['never_connected'] == 1,
+    );
+  }
+}
+
+class OnlineStagiaire {
+  final int id;
+  final String prenom;
+  final String nom;
+  final String email;
+  final String? avatar;
+  final String lastActivityAt;
+  final List<String> formations;
+
+  OnlineStagiaire({
+    required this.id,
+    required this.prenom,
+    required this.nom,
+    required this.email,
+    this.avatar,
+    required this.lastActivityAt,
+    required this.formations,
+  });
+
+  factory OnlineStagiaire.fromJson(Map<String, dynamic> json) {
+    return OnlineStagiaire(
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      prenom: json['prenom']?.toString() ?? '',
+      nom: json['nom']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      avatar: json['avatar']?.toString(),
+      lastActivityAt: json['last_activity_at']?.toString() ?? 'À l\'instant',
+      formations: (json['formations'] as List?)?.map((e) => e.toString()).toList() ?? [],
     );
   }
 }

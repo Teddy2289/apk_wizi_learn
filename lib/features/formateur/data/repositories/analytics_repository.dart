@@ -125,4 +125,35 @@ class AnalyticsRepository {
       return [];
     }
   }
+
+  /// Get inactive stagiaires
+  Future<List<InactiveStagiaire>> getInactiveStagiaires({int days = 7, String scope = 'mine'}) async {
+    try {
+      final response = await apiClient.get(
+        '/formateur/stagiaires/inactive',
+        queryParameters: {'days': days, 'scope': scope},
+      );
+      final list = (response.data as List?)
+          ?.map((e) => InactiveStagiaire.fromJson(e))
+          .toList() ?? [];
+      return list;
+    } catch (e) {
+      debugPrint('❌ Erreur inactifs: $e');
+      return [];
+    }
+  }
+
+  /// Get online stagiaires
+  Future<List<OnlineStagiaire>> getOnlineStagiaires() async {
+    try {
+      final response = await apiClient.get('/formateur/stagiaires/online');
+      final list = (response.data as List?)
+          ?.map((e) => OnlineStagiaire.fromJson(e))
+          .toList() ?? [];
+      return list;
+    } catch (e) {
+      debugPrint('❌ Erreur en ligne: $e');
+      return [];
+    }
+  }
 }

@@ -8,6 +8,7 @@ import 'package:wizi_learn/features/formateur/data/repositories/analytics_reposi
 import 'package:wizi_learn/features/formateur/presentation/pages/stagiaire_profile_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
 import 'package:wizi_learn/features/formateur/presentation/widgets/dashboard_shimmer.dart';
+import 'package:wizi_learn/features/formateur/presentation/widgets/formateur_drawer_menu.dart';
 
 class FormateurDashboardPage extends StatefulWidget {
   const FormateurDashboardPage({super.key});
@@ -60,33 +61,43 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
     }
   }
 
-  List<dynamic> _getFilteredStagiaires() {
-    // Falls back to formations list from summary or empty list for now
-    // React dashboard actually lists progress, which might be in 'formations' or a separate call
-    // For now we map from _summary?.formations if structure matches, or adjust later.
-    // Based on previous code, it was expecting a list of stagiaires directly.
-    // React Dashboard typically doesn't show a full list of all trainees unless in "Performance" tab.
-    // However, keeping previous functionality:
-    // If _summary?.formations contains student data, we use it.
-    // Checking React: "FormateurDashboardStats" returns "formations" which seems to be Formation list, not student list.
-    // "TrainerPerformanceStats" (separate component) has student list.
-    // The previous Flutter code had `_stagiaireProgress = data['stagiaires']`.
-    // The new `/formateur/dashboard/stats` endpoint DOES NOT return list of stagiaires (it returns stats).
-    // We need to fetch the trainee list separately if we want to display it.
-    // React uses `<TrainerPerformanceStats />` which calls `/formateur/analytics/performance`
-    
-    // TEMPORARY FIX: We will return empty list or mock until we implement the Performance section properly
-    // or we should call getStudentsComparison or similar.
-    // Actually, let's fetch performance data in _loadData as 4th parallel call to maintain feature parity.
-    return []; 
-  }
 
+
+  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: FormateurTheme.background,
+      appBar: AppBar(
+        title: const Text('Tableau de Bord'),
+        backgroundColor: Colors.white,
+        foregroundColor: FormateurTheme.textPrimary,
+        elevation: 0,
+        centerTitle: false,
+        titleTextStyle: const TextStyle(
+          color: FormateurTheme.textPrimary,
+          fontWeight: FontWeight.w900,
+          fontSize: 20,
+          fontFamily: 'Montserrat',
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none_rounded),
+            onPressed: () => Navigator.pushNamed(context, '/formateur/send-notification'),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      drawer: FormateurDrawerMenu(
+        onLogout: () async {
+          // Add your logout logic here
+          // final storage = const FlutterSecureStorage();
+          // await storage.deleteAll();
+           Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        },
+      ),
       body: _loading
-          ? const DashboardShimmer() // You might need to update Shimmer colors too ideally
+          ? const DashboardShimmer() 
           : RefreshIndicator(
               color: FormateurTheme.accent,
               backgroundColor: Colors.white,
@@ -120,8 +131,8 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                     _buildSearchAndFilters(),
                     const SizedBox(height: 24),
 
-                    // Trainees Section
-                     _buildTraineesProgressSection(),
+                    // Online Stagiaires Section
+                     _buildOnlineStagiairesSection(),
                      const SizedBox(height: 40),
                   ],
                 ),
@@ -310,7 +321,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                         Text(
                           _inactiveStagiaires.first.neverConnected
                               ? 'Jamais connecté'
-                              : 'Inactif depuis ${_inactiveStagiaires.first.daysSinceActivity}j',
+                              : 'Inactif depuis ${_inactiveStagiaires.first.daysSinceActivity.toStringAsFixed(0)}j',
                           style: const TextStyle(
                             color: FormateurTheme.error,
                             fontSize: 12,
@@ -619,9 +630,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
     );
   }
 
-  Widget _buildTraineesProgressSection() {
-    final filteredStagiaires = _getFilteredStagiaires();
-
+  Widget _buildOnlineStagiairesSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -629,7 +638,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
              Text(
-              'APPRENANTS',
+              'EN LIGNE',
               style: TextStyle(
                 color: FormateurTheme.textTertiary,
                 fontSize: 12,
@@ -640,13 +649,13 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: FormateurTheme.accent.withOpacity(0.1),
+                color: FormateurTheme.success.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                '${filteredStagiaires.length} TOTAL',
+                '${_onlineStagiaires.length} ACTIFS',
                 style: const TextStyle(
-                  color: FormateurTheme.accentDark,
+                  color: FormateurTheme.success,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                 ),
@@ -655,7 +664,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
           ],
         ),
         const SizedBox(height: 20),
-        if (filteredStagiaires.isEmpty)
+        if (_onlineStagiaires.isEmpty)
           Container(
             padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
@@ -666,10 +675,10 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
             alignment: Alignment.center,
             child: Column(
               children: [
-                Icon(Icons.person_off_outlined, color: FormateurTheme.textTertiary.withOpacity(0.5), size: 48),
+                Icon(Icons.wifi_off_rounded, color: FormateurTheme.textTertiary.withOpacity(0.5), size: 48),
                 const SizedBox(height: 12),
                  Text(
-                  'Aucun résultat trouvé',
+                  'Aucun apprenant en ligne',
                   style: TextStyle(color: FormateurTheme.textSecondary, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -679,12 +688,10 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: filteredStagiaires.length,
+            itemCount: _onlineStagiaires.length,
             separatorBuilder: (_, __) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
-              final stagiaire = filteredStagiaires[index];
-              final double progress = (stagiaire['progress'] ?? 0).toDouble();
-              final int avgScore = (stagiaire['avg_score'] ?? 0).toInt();
+              final stagiaire = _onlineStagiaires[index];
 
               return Material(
                 color: Colors.transparent,
@@ -695,7 +702,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => StagiaireProfilePage(
-                          stagiaireId: stagiaire['id'] as int,
+                          stagiaireId: stagiaire.id,
                         ),
                       ),
                     );
@@ -709,77 +716,84 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                       border: Border.all(color: FormateurTheme.border),
                       boxShadow: FormateurTheme.cardShadow,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Row(
-                          children: [
-                             CircleAvatar(
-                                radius: 24,
-                                backgroundColor: FormateurTheme.background,
-                                backgroundImage: stagiaire['avatar'] != null 
-                                  ? NetworkImage(stagiaire['avatar']) 
-                                  : null,
-                                child: stagiaire['avatar'] == null
-                                  ? Text(
-                                      stagiaire['prenom'][0].toUpperCase(),
-                                      style: TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.w900),
-                                    )
-                                  : null,
-                              ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${stagiaire['prenom']} ${stagiaire['nom']}',
-                                    style: const TextStyle(
-                                      color: FormateurTheme.textPrimary,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: -0.5,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    stagiaire['formation'] ?? 'Formation non assignée',
-                                    style: const TextStyle(
-                                      color: FormateurTheme.textSecondary,
-                                      fontSize: 12,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
+                         Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: FormateurTheme.success, width: 2),
+                          ),
+                           child: CircleAvatar(
+                              radius: 22,
+                              backgroundColor: FormateurTheme.background,
+                              backgroundImage: stagiaire.avatar != null 
+                                ? NetworkImage(stagiaire.avatar!) 
+                                : null,
+                              child: stagiaire.avatar == null
+                                ? Text(
+                                    stagiaire.prenom.isNotEmpty ? stagiaire.prenom[0].toUpperCase() : '?',
+                                    style: TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.w900),
+                                  )
+                                : null,
                             ),
-                            Icon(Icons.chevron_right, color: FormateurTheme.border),
-                          ],
+                         ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${stagiaire.prenom} ${stagiaire.nom}',
+                                style: const TextStyle(
+                                  color: FormateurTheme.textPrimary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                stagiaire.email,
+                                style: const TextStyle(
+                                  color: FormateurTheme.textSecondary,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 20),
-                        Row(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Expanded(
-                              child: _buildMiniStat(
-                                'PROGRESSION', 
-                                '${progress.toInt()}%', 
-                                Colors.blue,
-                                progress / 100,
+                             Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: FormateurTheme.background,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: FormateurTheme.border),
                               ),
-                            ),
-                            Container(width: 1, height: 30, color: FormateurTheme.border),
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 16),
-                                child: _buildMiniStat(
-                                  'SCORE MOYEN', 
-                                  '$avgScore%', 
-                                  avgScore >= 75 ? FormateurTheme.success : FormateurTheme.orangeAccent,
-                                  avgScore / 100,
+                              child: Text(
+                                stagiaire.lastActivityAt,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: FormateurTheme.textSecondary,
                                 ),
                               ),
                             ),
+                            if (stagiaire.formations.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                stagiaire.formations.first,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: FormateurTheme.textTertiary,
+                                ),
+                              ),
+                            ]
                           ],
                         ),
                       ],

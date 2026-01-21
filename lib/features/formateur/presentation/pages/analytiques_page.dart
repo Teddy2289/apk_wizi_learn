@@ -162,77 +162,24 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
             childAspectRatio: 1.1,
             children: [
               _SummaryCard('Stagiaires', _summary!.totalStagiaires.toString(), Icons.people_outline, Colors.blue),
-              _SummaryCard('Actifs', _summary!.activeStagiaires.toString(), Icons.person_add_alt_1_outlined, FormateurTheme.success),
-              _SummaryCard('Complétés', _summary!.totalCompletions.toString(), Icons.emoji_events_outlined, FormateurTheme.accent),
-              _SummaryCard('Score Moy.', '${_summary!.averageScore.toStringAsFixed(1)}%', Icons.analytics_outlined, FormateurTheme.orangeAccent),
+              _SummaryCard('Actifs (Semaine)', _summary!.activeThisWeek.toString(), Icons.person_add_alt_1_outlined, FormateurTheme.success),
+              _SummaryCard('Quiz Passés', _summary!.totalQuizzesTaken.toString(), Icons.emoji_events_outlined, FormateurTheme.accent),
+              _SummaryCard('Score Moy.', '${_summary!.avgQuizScore.toStringAsFixed(1)}%', Icons.analytics_outlined, FormateurTheme.orangeAccent),
             ],
           ),
           const SizedBox(height: 24),
-
-          // Trend Card
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: FormateurTheme.border),
-              boxShadow: FormateurTheme.cardShadow,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: (_summary!.trendPercentage >= 0 ? FormateurTheme.success : FormateurTheme.error).withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _summary!.trendPercentage >= 0 ? Icons.trending_up : Icons.trending_down,
-                    color: _summary!.trendPercentage >= 0 ? FormateurTheme.success : FormateurTheme.error,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'TENDANCE PERFORMANCE',
-                        style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            color: FormateurTheme.textTertiary,
-                            letterSpacing: 1.2
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            '${_summary!.trendPercentage >= 0 ? '+' : ''}${_summary!.trendPercentage.toStringAsFixed(1)}%',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
-                              color: _summary!.trendPercentage >= 0 ? FormateurTheme.success : FormateurTheme.error,
-                              height: 1,
-                              letterSpacing: -1,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'vs période préc.',
-                            style: TextStyle(fontSize: 12, color: FormateurTheme.textSecondary, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          
+          // Additional Stats Row
+           Row(
+            children: [
+              Expanded(
+                child: _SummaryCard('Formations', _summary!.totalFormations.toString(), Icons.school_outlined, Colors.purple),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _SummaryCard('Heures Vidéo', '${_summary!.totalVideoHours.toStringAsFixed(1)}h', Icons.play_circle_outline, Colors.redAccent),
+              ),
+            ],
           ),
           const SizedBox(height: 32),
         ],
