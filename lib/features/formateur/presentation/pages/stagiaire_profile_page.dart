@@ -206,7 +206,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
     final stats = _profile!.stats;
 
     return SliverAppBar(
-      expandedHeight: 280,
+      expandedHeight: 320,
       pinned: true,
       backgroundColor: Colors.white,
       elevation: 0,

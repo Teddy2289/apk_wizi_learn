@@ -84,38 +84,41 @@ class DashboardShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-           // Header Shimmer
-          _buildHeaderShimmer(),
-           const SizedBox(height: 32),
-
-          // Alert card shimmer
-          _buildAlertShimmer(),
-          const SizedBox(height: 32),
-
-          // Stats grid shimmer
-          _buildStatsGridShimmer(),
-          const SizedBox(height: 32),
-
-          // Quick actions shimmer
-          _buildQuickActionsShimmer(),
-          const SizedBox(height: 32),
-
-          // Search bar shimmer
-          ShimmerWidget.rectangular(
-            width: double.infinity,
-            height: 56,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          const SizedBox(height: 24),
-
-          // Trainee cards shimmer
-          ..._buildTraineeCardsShimmer(),
-        ],
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+             // Header Shimmer
+            _buildHeaderShimmer(),
+             const SizedBox(height: 32),
+  
+            // Alert card shimmer
+            _buildAlertShimmer(),
+            const SizedBox(height: 32),
+  
+            // Stats grid shimmer
+            _buildStatsGridShimmer(),
+            const SizedBox(height: 32),
+  
+            // Quick actions shimmer
+            _buildQuickActionsShimmer(),
+            const SizedBox(height: 32),
+  
+            // Search bar shimmer
+            ShimmerWidget.rectangular(
+              width: double.infinity,
+              height: 56,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            const SizedBox(height: 24),
+  
+            // Trainee cards shimmer
+            ..._buildTraineeCardsShimmer(),
+          ],
+        ),
       ),
     );
   }
