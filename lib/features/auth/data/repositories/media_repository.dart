@@ -147,4 +147,24 @@ class MediaRepository {
       return {};
     }
   }
+
+  Future<void> updateProgress({
+    required int mediaId,
+    required int currentTime,
+    required int duration,
+  }) async {
+    try {
+      await apiClient.post(
+        '/medias/updateProgress',
+        data: {
+          'media_id': mediaId,
+          'current_time': currentTime,
+          'duration': duration,
+        },
+      );
+    } catch (e) {
+      // Fail silently for progress updates to avoid disrupting playback
+      debugPrint('Error updating video progress: $e');
+    }
+  }
 }
