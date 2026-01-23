@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
+import 'package:wizi_learn/core/constants/route_constants.dart';
 
 class FormateurDrawerMenu extends StatelessWidget {
   final VoidCallback onLogout;
@@ -80,6 +81,14 @@ class FormateurDrawerMenu extends StatelessWidget {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/formateur/analytiques');
+              },
+            ),
+             _MenuItem(
+              icon: Icons.video_library_outlined,
+              label: 'Vidéos',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, RouteConstants.formateurVideos);
               },
             ),
           ]),

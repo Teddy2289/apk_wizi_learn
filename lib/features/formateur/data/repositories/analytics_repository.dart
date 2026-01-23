@@ -8,11 +8,14 @@ class AnalyticsRepository {
   AnalyticsRepository({required this.apiClient});
 
   /// Get quiz success rate stats
-  Future<List<QuizSuccessStats>> getQuizSuccessRate({int period = 30}) async {
+  Future<List<QuizSuccessStats>> getQuizSuccessRate({int period = 30, String? formationId}) async {
     try {
       final response = await apiClient.get(
         '/formateur/analytics/quiz-success-rate',
-        queryParameters: {'period': period},
+        queryParameters: {
+          'period': period,
+          if (formationId != null) 'formation_id': formationId,
+        },
       );
 
       final stats = (response.data['quiz_stats'] as List?)
@@ -48,11 +51,14 @@ class AnalyticsRepository {
   }
 
   /// Get activity heatmap by day
-  Future<List<ActivityByDay>> getActivityByDay({int period = 30}) async {
+  Future<List<ActivityByDay>> getActivityByDay({int period = 30, String? formationId}) async {
     try {
       final response = await apiClient.get(
         '/formateur/analytics/activity-heatmap',
-        queryParameters: {'period': period},
+        queryParameters: {
+          'period': period,
+          if (formationId != null) 'formation_id': formationId,
+        },
       );
 
       final activities = (response.data['activity_by_day'] as List?)
@@ -68,9 +74,12 @@ class AnalyticsRepository {
   }
 
   /// Get dropout rates
-  Future<List<DropoutStats>> getDropoutStats() async {
+  Future<List<DropoutStats>> getDropoutStats({String? formationId}) async {
     try {
-      final response = await apiClient.get('/formateur/analytics/dropout-rate');
+      final response = await apiClient.get(
+        '/formateur/analytics/dropout-rate',
+        queryParameters: formationId != null ? {'formation_id': formationId} : null,
+      );
 
       final stats = (response.data['quiz_dropout'] as List?)
               ?.map((d) => DropoutStats.fromJson(d))
@@ -85,12 +94,15 @@ class AnalyticsRepository {
   }
 
   /// Get dashboard summary
-  Future<DashboardSummary> getDashboardSummary({int period = 30}) async {
+  Future<DashboardSummary> getDashboardSummary({int period = 30, String? formationId}) async {
     try {
       // Changed to match React's dashboard endpoint
       final response = await apiClient.get(
         '/formateur/dashboard/stats',
-        queryParameters: {'period': period},
+        queryParameters: {
+          'period': period,
+          if (formationId != null) 'formation_id': formationId,
+        },
       );
 
       // Note: Model parsing might need adjustment depending on backend response format
@@ -152,6 +164,30 @@ class AnalyticsRepository {
     } catch (e) {
       debugPrint('❌ Erreur en ligne: $e');
       return [];
+    }
+  }
+
+  /// Get formations with videos for analytics
+  Future<List<FormationVideos>> getFormationsVideos() async {
+    try {
+      final response = await apiClient.get('/formateur/formations-videos');
+      final list = (response.data['data'] ?? response.data) as List?;
+      return list?.map((e) => FormationVideos.fromJson(e)).toList() ?? [];
+    } catch (e) {
+      debugPrint('❌ Erreur formations-videos: $e');
+      return [];
+    }
+  }
+
+  /// Get statistics for a specific video
+  Future<VideoStats?> getVideoStats(int videoId) async {
+    try {
+      final response = await apiClient.get('/formateur/video/$videoId/stats');
+      final data = response.data['data'] ?? response.data;
+      return VideoStats.fromJson(data);
+    } catch (e) {
+      debugPrint('❌ Erreur stats vidéo: $e');
+      return null;
     }
   }
 }

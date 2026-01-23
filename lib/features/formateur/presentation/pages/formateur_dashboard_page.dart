@@ -4,7 +4,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/formateur/data/models/analytics_model.dart';
+import 'package:wizi_learn/features/formateur/data/models/formation_management_model.dart';
 import 'package:wizi_learn/features/formateur/data/repositories/analytics_repository.dart';
+import 'package:wizi_learn/features/formateur/data/repositories/formation_management_repository.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/stagiaire_profile_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
 import 'package:wizi_learn/features/formateur/presentation/widgets/dashboard_shimmer.dart';
@@ -21,12 +23,15 @@ class FormateurDashboardPage extends StatefulWidget {
 
 class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
   late final AnalyticsRepository _analyticsRepository;
+  late final FormationManagementRepository _formationRepository;
   
   DashboardSummary? _summary;
   List<InactiveStagiaire> _inactiveStagiaires = [];
   List<OnlineStagiaire> _onlineStagiaires = [];
+  List<FormationWithStats> _formations = [];
   PerformanceRankings? _rankings;
   bool _loading = true;
+  String? _selectedFormationId;
   String _selectedFilter = 'all'; // all, active, formation
   String _searchQuery = '';
 
@@ -38,17 +43,27 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
       storage: const FlutterSecureStorage(),
     );
     _analyticsRepository = AnalyticsRepository(apiClient: apiClient);
+    _formationRepository = FormationManagementRepository(apiClient: apiClient);
     _loadData();
   }
 
   Future<void> _loadData() async {
     setState(() => _loading = true);
     try {
+      if (_formations.isEmpty) {
+        _formations = await _formationRepository.getAvailableFormations();
+      }
+
       final results = await Future.wait([
-        _analyticsRepository.getDashboardSummary(period: 7),
+        _analyticsRepository.getDashboardSummary(
+          period: 7,
+          formationId: _selectedFormationId,
+        ),
         _analyticsRepository.getInactiveStagiaires(days: 7),
         _analyticsRepository.getOnlineStagiaires(),
-        _analyticsRepository.getStudentsComparison(),
+        _analyticsRepository.getStudentsComparison(
+          formationId: _selectedFormationId,
+        ),
       ]);
 
       if (mounted) {
@@ -139,6 +154,52 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                     // Online Stagiaires Section
                      _buildOnlineStagiairesSection(),
                      const SizedBox(height: 32),
+
+                    // Formation Selector
+                    if (_formations.isNotEmpty) ...[
+                      const Text(
+                        'FILTRER PAR FORMATION',
+                        style: TextStyle(
+                          color: FormateurTheme.textTertiary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: FormateurTheme.border),
+                          boxShadow: FormateurTheme.cardShadow,
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String?>(
+                            value: _selectedFormationId,
+                            isExpanded: true,
+                            hint: const Text('Toutes les formations', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: FormateurTheme.textSecondary),
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text('Toutes les formations', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                              ),
+                              ..._formations.map((f) => DropdownMenuItem<String?>(
+                                value: f.id.toString(),
+                                child: Text(f.titre, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                              )),
+                            ],
+                            onChanged: (value) {
+                              setState(() => _selectedFormationId = value);
+                              _loadData();
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
 
                     // Top Learners Section
                     if (_rankings != null && _rankings!.mostQuizzes.isNotEmpty) ...[

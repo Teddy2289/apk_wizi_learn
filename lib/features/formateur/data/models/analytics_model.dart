@@ -266,3 +266,110 @@ class PerformanceRankings {
     );
   }
 }
+
+class FormationVideos {
+  final int formationId;
+  final String titre;
+  final List<VideoBasicInfo> videos;
+
+  FormationVideos({
+    required this.formationId,
+    required this.titre,
+    required this.videos,
+  });
+
+  factory FormationVideos.fromJson(Map<String, dynamic> json) {
+    return FormationVideos(
+      formationId: int.tryParse(json['formation_id']?.toString() ?? '0') ?? 0,
+      titre: json['formation_titre']?.toString() ?? '',
+      videos: (json['videos'] as List?)
+              ?.map((v) => VideoBasicInfo.fromJson(v))
+              .toList() ??
+          [],
+    );
+  }
+}
+
+class VideoBasicInfo {
+  final int id;
+  final String titre;
+  final String? description;
+  final String? url;
+  final String? createdAt;
+
+  VideoBasicInfo({
+    required this.id,
+    required this.titre,
+    this.description,
+    this.url,
+    this.createdAt,
+  });
+
+  factory VideoBasicInfo.fromJson(Map<String, dynamic> json) {
+    return VideoBasicInfo(
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      titre: json['titre']?.toString() ?? '',
+      description: json['description']?.toString(),
+      url: json['url']?.toString(),
+      createdAt: json['created_at']?.toString(),
+    );
+  }
+}
+
+class VideoStats {
+  final int videoId;
+  final int totalViews;
+  final double totalDurationWatched;
+  final int completionRate;
+  final List<StagiaireVideoStats> viewsByStagiaire;
+
+  VideoStats({
+    required this.videoId,
+    required this.totalViews,
+    required this.totalDurationWatched,
+    required this.completionRate,
+    required this.viewsByStagiaire,
+  });
+
+  factory VideoStats.fromJson(Map<String, dynamic> json) {
+    return VideoStats(
+      videoId: int.tryParse(json['video_id']?.toString() ?? '0') ?? 0,
+      totalViews: int.tryParse(json['total_views']?.toString() ?? '0') ?? 0,
+      totalDurationWatched: double.tryParse(json['total_duration_watched']?.toString() ?? '0') ?? 0.0,
+      completionRate: int.tryParse(json['completion_rate']?.toString() ?? '0') ?? 0,
+      viewsByStagiaire: (json['views_by_stagiaire'] as List?)
+              ?.map((v) => StagiaireVideoStats.fromJson(v))
+              .toList() ??
+          [],
+    );
+  }
+}
+
+class StagiaireVideoStats {
+  final int id;
+  final String prenom;
+  final String nom;
+  final bool completed;
+  final double totalWatched;
+  final int percentage;
+
+  StagiaireVideoStats({
+    required this.id,
+    required this.prenom,
+    required this.nom,
+    required this.completed,
+    required this.totalWatched,
+    required this.percentage,
+  });
+
+  factory StagiaireVideoStats.fromJson(Map<String, dynamic> json) {
+    return StagiaireVideoStats(
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      prenom: json['prenom']?.toString() ?? '',
+      nom: json['nom']?.toString() ?? '',
+      completed: json['completed'] == true || json['completed'] == 1,
+      totalWatched: double.tryParse(json['total_watched']?.toString() ?? '0') ?? 0.0,
+      percentage: int.tryParse(json['percentage']?.toString() ?? '0') ?? 0,
+    );
+  }
+}

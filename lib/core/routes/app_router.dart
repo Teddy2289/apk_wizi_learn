@@ -30,6 +30,7 @@ import 'package:wizi_learn/features/formateur/presentation/pages/gestion_formati
 import 'package:wizi_learn/features/formateur/presentation/pages/analytiques_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/quiz_creator_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/formateur_stagiaires_page.dart';
+import 'package:wizi_learn/features/formateur/presentation/pages/formateur_videos_page.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -143,6 +144,10 @@ class AppRouter {
       case '/formateur/stagiaires':
         return MaterialPageRoute(
           builder: (_) => const FormateurStagiairesPage(),
+        );
+      case RouteConstants.formateurVideos:
+        return MaterialPageRoute(
+          builder: (_) => const FormateurVideosPage(),
         );
 
       default:

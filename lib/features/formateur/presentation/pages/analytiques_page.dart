@@ -4,7 +4,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/formateur/data/models/analytics_model.dart';
+import 'package:wizi_learn/features/formateur/data/models/formation_management_model.dart';
 import 'package:wizi_learn/features/formateur/data/repositories/analytics_repository.dart';
+import 'package:wizi_learn/features/formateur/data/repositories/formation_management_repository.dart';
 import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
 
 class AnalytiquesPage extends StatefulWidget {
@@ -16,12 +18,15 @@ class AnalytiquesPage extends StatefulWidget {
 
 class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProviderStateMixin {
   late final AnalyticsRepository _repository;
+  late final FormationManagementRepository _formationRepository;
   late final TabController _tabController;
 
   int _selectedPeriod = 30;
+  String? _selectedFormationId;
   bool _loading = true;
 
   DashboardSummary? _summary;
+  List<FormationWithStats> _formations = [];
   List<QuizSuccessStats> _successStats = [];
   List<ActivityByDay> _activityByDay = [];
   List<DropoutStats> _dropoutStats = [];
@@ -29,12 +34,12 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    _repository = AnalyticsRepository(
-      apiClient: ApiClient(
-        dio: Dio(),
-        storage: const FlutterSecureStorage(),
-      ),
+    final apiClient = ApiClient(
+      dio: Dio(),
+      storage: const FlutterSecureStorage(),
     );
+    _repository = AnalyticsRepository(apiClient: apiClient);
+    _formationRepository = FormationManagementRepository(apiClient: apiClient);
     _tabController = TabController(length: 3, vsync: this);
     _loadData();
   }
@@ -48,10 +53,25 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
   Future<void> _loadData() async {
     setState(() => _loading = true);
     try {
-      final summary = await _repository.getDashboardSummary(period: _selectedPeriod);
-      final success = await _repository.getQuizSuccessRate(period: _selectedPeriod);
-      final activity = await _repository.getActivityByDay(period: _selectedPeriod);
-      final dropout = await _repository.getDropoutStats();
+      if (_formations.isEmpty) {
+        _formations = await _formationRepository.getAvailableFormations();
+      }
+
+      final summary = await _repository.getDashboardSummary(
+        period: _selectedPeriod,
+        formationId: _selectedFormationId,
+      );
+      final success = await _repository.getQuizSuccessRate(
+        period: _selectedPeriod,
+        formationId: _selectedFormationId,
+      );
+      final activity = await _repository.getActivityByDay(
+        period: _selectedPeriod,
+        formationId: _selectedFormationId,
+      );
+      final dropout = await _repository.getDropoutStats(
+        formationId: _selectedFormationId,
+      );
 
       setState(() {
         _summary = summary;
@@ -108,6 +128,42 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
           ? const Center(child: CircularProgressIndicator(color: FormateurTheme.accent))
           : Column(
               children: [
+                // Formation Filter
+                if (_formations.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: FormateurTheme.border),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String?>(
+                          value: _selectedFormationId,
+                          isExpanded: true,
+                          hint: const Text('Toutes les formations', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: FormateurTheme.textSecondary),
+                          items: [
+                            const DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text('Toutes les formations', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                            ),
+                            ..._formations.map((f) => DropdownMenuItem<String?>(
+                              value: f.id.toString(),
+                              child: Text(f.titre, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                            )),
+                          ],
+                          onChanged: (value) {
+                            setState(() => _selectedFormationId = value);
+                            _loadData();
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+
                 // Period Selector
                 Padding(
                   padding: const EdgeInsets.all(16),

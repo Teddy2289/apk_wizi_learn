@@ -27,5 +27,6 @@ class RouteConstants {
   static const String privacy = '/privacy';
   static const String commercialDashboard = '/commercial-dashboard';
   static const String formateurDashboard = '/formateur/dashboard';
+  static const String formateurVideos = '/formateur/videos';
   static const String profileEdit = '/profile/edit';
 }
