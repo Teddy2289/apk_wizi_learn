@@ -373,3 +373,73 @@ class StagiaireVideoStats {
     );
   }
 }
+
+class DemandeSuivi {
+  final int id;
+  final String date;
+  final String statut;
+  final String formation;
+  final String stagiaireName;
+  final String? motif;
+
+  DemandeSuivi({
+    required this.id,
+    required this.date,
+    required this.statut,
+    required this.formation,
+    required this.stagiaireName,
+    this.motif,
+  });
+
+  factory DemandeSuivi.fromJson(Map<String, dynamic> json) {
+    final stagiaire = json['stagiaire'];
+    final name = stagiaire != null ? "${stagiaire['prenom'] ?? ''} ${stagiaire['name'] ?? ''}".trim() : 'Stagiaire';
+    
+    return DemandeSuivi(
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      date: json['date']?.toString() ?? '',
+      statut: json['statut']?.toString() ?? 'en_attente',
+      formation: json['formation']?.toString() ?? 'Formation',
+      stagiaireName: name.isNotEmpty ? name : 'Stagiaire',
+      motif: json['motif']?.toString(),
+    );
+  }
+}
+
+class ParrainageSuivi {
+  final int id;
+  final String date;
+  final int points;
+  final String gains;
+  final String? parrainName;
+  final String filleulName;
+  final String filleulStatut;
+
+  ParrainageSuivi({
+    required this.id,
+    required this.date,
+    required this.points,
+    required this.gains,
+    this.parrainName,
+    required this.filleulName,
+    required this.filleulStatut,
+  });
+
+  factory ParrainageSuivi.fromJson(Map<String, dynamic> json) {
+    final parrain = json['parrain'];
+    final filleul = json['filleul'];
+    
+    final pName = parrain != null ? parrain['name']?.toString() : null;
+    final fName = filleul != null ? "${filleul['prenom'] ?? ''} ${filleul['name'] ?? ''}".trim() : 'Filleul';
+
+    return ParrainageSuivi(
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      date: json['date']?.toString() ?? '',
+      points: int.tryParse(json['points']?.toString() ?? '0') ?? 0,
+      gains: json['gains']?.toString() ?? '0',
+      parrainName: pName,
+      filleulName: fName.isNotEmpty ? fName : 'Filleul',
+      filleulStatut: filleul != null ? filleul['statut']?.toString() ?? 'actif' : 'actif',
+    );
+  }
+}

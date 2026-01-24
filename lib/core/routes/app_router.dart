@@ -31,6 +31,9 @@ import 'package:wizi_learn/features/formateur/presentation/pages/analytiques_pag
 import 'package:wizi_learn/features/formateur/presentation/pages/quiz_creator_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/formateur_stagiaires_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/formateur_videos_page.dart';
+import 'package:wizi_learn/features/formateur/presentation/pages/formateur_suivi_demandes_page.dart';
+import 'package:wizi_learn/features/formateur/presentation/pages/formateur_suivi_parrainage_page.dart';
+
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -149,6 +152,15 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => const FormateurVideosPage(),
         );
+      case RouteConstants.formateurSuiviDemandes:
+        return MaterialPageRoute(
+          builder: (_) => const FormateurSuiviDemandesPage(),
+        );
+      case RouteConstants.formateurSuiviParrainage:
+        return MaterialPageRoute(
+          builder: (_) => const FormateurSuiviParrainagePage(),
+        );
+
 
       default:
         return MaterialPageRoute(

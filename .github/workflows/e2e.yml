@@ -1,0 +1,27 @@
+name: Flutter E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.7.2' # Matching pubspec.yaml sdk ^3.7.2
+          channel: 'stable'
+          
+      - name: Install dependencies
+        run: flutter pub get
+        
+      - name: Run Integration Tests (Web)
+        run: |
+          flutter test integration_test/app_test.dart -d chrome --headless

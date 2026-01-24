@@ -29,4 +29,7 @@ class RouteConstants {
   static const String formateurDashboard = '/formateur/dashboard';
   static const String formateurVideos = '/formateur/videos';
   static const String profileEdit = '/profile/edit';
+  static const String formateurSuiviDemandes = '/formateur/suivi-demandes';
+  static const String formateurSuiviParrainage = '/formateur/suivi-parrainage';
 }
+

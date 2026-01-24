@@ -39,9 +39,10 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
         final formationsData = formationsResponse.data;
         if (mounted) {
           setState(() {
-            _formations = formationsData['formations'] ?? [];
+            _formations = (formationsData['formations'] as List?) ?? [];
           });
         }
+
       }
 
       // Load ranking

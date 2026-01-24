@@ -117,6 +117,23 @@ class FormateurDrawerMenu extends StatelessWidget {
                 Navigator.pushNamed(context, '/formateur/quizzes');
               },
             ),
+            _MenuItem(
+              icon: Icons.assignment_outlined,
+              label: 'Suivi Demandes',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, RouteConstants.formateurSuiviDemandes);
+              },
+            ),
+            _MenuItem(
+              icon: Icons.card_giftcard_outlined,
+              label: 'Suivi Parrainage',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, RouteConstants.formateurSuiviParrainage);
+              },
+            ),
+
           ]),
           _buildMenuSection('PARAMÈTRES', [
              _MenuItem(

@@ -5,6 +5,9 @@ import 'email_sender_screen.dart';
 import 'notification_sender_screen.dart';
 import 'stats_dashboard_screen.dart';
 import 'online_users_screen.dart';
+import '../../formateur/presentation/pages/formateur_suivi_demandes_page.dart';
+import '../../formateur/presentation/pages/formateur_suivi_parrainage_page.dart';
+
 
 class CommercialDashboardScreen extends StatefulWidget {
   const CommercialDashboardScreen({super.key});
@@ -22,8 +25,9 @@ class _CommercialDashboardScreenState extends State<CommercialDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
     _tabController.addListener(() {
+
       setState(() {
         _currentIndex = _tabController.index;
       });
@@ -56,7 +60,9 @@ class _CommercialDashboardScreenState extends State<CommercialDashboardScreen>
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
           indicatorColor: Colors.white,
+
           indicatorWeight: 3,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
@@ -81,7 +87,16 @@ class _CommercialDashboardScreenState extends State<CommercialDashboardScreen>
               icon: Icon(LucideIcons.users, size: 20),
               text: 'En ligne',
             ),
+            Tab(
+              icon: Icon(LucideIcons.clipboardList, size: 20),
+              text: 'Suivi Inscr.',
+            ),
+            Tab(
+              icon: Icon(LucideIcons.gift, size: 20),
+              text: 'Suivi Parr.',
+            ),
           ],
+
         ),
       ),
       body: TabBarView(
@@ -91,7 +106,10 @@ class _CommercialDashboardScreenState extends State<CommercialDashboardScreen>
           NotificationSenderScreen(),
           StatsDashboardScreen(),
           OnlineUsersScreen(),
+          FormateurSuiviDemandesPage(),
+          FormateurSuiviParrainagePage(),
         ],
+
       ),
     );
   }

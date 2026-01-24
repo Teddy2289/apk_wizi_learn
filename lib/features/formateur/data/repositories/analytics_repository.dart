@@ -179,7 +179,7 @@ class AnalyticsRepository {
     }
   }
 
-  /// Get statistics for a specific video
+  /// Get video statistics
   Future<VideoStats?> getVideoStats(int videoId) async {
     try {
       final response = await apiClient.get('/formateur/video/$videoId/stats');
@@ -190,4 +190,31 @@ class AnalyticsRepository {
       return null;
     }
   }
+
+  /// Get training requests tracking
+  Future<List<DemandeSuivi>> getDemandesSuivi() async {
+    try {
+      final response = await apiClient.get('/formateur/suivi/demandes');
+      final data = response.data['data'] ?? response.data;
+      final list = data as List?;
+      return list?.map((e) => DemandeSuivi.fromJson(e)).toList() ?? [];
+    } catch (e) {
+      debugPrint('❌ Erreur suivi demandes: $e');
+      return [];
+    }
+  }
+
+  /// Get sponsorship tracking
+  Future<List<ParrainageSuivi>> getParrainageSuivi() async {
+    try {
+      final response = await apiClient.get('/formateur/suivi/parrainage');
+      final data = response.data['data'] ?? response.data;
+      final list = data as List?;
+      return list?.map((e) => ParrainageSuivi.fromJson(e)).toList() ?? [];
+    } catch (e) {
+      debugPrint('❌ Erreur suivi parrainage: $e');
+      return [];
+    }
+  }
 }
+
