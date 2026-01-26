@@ -140,10 +140,16 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
   }
 
   Widget _buildStagiaireCard(dynamic stagiaire) {
-    final String displayName = (stagiaire['prenom'] != null || stagiaire['nom'] != null)
-        ? '${stagiaire['prenom'] ?? ''} ${stagiaire['nom'] ?? ''}'.trim()
-        : (stagiaire['name'] ?? 'Stagiaire');
-    final String finalName = displayName.isEmpty ? 'Stagiaire' : displayName;
+    final String prenom = (stagiaire['prenom'] ?? '').toString();
+    final String nom = (stagiaire['nom'] ?? '').toString();
+    final String name = (stagiaire['name'] ?? '').toString();
+    
+    String displayName = '$prenom $nom'.trim();
+    if (displayName.isEmpty) {
+      displayName = name.isNotEmpty ? name : 'Stagiaire';
+    }
+    
+    final String finalName = displayName;
 
     return Container(
       decoration: BoxDecoration(

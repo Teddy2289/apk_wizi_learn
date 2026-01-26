@@ -25,7 +25,7 @@ import 'package:wizi_learn/features/commercial/screens/commercial_dashboard_scre
 import 'package:wizi_learn/features/profile/presentation/pages/profile_edit_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/formateur_dashboard_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/formateur_classement_page.dart';
-import 'package:wizi_learn/features/formateur/presentation/pages/send_notification_page.dart';
+import 'package:wizi_learn/features/formateur/presentation/pages/formateur_communications_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/gestion_formations_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/analytiques_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/quiz_creator_page.dart';
@@ -130,7 +130,7 @@ class AppRouter {
         );
       case '/formateur/send-notification':
         return MaterialPageRoute(
-          builder: (_) => const SendNotificationPage(),
+          builder: (_) => const FormateurCommunicationsPage(),
         );
       case '/formateur/formations':
         return MaterialPageRoute(

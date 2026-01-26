@@ -477,7 +477,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildActionButton(Icons.emoji_events_rounded, 'stagiaires', () => Navigator.pushNamed(context, '/formateur/classement')),
+          _buildActionButton(Icons.emoji_events_rounded, 'STAGIAIRES', () => Navigator.pushNamed(context, '/formateur/classement')),
           Container(width: 1, height: 30, color: Colors.white10),
           _buildActionButton(Icons.campaign_rounded, 'NOTIFIER', () => Navigator.pushNamed(context, '/formateur/send-notification')),
           Container(width: 1, height: 30, color: Colors.white10),
