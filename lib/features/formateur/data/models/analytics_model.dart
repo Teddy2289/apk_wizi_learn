@@ -219,6 +219,7 @@ class StagiairePerformance {
   final String? image;
   final int totalQuizzes;
   final int totalLogins;
+  final int totalPoints;
   final String? lastQuizAt;
 
   StagiairePerformance({
@@ -228,17 +229,25 @@ class StagiairePerformance {
     this.image,
     required this.totalQuizzes,
     required this.totalLogins,
+    required this.totalPoints,
     this.lastQuizAt,
   });
 
   factory StagiairePerformance.fromJson(Map<String, dynamic> json) {
+    final prenom = json['prenom']?.toString() ?? '';
+    final nom = json['name']?.toString() ?? '';
+    final fullName = prenom.isNotEmpty || nom.isNotEmpty 
+        ? "$prenom $nom".trim() 
+        : 'Stagiaire';
+
     return StagiairePerformance(
       id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
-      name: json['name']?.toString() ?? 'Stagiaire',
+      name: fullName,
       email: json['email']?.toString() ?? '',
       image: json['image']?.toString(),
       totalQuizzes: int.tryParse(json['total_quizzes']?.toString() ?? '0') ?? 0,
       totalLogins: int.tryParse(json['total_logins']?.toString() ?? '0') ?? 0,
+      totalPoints: int.tryParse(json['total_points']?.toString() ?? '0') ?? 0,
       lastQuizAt: json['last_quiz_at']?.toString(),
     );
   }

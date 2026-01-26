@@ -240,13 +240,18 @@ class _GestionFormationsPageState extends State<GestionFormationsPage> {
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: stagiaire.isActive ? FormateurTheme.success.withOpacity(0.1) : FormateurTheme.background,
-                          child: Text(
-                            stagiaire.prenom[0].toUpperCase(),
-                            style: TextStyle(
-                              color: stagiaire.isActive ? FormateurTheme.success : FormateurTheme.textTertiary,
-                              fontWeight: FontWeight.bold
-                            ),
-                          ),
+                          backgroundImage: stagiaire.avatar != null && stagiaire.avatar!.isNotEmpty
+                              ? NetworkImage(AppConstants.getUserImageUrl(stagiaire.avatar!))
+                              : null,
+                          child: (stagiaire.avatar == null || stagiaire.avatar!.isEmpty)
+                              ? Text(
+                                  stagiaire.prenom[0].toUpperCase(),
+                                  style: TextStyle(
+                                    color: stagiaire.isActive ? FormateurTheme.success : FormateurTheme.textTertiary,
+                                    fontWeight: FontWeight.bold
+                                  ),
+                                )
+                              : null,
                         ),
                         title: Text(stagiaire.fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                         subtitle: Column(
@@ -256,10 +261,10 @@ class _GestionFormationsPageState extends State<GestionFormationsPage> {
                             ClipRRect(
                               borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
-                                value: stagiaire.progress / 100,
+                                value: stagiaire.progress / 10,
                                 backgroundColor: FormateurTheme.background,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  stagiaire.progress == 100
+                                  stagiaire.progress == 10
                                       ? FormateurTheme.success
                                       : FormateurTheme.orangeAccent,
                                 ),
@@ -269,7 +274,7 @@ class _GestionFormationsPageState extends State<GestionFormationsPage> {
                           ],
                         ),
                         trailing: Text(
-                          '${stagiaire.progress}%',
+                          '${stagiaire.progress * 10}%',
                           style: const TextStyle(fontWeight: FontWeight.bold, color: FormateurTheme.textPrimary),
                         ),
                       ),

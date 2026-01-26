@@ -118,7 +118,7 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
           unselectedLabelColor: FormateurTheme.textTertiary,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1),
           tabs: const [
-            Tab(text: 'OVERVIEW'),
+            Tab(text: 'GÉNÉRAL'),
             Tab(text: 'SUCCÈS'),
             Tab(text: 'ACTIVITÉ'),
           ],

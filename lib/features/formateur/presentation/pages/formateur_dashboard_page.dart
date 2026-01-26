@@ -187,13 +187,6 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                           // Formation Selector
                           if (_formations.isNotEmpty) ...[
                             _buildFormationSelector(),
-                            const SizedBox(height: 32),
-                          ],
-
-                          // Top Learners Section
-                          if (_rankings != null && _rankings!.mostQuizzes.isNotEmpty) ...[
-                            _buildTopLearnersSection(),
-                            const SizedBox(height: 40),
                           ],
                         ],
                       ),
@@ -361,10 +354,15 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: Colors.white,
-                    child: Text(
-                      _inactiveStagiaires.first.prenom.isNotEmpty ? _inactiveStagiaires.first.prenom[0].toUpperCase() : '?',
-                      style: const TextStyle(color: FormateurTheme.accentDark, fontWeight: FontWeight.w900),
-                    ),
+                    backgroundImage: _inactiveStagiaires.first.avatar != null && _inactiveStagiaires.first.avatar!.isNotEmpty
+                        ? NetworkImage(AppConstants.getUserImageUrl(_inactiveStagiaires.first.avatar!))
+                        : null,
+                    child: (_inactiveStagiaires.first.avatar == null || _inactiveStagiaires.first.avatar!.isEmpty)
+                        ? Text(
+                            _inactiveStagiaires.first.prenom.isNotEmpty ? _inactiveStagiaires.first.prenom[0].toUpperCase() : '?',
+                            style: const TextStyle(color: FormateurTheme.accentDark, fontWeight: FontWeight.w900),
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -372,7 +370,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${_inactiveStagiaires.first.prenom} ${_inactiveStagiaires.first.nom}'.toUpperCase(),
+                          '${_inactiveStagiaires.first.prenom} ${_inactiveStagiaires.first.nom}',
                           style: const TextStyle(
                             color: FormateurTheme.textPrimary,
                             fontWeight: FontWeight.w900,
@@ -556,7 +554,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                     backgroundColor: FormateurTheme.background,
                     backgroundImage: stagiaire.avatar != null && stagiaire.avatar!.isNotEmpty
                       ? NetworkImage(AppConstants.getUserImageUrl(stagiaire.avatar!)) : null,
-                    child: stagiaire.avatar == null ? Text(stagiaire.prenom[0], style: const TextStyle(fontWeight: FontWeight.w900)) : null,
+                    child: (stagiaire.avatar == null || stagiaire.avatar!.isEmpty) ? Text(stagiaire.prenom[0], style: const TextStyle(fontWeight: FontWeight.w900)) : null,
                   ),
                 ),
                 title: Text('${stagiaire.prenom} ${stagiaire.nom}'.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: -0.5)),
@@ -593,7 +591,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
               icon: const Icon(Icons.expand_more_rounded, color: FormateurTheme.accent),
               items: [
                 const DropdownMenuItem<String?>(value: null, child: Text('Toutes les formations', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900))),
-                ..._formations.map((f) => DropdownMenuItem<String?>(value: f.id.toString(), child: Text(f.titre.toUpperCase(), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900)))),
+                ..._formations.map((f) => DropdownMenuItem<String?>(value: f.id.toString(), child: Text(f.titre, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900)))),
               ],
               onChanged: (value) {
                 setState(() => _selectedFormationId = value);

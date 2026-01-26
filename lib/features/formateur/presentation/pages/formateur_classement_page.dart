@@ -255,11 +255,11 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
             items: [
               const DropdownMenuItem(
                 value: 'global',
-                child: Text('🌍 TOUS MES STAGIAIRES'),
+                child: Text('TOUS MES STAGIAIRES'),
               ),
               ..._formations.map((f) => DropdownMenuItem(
                 value: f['id'].toString(),
-                child: Text('🎓 ${f['titre']}', overflow: TextOverflow.ellipsis),
+                child: Text('${f['titre']}', overflow: TextOverflow.ellipsis),
               )),
             ],
             onChanged: (value) {

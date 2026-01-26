@@ -56,7 +56,12 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
       } else {
         _filteredStagiaires = _stagiaires.where((s) {
           final name = (s['name'] ?? '').toString().toLowerCase();
-          return name.contains(query.toLowerCase());
+          final prenom = (s['prenom'] ?? '').toString().toLowerCase();
+          final nom = (s['nom'] ?? '').toString().toLowerCase();
+          final searchLower = query.toLowerCase();
+          return name.contains(searchLower) || 
+                 prenom.contains(searchLower) || 
+                 nom.contains(searchLower);
         }).toList();
       }
     });
@@ -134,6 +139,11 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
   }
 
   Widget _buildStagiaireCard(dynamic stagiaire) {
+    final String displayName = (stagiaire['prenom'] != null || stagiaire['nom'] != null)
+        ? '${stagiaire['prenom'] ?? ''} ${stagiaire['nom'] ?? ''}'.trim()
+        : (stagiaire['name'] ?? 'Stagiaire');
+    final String finalName = displayName.isEmpty ? 'Stagiaire' : displayName;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -146,16 +156,17 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
         leading: CircleAvatar(
           radius: 24,
           backgroundColor: FormateurTheme.accent.withOpacity(0.1),
-          backgroundImage: stagiaire['image'] != null ? NetworkImage(stagiaire['image']) : null,
-          child: (stagiaire['image'] == null && stagiaire['name'] != null && (stagiaire['name'] as String).isNotEmpty)
+          backgroundImage: stagiaire['image'] != null && stagiaire['image'].toString().isNotEmpty 
+              ? NetworkImage(AppConstants.getUserImageUrl(stagiaire['image'].toString())) : null,
+          child: ((stagiaire['image'] == null || stagiaire['image'].toString().isEmpty) && finalName != 'Stagiaire')
               ? Text(
-                  (stagiaire['name'] as String)[0].toUpperCase(),
+                  finalName[0].toUpperCase(),
                   style: const TextStyle(color: FormateurTheme.accentDark, fontWeight: FontWeight.bold),
                 )
-              : (stagiaire['image'] == null ? const Icon(Icons.person, color: FormateurTheme.accentDark) : null),
+              : ((stagiaire['image'] == null || stagiaire['image'].toString().isEmpty) ? const Icon(Icons.person, color: FormateurTheme.accentDark) : null),
         ),
         title: Text(
-          stagiaire['name'] ?? 'Stagiaire',
+          finalName,
           style: const TextStyle(fontWeight: FontWeight.bold, color: FormateurTheme.textPrimary),
         ),
         subtitle: Text(

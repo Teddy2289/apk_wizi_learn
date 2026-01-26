@@ -260,7 +260,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _buildHeaderMetric('POINTS', stats.totalPoints.toString(), Colors.blue),
-                        _buildHeaderMetric('SCORE', '${stats.averageScore.toInt()}%', FormateurTheme.success),
+                        _buildHeaderMetric('SCORE', '${(stats.averageScore * 10).toInt()}%', FormateurTheme.success),
                         _buildHeaderMetric('SÉRIE', '${stats.loginStreak}j', FormateurTheme.orangeAccent),
                       ],
                     ),
@@ -317,7 +317,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
           ..._profile!.formations.map((f) => _buildFormationProgressCard(f)),
         
         const SizedBox(height: 32),
-        const Text('EXCELLENCE QUIZ', style: TextStyle(color: FormateurTheme.textTertiary, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+        const Text('VOS QUIZ', style: TextStyle(color: FormateurTheme.textTertiary, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
         const SizedBox(height: 16),
         if (_profile!.quizHistory.isEmpty)
           _buildEmptyTabState(Icons.quiz_outlined, 'Aucun quiz effectué')
@@ -343,7 +343,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                child: Text('${f.progress}%', style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 11)),
+                child: Text('${f.progress * 10}%', style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 11)),
               ),
             ],
           ),
@@ -351,7 +351,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: f.progress / 100,
+              value: f.progress / 10,
               minHeight: 6,
               backgroundColor: FormateurTheme.background,
               valueColor: AlwaysStoppedAnimation<Color>(color),
@@ -419,7 +419,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
         title: Text(a.title.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: FormateurTheme.textPrimary, letterSpacing: -0.2)),
         subtitle: Text(_formatDate(a.timestamp).toUpperCase(), style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 9, fontWeight: FontWeight.w900)),
         trailing: a.score != null 
-          ? Text('${a.score}%', style: const TextStyle(color: FormateurTheme.success, fontWeight: FontWeight.w900)) : null,
+          ? Text('${(a.score! * 10).toInt()}%', style: const TextStyle(color: FormateurTheme.success, fontWeight: FontWeight.w900)) : null,
       ),
     );
   }
@@ -506,16 +506,6 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
       case 'formation_started': return Icons.rocket_launch_rounded;
       case 'formation_completed': return Icons.check_circle_rounded;
       default: return Icons.bolt_rounded;
-    }
-  }
-  bool _isRecentlyActive() {
-    if (_profile?.stagiaire.lastLogin == null) return false;
-    try {
-      final lastLogin = DateTime.parse(_profile!.stagiaire.lastLogin!);
-      final diff = DateTime.now().difference(lastLogin);
-      return diff.inHours < 24;
-    } catch (e) {
-      return false;
     }
   }
 }
