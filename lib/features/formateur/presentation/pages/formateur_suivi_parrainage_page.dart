@@ -197,7 +197,7 @@ class _FormateurSuiviParrainagePageState extends State<FormateurSuiviParrainageP
                   const SizedBox(height: 4),
                   Text(
                     '${_totalGains.toStringAsFixed(0)}€',
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.emerald),
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF10B981)),
                   ),
                 ],
               ),
@@ -298,7 +298,7 @@ class _FormateurSuiviParrainagePageState extends State<FormateurSuiviParrainageP
                     Text(
                       '${parrainage.gains}€',
                       style: const TextStyle(
-                        color: Colors.emerald,
+                        color: Color(0xFF10B981),
                         fontWeight: FontWeight.w900,
                         fontSize: 11,
                       ),

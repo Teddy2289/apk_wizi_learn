@@ -528,7 +528,6 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
   }
 
   Widget _buildOnlineStagiairesSection() {
-  Widget _buildOnlineStagiairesSection() {
     if (_onlineStagiaires.isEmpty) return const SizedBox.shrink();
 
     return Column(

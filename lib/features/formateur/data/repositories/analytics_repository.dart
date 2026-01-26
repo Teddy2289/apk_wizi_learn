@@ -18,12 +18,8 @@ class AnalyticsRepository {
         },
       );
 
-      final stats = (response.data['quiz_stats'] as List?)
-              ?.map((s) => QuizSuccessStats.fromJson(s))
-              .toList() ??
-          [];
-
-      return stats;
+      final list = _parseList(response.data, key: 'quiz_stats');
+      return list.map((s) => QuizSuccessStats.fromJson(s)).toList();
     } catch (e) {
       debugPrint('❌ Erreur stats taux de réussite: $e');
       rethrow;
@@ -38,12 +34,8 @@ class AnalyticsRepository {
         queryParameters: {'period': period},
       );
 
-      final trends = (response.data['completion_trends'] as List?)
-              ?.map((t) => CompletionTrend.fromJson(t))
-              .toList() ??
-          [];
-
-      return trends;
+      final list = _parseList(response.data, key: 'completion_trends');
+      return list.map((t) => CompletionTrend.fromJson(t)).toList();
     } catch (e) {
       debugPrint('❌ Erreur trends temps: $e');
       rethrow;
@@ -61,12 +53,8 @@ class AnalyticsRepository {
         },
       );
 
-      final activities = (response.data['activity_by_day'] as List?)
-              ?.map((a) => ActivityByDay.fromJson(a))
-              .toList() ??
-          [];
-
-      return activities;
+      final list = _parseList(response.data, key: 'activity_by_day');
+      return list.map((a) => ActivityByDay.fromJson(a)).toList();
     } catch (e) {
       debugPrint('❌ Erreur heatmap: $e');
       rethrow;
@@ -81,12 +69,8 @@ class AnalyticsRepository {
         queryParameters: formationId != null ? {'formation_id': formationId} : null,
       );
 
-      final stats = (response.data['quiz_dropout'] as List?)
-              ?.map((d) => DropoutStats.fromJson(d))
-              .toList() ??
-          [];
-
-      return stats;
+      final list = _parseList(response.data, key: 'quiz_dropout');
+      return list.map((d) => DropoutStats.fromJson(d)).toList();
     } catch (e) {
       debugPrint('❌ Erreur dropout stats: $e');
       rethrow;
@@ -96,7 +80,6 @@ class AnalyticsRepository {
   /// Get dashboard summary
   Future<DashboardSummary> getDashboardSummary({int period = 30, String? formationId}) async {
     try {
-      // Changed to match React's dashboard endpoint
       final response = await apiClient.get(
         '/formateur/dashboard/stats',
         queryParameters: {
@@ -105,7 +88,6 @@ class AnalyticsRepository {
         },
       );
 
-      // Note: Model parsing might need adjustment depending on backend response format
       return DashboardSummary.fromJson(response.data);
     } catch (e) {
       debugPrint('❌ Erreur dashboard summary: $e');
@@ -117,7 +99,7 @@ class AnalyticsRepository {
   Future<List<dynamic>> getFormationsPerformance() async {
     try {
       final response = await apiClient.get('/formateur/analytics/formations/performance');
-      return response.data as List<dynamic>;
+      return _parseList(response.data);
     } catch (e) {
       debugPrint('❌ Erreur formations performance: $e');
       return [];
@@ -131,7 +113,8 @@ class AnalyticsRepository {
         '/formateur/analytics/performance',
         queryParameters: formationId != null ? {'formation_id': formationId} : null,
       );
-      return response.data as Map<String, dynamic>;
+      if (response.data is Map) return response.data;
+      return {'performance': [], 'rankings': {'most_quizzes': [], 'most_active': []}};
     } catch (e) {
       debugPrint('❌ Erreur comparaison stagiaires: $e');
       return {'performance': [], 'rankings': {'most_quizzes': [], 'most_active': []}};
@@ -145,9 +128,8 @@ class AnalyticsRepository {
         '/formateur/stagiaires/inactive',
         queryParameters: {'days': days, 'scope': scope},
       );
-      final data = response.data;
-      final list = (data is Map ? data['inactive_stagiaires'] : data) as List?;
-      return list?.map((e) => InactiveStagiaire.fromJson(e)).toList() ?? [];
+      final list = _parseList(response.data, key: 'inactive_stagiaires');
+      return list.map((e) => InactiveStagiaire.fromJson(e)).toList();
     } catch (e) {
       debugPrint('❌ Erreur inactifs: $e');
       return [];
@@ -158,9 +140,8 @@ class AnalyticsRepository {
   Future<List<OnlineStagiaire>> getOnlineStagiaires() async {
     try {
       final response = await apiClient.get('/formateur/stagiaires/online');
-      final data = response.data;
-      final list = (data is Map ? data['stagiaires'] : data) as List?;
-      return list?.map((e) => OnlineStagiaire.fromJson(e)).toList() ?? [];
+      final list = _parseList(response.data, key: 'stagiaires');
+      return list.map((e) => OnlineStagiaire.fromJson(e)).toList();
     } catch (e) {
       debugPrint('❌ Erreur en ligne: $e');
       return [];
@@ -171,8 +152,8 @@ class AnalyticsRepository {
   Future<List<FormationVideos>> getFormationsVideos() async {
     try {
       final response = await apiClient.get('/formateur/formations-videos');
-      final list = (response.data['data'] ?? response.data) as List?;
-      return list?.map((e) => FormationVideos.fromJson(e)).toList() ?? [];
+      final list = _parseList(response.data);
+      return list.map((e) => FormationVideos.fromJson(e)).toList();
     } catch (e) {
       debugPrint('❌ Erreur formations-videos: $e');
       return [];
@@ -183,7 +164,8 @@ class AnalyticsRepository {
   Future<VideoStats?> getVideoStats(int videoId) async {
     try {
       final response = await apiClient.get('/formateur/video/$videoId/stats');
-      final data = response.data['data'] ?? response.data;
+      final data = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      if (data is! Map<String, dynamic>) return null;
       return VideoStats.fromJson(data);
     } catch (e) {
       debugPrint('❌ Erreur stats vidéo: $e');
@@ -195,9 +177,8 @@ class AnalyticsRepository {
   Future<List<DemandeSuivi>> getDemandesSuivi() async {
     try {
       final response = await apiClient.get('/formateur/suivi/demandes');
-      final data = response.data['data'] ?? response.data;
-      final list = data as List?;
-      return list?.map((e) => DemandeSuivi.fromJson(e)).toList() ?? [];
+      final list = _parseList(response.data);
+      return list.map((e) => DemandeSuivi.fromJson(e)).toList();
     } catch (e) {
       debugPrint('❌ Erreur suivi demandes: $e');
       return [];
@@ -208,13 +189,28 @@ class AnalyticsRepository {
   Future<List<ParrainageSuivi>> getParrainageSuivi() async {
     try {
       final response = await apiClient.get('/formateur/suivi/parrainage');
-      final data = response.data['data'] ?? response.data;
-      final list = data as List?;
-      return list?.map((e) => ParrainageSuivi.fromJson(e)).toList() ?? [];
+      final list = _parseList(response.data);
+      return list.map((e) => ParrainageSuivi.fromJson(e)).toList();
     } catch (e) {
       debugPrint('❌ Erreur suivi parrainage: $e');
       return [];
     }
   }
+
+  /// Helper methods
+  List<dynamic> _parseList(dynamic data, {String? key}) {
+    if (data == null) return [];
+    if (data is List) return data;
+    if (data is Map) {
+      if (key != null && data.containsKey(key) && data[key] is List) {
+        return data[key];
+      }
+      if (data.containsKey('data') && data['data'] is List) {
+        return data['data'];
+      }
+    }
+    return [];
+  }
+}
 }
 

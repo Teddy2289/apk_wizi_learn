@@ -189,7 +189,7 @@ class _FormateurVideosPageState extends State<FormateurVideosPage> {
               color: FormateurTheme.accent.withOpacity(0.1),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.school_rounded, color: FormateurTheme.accent Dark, size: 20),
+            child: const Icon(Icons.school_rounded, color: FormateurTheme.accentDark, size: 20),
           ),
           title: Text(
             formation.titre.toUpperCase(),
@@ -425,5 +425,4 @@ class _VideoStatsSheetState extends State<_VideoStatsSheet> {
       ),
     );
   }
-}
 }

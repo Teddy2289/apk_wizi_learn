@@ -508,19 +508,6 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
       default: return Icons.bolt_rounded;
     }
   }
-}
-
-class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  _SliverAppBarDelegate(this._tabBar);
-  final TabBar _tabBar;
-  @override double get minExtent => _tabBar.preferredSize.height;
-  @override double get maxExtent => _tabBar.preferredSize.height;
-  @override Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(color: Colors.white, child: _tabBar);
-  }
-  @override bool shouldRebuild(_SliverAppBarDelegate oldDelegate) => false;
-}
-
   bool _isRecentlyActive() {
     if (_profile?.stagiaire.lastLogin == null) return false;
     try {
@@ -529,39 +516,6 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
       return diff.inHours < 24;
     } catch (e) {
       return false;
-    }
-  }
-
-  String _formatDate(String date) {
-    try {
-      final dt = DateTime.parse(date);
-      final now = DateTime.now();
-      final diff = now.difference(dt);
-
-      if (diff.inDays == 0) {
-        return 'Aujourd\'hui';
-      } else if (diff.inDays == 1) {
-        return 'Hier';
-      } else if (diff.inDays < 7) {
-        return 'Il y a ${diff.inDays}j';
-      } else {
-        return '${dt.day}/${dt.month}/${dt.year}';
-      }
-    } catch (e) {
-      return date;
-    }
-  }
-
-  IconData _getActivityIcon(String type) {
-    switch (type) {
-      case 'quiz_completed':
-        return Icons.quiz_outlined;
-      case 'formation_started':
-        return Icons.play_lesson_outlined;
-      case 'formation_completed':
-        return Icons.check_circle_outline;
-      default:
-        return Icons.calendar_today_outlined;
     }
   }
 }

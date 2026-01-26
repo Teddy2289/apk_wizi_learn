@@ -66,4 +66,10 @@ class FormateurTheme {
   static const LinearGradient textGradient = LinearGradient(
     colors: [accentDark, Color(0xFFFACC15)],
   );
+
+  static const LinearGradient yellowWhiteGradient = LinearGradient(
+    colors: [Color(0xFFFACC15), Colors.white],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
 }

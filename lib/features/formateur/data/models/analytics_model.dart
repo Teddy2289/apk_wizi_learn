@@ -380,6 +380,7 @@ class DemandeSuivi {
   final String statut;
   final String formation;
   final String stagiaireName;
+  final int stagiaireId;
   final String? motif;
 
   DemandeSuivi({
@@ -388,12 +389,14 @@ class DemandeSuivi {
     required this.statut,
     required this.formation,
     required this.stagiaireName,
+    required this.stagiaireId,
     this.motif,
   });
 
   factory DemandeSuivi.fromJson(Map<String, dynamic> json) {
     final stagiaire = json['stagiaire'];
     final name = stagiaire != null ? "${stagiaire['prenom'] ?? ''} ${stagiaire['name'] ?? ''}".trim() : 'Stagiaire';
+    final sId = stagiaire != null ? int.tryParse(stagiaire['id']?.toString() ?? '0') ?? 0 : 0;
     
     return DemandeSuivi(
       id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
@@ -401,6 +404,7 @@ class DemandeSuivi {
       statut: json['statut']?.toString() ?? 'en_attente',
       formation: json['formation']?.toString() ?? 'Formation',
       stagiaireName: name.isNotEmpty ? name : 'Stagiaire',
+      stagiaireId: sId,
       motif: json['motif']?.toString(),
     );
   }
