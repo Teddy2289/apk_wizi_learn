@@ -41,6 +41,7 @@ class StagiaireInFormation {
   final String prenom;
   final String nom;
   final String email;
+  final String? avatar;
   final String? dateDebut;
   final String? dateFin;
   final int progress;
@@ -51,6 +52,7 @@ class StagiaireInFormation {
     required this.prenom,
     required this.nom,
     required this.email,
+    this.avatar,
     this.dateDebut,
     this.dateFin,
     required this.progress,
@@ -63,6 +65,7 @@ class StagiaireInFormation {
       prenom: json['prenom']?.toString() ?? '',
       nom: json['nom']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
+      avatar: json['avatar']?.toString() ?? json['image']?.toString(),
       dateDebut: json['date_debut']?.toString(),
       dateFin: json['date_fin']?.toString(),
       progress: int.tryParse(json['progress']?.toString() ?? '0') ?? 0,

@@ -33,6 +33,7 @@ import 'package:wizi_learn/features/formateur/presentation/pages/formateur_stagi
 import 'package:wizi_learn/features/formateur/presentation/pages/formateur_videos_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/formateur_suivi_demandes_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/formateur_suivi_parrainage_page.dart';
+import 'package:wizi_learn/features/formateur/presentation/pages/trainer_arena_page.dart';
 
 
 class AppRouter {
@@ -159,6 +160,10 @@ class AppRouter {
       case RouteConstants.formateurSuiviParrainage:
         return MaterialPageRoute(
           builder: (_) => const FormateurSuiviParrainagePage(),
+        );
+      case '/formateur/arena':
+        return MaterialPageRoute(
+          builder: (_) => const TrainerArenaPage(),
         );
 
 

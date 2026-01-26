@@ -259,9 +259,9 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                     fontFamily: 'Montserrat',
                   ),
                   children: [
-                    TextSpan(text: 'Dashboard\n'),
+                    TextSpan(text: 'Tableau\n'),
                     TextSpan(
-                      text: 'Analytique',
+                      text: 'de bord',
                       style: TextStyle(color: FormateurTheme.accentDark),
                     ),
                   ],
@@ -269,7 +269,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
               ),
               const SizedBox(height: 16),
               const Text(
-                "Supervisez l'engagement et l'excellence académique de vos cohortes.",
+                "Supervisez l'engagement et l'excellence académique de vos stagiaires.",
                 style: TextStyle(
                   color: FormateurTheme.textSecondary,
                   fontSize: 15,
@@ -477,7 +477,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildActionButton(Icons.emoji_events_rounded, 'COHORTES', () => Navigator.pushNamed(context, '/formateur/classement')),
+          _buildActionButton(Icons.emoji_events_rounded, 'stagiaires', () => Navigator.pushNamed(context, '/formateur/classement')),
           Container(width: 1, height: 30, color: Colors.white10),
           _buildActionButton(Icons.campaign_rounded, 'NOTIFIER', () => Navigator.pushNamed(context, '/formateur/send-notification')),
           Container(width: 1, height: 30, color: Colors.white10),
