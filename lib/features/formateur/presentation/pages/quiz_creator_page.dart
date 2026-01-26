@@ -191,7 +191,6 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Apply filters then group by formation
     final filtered = _quizzes.where((q) {
       final status = (q['status'] ?? '').toString().toLowerCase();
       final niveau = (q['niveau'] ?? '').toString().toLowerCase();
@@ -204,333 +203,259 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
       return okStatus && okNiveau && okFormation;
     }).toList();
 
-    // Grouping for the list display
     final Map<String, List<Map<String, dynamic>>> grouped = {};
     for (final q in filtered) {
       final key = (q['formation_id'] ?? 'none').toString();
       grouped.putIfAbsent(key, () => []).add(q);
     }
 
-    String formationName(String id) {
-      if (id == 'none' || id.isEmpty) return 'Sans formation';
-      final formation = _formations.firstWhere(
-        (f) => f['id'].toString() == id,
-        orElse: () => {'titre': 'Formation #$id'},
-      );
-      return (formation['nom'] ?? formation['titre'] ?? 'Formation #$id').toString();
-    }
-
     return Scaffold(
       backgroundColor: FormateurTheme.background,
       appBar: AppBar(
-        title: const Text('Gestion des Quiz'),
-        backgroundColor: Colors.transparent,
+        title: const Text('Atelier Quiz'),
+        backgroundColor: Colors.white,
+        foregroundColor: FormateurTheme.textPrimary,
         elevation: 0,
         centerTitle: false,
         titleTextStyle: const TextStyle(
-            color: FormateurTheme.textPrimary,
-            fontWeight: FontWeight.w900,
-            fontSize: 20,
-            fontFamily: 'Montserrat'
+          color: FormateurTheme.textPrimary,
+          fontWeight: FontWeight.w900,
+          fontSize: 18,
+          fontFamily: 'Montserrat',
         ),
-        foregroundColor: FormateurTheme.textPrimary,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: FormateurTheme.border, height: 1),
+        ),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: FormateurTheme.accent))
-          : _quizzes.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.quiz_outlined, size: 64, color: FormateurTheme.textTertiary),
-                      const SizedBox(height: 16),
-                      const Text('Aucun quiz créé', style: TextStyle(color: FormateurTheme.textSecondary, fontSize: 16)),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: _createQuiz,
-                        icon: const Icon(Icons.add_rounded),
-                        label: const Text('CRÉER LE PREMIER QUIZ'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: FormateurTheme.accentDark,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                          textStyle: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+          : RefreshIndicator(
+              onRefresh: _loadAll,
+              color: FormateurTheme.accent,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    _buildPremiumHeader(),
+                    if (_quizzes.isEmpty)
+                      _buildEmptyState()
+                    else
+                      Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          children: [
+                             ...grouped.keys.map((key) => _buildFormationGroup(key, grouped[key]!)),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: grouped.keys.length + 1,
-                  separatorBuilder: (context, index) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    // First item: filters UI
-                    if (index == 0) {
-                      return _Filters(
-                        filterStatus: _filterStatus,
-                        filterNiveau: _filterNiveau,
-                        filterFormationId: _filterFormationId,
-                        onStatusChanged: (v) => setState(() => _filterStatus = v),
-                        onNiveauChanged: (v) => setState(() => _filterNiveau = v),
-                        onFormationChanged: (v) => setState(() => _filterFormationId = v),
-                        formations: _formations,
-                      );
-                    }
-
-                    final key = grouped.keys.elementAt(index - 1);
-                    final items = grouped[key]!;
-                    final label = formationName(key);
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4),
-                          child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: FormateurTheme.textPrimary)),
-                        ),
-                        ...items.map((quiz) {
-                          final status = quiz['status'] ?? 'brouillon';
-                          final statusColor = status == 'actif'
-                              ? FormateurTheme.success
-                              : status == 'archive'
-                                  ? FormateurTheme.textTertiary
-                                  : FormateurTheme.orangeAccent;
-
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: FormateurTheme.border),
-                              boxShadow: FormateurTheme.cardShadow,
-                            ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.all(16),
-                              title: Text(
-                                quiz['titre'] ?? '',
-                                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: FormateurTheme.textPrimary),
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 6.0),
-                                child: Wrap(
-                                  spacing: 12,
-                                  runSpacing: 6,
-                                  crossAxisAlignment: WrapCrossAlignment.center,
-                                  children: [
-                                    _InfoChip(icon: Icons.help_outline, label: '${quiz['nb_questions'] ?? 0} questions'),
-                                    _InfoChip(icon: Icons.timer_outlined, label: '${quiz['duree'] ?? 0} min'),
-                                    _StatusChip(status: status.toString(), color: statusColor),
-                                  ],
-                                ),
-                              ),
-                              leading: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: statusColor.withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(Icons.assignment_outlined, color: statusColor),
-                              ),
-                              trailing: PopupMenuButton(
-                                icon: const Icon(Icons.more_vert, color: FormateurTheme.textSecondary),
-                                color: Colors.white,
-                                elevation: 4,
-                                surfaceTintColor: Colors.white,
-                                itemBuilder: (context) => [
-                                  const PopupMenuItem(
-                                    value: 'view',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.visibility_outlined, size: 20, color: FormateurTheme.textPrimary),
-                                        SizedBox(width: 12),
-                                        Text('Voir détails'),
-                                      ],
-                                    ),
-                                  ),
-                                  const PopupMenuItem(
-                                    value: 'delete',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.delete_outline, size: 20, color: FormateurTheme.error),
-                                        SizedBox(width: 12),
-                                        Text('Supprimer', style: TextStyle(color: FormateurTheme.error)),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                                onSelected: (value) {
-                                  if (value == 'delete') {
-                                    _deleteQuiz(quiz['id']);
-                                  } else if (value == 'view') {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => QuizDetailPage(quizId: quiz['id']),
-                                      ),
-                                    ).then((_) => _loadQuizzes());
-                                  }
-                                },
-                              ),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => QuizDetailPage(quizId: quiz['id']),
-                                  ),
-                                ).then((_) => _loadQuizzes());
-                              },
-                            ),
-                          );
-                        }).toList(),
-                      ],
-                    );
-                  },
+                  ],
                 ),
-      floatingActionButton: FloatingActionButton(
+              ),
+            ),
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: _createQuiz,
-        backgroundColor: FormateurTheme.accentDark,
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
+        backgroundColor: FormateurTheme.textPrimary,
+        elevation: 0,
+        highlightElevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        icon: const Icon(Icons.add_rounded, color: FormateurTheme.accent, size: 24),
+        label: const Text('NOUVEAU QUIZ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
       ),
     );
   }
-}
 
-class _InfoChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _InfoChip({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: FormateurTheme.textSecondary),
-        const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 12, color: FormateurTheme.textSecondary)),
-      ],
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  final String status;
-  final Color color;
-  const _StatusChip({required this.status, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildPremiumHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        status.toUpperCase(),
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color),
-      ),
-    );
-  }
-}
-
-class _Filters extends StatelessWidget {
-  final String filterStatus;
-  final String filterNiveau;
-  final String filterFormationId;
-  final ValueChanged<String> onStatusChanged;
-  final ValueChanged<String> onNiveauChanged;
-  final ValueChanged<String> onFormationChanged;
-  final List<Map<String, dynamic>> formations;
-
-  const _Filters({
-    required this.filterStatus,
-    required this.filterNiveau,
-    required this.filterFormationId,
-    required this.onStatusChanged,
-    required this.onNiveauChanged,
-    required this.onFormationChanged,
-    required this.formations,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: FormateurTheme.border),
-        boxShadow: FormateurTheme.cardShadow,
-      ),
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Filtres', style: TextStyle(fontWeight: FontWeight.bold, color: FormateurTheme.textPrimary)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: FormateurTheme.accent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.architecture_rounded, size: 12, color: FormateurTheme.accentDark),
+                const SizedBox(width: 8),
+                Text(
+                  'ATELIER DE CONCEPTION',
+                  style: TextStyle(
+                    color: FormateurTheme.accentDark,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Laboratoire Quiz',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              color: FormateurTheme.textPrimary,
+              letterSpacing: -1.5,
+            ),
+          ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
+          const Text(
+            "Créez et gérez vos évaluations pédagogiques avec précision.",
+            style: TextStyle(
+              color: FormateurTheme.textSecondary,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 32),
+          _buildFiltersSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFiltersSection() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+           _buildFilterDropdown(
+            hint: 'Formation',
+            value: _filterFormationId.isEmpty ? null : _filterFormationId,
+            items: [
+               const DropdownMenuItem(value: '', child: Text('Toutes les formations', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900))),
+               ..._formations.map((f) => DropdownMenuItem(value: f['id'].toString(), child: Text((f['nom'] ?? f['titre'] ?? '').toString().toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900)))),
+            ],
+            onChanged: (v) => setState(() => _filterFormationId = v ?? ''),
+          ),
+          const SizedBox(width: 12),
+           _buildFilterDropdown(
+            hint: 'Statut',
+            value: _filterStatus.isEmpty ? null : _filterStatus,
+            items: [
+               const DropdownMenuItem(value: '', child: Text('Tous les statuts', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900))),
+               const DropdownMenuItem(value: 'actif', child: Text('ACTIF', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900))),
+               const DropdownMenuItem(value: 'brouillon', child: Text('BROUILLON', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900))),
+               const DropdownMenuItem(value: 'archive', child: Text('ARCHIVÉ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900))),
+            ],
+            onChanged: (v) => setState(() => _filterStatus = v ?? ''),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterDropdown({required String hint, required String? value, required List<DropdownMenuItem<String>> items, required ValueChanged<String?> onChanged}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: FormateurTheme.background,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: FormateurTheme.border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          hint: Text(hint, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary)),
+          icon: const Icon(Icons.expand_more_rounded, size: 18, color: FormateurTheme.accent),
+          items: items,
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFormationGroup(String key, List<Map<String, dynamic>> quizzes) {
+    String formationTitle = 'Sans formation';
+    if (key != 'none' && key.isNotEmpty) {
+      final f = _formations.firstWhere((f) => f['id'].toString() == key, orElse: () => {});
+      formationTitle = (f['nom'] ?? f['titre'] ?? 'Formation #$key').toString();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 16),
+          child: Text(formationTitle.toUpperCase(), style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+        ),
+        ...quizzes.map((q) => _buildQuizCard(q)),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildQuizCard(Map<String, dynamic> quiz) {
+    final status = (quiz['status'] ?? 'brouillon').toString();
+    final statusColor = status == 'actif' ? FormateurTheme.success : status == 'archive' ? FormateurTheme.textTertiary : FormateurTheme.orangeAccent;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: FormateurTheme.premiumCardDecoration,
+      child: ListTile(
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => QuizDetailPage(quizId: quiz['id']))).then((_) => _loadQuizzes()),
+        contentPadding: const EdgeInsets.all(20),
+        leading: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+          child: Icon(Icons.assignment_rounded, color: statusColor, size: 24),
+        ),
+        title: Text(quiz['titre']?.toString().toUpperCase() ?? '', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: FormateurTheme.textPrimary, letterSpacing: -0.2)),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Row(
             children: [
-              SizedBox(
-                width: 160,
-                child: DropdownButtonFormField<String>(
-                  value: filterFormationId.isEmpty ? null : filterFormationId,
-                  hint: const Text('Formation'),
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: FormateurTheme.border)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  ),
-                  items: [
-                    const DropdownMenuItem(value: '', child: Text('Toutes les formations')),
-                    ...formations.map((f) => DropdownMenuItem(
-                      value: f['id'].toString(), 
-                      child: Text(f['nom'] ?? f['titre'] ?? 'Formation #${f['id']}')
-                    )),
-                  ],
-                  onChanged: (v) => onFormationChanged(v ?? ''),
-                ),
-              ),
-              SizedBox(
-                width: 150,
-                child: DropdownButtonFormField<String>(
-                  value: filterNiveau.isEmpty ? null : filterNiveau,
-                  hint: const Text('Niveau'),
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: FormateurTheme.border)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: '', child: Text('Tous')),
-                    DropdownMenuItem(value: 'débutant', child: Text('Débutant')),
-                    DropdownMenuItem(value: 'intermédiaire', child: Text('Intermédiaire')),
-                    DropdownMenuItem(value: 'avancé', child: Text('Avancé')),
-                  ],
-                  onChanged: (v) => onNiveauChanged(v ?? ''),
-                ),
-              ),
-              SizedBox(
-                width: 150,
-                child: DropdownButtonFormField<String>(
-                  value: filterStatus.isEmpty ? null : filterStatus,
-                  hint: const Text('Statut'),
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: FormateurTheme.border)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: '', child: Text('Tous')),
-                    DropdownMenuItem(value: 'actif', child: Text('Actif')),
-                    DropdownMenuItem(value: 'brouillon', child: Text('Brouillon')),
-                    DropdownMenuItem(value: 'inactif', child: Text('Inactif')),
-                    DropdownMenuItem(value: 'archive', child: Text('Archivé')),
-                  ],
-                  onChanged: (v) => onStatusChanged(v ?? ''),
-                ),
-              ),
+               _buildCardMetric(Icons.help_outline_rounded, '${quiz['nb_questions'] ?? 0}'),
+               const SizedBox(width: 16),
+               _buildCardMetric(Icons.timer_outlined, '${quiz['duree'] ?? 0}m'),
+               const Spacer(),
+               Container(
+                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                 decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                 child: Text(status.toUpperCase(), style: TextStyle(color: statusColor, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+               ),
             ],
           ),
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(color: FormateurTheme.background, borderRadius: BorderRadius.circular(8)),
+          child: const Icon(Icons.chevron_right_rounded, color: FormateurTheme.border),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCardMetric(IconData icon, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: FormateurTheme.textTertiary),
+        const SizedBox(width: 4),
+        Text(value, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: FormateurTheme.textSecondary)),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        children: [
+          const SizedBox(height: 80),
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: FormateurTheme.border)),
+            child: const Icon(Icons.quiz_outlined, size: 48, color: FormateurTheme.border),
+          ),
+          const SizedBox(height: 24),
+          const Text('VOTRE ATELIER EST VIDE', style: TextStyle(color: FormateurTheme.textTertiary, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.5)),
         ],
       ),
     );

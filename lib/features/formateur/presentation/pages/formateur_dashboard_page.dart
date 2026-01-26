@@ -84,12 +84,11 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
 
 
   @override
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: FormateurTheme.background,
       appBar: AppBar(
-        title: const Text('Tableau de Bord'),
+        title: const Text('Dashboard'),
         backgroundColor: Colors.white,
         foregroundColor: FormateurTheme.textPrimary,
         elevation: 0,
@@ -97,22 +96,24 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
         titleTextStyle: const TextStyle(
           color: FormateurTheme.textPrimary,
           fontWeight: FontWeight.w900,
-          fontSize: 20,
+          fontSize: 18,
           fontFamily: 'Montserrat',
+          letterSpacing: -0.5,
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: FormateurTheme.border, height: 1),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none_rounded),
+            icon: const Icon(Icons.notifications_none_rounded, size: 22),
             onPressed: () => Navigator.pushNamed(context, RouteConstants.notifications),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
         ],
       ),
       drawer: FormateurDrawerMenu(
         onLogout: () async {
-          // Add your logout logic here
-          // final storage = const FlutterSecureStorage();
-          // await storage.deleteAll();
            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
         },
       ),
@@ -124,88 +125,79 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
               onRefresh: _loadData,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+                padding: const EdgeInsets.symmetric(horizontal: 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildHeader(),
-                    const SizedBox(height: 32),
+                    _buildPremiumHeader(),
+                    
+                    Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        children: [
+                          // Critical Alerts
+                          if (_inactiveStagiaires.isNotEmpty) ...[
+                            _buildCriticalAlertsSection(),
+                            const SizedBox(height: 24),
+                          ],
 
-                    // Critical Alerts
-                     if (_inactiveStagiaires.isNotEmpty) ...[
-                      _buildCriticalAlertsSection(),
-                      const SizedBox(height: 32),
-                    ],
+                          // Stats Grid
+                          if (_summary != null) ...[
+                            _buildStatsGrid(),
+                            const SizedBox(height: 24),
+                          ],
 
-                    // Stats Grid
-                    if (_summary != null) ...[
-                      _buildStatsGrid(),
-                       const SizedBox(height: 32),
-                    ],
+                          // Quick Actions
+                          _buildQuickActions(),
+                          const SizedBox(height: 32),
 
-                    // Quick Actions
-                    _buildQuickActions(),
-                    const SizedBox(height: 32),
-
-                    // Search and Filters
-                    _buildSearchAndFilters(),
-                    const SizedBox(height: 24),
-
-                    // Online Stagiaires Section
-                     _buildOnlineStagiairesSection(),
-                     const SizedBox(height: 32),
-
-                    // Formation Selector
-                    if (_formations.isNotEmpty) ...[
-                      const Text(
-                        'FILTRER PAR FORMATION',
-                        style: TextStyle(
-                          color: FormateurTheme.textTertiary,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: FormateurTheme.border),
-                          boxShadow: FormateurTheme.cardShadow,
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String?>(
-                            value: _selectedFormationId,
-                            isExpanded: true,
-                            hint: const Text('Toutes les formations', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: FormateurTheme.textSecondary),
-                            items: [
-                              const DropdownMenuItem<String?>(
-                                value: null,
-                                child: Text('Toutes les formations', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                          // Sections Header
+                          Row(
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 16,
+                                decoration: BoxDecoration(
+                                  color: FormateurTheme.accent,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
                               ),
-                              ..._formations.map((f) => DropdownMenuItem<String?>(
-                                value: f.id.toString(),
-                                child: Text(f.titre, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                              )),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'ACTIVITÉ EN DIRECT',
+                                style: TextStyle(
+                                  color: FormateurTheme.textPrimary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
                             ],
-                            onChanged: (value) {
-                              setState(() => _selectedFormationId = value);
-                              _loadData();
-                            },
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                    ],
+                          const SizedBox(height: 20),
 
-                    // Top Learners Section
-                    if (_rankings != null && _rankings!.mostQuizzes.isNotEmpty) ...[
-                      _buildTopLearnersSection(),
-                      const SizedBox(height: 40),
-                    ],
+                          // Search and Filters
+                          _buildSearchAndFilters(),
+                          const SizedBox(height: 24),
+
+                          // Online Stagiaires Section
+                          _buildOnlineStagiairesSection(),
+                          const SizedBox(height: 32),
+
+                          // Formation Selector
+                          if (_formations.isNotEmpty) ...[
+                            _buildFormationSelector(),
+                            const SizedBox(height: 32),
+                          ],
+
+                          // Top Learners Section
+                          if (_rankings != null && _rankings!.mostQuizzes.isNotEmpty) ...[
+                            _buildTopLearnersSection(),
+                            const SizedBox(height: 40),
+                          ],
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -213,77 +205,89 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
     );
   }
 
-  Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: FormateurTheme.accent.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: FormateurTheme.accent.withOpacity(0.2)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-               Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(
-                  color: FormateurTheme.accentDark,
-                  shape: BoxShape.circle,
-                ),
+  Widget _buildPremiumHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 40, 24, 40),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: FormateurTheme.border)),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -40,
+            top: -40,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: FormateurTheme.accent.withOpacity(0.05),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 8),
-              Text(
-                'PERSPECTIVE FORMATEUR',
-                style: TextStyle(
-                  color: FormateurTheme.accentDark,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        RichText(
-          text: TextSpan(
-            style: const TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.w900,
-              color: FormateurTheme.textPrimary,
-              height: 1.1,
-              letterSpacing: -1,
-              fontFamily: 'Montserrat', // Ensuring font consistency
             ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const TextSpan(text: 'Dashboard '),
-              TextSpan(
-                text: 'Analytique',
-                style: TextStyle(
-                  foreground: Paint()
-                    ..shader = FormateurTheme.textGradient.createShader(
-                      const Rect.fromLTWH(0.0, 0.0, 200.0, 70.0),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: FormateurTheme.accent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: FormateurTheme.accent.withOpacity(0.2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.analytics_outlined, size: 12, color: FormateurTheme.accentDark),
+                    const SizedBox(width: 8),
+                    Text(
+                      'ESPACE FORMATEUR',
+                      style: TextStyle(
+                        color: FormateurTheme.accentDark,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                      ),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              RichText(
+                text: const TextSpan(
+                  style: TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w900,
+                    color: FormateurTheme.textPrimary,
+                    height: 1.0,
+                    letterSpacing: -1.5,
+                    fontFamily: 'Montserrat',
+                  ),
+                  children: [
+                    TextSpan(text: 'Dashboard\n'),
+                    TextSpan(
+                      text: 'Analytique',
+                      style: TextStyle(color: FormateurTheme.accentDark),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "Supervisez l'engagement et l'excellence académique de vos cohortes.",
+                style: TextStyle(
+                  color: FormateurTheme.textSecondary,
+                  fontSize: 15,
+                  height: 1.4,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          "Supervisez l'engagement et l'excellence académique de vos cohortes en un coup d'œil.",
-          style: TextStyle(
-            color: FormateurTheme.textSecondary,
-            fontSize: 16,
-            height: 1.5,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -291,44 +295,39 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
     final criticalCount = _inactiveStagiaires.where((s) => s.neverConnected).length;
     
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white, // React: bg-white
-        borderRadius: BorderRadius.circular(32), // React: rounded-[2rem]
-        boxShadow: FormateurTheme.cardShadow,
-        border: Border.all(color: FormateurTheme.border),
-      ),
+      decoration: FormateurTheme.premiumCardDecoration,
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: FormateurTheme.orangeAccent.withOpacity(0.1),
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.warning_amber_rounded, color: FormateurTheme.orangeAccent, size: 20),
+                child: const Icon(Icons.warning_amber_rounded, color: FormateurTheme.orangeAccent, size: 22),
               ),
-              const SizedBox(width: 12),
-              Column(
+              const SizedBox(width: 16),
+              const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   Text(
-                    'ATTENTION REQUISE',
+                  Text(
+                    'ATTENTION',
                     style: TextStyle(
-                      color: FormateurTheme.textTertiary,
+                      color: FormateurTheme.orangeAccent,
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.2,
                     ),
                   ),
-                   Text(
+                  Text(
                     'Alertes Critiques',
                     style: TextStyle(
                       color: FormateurTheme.textPrimary,
                       fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                 ],
@@ -341,19 +340,9 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                     color: FormateurTheme.error.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error_outline, size: 14, color: FormateurTheme.error),
-                      const SizedBox(width: 4),
-                       Text(
-                        '$criticalCount Critiques',
-                        style: const TextStyle(
-                          color: FormateurTheme.error,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    '$criticalCount',
+                    style: const TextStyle(color: FormateurTheme.error, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                 ),
             ],
@@ -371,10 +360,10 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: FormateurTheme.error.withOpacity(0.1),
+                    backgroundColor: Colors.white,
                     child: Text(
                       _inactiveStagiaires.first.prenom.isNotEmpty ? _inactiveStagiaires.first.prenom[0].toUpperCase() : '?',
-                      style: const TextStyle(color: FormateurTheme.error, fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: FormateurTheme.accentDark, fontWeight: FontWeight.w900),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -383,11 +372,11 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${_inactiveStagiaires.first.prenom} ${_inactiveStagiaires.first.nom}',
+                          '${_inactiveStagiaires.first.prenom} ${_inactiveStagiaires.first.nom}'.toUpperCase(),
                           style: const TextStyle(
                             color: FormateurTheme.textPrimary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
                           ),
                         ),
                         Text(
@@ -396,14 +385,14 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                               : 'Inactif depuis ${_inactiveStagiaires.first.daysSinceActivity.toStringAsFixed(0)}j',
                           style: const TextStyle(
                             color: FormateurTheme.error,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  ElevatedButton(
+                  TextButton(
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -414,17 +403,11 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                         ),
                       );
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: FormateurTheme.textPrimary,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    style: TextButton.styleFrom(
+                      foregroundColor: FormateurTheme.accentDark,
+                      textStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11),
                     ),
-                    child: const Text(
-                      'Relancer',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
+                    child: const Text('VOIR PROFIL'),
                   ),
                 ],
               ),
@@ -435,116 +418,49 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
   }
 
   Widget _buildStatsGrid() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final int crossAxisCount = constraints.maxWidth < 600 ? 1 : 2; // More responsive
-        final double aspectRatio = crossAxisCount == 1 ? 2.2 : 1.2; // Adjusted aspect ratio
-        
-        return GridView.count(
-          crossAxisCount: crossAxisCount,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: aspectRatio,
-          children: [
-            _buildStatCard(
-              'Stagiaires',
-              _summary?.totalStagiaires.toString() ?? '0',
-              'Actifs cette semaine',
-              Icons.people_outline,
-              Colors.blue,
-            ),
-            _buildStatCard(
-              'Programmes',
-              _summary?.activeThisWeek.toString() ?? '0', 
-               'Formations actives',
-              Icons.school_outlined,
-              Colors.purple,
-            ),
-            _buildStatCard(
-              'Score Moyen',
-              '${_summary?.avgQuizScore ?? 0}%',
-               'Performance globale',
-              Icons.emoji_events_outlined,
-              FormateurTheme.accentDark,
-            ),
-            _buildStatCard(
-              'Alertes',
-              _summary?.inactiveCount.toString() ?? '0',
-               'Stagiaires inactifs',
-              Icons.trending_down_rounded,
-              FormateurTheme.orangeAccent,
-            ),
-          ],
-        );
-      },
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
+      childAspectRatio: 1.0,
+      children: [
+        _buildStatCard('Stagiaires', _summary?.totalStagiaires.toString() ?? '0', Icons.people_alt_rounded, Colors.blue),
+        _buildStatCard('Programmes', _summary?.activeThisWeek.toString() ?? '0', Icons.auto_awesome_motion_rounded, Colors.purple),
+        _buildStatCard('Score Moyen', '${_summary?.avgQuizScore ?? 0}%', Icons.military_tech_rounded, FormateurTheme.accentDark),
+        _buildStatCard('Inactifs', _summary?.inactiveCount.toString() ?? '0', Icons.notifications_active_rounded, FormateurTheme.orangeAccent),
+      ],
     );
   }
 
-  Widget _buildStatCard(String title, String value, String subtitle, IconData icon, Color color) {
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(32), // React style
-        boxShadow: FormateurTheme.cardShadow,
-        border: Border.all(color: FormateurTheme.border),
-      ),
-      padding: const EdgeInsets.all(24.0),
+      decoration: FormateurTheme.premiumCardDecoration,
+      padding: const EdgeInsets.all(20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  color: FormateurTheme.textTertiary,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, size: 20, color: color),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, size: 20, color: color),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 value,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  color: FormateurTheme.textPrimary,
-                  letterSpacing: -1,
-                ),
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: FormateurTheme.textPrimary, letterSpacing: -1),
               ),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: FormateurTheme.background,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: FormateurTheme.border),
-                ),
-                child: Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: FormateurTheme.textSecondary,
-                  ),
-                ),
+              const SizedBox(height: 2),
+              Text(
+                title.toUpperCase(),
+                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 0.5),
               ),
             ],
           ),
@@ -554,328 +470,140 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
   }
 
   Widget _buildQuickActions() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildActionButton(
-            icon: Icons.leaderboard_outlined,
-            label: 'Classement',
-            onPressed: () => Navigator.pushNamed(context, '/formateur/classement'),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildActionButton(
-            icon: Icons.notifications_none_outlined,
-            label: 'Notifier',
-            onPressed: () => Navigator.pushNamed(context, '/formateur/send-notification'),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildActionButton(
-            icon: Icons.bar_chart_rounded,
-            label: 'Analytique',
-            onPressed: () => Navigator.pushNamed(context, '/formateur/analytiques'),
-          ),
-        ),
-      ],
+    return Container(
+      decoration: FormateurTheme.premiumCardDecoration.copyWith(
+        color: FormateurTheme.textPrimary,
+        border: Border.all(color: Colors.white12),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildActionButton(Icons.emoji_events_rounded, 'COHORTES', () => Navigator.pushNamed(context, '/formateur/classement')),
+          Container(width: 1, height: 30, color: Colors.white10),
+          _buildActionButton(Icons.campaign_rounded, 'NOTIFIER', () => Navigator.pushNamed(context, '/formateur/send-notification')),
+          Container(width: 1, height: 30, color: Colors.white10),
+          _buildActionButton(Icons.insert_chart_rounded, 'STATS', () => Navigator.pushNamed(context, '/formateur/analytiques')),
+        ],
+      ),
     );
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onPressed();
-        },
-        borderRadius: BorderRadius.circular(24),
-        child: Container(
-          height: 100,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: FormateurTheme.border),
-            boxShadow: FormateurTheme.cardShadow,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: FormateurTheme.background,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: FormateurTheme.textPrimary, size: 24),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: FormateurTheme.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
+  Widget _buildActionButton(IconData icon, String label, VoidCallback onPressed) {
+    return InkWell(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onPressed();
+      },
+      child: Column(
+        children: [
+          Icon(icon, color: FormateurTheme.accent, size: 24),
+          const SizedBox(height: 10),
+          Text(label, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.0)),
+        ],
       ),
     );
   }
 
   Widget _buildSearchAndFilters() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Search Bar
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: FormateurTheme.cardShadow,
-            border: Border.all(color: FormateurTheme.border),
-          ),
-          child: TextField(
-            onChanged: (value) => setState(() => _searchQuery = value),
-            decoration: InputDecoration(
-              hintText: 'Rechercher un apprenant...',
-              hintStyle: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 14),
-              prefixIcon: const Icon(Icons.search, color: FormateurTheme.textTertiary),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            ),
-            style: const TextStyle(color: FormateurTheme.textPrimary),
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: FormateurTheme.border),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: TextField(
+        onChanged: (value) => setState(() => _searchQuery = value),
+        decoration: InputDecoration(
+          hintText: 'Rechercher un apprenant...',
+          hintStyle: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 13, fontWeight: FontWeight.w700),
+          prefixIcon: const Icon(Icons.search, color: FormateurTheme.accent, size: 20),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 20),
         ),
-        const SizedBox(height: 16),
-        // Filter Chips
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _buildFilterChip('Tous', 'all'),
-              const SizedBox(width: 8),
-              _buildFilterChip('Actifs', 'active'),
-              const SizedBox(width: 8),
-              _buildFilterChip('En Formation', 'formation'),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFilterChip(String label, String value) {
-    final isSelected = _selectedFilter == value;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedFilter = value),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? FormateurTheme.textPrimary : Colors.white,
-          border: Border.all(
-            color: isSelected ? FormateurTheme.textPrimary : FormateurTheme.border,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: isSelected ? [
-            BoxShadow(color: FormateurTheme.textPrimary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))
-          ] : null,
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : FormateurTheme.textSecondary,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-          ),
-        ),
+        style: const TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.bold),
       ),
     );
   }
 
   Widget _buildOnlineStagiairesSection() {
+  Widget _buildOnlineStagiairesSection() {
+    if (_onlineStagiaires.isEmpty) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-             Text(
-              'EN LIGNE',
-              style: TextStyle(
-                color: FormateurTheme.textTertiary,
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.5,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: FormateurTheme.success.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                '${_onlineStagiaires.length} ACTIFS',
-                style: const TextStyle(
-                  color: FormateurTheme.success,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        if (_onlineStagiaires.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(40),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: FormateurTheme.border),
-            ),
-            alignment: Alignment.center,
-            child: Column(
-              children: [
-                Icon(Icons.wifi_off_rounded, color: FormateurTheme.textTertiary.withOpacity(0.5), size: 48),
-                const SizedBox(height: 12),
-                 Text(
-                  'Aucun apprenant en ligne',
-                  style: TextStyle(color: FormateurTheme.textSecondary, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          )
-        else
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _onlineStagiaires.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              final stagiaire = _onlineStagiaires[index];
-
-              return Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => StagiaireProfilePage(
-                          stagiaireId: stagiaire.id,
-                        ),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(24),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: FormateurTheme.border),
-                      boxShadow: FormateurTheme.cardShadow,
-                    ),
-                    child: Row(
-                      children: [
-                         Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: FormateurTheme.success, width: 2),
-                          ),
-                           child: CircleAvatar(
-                              radius: 22,
-                              backgroundColor: FormateurTheme.background,
-                              backgroundImage: stagiaire.avatar != null && stagiaire.avatar!.isNotEmpty
-                                ? NetworkImage(AppConstants.getUserImageUrl(stagiaire.avatar!)) 
-                                : null,
-                              child: stagiaire.avatar == null
-                                ? Text(
-                                    stagiaire.prenom.isNotEmpty ? stagiaire.prenom[0].toUpperCase() : '?',
-                                    style: TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.w900),
-                                  )
-                                : null,
-                            ),
-                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${stagiaire.prenom} ${stagiaire.nom}',
-                                style: const TextStyle(
-                                  color: FormateurTheme.textPrimary,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                stagiaire.email,
-                                style: const TextStyle(
-                                  color: FormateurTheme.textSecondary,
-                                  fontSize: 12,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: FormateurTheme.background,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: FormateurTheme.border),
-                              ),
-                              child: Text(
-                                stagiaire.lastActivityAt,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: FormateurTheme.textSecondary,
-                                ),
-                              ),
-                            ),
-                            if (stagiaire.formations.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                stagiaire.formations.first,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: FormateurTheme.textTertiary,
-                                ),
-                              ),
-                            ]
-                          ],
-                        ),
-                      ],
-                    ),
+         ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _onlineStagiaires.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final stagiaire = _onlineStagiaires[index];
+            return Container(
+              decoration: FormateurTheme.premiumCardDecoration,
+              child: ListTile(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => StagiaireProfilePage(stagiaireId: stagiaire.id)));
+                },
+                contentPadding: const EdgeInsets.all(16),
+                leading: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: FormateurTheme.success, width: 2)),
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: FormateurTheme.background,
+                    backgroundImage: stagiaire.avatar != null && stagiaire.avatar!.isNotEmpty
+                      ? NetworkImage(AppConstants.getUserImageUrl(stagiaire.avatar!)) : null,
+                    child: stagiaire.avatar == null ? Text(stagiaire.prenom[0], style: const TextStyle(fontWeight: FontWeight.w900)) : null,
                   ),
                 ),
-              );
-            },
-          ),
+                title: Text('${stagiaire.prenom} ${stagiaire.nom}'.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: -0.5)),
+                subtitle: const Row(
+                  children: [
+                    Icon(Icons.circle, color: FormateurTheme.success, size: 8),
+                    SizedBox(width: 6),
+                    Text('EN LIGNE', style: TextStyle(color: FormateurTheme.success, fontSize: 10, fontWeight: FontWeight.w900)),
+                  ],
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded, color: FormateurTheme.border),
+              ),
+            );
+          },
+        ),
       ],
+    );
+  }
+
+  Widget _buildFormationSelector() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: FormateurTheme.premiumCardDecoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('FILTRER PAR FORMATION', style: TextStyle(color: FormateurTheme.textTertiary, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.0)),
+          const SizedBox(height: 16),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<String?>(
+              value: _selectedFormationId,
+              isExpanded: true,
+              hint: const Text('Toutes les formations', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900)),
+              icon: const Icon(Icons.expand_more_rounded, color: FormateurTheme.accent),
+              items: [
+                const DropdownMenuItem<String?>(value: null, child: Text('Toutes les formations', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900))),
+                ..._formations.map((f) => DropdownMenuItem<String?>(value: f.id.toString(), child: Text(f.titre.toUpperCase(), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900)))),
+              ],
+              onChanged: (value) {
+                setState(() => _selectedFormationId = value);
+                _loadData();
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -886,52 +614,35 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-             Text(
+            const Text(
               'TOP PERFORMANCE',
-              style: TextStyle(
-                color: FormateurTheme.textTertiary,
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.5,
-              ),
+              style: TextStyle(color: FormateurTheme.textTertiary, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5),
             ),
-             Text(
-              '30 DERNIERS JOURS',
-              style: TextStyle(
-                color: FormateurTheme.textTertiary,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(color: FormateurTheme.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+              child: const Text('30 JOURS', style: TextStyle(color: FormateurTheme.accentDark, fontSize: 9, fontWeight: FontWeight.w900)),
             ),
           ],
         ),
         const SizedBox(height: 20),
         Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: FormateurTheme.border),
-            boxShadow: FormateurTheme.cardShadow,
-          ),
+          decoration: FormateurTheme.premiumCardDecoration,
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
               Row(
                 children: [
-                  const Icon(Icons.star_rounded, color: FormateurTheme.orangeAccent, size: 24),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Meilleurs Score Quiz',
-                    style: TextStyle(
-                      color: FormateurTheme.textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                    ),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: FormateurTheme.orangeAccent.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.star_rounded, color: FormateurTheme.orangeAccent, size: 20),
                   ),
+                  const SizedBox(width: 14),
+                  const Text('Leaders de Quiz', style: TextStyle(color: FormateurTheme.textPrimary, fontSize: 17, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               ...(_rankings?.mostQuizzes.take(3).map((s) => _buildTopLearnerItem(s)) ?? []),
             ],
           ),
@@ -952,107 +663,29 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
       child: Row(
         children: [
           CircleAvatar(
-            radius: 20,
-            backgroundColor: FormateurTheme.accent.withOpacity(0.1),
+            radius: 18,
+            backgroundColor: Colors.white,
             backgroundImage: s.image != null && s.image!.isNotEmpty 
-                ? NetworkImage(AppConstants.getUserImageUrl(s.image!)) 
-                : null,
-            child: s.image == null
-                ? Text(
-                    s.name.isNotEmpty ? s.name[0].toUpperCase() : '?',
-                    style: const TextStyle(color: FormateurTheme.accentDark, fontWeight: FontWeight.bold),
-                  )
-                : null,
+                ? NetworkImage(AppConstants.getUserImageUrl(s.image!)) : null,
+            child: s.image == null ? Text(s.name[0], style: const TextStyle(fontWeight: FontWeight.w900)) : null,
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  s.name,
-                  style: const TextStyle(
-                    color: FormateurTheme.textPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  '${s.totalQuizzes} quiz complétés',
-                  style: const TextStyle(
-                    color: FormateurTheme.textSecondary,
-                    fontSize: 11,
-                  ),
-                ),
+                Text(s.name.toUpperCase(), style: const TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.w900, fontSize: 12)),
+                Text('${s.totalQuizzes} quiz complétés', style: const TextStyle(color: FormateurTheme.textSecondary, fontSize: 10, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: FormateurTheme.border),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.flash_on_rounded, color: Colors.blue, size: 14),
-                const SizedBox(width: 4),
-                Text(
-                  '${s.totalLogins}',
-                  style: const TextStyle(
-                    color: Colors.blue,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: FormateurTheme.border)),
+            child: Text('${s.totalLogins} connexions', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w900, fontSize: 10)),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildMiniStat(String label, String value, Color color, double progress) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: FormateurTheme.textTertiary,
-            fontSize: 9,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                color: FormateurTheme.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: FormateurTheme.background,
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
-                  minHeight: 6,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

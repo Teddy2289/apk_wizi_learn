@@ -15,29 +15,46 @@ class FormateurTheme {
   static const Color accent = AppColors.primary;
   static const Color accentDark = AppColors.primaryDark;
   static const Color accentLight = AppColors.primaryAccent;
-  static const Color orangeAccent = Color(0xFFF97316); // Keeping specific orange for alerts
+  static const Color orangeAccent = Color(0xFFF97316); 
   
   // Functional Colors
   static const Color success = AppColors.success;
   static const Color error = AppColors.error;
-  static const Color border = Color(0xFFE2E8F0); // Slate 200
+  static const Color border = Color(0xFFF1F5F9); // Slate 100 
+  
+  // Radius
+  static const double radiusXL = 32.0;
+  static const double radius2XL = 40.0;
   
   // Shadows
   static List<BoxShadow> cardShadow = [
     BoxShadow(
-      color: const Color(0xFF64748B).withOpacity(0.08),
-      blurRadius: 16,
+      color: const Color(0xFF64748B).withOpacity(0.05),
+      blurRadius: 20,
       offset: const Offset(0, 4),
     ),
   ];
   
-  static List<BoxShadow> hoverShadow = [
+  static List<BoxShadow> premiumShadow = [
     BoxShadow(
-      color: const Color(0xFFEAB308).withOpacity(0.15),
-      blurRadius: 24,
-      offset: const Offset(0, 8),
+      color: const Color(0xFF0F172A).withOpacity(0.03),
+      blurRadius: 40,
+      offset: const Offset(0, 10),
     ),
   ];
+
+  // Decoration Helpers
+  static BoxDecoration headerDecoration = BoxDecoration(
+    color: Colors.white,
+    border: Border(bottom: BorderSide(color: border)),
+  );
+
+  static BoxDecoration premiumCardDecoration = BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(radiusXL),
+    boxShadow: cardShadow,
+    border: Border.all(color: border),
+  );
 
   // Gradients
   static const LinearGradient premiumGradient = LinearGradient(
@@ -47,6 +64,6 @@ class FormateurTheme {
   );
   
   static const LinearGradient textGradient = LinearGradient(
-    colors: [accentDark, Color(0xFFFACC15)], // Yellow 600 to 400
+    colors: [accentDark, Color(0xFFFACC15)],
   );
 }
