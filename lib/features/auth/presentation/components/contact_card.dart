@@ -513,7 +513,7 @@ class ContactCard extends StatelessWidget {
             : '';
 
     if (prenom.isNotEmpty && nom.isNotEmpty) {
-      return '$prenom $nom';
+      return '$prenom ${nom[0]}.';
     } else if (prenom.isNotEmpty) {
       return prenom;
     } else if (nom.isNotEmpty) {

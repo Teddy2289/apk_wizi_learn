@@ -252,23 +252,73 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                       ? Stack(
                           children: [
                             Positioned.fill(
-                              child: InteractiveViewer(
-                                transformationController: _transformationController,
-                                minScale: 1.0,
-                                maxScale: 5.0,
-                                boundaryMargin: const EdgeInsets.all(20),
-                                child: Center(
-                                  child: FittedBox(
-                                    fit: _fitMode,
-                                    child: SizedBox(
-                                      width: _videoPlayerController!.value.size.width,
-                                      height: _videoPlayerController!.value.size.height,
-                                      child: Chewie(controller: _chewieController!),
+                              child: GestureDetector(
+                                onDoubleTapDown: (details) {
+                                  final screenWidth = MediaQuery.of(context).size.width;
+                                  if (details.localPosition.dx > screenWidth / 2) {
+                                    // Skip forward 10s
+                                    final newPos = _videoPlayerController!.value.position + const Duration(seconds: 10);
+                                    _videoPlayerController!.seekTo(newPos);
+                                  } else {
+                                    // Skip backward 10s
+                                    final newPos = _videoPlayerController!.value.position - const Duration(seconds: 10);
+                                    _videoPlayerController!.seekTo(newPos);
+                                  }
+                                },
+                                child: InteractiveViewer(
+                                  transformationController: _transformationController,
+                                  minScale: 1.0,
+                                  maxScale: 5.0,
+                                  boundaryMargin: const EdgeInsets.all(20),
+                                  child: Center(
+                                    child: FittedBox(
+                                      fit: _fitMode,
+                                      child: SizedBox(
+                                        width: _videoPlayerController!.value.size.width,
+                                        height: _videoPlayerController!.value.size.height,
+                                        child: Chewie(controller: _chewieController!),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
+                            // Central Overlay with Pause/Seek
+                            if (!_isLoading)
+                              Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _buildCircleButton(
+                                      icon: Icons.replay_10,
+                                      onTap: () {
+                                        final newPos = _videoPlayerController!.value.position - const Duration(seconds: 10);
+                                        _videoPlayerController!.seekTo(newPos);
+                                      },
+                                    ),
+                                    const SizedBox(width: 30),
+                                    _buildCircleButton(
+                                      icon: _videoPlayerController!.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                                      size: 50,
+                                      onTap: () {
+                                        setState(() {
+                                          _videoPlayerController!.value.isPlaying
+                                              ? _videoPlayerController!.pause()
+                                              : _videoPlayerController!.play();
+                                        });
+                                      },
+                                    ),
+                                    const SizedBox(width: 30),
+                                    _buildCircleButton(
+                                      icon: Icons.forward_10,
+                                      onTap: () {
+                                        final newPos = _videoPlayerController!.value.position + const Duration(seconds: 10);
+                                        _videoPlayerController!.seekTo(newPos);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
                             Positioned(
                               top: 10,
                               left: 10,
@@ -514,6 +564,27 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
               },
             ),
         ],
+      ),
+    );
+  Widget _buildCircleButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    double size = 40,
+  }) {
+    return Material(
+      color: Colors.black38,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Icon(
+            icon,
+            color: Colors.white70,
+            size: size,
+          ),
+        ),
       ),
     );
   }
