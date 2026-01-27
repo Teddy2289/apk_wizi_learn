@@ -28,7 +28,7 @@ class Contact extends Equatable {
   factory Contact.fromJson(Map<String, dynamic> json) {
     return Contact(
       id: json['id'] ?? 0,
-      name: json['name'] ?? 'Inconnu',
+      name: json['nom'] ?? json['name'] ?? 'Inconnu',
       type: json['type'] ?? 'Autre',
       prenom: json['prenom'] ?? '',
       telephone: json['telephone'] ?? '',
