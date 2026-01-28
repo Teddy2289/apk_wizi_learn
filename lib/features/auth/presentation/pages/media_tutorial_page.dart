@@ -226,16 +226,21 @@ class _MediaTutorialPageState extends State<MediaTutorialPage> {
 
 
   Future<void> _downloadMedia(Media media) async {
-    final url = media.url;
-    if (url.isEmpty) return;
+    final rawUrl = media.url;
+    if (rawUrl.isEmpty) return;
 
+    // S'assurer que l'URL est absolue
+    final url = AppConstants.getMediaUrl(rawUrl);
     final uri = Uri.parse(url);
+    
+    debugPrint('lancement de URL de téléchargement: $url');
+    
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Impossible d\'ouvrir le lien')),
+          SnackBar(content: Text('Impossible d\'ouvrir le lien : $url')),
         );
       }
     }

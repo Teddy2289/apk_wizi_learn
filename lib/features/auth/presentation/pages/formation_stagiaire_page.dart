@@ -387,18 +387,11 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                   ),
                 ],
                 const SizedBox(height: 8),
-                Text(
-                  'Description',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
+                    color: isDarkMode ? Colors.black26 : Colors.grey.shade50,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Html(
@@ -408,7 +401,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                         margin: Margins.zero,
                         padding: HtmlPaddings.zero,
                         fontSize: FontSize(14),
-                        color: Colors.grey.shade700,
+                        color: isDarkMode ? Colors.white70 : Colors.grey.shade700,
                       ),
                       'ul': Style(
                         margin: Margins.only(bottom: 8),
@@ -427,10 +420,125 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                     },
                   ),
                 ),
+                if (formation.stats != null && formation.stats!.levels.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  Text(
+                    'Mes Statistiques',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: styles['color'].withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: styles['color'].withOpacity(0.1)),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'SCORE MOYEN',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: styles['color'],
+                                  ),
+                                ),
+                                Text(
+                                  '${formation.stats!.averageScore}%',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    color: styles['color'],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'QUIZ COMPLÉTÉS',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: styles['color'],
+                                  ),
+                                ),
+                                Text(
+                                  '${formation.stats!.totalCompletions}',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    color: styles['color'],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        const Divider(height: 1),
+                        const SizedBox(height: 12),
+                        ...formation.stats!.levels.map((l) => _buildLevelStatRow(l, theme)),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLevelStatRow(FormationLevelStats l, ThemeData theme) {
+    final color = l.name.toLowerCase().contains('débu') 
+        ? Colors.green 
+        : l.name.toLowerCase().contains('inter') 
+            ? Colors.orange 
+            : Colors.red;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              l.name.toUpperCase(),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 10,
+              ),
+            ),
+          ),
+          Text(
+            '${l.completions} QUIZ',
+            style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            '${l.avgScore}% AVG',
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: 10,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        ],
       ),
     );
   }

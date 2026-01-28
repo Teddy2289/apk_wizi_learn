@@ -357,6 +357,82 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
+          if (f.levels != null && f.levels!.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            const Divider(color: FormateurTheme.border, height: 1),
+            const SizedBox(height: 16),
+            ...f.levels!.map((level) => _buildLevelBreakdownRow(level)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLevelBreakdownRow(FormationLevel l) {
+    final color = l.name.toLowerCase().contains('débu') 
+        ? FormateurTheme.success 
+        : l.name.toLowerCase().contains('inter') 
+            ? FormateurTheme.orangeAccent 
+            : FormateurTheme.error;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    l.name.toUpperCase(),
+                    style: TextStyle(
+                      color: FormateurTheme.textSecondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                '${l.avgScore}% AVG',
+                style: TextStyle(
+                  color: FormateurTheme.textPrimary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${l.completions} QUIZ',
+                style: const TextStyle(
+                  color: FormateurTheme.textTertiary,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(
+                'BEST: ${l.bestScore}%',
+                style: const TextStyle(
+                  color: FormateurTheme.textTertiary,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

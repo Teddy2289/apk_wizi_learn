@@ -175,6 +175,7 @@ class FormationProgress {
   final String? startedAt;
   final String? completedAt;
   final int progress;
+  final List<FormationLevel>? levels;
 
   FormationProgress({
     required this.id,
@@ -183,6 +184,7 @@ class FormationProgress {
     this.startedAt,
     this.completedAt,
     required this.progress,
+    this.levels,
   });
 
   factory FormationProgress.fromJson(Map<String, dynamic> json) {
@@ -193,6 +195,9 @@ class FormationProgress {
       startedAt: json['started_at']?.toString(),
       completedAt: json['completed_at']?.toString(),
       progress: int.tryParse(json['progress']?.toString() ?? '0') ?? 0,
+      levels: (json['levels'] as List?)
+          ?.map((l) => FormationLevel.fromJson(l))
+          .toList(),
     );
   }
 
@@ -232,4 +237,27 @@ class QuizResult {
   }
 
   double get percentage => maxScore > 0 ? (score / maxScore) * 100 : 0;
+}
+
+class FormationLevel {
+  final String name;
+  final double avgScore;
+  final int bestScore;
+  final int completions;
+
+  FormationLevel({
+    required this.name,
+    required this.avgScore,
+    required this.bestScore,
+    required this.completions,
+  });
+
+  factory FormationLevel.fromJson(Map<String, dynamic> json) {
+    return FormationLevel(
+      name: json['name']?.toString() ?? 'Inconnu',
+      avgScore: double.tryParse(json['avg_score']?.toString() ?? '0') ?? 0.0,
+      bestScore: int.tryParse(json['best_score']?.toString() ?? '0') ?? 0,
+      completions: int.tryParse(json['completions']?.toString() ?? '0') ?? 0,
+    );
+  }
 }

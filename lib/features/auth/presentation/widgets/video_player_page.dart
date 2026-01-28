@@ -566,6 +566,8 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
         ],
       ),
     );
+  }
+
   Widget _buildCircleButton({
     required IconData icon,
     required VoidCallback onTap,

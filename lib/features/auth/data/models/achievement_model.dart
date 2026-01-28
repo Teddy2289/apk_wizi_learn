@@ -23,7 +23,7 @@ class Achievement {
 
   factory Achievement.fromJson(Map<String, dynamic> json) {
     return Achievement(
-      id: json['id'] as int,
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '') ?? 0,
       name: json['name'] ?? '',
       type: json['type'] ?? '',
       condition: json['condition'] is int ? json['condition'] : int.tryParse(json['condition'].toString()) ?? 0,

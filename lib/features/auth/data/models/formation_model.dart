@@ -47,6 +47,7 @@ class Formation {
   final FormateurModel? formateur;
   final String? dateDebut;
   final String? dateFin;
+  final FormationStats? stats;
 
   // Models
   Formation({
@@ -77,7 +78,9 @@ class Formation {
     this.publicCible,
     this.nombreParticipants,
     this.cursusPdfUrl,
+    this.stats,
   });
+
   factory Formation.fromJson(Map<String, dynamic> json) {
     // Sécuriser accès aux sous-objets
     final rawCategory =
@@ -145,6 +148,52 @@ class Formation {
               : null,
       dateDebut: _cleanNullableString(json['date_debut']),
       dateFin: _cleanNullableString(json['date_fin']),
+      stats: json['stats'] != null ? FormationStats.fromJson(json['stats']) : null,
+    );
+  }
+}
+
+class FormationStats {
+  final int totalCompletions;
+  final int averageScore;
+  final List<FormationLevelStats> levels;
+
+  FormationStats({
+    required this.totalCompletions,
+    required this.averageScore,
+    required this.levels,
+  });
+
+  factory FormationStats.fromJson(Map<String, dynamic> json) {
+    return FormationStats(
+      totalCompletions: int.tryParse(json['total_completions']?.toString() ?? '0') ?? 0,
+      averageScore: int.tryParse(json['average_score']?.toString() ?? '0') ?? 0,
+      levels: (json['levels'] as List?)
+          ?.map((l) => FormationLevelStats.fromJson(l))
+          .toList() ?? [],
+    );
+  }
+}
+
+class FormationLevelStats {
+  final String name;
+  final int avgScore;
+  final int bestScore;
+  final int completions;
+
+  FormationLevelStats({
+    required this.name,
+    required this.avgScore,
+    required this.bestScore,
+    required this.completions,
+  });
+
+  factory FormationLevelStats.fromJson(Map<String, dynamic> json) {
+    return FormationLevelStats(
+      name: json['name']?.toString() ?? 'Inconnu',
+      avgScore: int.tryParse(json['avg_score']?.toString() ?? '0') ?? 0,
+      bestScore: int.tryParse(json['best_score']?.toString() ?? '0') ?? 0,
+      completions: int.tryParse(json['completions']?.toString() ?? '0') ?? 0,
     );
   }
 }
