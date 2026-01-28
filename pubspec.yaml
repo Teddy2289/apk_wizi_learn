@@ -76,6 +76,11 @@ dependencies:
   package_info_plus: ^9.0.0
   fl_chart: ^1.1.1
 
+  # Google Calendar Integration
+  google_sign_in: ^7.0.0
+  googleapis: ^15.0.0
+  extension_google_sign_in_as_googleapis_auth: ^3.0.0
+
   # Offline Access & Storage
   connectivity_plus: ^6.1.2 # Network status detection
   path_provider: ^2.1.5 # File system paths

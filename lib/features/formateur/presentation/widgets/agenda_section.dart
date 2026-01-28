@@ -1,35 +1,87 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/formateur/data/models/agenda_model.dart';
+import 'package:wizi_learn/features/formateur/data/services/google_calendar_service.dart';
 import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
 import 'package:intl/intl.dart';
 
-class AgendaSection extends StatelessWidget {
+class AgendaSection extends StatefulWidget {
   final List<AgendaEvent> events;
+  final VoidCallback onRefreshRequested;
 
   const AgendaSection({
     super.key,
     required this.events,
+    required this.onRefreshRequested,
   });
 
-  Future<void> _launchSyncApp() async {
-    // URL of the Next.js Sync App
-    const url = 'https://wizi-learn-google-calendar.vercel.app';
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+  @override
+  State<AgendaSection> createState() => _AgendaSectionState();
+}
+
+class _AgendaSectionState extends State<AgendaSection> {
+  late final GoogleCalendarService _calendarService;
+  bool _isSyncing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final apiClient = ApiClient(
+      dio: Dio(),
+      storage: const FlutterSecureStorage(),
+    );
+    _calendarService = GoogleCalendarService(apiClient: apiClient);
+  }
+
+  /// Handle Google Calendar Sync
+  Future<void> _handleSync() async {
+    if (_isSyncing) return;
+
+    setState(() => _isSyncing = true);
+
+    try {
+      await _calendarService.syncWithBackend();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Calendrier synchronisé avec succès'),
+            backgroundColor: FormateurTheme.success,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        
+        // Refresh the agenda data
+        widget.onRefreshRequested();
+      }
+    } catch (e) {
+      debugPrint('Sync error: $e');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Erreur de synchronisation: ${e.toString()}'),
+            backgroundColor: FormateurTheme.error,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSyncing = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (events.isEmpty) {
+    if (widget.events.isEmpty) {
       return _buildEmptyState(context);
     }
 
     // Sort by date and take top 3 upcoming
-    final upcomingEvents = events
+    final upcomingEvents = widget.events
         .where((e) => e.isUpcoming || e.isToday)
         .toList()
       ..sort((a, b) => a.start.compareTo(b.start));
@@ -61,9 +113,15 @@ class AgendaSection extends StatelessWidget {
                 ],
               ),
               TextButton.icon(
-                onPressed: _launchSyncApp,
-                icon: const Icon(Icons.sync, size: 16),
-                label: const Text('SYNCHRONISER'),
+                onPressed: _isSyncing ? null : _handleSync,
+                icon: _isSyncing 
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: FormateurTheme.accent),
+                    )
+                  : const Icon(Icons.sync, size: 16),
+                label: Text(_isSyncing ? 'SYNC...' : 'SYNCHRONISER'),
                 style: TextButton.styleFrom(
                   foregroundColor: FormateurTheme.accent,
                   textStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11),
@@ -125,9 +183,15 @@ class AgendaSection extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: _launchSyncApp,
-            icon: const Icon(Icons.sync_alt, size: 18),
-            label: const Text('CONNECTER GOOGLE CALENDAR'),
+            onPressed: _isSyncing ? null : _handleSync,
+            icon: _isSyncing
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+              : const Icon(Icons.sync_alt, size: 18),
+            label: Text(_isSyncing ? 'CONNEXION...' : 'CONNECTER GOOGLE CALENDAR'),
             style: ElevatedButton.styleFrom(
               backgroundColor: FormateurTheme.accent,
               foregroundColor: Colors.white,

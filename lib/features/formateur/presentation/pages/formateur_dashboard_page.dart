@@ -154,7 +154,10 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                           ],
 
                           // Agenda Section (NEW)
-                          AgendaSection(events: _agendaEvents),
+                          AgendaSection(
+                            events: _agendaEvents,
+                            onRefreshRequested: _loadData,
+                          ),
                           const SizedBox(height: 24),
                           
                           // Quick Actions
