@@ -12,7 +12,9 @@ import 'package:wizi_learn/features/auth/presentation/constants/couleur_palette.
 import 'package:wizi_learn/features/auth/presentation/widgets/video_player_page.dart';
 import 'package:wizi_learn/features/auth/presentation/widgets/custom_scaffold.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
+import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:flutter_html/flutter_html.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 

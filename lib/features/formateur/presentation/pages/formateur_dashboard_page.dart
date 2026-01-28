@@ -5,12 +5,15 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/formateur/data/models/analytics_model.dart';
 import 'package:wizi_learn/features/formateur/data/models/formation_management_model.dart';
+import 'package:wizi_learn/features/formateur/data/models/agenda_model.dart';
 import 'package:wizi_learn/features/formateur/data/repositories/analytics_repository.dart';
 import 'package:wizi_learn/features/formateur/data/repositories/formation_management_repository.dart';
+import 'package:wizi_learn/features/formateur/data/repositories/agenda_repository.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/stagiaire_profile_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
 import 'package:wizi_learn/features/formateur/presentation/widgets/dashboard_shimmer.dart';
 import 'package:wizi_learn/features/formateur/presentation/widgets/formateur_drawer_menu.dart';
+import 'package:wizi_learn/features/formateur/presentation/widgets/agenda_section.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
 
@@ -24,11 +27,13 @@ class FormateurDashboardPage extends StatefulWidget {
 class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
   late final AnalyticsRepository _analyticsRepository;
   late final FormationManagementRepository _formationRepository;
+  late final AgendaRepository _agendaRepository;
   
   DashboardSummary? _summary;
   List<InactiveStagiaire> _inactiveStagiaires = [];
   List<OnlineStagiaire> _onlineStagiaires = [];
   List<FormationWithStats> _formations = [];
+  List<AgendaEvent> _agendaEvents = [];
   PerformanceRankings? _rankings;
   bool _loading = true;
   String? _selectedFormationId;
@@ -44,6 +49,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
     );
     _analyticsRepository = AnalyticsRepository(apiClient: apiClient);
     _formationRepository = FormationManagementRepository(apiClient: apiClient);
+    _agendaRepository = AgendaRepository(apiClient: apiClient);
     _loadData();
   }
 
@@ -64,6 +70,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
         _analyticsRepository.getStudentsComparison(
           formationId: _selectedFormationId,
         ),
+        _agendaRepository.getAgenda(),
       ]);
 
       if (mounted) {
@@ -72,6 +79,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
           _inactiveStagiaires = results[1] as List<InactiveStagiaire>;
           _onlineStagiaires = results[2] as List<OnlineStagiaire>;
           _rankings = PerformanceRankings.fromJson(results[3] as Map<String, dynamic>);
+          _agendaEvents = results[4] as List<AgendaEvent>;
           _loading = false;
         });
       }
@@ -80,8 +88,6 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
       if (mounted) setState(() => _loading = false);
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -147,6 +153,10 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                             const SizedBox(height: 24),
                           ],
 
+                          // Agenda Section (NEW)
+                          AgendaSection(events: _agendaEvents),
+                          const SizedBox(height: 24),
+                          
                           // Quick Actions
                           _buildQuickActions(),
                           const SizedBox(height: 32),

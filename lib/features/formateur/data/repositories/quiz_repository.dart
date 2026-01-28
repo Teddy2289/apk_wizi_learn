@@ -84,4 +84,93 @@ class QuizRepository {
       return false;
     }
   }
+
+  /// Get all quizzes with optional filters
+  Future<List<Quiz>> getAllQuizzes({
+    int page = 1,
+    int limit = 400,
+    String? search,
+    String? status,
+    int? formationId,
+  }) async {
+    try {
+      final params = <String, dynamic>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      if (search != null && search.isNotEmpty) params['search'] = search;
+      if (status != null && status.isNotEmpty) params['status'] = status;
+      if (formationId != null) params['formation_id'] = formationId.toString();
+
+      final response = await apiClient.get(
+        '/formateur/quizzes',
+        queryParameters: params,
+      );
+
+      // Handle nested data structure
+      final root = response.data is Map && response.data['data'] != null
+          ? response.data['data']
+          : response.data;
+
+      final List<dynamic> quizList;
+      if (root is List) {
+        quizList = root;
+      } else if (root is Map && root['data'] is List) {
+        quizList = root['data'] as List;
+      } else {
+        quizList = [];
+      }
+
+      return quizList
+          .map((json) => Quiz.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('❌ Erreur chargement liste quizzes: $e');
+      rethrow;
+    }
+  }
+
+  /// Create a new quiz
+  Future<Quiz?> createQuiz(Map<String, dynamic> quizData) async {
+    try {
+      final response = await apiClient.post(
+        '/formateur/quizzes',
+        data: quizData,
+      );
+
+      final root = response.data is Map && response.data['data'] != null
+          ? response.data['data']
+          : response.data;
+
+      return Quiz.fromJson(root as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ Erreur création quiz: $e');
+      return null;
+    }
+  }
+
+  /// Update quiz status
+  Future<bool> updateQuizStatus(int quizId, String status) async {
+    try {
+      await apiClient.patch(
+        '/formateur/quizzes/$quizId',
+        data: {'status': status},
+      );
+      return true;
+    } catch (e) {
+      debugPrint('❌ Erreur mise à jour statut quiz: $e');
+      return false;
+    }
+  }
+
+  /// Delete a quiz
+  Future<bool> deleteQuiz(int quizId) async {
+    try {
+      await apiClient.delete('/formateur/quizzes/$quizId');
+      return true;
+    } catch (e) {
+      debugPrint('❌ Erreur suppression quiz: $e');
+      return false;
+    }
+  }
 }
