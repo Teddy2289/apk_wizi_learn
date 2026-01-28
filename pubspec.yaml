@@ -77,9 +77,9 @@ dependencies:
   fl_chart: ^1.1.1
 
   # Google Calendar Integration
-  google_sign_in: ^7.0.0
+  google_sign_in: ^6.2.2
   googleapis: ^15.0.0
-  extension_google_sign_in_as_googleapis_auth: ^3.0.0
+  extension_google_sign_in_as_googleapis_auth: ^2.0.13
 
   # Offline Access & Storage
   connectivity_plus: ^6.1.2 # Network status detection

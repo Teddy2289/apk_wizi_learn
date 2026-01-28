@@ -3,6 +3,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/calendar/v3.dart' as calendar;
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
+import 'package:dio/dio.dart';
 
 class GoogleCalendarService {
   final ApiClient apiClient;
@@ -35,7 +36,7 @@ class GoogleCalendarService {
         throw Exception('Google Sign-In failed');
       }
 
-      // Get authenticated HTTP client using extension
+      // Get authenticated HTTP client
       final authenticatedClient = await _googleSignIn.authenticatedClient();
       if (authenticatedClient == null) {
         throw Exception('Failed to get authenticated client');
@@ -138,22 +139,22 @@ class GoogleCalendarService {
         };
       }).toList();
 
-      // Send to backend
-      final response = await apiClient.post(
+      // Send to backend using custom header
+      await apiClient.post(
         '/agendas/sync',
         data: {
           'userId': await _getUserId(),
           'calendars': calendarsData,
           'events': eventsData,
         },
-        options: {
-          'headers': {
+        options: Options(
+          headers: {
             'x-sync-secret': 'wizi-calendar-sync-secret-2026-v1',
           },
-        },
+        ),
       );
 
-      debugPrint('✅ Backend sync successful: ${response.data}');
+      debugPrint('✅ Backend sync successful');
     } catch (e) {
       debugPrint('❌ Backend sync error: $e');
       rethrow;
@@ -163,7 +164,6 @@ class GoogleCalendarService {
   /// Get current user ID from storage/API
   Future<String> _getUserId() async {
     try {
-      // Try to get from /me endpoint
       final response = await apiClient.get('/me');
       return response.data['id']?.toString() ?? '0';
     } catch (e) {

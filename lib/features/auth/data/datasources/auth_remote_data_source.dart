@@ -56,7 +56,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final token = (responseData['token'] ?? responseData['access_token'] ?? (responseData['data'] is Map ? responseData['data']['token'] : null)) as String?;
       debugPrint('extracted token: $token');
       if (token == null || token.isEmpty) {
-        throw ApiException(message: 'Token non reçu ou invalide');
+        throw ApiException(message: 'Veuillez vérifier votre connexion Internet ou vos identifiants (email/mot de passe)');
       }
 
       await storage.write(key: AppConstants.tokenKey, value: token);
