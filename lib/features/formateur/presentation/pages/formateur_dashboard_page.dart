@@ -197,6 +197,18 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                           _buildOnlineStagiairesSection(),
                           const SizedBox(height: 32),
 
+                          // Top Learners Section (NEW)
+                          if (_rankings != null) ...[
+                            _buildTopLearnersSection(),
+                            const SizedBox(height: 32),
+                          ],
+
+                          // Formation Performance Section (NEW)
+                          if (_summary?.formations.isNotEmpty ?? false) ...[
+                            _buildFormationPerformanceSection(),
+                            const SizedBox(height: 32),
+                          ],
+
                           // Formation Selector
                           if (_formations.isNotEmpty) ...[
                             _buildFormationSelector(),
@@ -437,15 +449,53 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
       crossAxisSpacing: 16,
       childAspectRatio: 1.0,
       children: [
-        _buildStatCard('Stagiaires', _summary?.totalStagiaires.toString() ?? '0', Icons.people_alt_rounded, Colors.blue),
-        _buildStatCard('Programmes', _summary?.activeThisWeek.toString() ?? '0', Icons.auto_awesome_motion_rounded, Colors.purple),
-        _buildStatCard('Score Moyen', '${_summary?.avgQuizScore ?? 0}%', Icons.military_tech_rounded, FormateurTheme.accentDark),
-        _buildStatCard('Inactifs', _summary?.inactiveCount.toString() ?? '0', Icons.notifications_active_rounded, FormateurTheme.orangeAccent),
+        _buildStatCard(
+          'Stagiaires', 
+          _summary?.totalStagiaires.toString() ?? '0', 
+          Icons.people_alt_rounded, 
+          Colors.blue,
+          subValue: '${_summary?.activeThisWeek ?? 0} actifs'
+        ),
+        _buildStatCard(
+          'Formations', 
+          _summary?.totalFormations.toString() ?? '0', 
+          Icons.video_library_rounded, 
+          Colors.purple,
+          subValue: 'Programmes actifs'
+        ),
+        _buildStatCard(
+          'Quiz Complétés', 
+          _summary?.totalQuizzesTaken.toString() ?? '0', 
+          Icons.emoji_events_rounded, 
+          FormateurTheme.accentDark,
+          subValue: 'Moyenne: ${_summary?.avgQuizScore ?? 0}%'
+        ),
+        _buildStatCard(
+          'Inactifs', 
+          _summary?.inactiveCount.toString() ?? '0', 
+          Icons.notifications_active_rounded, 
+          FormateurTheme.orangeAccent,
+          subValue: '7+ jours d\'absence'
+        ),
+        _buildStatCard(
+          'Jamais Connectés', 
+          _summary?.neverConnected.toString() ?? '0', 
+          Icons.person_off_rounded, 
+          FormateurTheme.error,
+          subValue: 'En attente'
+        ),
+        _buildStatCard(
+          'Heures Vidéos', 
+          '${_summary?.totalVideoHours.toStringAsFixed(0) ?? 0}h', 
+          Icons.play_circle_fill_rounded, 
+          Colors.indigo,
+          subValue: 'Visionnage cumulé'
+        ),
       ],
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(String title, String value, IconData icon, Color color, {String? subValue}) {
     return Container(
       decoration: FormateurTheme.premiumCardDecoration,
       padding: const EdgeInsets.all(20.0),
@@ -453,26 +503,49 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, size: 20, color: color),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, size: 20, color: color),
+              ),
+            ],
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 value,
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: FormateurTheme.textPrimary, letterSpacing: -1),
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: FormateurTheme.textPrimary, letterSpacing: -1),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 4),
               Text(
                 title.toUpperCase(),
                 style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 0.5),
               ),
+              if (subValue != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: color.withOpacity(0.1)),
+                  ),
+                  child: Text(
+                    subValue,
+                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: color),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ],
           ),
         ],
@@ -617,43 +690,161 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
     );
   }
 
-  Widget _buildTopLearnersSection() {
+  Widget _buildFormationPerformanceSection() {
+    if (_summary?.formations.isEmpty ?? true) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'TOP PERFORMANCE',
-              style: TextStyle(color: FormateurTheme.textTertiary, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(color: FormateurTheme.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-              child: const Text('30 JOURS', style: TextStyle(color: FormateurTheme.accentDark, fontSize: 9, fontWeight: FontWeight.w900)),
-            ),
-          ],
+           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+           children: [
+             const Text(
+               'PERFORMANCE PAR FORMATION',
+               style: TextStyle(color: FormateurTheme.textTertiary, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5),
+             ),
+             Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: Colors.indigo.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                child: Text('${_summary!.formations.length}', style: const TextStyle(color: Colors.indigo, fontSize: 9, fontWeight: FontWeight.w900)),
+             ),
+           ],
         ),
         const SizedBox(height: 20),
-        Container(
-          decoration: FormateurTheme.premiumCardDecoration,
-          padding: const EdgeInsets.all(24),
+        SizedBox(
+          height: 180,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _summary!.formations.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            itemBuilder: (context, index) {
+              final f = _summary!.formations[index];
+              return Container(
+                width: 260,
+                padding: const EdgeInsets.all(20),
+                decoration: FormateurTheme.premiumCardDecoration,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            f.titre,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                              color: FormateurTheme.textPrimary,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: f.avgScore >= 80 ? Colors.green.withOpacity(0.1) : (f.avgScore >= 50 ? FormateurTheme.accent.withOpacity(0.1) : FormateurTheme.error.withOpacity(0.1)),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '${f.avgScore}%',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: f.avgScore >= 80 ? Colors.green : (f.avgScore >= 50 ? FormateurTheme.accentDark : FormateurTheme.error),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        _buildFormationStatRow(Icons.people_outline, '${f.studentCount} Stagiaires'),
+                        const SizedBox(height: 8),
+                         _buildFormationStatRow(Icons.check_circle_outline, '${f.totalCompletions} Quiz finis'),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFormationStatRow(IconData icon, String label) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: FormateurTheme.textTertiary),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: FormateurTheme.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+
+  Widget _buildTopLearnersSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'TOP PERFORMANCE',
+          style: TextStyle(color: FormateurTheme.textTertiary, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5),
+        ),
+        const SizedBox(height: 20),
+        DefaultTabController(
+          length: 2,
           child: Column(
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: FormateurTheme.orangeAccent.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(Icons.star_rounded, color: FormateurTheme.orangeAccent, size: 20),
+              Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: FormateurTheme.border),
+                ),
+                child: TabBar(
+                  indicator: BoxDecoration(
+                    color: FormateurTheme.accent,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  const SizedBox(width: 14),
-                  const Text('Leaders de Quiz', style: TextStyle(color: FormateurTheme.textPrimary, fontSize: 17, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-                ],
+                  labelColor: Colors.white,
+                  unselectedLabelColor: FormateurTheme.textTertiary,
+                  labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11),
+                  tabs: const [
+                    Tab(text: 'TOP QUIZ'),
+                    Tab(text: 'TOP ACTIFS'),
+                  ],
+                ),
               ),
-              const SizedBox(height: 24),
-              ...(_rankings?.mostQuizzes.take(3).map((s) => _buildTopLearnerItem(s)) ?? []),
+              const SizedBox(height: 20),
+              SizedBox(
+                height: 300, 
+                child: TabBarView(
+                  children: [
+                    // Top Quiz List
+                    ListView(
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: (_rankings?.mostQuizzes.take(3).map((s) => _buildTopLearnerItem(s, type: 'quiz')) ?? []).toList(),
+                    ),
+                    // Top Active List
+                    ListView(
+                       physics: const NeverScrollableScrollPhysics(),
+                       children: (_rankings?.mostActive.take(3).map((s) => _buildTopLearnerItem(s, type: 'active')) ?? []).toList(),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -661,7 +852,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
     );
   }
 
-  Widget _buildTopLearnerItem(StagiairePerformance s) {
+  Widget _buildTopLearnerItem(StagiairePerformance s, {required String type}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -677,7 +868,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
             backgroundColor: Colors.white,
             backgroundImage: s.image != null && s.image!.isNotEmpty 
                 ? NetworkImage(AppConstants.getUserImageUrl(s.image!)) : null,
-            child: s.image == null ? Text(s.name[0], style: const TextStyle(fontWeight: FontWeight.w900)) : null,
+            child: s.image == null ? Text(s.name.isNotEmpty ? s.name[0] : '?', style: const TextStyle(fontWeight: FontWeight.w900)) : null,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -685,14 +876,21 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(s.name.toUpperCase(), style: const TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.w900, fontSize: 12)),
-                Text('${s.totalQuizzes} quiz complétés', style: const TextStyle(color: FormateurTheme.textSecondary, fontSize: 10, fontWeight: FontWeight.w600)),
+                Text(s.email, style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 10, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: FormateurTheme.border)),
-            child: Text('${s.totalLogins} connexions', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w900, fontSize: 10)),
+            child: Text(
+              type == 'quiz' ? '${s.totalQuizzes} quiz' : '${s.totalLogins} logs',
+              style: TextStyle(
+                color: type == 'quiz' ? FormateurTheme.accentDark : Colors.blue,
+                fontWeight: FontWeight.w900,
+                fontSize: 10
+              ),
+            ),
           ),
         ],
       ),

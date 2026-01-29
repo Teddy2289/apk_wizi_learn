@@ -103,7 +103,7 @@ class DashboardSummary {
   final int neverConnected;
   final double avgQuizScore;
   final double totalVideoHours;
-  final List<dynamic> formations; // Keeping dynamic for now to avoid circular deps or complex nested models immediately
+  final List<FormationDashboardStats> formations;
   final List<dynamic> formateurs; // Keeping dynamic for now
 
   DashboardSummary({
@@ -130,7 +130,9 @@ class DashboardSummary {
       neverConnected: int.tryParse(json['never_connected']?.toString() ?? '0') ?? 0,
       avgQuizScore: double.tryParse(json['avg_quiz_score']?.toString() ?? '0') ?? 0.0,
       totalVideoHours: double.tryParse(json['total_video_hours']?.toString() ?? '0') ?? 0.0,
-      formations: _parseList(json['formations']),
+      formations: (json['formations'] as List?)
+          ?.map((e) => FormationDashboardStats.fromJson(e))
+          .toList() ?? [],
       formateurs: _parseList(json['formateurs']),
     );
   }
@@ -142,6 +144,35 @@ class DashboardSummary {
       return data['data'] is List ? data['data'] : [];
     }
     return [];
+  }
+}
+
+class FormationDashboardStats {
+  final int id;
+  final String titre; // Using 'titre' to match React's 'nom' or 'titre' depending on API
+  final int studentCount;
+  final int activeStudents;
+  final double avgScore;
+  final int totalCompletions;
+
+  FormationDashboardStats({
+    required this.id,
+    required this.titre,
+    required this.studentCount,
+    required this.activeStudents,
+    required this.avgScore,
+    required this.totalCompletions,
+  });
+
+  factory FormationDashboardStats.fromJson(Map<String, dynamic> json) {
+    return FormationDashboardStats(
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      titre: json['nom']?.toString() ?? json['titre']?.toString() ?? 'Formation',
+      studentCount: int.tryParse(json['total_stagiaires']?.toString() ?? '0') ?? 0,
+      activeStudents: int.tryParse(json['stagiaires_actifs']?.toString() ?? '0') ?? 0,
+      avgScore: double.tryParse(json['score_moyen']?.toString() ?? '0') ?? 0.0,
+      totalCompletions: int.tryParse(json['total_completions']?.toString() ?? '0') ?? 0,
+    );
   }
 }
 
