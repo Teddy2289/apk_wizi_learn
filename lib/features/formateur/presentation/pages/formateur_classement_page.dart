@@ -53,9 +53,18 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
       final response = await _apiClient.get(endpoint, queryParameters: {'period': _period});
       final data = response.data;
       
+      debugPrint('DEBUG: Ranking response data: $data');
+      debugPrint('DEBUG: Data type: ${data.runtimeType}');
+
       if (mounted) {
         setState(() {
-          _ranking = data['ranking'] ?? [];
+          if (data is Map) {
+            _ranking = data['ranking'] ?? [];
+          } else if (data is List) {
+            _ranking = data;
+          } else {
+            _ranking = [];
+          }
           _loading = false;
         });
       }
@@ -341,8 +350,18 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
   }
 
   Widget _buildRankingRow(dynamic stagiaire, int index) {
-    // Use rank from API if available, otherwise use index + 1
-    final int rank = stagiaire['rank'] != null ? int.parse(stagiaire['rank'].toString()) : index;
+    // Robustly parse rank from API or use index + 1
+    int rank;
+    try {
+      if (stagiaire['rank'] != null) {
+        rank = int.tryParse(stagiaire['rank'].toString()) ?? index;
+      } else {
+        rank = index;
+      }
+    } catch (e) {
+      rank = index;
+    }
+    
     final bool isTop3 = rank <= 3;
     final String? imagePath = stagiaire['image'] ?? stagiaire['avatar'];
 

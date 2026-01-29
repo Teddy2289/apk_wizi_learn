@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -24,6 +26,7 @@ class _TrainerArenaPageState extends State<TrainerArenaPage> {
   bool _showSearch = false;
   String _period = 'all';
   int? _expandedFormateurId;
+  Map<String, dynamic>? _currentUser;
 
   @override
   void initState() {
@@ -41,6 +44,7 @@ class _TrainerArenaPageState extends State<TrainerArenaPage> {
       await Future.wait([
         _fetchFormations(),
         _fetchRanking(),
+        _loadCurrentUser(),
       ]);
     } catch (e) {
       debugPrint('Error fetching data: $e');
@@ -84,8 +88,24 @@ class _TrainerArenaPageState extends State<TrainerArenaPage> {
     }
   }
 
+  Future<void> _loadCurrentUser() async {
+    try {
+      final userStr = await const FlutterSecureStorage().read(key: 'auth_user');
+      if (userStr != null) {
+        setState(() {
+          _currentUser = jsonDecode(userStr);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading current user: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Determine the current user's ID for comparison
+    final int? currentUserId = _currentUser?['id'];
+
     final filteredRanking = _ranking.where((f) {
       final name = '${f['prenom']} ${f['nom']}'.toLowerCase();
       final matchesName = name.contains(_searchQuery.toLowerCase());
@@ -95,54 +115,68 @@ class _TrainerArenaPageState extends State<TrainerArenaPage> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white.withOpacity(0.8),
         elevation: 0,
+        centerTitle: false,
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ColorFilter.mode(Colors.white.withOpacity(0.8), BlendMode.srcOver),
+            child: Container(color: Colors.transparent),
+          ),
+        ),
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: FormateurTheme.textPrimary),
+            icon: const Icon(Icons.menu_rounded, color: Color(0xFF1E293B)),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
         title: Row(
           children: [
-            const Icon(Icons.emoji_events_rounded, color: FormateurTheme.accent), // Fixed color
-            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFACC15).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.gamepad_outlined, color: Color(0xFFFACC15), size: 18),
+            ),
+            const SizedBox(width: 12),
             const Text(
-              'Arène des Formateurs',
+              'Arène Formateurs',
               style: TextStyle(
-                color: FormateurTheme.textPrimary,
-                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+                letterSpacing: -0.5,
               ),
             ),
           ],
         ),
         actions: [
-          if (_showSearch)
-            Container(
-              width: 200,
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: TextField(
-                autofocus: true,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  hintText: 'Rechercher...',
-                  contentPadding: EdgeInsets.only(bottom: 12),
-                ),
-                onChanged: (val) => setState(() => _searchQuery = val),
-              ),
-            ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: _showSearch ? 180 : 0,
+            height: 36,
+            child: _showSearch 
+              ? TextField(
+                  autofocus: true,
+                  style: const TextStyle(fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: 'Rechercher...',
+                    hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  onChanged: (val) => setState(() => _searchQuery = val),
+                )
+              : null,
+          ),
           IconButton(
             icon: Icon(
-              _showSearch ? Icons.close : Icons.search,
-              color: _showSearch ? FormateurTheme.accent : Colors.grey[600], // Fixed color
+              _showSearch ? Icons.close_rounded : Icons.search_rounded,
+              color: _showSearch ? const Color(0xFFFACC15) : const Color(0xFF64748B),
             ),
             onPressed: () {
               setState(() {
@@ -154,142 +188,115 @@ class _TrainerArenaPageState extends State<TrainerArenaPage> {
           const SizedBox(width: 8),
         ],
       ),
-      drawer: FormateurDrawerMenu(onLogout: () {}), // Fixed args
+      drawer: FormateurDrawerMenu(onLogout: () {}),
       body: _loading 
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFFFACC15)))
           : RefreshIndicator(
               onRefresh: () async {
-                await Future.wait([_fetchFormations(), _fetchRanking()]);
-              }, // Fixed refresh logic to reload both
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    // Period Switcher
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          _buildPeriodButton('week', 'Hebdomadaire'),
-                          _buildPeriodButton('month', 'Mensuel'),
-                          _buildPeriodButton('all', 'Tout temps'),
-                        ],
-                      ),
+                await _fetchData();
+              },
+              color: const Color(0xFFFACC15),
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                children: [
+                  // Period Switcher (Premium Look)
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE2E8F0).withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFE2E8F0).withOpacity(0.5)),
                     ),
-                    const SizedBox(height: 16),
-
-                    // Filters
-                    Row(
+                    child: Row(
                       children: [
-                        Expanded(
-                          child: _buildDropdown(
-                            value: _selectedFormationId,
-                            items: [
-                              const DropdownMenuItem(value: 'all', child: Text('Toutes les Formations')),
-                              ..._formations.map((f) => DropdownMenuItem(
-                                value: f['id'].toString(),
-                                child: Text(f['titre'] ?? f['nom'] ?? 'Sans titre', overflow: TextOverflow.ellipsis),
-                              )),
-                            ],
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() {
-                                  _selectedFormationId = val;
-                                  _selectedFormateurId = 'all';
-                                });
-                                _fetchRanking();
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildDropdown(
-                            value: _selectedFormateurId,
-                            items: [
-                              const DropdownMenuItem(value: 'all', child: Text('Tous les Formateurs')),
-                              ..._ranking.map((f) => DropdownMenuItem(
-                                value: f['id'].toString(),
-                                child: Text('${f['prenom']} ${f['nom']}', overflow: TextOverflow.ellipsis),
-                              )),
-                            ],
-                            onChanged: (val) {
-                              if (val != null) setState(() => _selectedFormateurId = val);
-                            },
-                          ),
-                        ),
+                        _buildPeriodButton('week', 'Hebdomadaire'),
+                        _buildPeriodButton('month', 'Mensuel'),
+                        _buildPeriodButton('all', 'Tout temps'),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                  ),
+                  const SizedBox(height: 20),
 
-                    // Leaderboard
-                    if (filteredRanking.isEmpty)
-                      _buildEmptyState()
-                    else
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: filteredRanking.length,
-                        itemBuilder: (context, index) {
-                          final formateur = filteredRanking[index];
-                          final isExpanded = _expandedFormateurId == formateur['id'];
-                          
-                          return _buildFormateurCard(formateur, index, isExpanded);
-                        },
+                  // Filters
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildPremiumDropdown(
+                          value: _selectedFormationId,
+                          hint: 'Toutes les Formations',
+                          items: [
+                            const DropdownMenuItem(value: 'all', child: Text('Toutes les Formations')),
+                            ..._formations.map((f) => DropdownMenuItem(
+                              value: f['id'].toString(),
+                              child: Text(f['titre'] ?? f['nom'] ?? 'Sans titre', overflow: TextOverflow.ellipsis),
+                            )),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                _selectedFormationId = val;
+                                _selectedFormateurId = 'all';
+                              });
+                              _fetchRanking();
+                            }
+                          },
+                        ),
                       ),
-                  ],
-                ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildPremiumDropdown(
+                          value: _selectedFormateurId,
+                          hint: 'Tous les Formateurs',
+                          items: [
+                            const DropdownMenuItem(value: 'all', child: Text('Tous les Formateurs')),
+                            ..._ranking.map((f) => DropdownMenuItem(
+                              value: f['id'].toString(),
+                              child: Text('${f['prenom']} ${f['nom']}', overflow: TextOverflow.ellipsis),
+                            )),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) setState(() => _selectedFormateurId = val);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+
+                  // Leaderboard
+                  if (filteredRanking.isEmpty)
+                    _buildEmptyState()
+                  else
+                    ...filteredRanking.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final formateur = entry.value;
+                      final isExpanded = _expandedFormateurId == formateur['id'];
+                      final bool isMe = currentUserId != null && currentUserId == formateur['id'];
+                      
+                      return _buildPremiumFormateurCard(formateur, index, isExpanded, isMe);
+                    }).toList(),
+                  const SizedBox(height: 40),
+                ],
               ),
             ),
     );
   }
 
-  Widget _buildPeriodButton(String id, String label) {
-    final isSelected = _period == id;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() => _period = id);
-          _fetchRanking();
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: isSelected ? [
-              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
-            ] : null,
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: isSelected ? Colors.black : Colors.grey[600],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDropdown<T>({
+  Widget _buildPremiumDropdown<T>({
     required T value,
+    required String hint,
     required List<DropdownMenuItem<T>> items,
     required ValueChanged<T?> onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2)),
+        ],
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
@@ -297,25 +304,29 @@ class _TrainerArenaPageState extends State<TrainerArenaPage> {
           items: items,
           onChanged: onChanged,
           isExpanded: true,
-          style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w600),
-          icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+          style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B), fontWeight: FontWeight.bold),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B), size: 20),
         ),
       ),
     );
   }
 
-  Widget _buildFormateurCard(dynamic formateur, int index, bool isExpanded) {
+  Widget _buildPremiumFormateurCard(dynamic formateur, int index, bool isExpanded, bool isMe) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.only(bottom: 12),
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey[200]!),
+        color: isMe ? const Color(0xFFFFFDE7) : Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: isMe ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0),
+          width: isMe ? 2 : 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -323,12 +334,15 @@ class _TrainerArenaPageState extends State<TrainerArenaPage> {
       child: Column(
         children: [
           InkWell(
-            onTap: () => setState(() {
-              _expandedFormateurId = isExpanded ? null : formateur['id'];
-            }),
-            borderRadius: BorderRadius.circular(24),
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              setState(() {
+                _expandedFormateurId = isExpanded ? null : formateur['id'];
+              });
+            },
+            borderRadius: BorderRadius.circular(28),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
                   Stack(
@@ -336,15 +350,16 @@ class _TrainerArenaPageState extends State<TrainerArenaPage> {
                     clipBehavior: Clip.none,
                     children: [
                       Container(
-                        width: 60,
-                        height: 60,
+                        width: 64,
+                        height: 64,
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(16),
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFF8FAFC), width: 2),
                           image: formateur['image'] != null
                               ? DecorationImage(
                                   image: NetworkImage(
-                                    AppConstants.getUserImageUrl(formateur['image']),
+                                    AppConstants.getMediaUrl(formateur['image']),
                                   ),
                                   fit: BoxFit.cover,
                                 )
@@ -354,28 +369,28 @@ class _TrainerArenaPageState extends State<TrainerArenaPage> {
                             ? Center(
                                 child: Text(
                                   '${formateur['prenom']?[0] ?? ''}${formateur['nom']?[0] ?? ''}',
-                                  style: TextStyle(
-                                    fontSize: 20,
+                                  style: const TextStyle(
+                                    fontSize: 22,
                                     fontWeight: FontWeight.w900,
-                                    color: Colors.grey[400],
+                                    color: Color(0xFFCBD5E1),
                                   ),
                                 ),
                               )
                             : null,
                       ),
                       Positioned(
-                        top: -6,
-                        left: -6,
+                        top: -8,
+                        left: -8,
                         child: Container(
-                          width: 24,
-                          height: 24,
+                          width: 28,
+                          height: 28,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: index == 0 ? FormateurTheme.accent // Fixed color
-                                : index == 1 ? Colors.grey[400] 
-                                : index == 2 ? Colors.brown[400] 
-                                : Colors.grey[100],
-                            border: Border.all(color: Colors.white, width: 2),
+                            color: index == 0 ? const Color(0xFFFACC15) 
+                                : index == 1 ? const Color(0xFFE2E8F0) 
+                                : index == 2 ? const Color(0xFFB45309) 
+                                : const Color(0xFFF1F5F9),
+                            border: Border.all(color: Colors.white, width: 2.5),
                             boxShadow: [
                               BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4),
                             ],
@@ -384,9 +399,9 @@ class _TrainerArenaPageState extends State<TrainerArenaPage> {
                             child: Text(
                               '${index + 1}',
                               style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: index <= 2 ? Colors.black : Colors.grey[600],
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                color: index == 0 ? Colors.black : (index <= 2 ? Colors.white : const Color(0xFF64748B)),
                               ),
                             ),
                           ),
@@ -394,81 +409,112 @@ class _TrainerArenaPageState extends State<TrainerArenaPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 20),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '${formateur['prenom']} ${formateur['nom']}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: FormateurTheme.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(Icons.people_outline, size: 14, color: Colors.grey),
-                            const SizedBox(width: 4),
                             Text(
-                              'Équipe de ${formateur['total_stagiaires']} Apprentis',
-                              style: TextStyle(
+                              '${formateur['prenom']} ${formateur['nom']}',
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF1E293B),
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            if (isMe) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFACC15),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'VOUS',
+                                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.black),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.groups_rounded, size: 14, color: Color(0xFF94A3B8)),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Équipe de ${formateur['total_stagiaires']} Apprenti${formateur['total_stagiaires'] > 1 ? 's' : ''}',
+                              style: const TextStyle(
                                 fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey[600],
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF64748B),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 4),
                         Text(
-                          '${formateur['total_points']} Pts Total',
+                          '${(formateur['total_points'] ?? 0).toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} PTS TOTAL',
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: 13,
                             fontWeight: FontWeight.w900,
-                            color: FormateurTheme.accent, // Fixed color
+                            color: Color(0xFFFACC15),
                             letterSpacing: 0.5,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Icon(
-                    isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-                    color: Colors.grey[400],
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isExpanded ? const Color(0xFFFACC15) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                      color: isExpanded ? Colors.black : const Color(0xFF94A3B8),
+                      size: 24,
+                    ),
                   ),
                 ],
               ),
             ),
           ),
           if (isExpanded)
-            Container(
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-                border: Border(top: BorderSide(color: Colors.grey[100]!)),
+                color: const Color(0xFFF8FAFC).withOpacity(0.5),
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
+                border: const Border(top: BorderSide(color: Color(0xFFF1F5F9))),
               ),
-              padding: const EdgeInsets.all(16),
-              child: _buildStagiairesGrid(formateur['stagiaires'] ?? []),
+              padding: const EdgeInsets.all(20),
+              child: _buildPremiumStagiairesGrid(formateur['stagiaires'] ?? []),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildStagiairesGrid(List<dynamic> stagiaires) {
+  Widget _buildPremiumStagiairesGrid(List<dynamic> stagiaires) {
     if (stagiaires.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: Text(
-          'AUCUN DÉFI RELEVÉ PAR CETTE ÉQUIPE',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey,
-            letterSpacing: 1,
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 20),
+          child: Text(
+            'AUCUN DÉFI RELEVÉ PAR CETTE ÉQUIPE',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF94A3B8),
+              letterSpacing: 1.5,
+              fontStyle: FontStyle.italic,
+            ),
           ),
         ),
       );
@@ -476,32 +522,35 @@ class _TrainerArenaPageState extends State<TrainerArenaPage> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final crossAxisCount = constraints.maxWidth > 400 ? 2 : 1;
+        final crossAxisCount = constraints.maxWidth > 350 ? 2 : 1;
         return Wrap(
           spacing: 12,
           runSpacing: 12,
           children: List.generate(stagiaires.length, (index) {
             final stagiaire = stagiaires[index];
             return Container(
-              width: (constraints.maxWidth - 12) / crossAxisCount - (crossAxisCount == 1 ? 0 : 0.1),
+              width: (constraints.maxWidth - (crossAxisCount > 1 ? 12 : 0)) / crossAxisCount,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey[200]!),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFF1F5F9)),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2)),
+                ],
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(10),
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(14),
                       image: stagiaire['image'] != null
                           ? DecorationImage(
                               image: NetworkImage(
-                                AppConstants.getUserImageUrl(stagiaire['image']),
+                                AppConstants.getMediaUrl(stagiaire['image']),
                               ),
                               fit: BoxFit.cover,
                             )
@@ -511,10 +560,10 @@ class _TrainerArenaPageState extends State<TrainerArenaPage> {
                         ? Center(
                             child: Text(
                               '${stagiaire['prenom']?[0] ?? ''}${stagiaire['nom']?[0] ?? ''}',
-                              style: TextStyle(
-                                fontSize: 12,
+                              style: const TextStyle(
+                                fontSize: 13,
                                 fontWeight: FontWeight.w900,
-                                color: Colors.grey[400],
+                                color: Color(0xFFCBD5E1),
                               ),
                             ),
                           )
@@ -528,19 +577,19 @@ class _TrainerArenaPageState extends State<TrainerArenaPage> {
                         Text(
                           '${stagiaire['prenom']} ${stagiaire['nom']}',
                           style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF334155),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          '${stagiaire['points']} PTS', // Corrected from points
+                          '${(stagiaire['points'] ?? 0).toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} PTS',
                           style: const TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w900,
-                            color: FormateurTheme.accent, // Fixed color
+                            color: Color(0xFFFACC15),
                           ),
                         ),
                       ],
@@ -552,6 +601,40 @@ class _TrainerArenaPageState extends State<TrainerArenaPage> {
           }),
         );
       },
+    );
+  }
+
+  Widget _buildPeriodButton(String id, String label) {
+    final isSelected = _period == id;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          setState(() => _period = id);
+          _fetchRanking();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: isSelected ? [
+              BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 8, offset: const Offset(0, 2))
+            ] : null,
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              color: isSelected ? const Color(0xFF1E293B) : const Color(0xFF64748B),
+              letterSpacing: -0.2,
+            ),
+          ),
+        ),
+      ),
     );
   }
 

@@ -105,7 +105,7 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
                     child: TextField(
                       onChanged: _filterStagiaires,
                       decoration: const InputDecoration(
-                        hintText: 'Rechercher un apprenant...',
+                        hintText: 'Rechercher un stagiaire...',
                         hintStyle: TextStyle(color: FormateurTheme.textTertiary, fontSize: 14),
                         prefixIcon: Icon(Icons.search, color: FormateurTheme.textTertiary),
                         border: InputBorder.none,

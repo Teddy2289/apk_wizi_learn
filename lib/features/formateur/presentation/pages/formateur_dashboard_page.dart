@@ -193,7 +193,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                     ),
                     
                     // Footer
-                    const DashboardFooter(),
+                    // const DashboardFooter(),
                   ],
                 ),
               ),
