@@ -112,24 +112,6 @@ class _AgendaSectionState extends State<AgendaSection> {
                   ),
                 ],
               ),
-              TextButton.icon(
-                onPressed: _isSyncing ? null : _handleSync,
-                icon: _isSyncing 
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: FormateurTheme.accent),
-                    )
-                  : const Icon(Icons.sync, size: 16),
-                label: Text(_isSyncing ? 'SYNC...' : 'SYNCHRONISER'),
-                style: TextButton.styleFrom(
-                  foregroundColor: FormateurTheme.accent,
-                  textStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  backgroundColor: FormateurTheme.accent.withOpacity(0.1),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -173,33 +155,12 @@ class _AgendaSectionState extends State<AgendaSection> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Connectez votre Google Calendar pour voir vos rendez-vous ici.',
+            'Les événements de votre agenda s\'afficheront ici une fois synchronisés.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: FormateurTheme.textSecondary,
               fontSize: 13,
               fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _isSyncing ? null : _handleSync,
-            icon: _isSyncing
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                )
-              : const Icon(Icons.sync_alt, size: 18),
-            label: Text(_isSyncing ? 'CONNEXION...' : 'CONNECTER GOOGLE CALENDAR'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: FormateurTheme.accent,
-              foregroundColor: Colors.white,
-              elevation: 4,
-              shadowColor: FormateurTheme.accent.withOpacity(0.4),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              textStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
             ),
           ),
         ],

@@ -251,8 +251,8 @@ class _LoginPageState extends State<LoginPage> {
                     SnackBar(
                       content: Text(
                         isUnauthorized
-                            ? 'Email ou mot de passe incorrect'
-                            : state.message,
+                            ? 'Veuillez vérifier votre mail/mot de passe'
+                            : 'Veuillez vérifier votre connexion ou votre mail/mot de passe',
                       ),
                       backgroundColor: Colors.red,
                       behavior: SnackBarBehavior.floating,

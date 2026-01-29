@@ -401,295 +401,501 @@ class _FormateurQuizManagementPageState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: Column(
-        children: [
-          // Header
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.shade200.withOpacity(0.5),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                )
-              ],
-            ),
-            padding: const EdgeInsets.fromLTRB(48, 64, 48, 48),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: FormateurTheme.accent.withOpacity(0.1),
-                    border: Border.all(color: FormateurTheme.accent.withOpacity(0.2)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.access_time, size: 12, color: FormateurTheme.accent),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Atelier de Quiz',
-                        style: TextStyle(
-                          color: FormateurTheme.accent,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text.rich(
-                  TextSpan(
-                    text: 'Gestion des ',
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.black87,
-                      height: 1.2,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: 'Évaluations',
-                        style: TextStyle(color: FormateurTheme.accent),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Consultez et organisez vos banques de questions par formation.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Rechercher un quiz...',
-                          prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
-                          filled: true,
-                          fillColor: Colors.grey.shade50,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(32),
-                            borderSide: BorderSide(color: Colors.grey.shade100),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(32),
-                            borderSide: BorderSide(color: Colors.grey.shade100),
-                          ),
-                          contentPadding: const EdgeInsets.all(24),
-                        ),
-                        onChanged: (value) {
-                          setState(() => _searchQuery = value);
-                          _loadData();
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: DropdownButtonFormField<int?>(
-                        value: _selectedFormationId,
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.filter_list, color: Colors.grey.shade400),
-                          filled: true,
-                          fillColor: Colors.grey.shade50,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(32),
-                            borderSide: BorderSide(color: Colors.grey.shade100),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                        ),
-                        items: [
-                          const DropdownMenuItem(value: null, child: Text('Toutes les formations')),
-                          ..._formations.map((f) => DropdownMenuItem(value: f.id, child: Text(f.titre))),
-                        ],
-                        onChanged: (v) {
-                          setState(() => _selectedFormationId = v);
-                          _loadData();
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    ElevatedButton.icon(
-                      onPressed: _showCreateQuizDialog,
-                      icon: const Icon(Icons.add, color: Colors.white),
-                      label: const Text(
-                        'NOUVEAU QUIZ',
-                        style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: FormateurTheme.accent,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-                        elevation: 8,
-                      ),
-                    ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 700;
+          final horizontalPadding = isMobile ? 12.0 : 48.0;
+
+          return Column(
+            children: [
+              // Header
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.shade200.withOpacity(0.5),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    )
                   ],
                 ),
-              ],
-            ),
-          ),
-          // Content
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _groupedQuizzes.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade50,
-                                borderRadius: BorderRadius.circular(48),
-                                border: Border.all(color: Colors.grey.shade100),
-                              ),
-                              child: Icon(Icons.inbox, size: 40, color: Colors.grey.shade200),
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  isMobile ? 32 : 64,
+                  horizontalPadding,
+                  isMobile ? 24 : 48,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: FormateurTheme.accent.withOpacity(0.1),
+                        border: Border.all(color: FormateurTheme.accent.withOpacity(0.2)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.access_time, size: 12, color: FormateurTheme.accent),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Atelier de Quiz',
+                            style: TextStyle(
+                              color: FormateurTheme.accent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
                             ),
-                            const SizedBox(height: 24),
-                            const Text(
-                              'Aucun quiz disponible',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'UTILISEZ LE BOUTON "NOUVEAU QUIZ" POUR COMMENCER.',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.grey.shade400,
-                                letterSpacing: 1.5,
-                              ),
-                            ),
-                          ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text.rich(
+                      TextSpan(
+                        text: 'Gestion des ',
+                        style: TextStyle(
+                          fontSize: isMobile ? 28 : 36,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                          height: 1.2,
                         ),
+                        children: [
+                          const TextSpan(
+                            text: 'Quiz',
+                            style: TextStyle(color: FormateurTheme.accent),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Consultez et organisez vos banques de questions par formation.',
+                      style: TextStyle(
+                        fontSize: isMobile ? 14 : 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    if (isMobile)
+                      Column(
+                        children: [
+                          TextField(
+                            decoration: InputDecoration(
+                              hintText: 'Rechercher un quiz...',
+                              prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(32),
+                                borderSide: BorderSide(color: Colors.grey.shade100),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(32),
+                                borderSide: BorderSide(color: Colors.grey.shade100),
+                              ),
+                              contentPadding: const EdgeInsets.all(20),
+                            ),
+                            onChanged: (value) {
+                              setState(() => _searchQuery = value);
+                              _loadData();
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<int?>(
+                            isExpanded: true,
+                            value: _selectedFormationId,
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(Icons.filter_list, color: Colors.grey.shade400),
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(32),
+                                borderSide: BorderSide(color: Colors.grey.shade100),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                            ),
+                            items: [
+                              const DropdownMenuItem(value: null, child: Text('Toutes les formations')),
+                              ..._formations.map((f) => DropdownMenuItem(value: f.id, child: Text(f.titre))),
+                            ],
+                            onChanged: (v) {
+                              setState(() => _selectedFormationId = v);
+                              _loadData();
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _showCreateQuizDialog,
+                              icon: const Icon(Icons.add, color: Colors.white),
+                              label: const Text(
+                                'NOUVEAU QUIZ',
+                                style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: FormateurTheme.accent,
+                                padding: const EdgeInsets.symmetric(vertical: 20),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+                                elevation: 8,
+                              ),
+                            ),
+                          ),
+                        ],
                       )
-                    : ListView(
-                        padding: const EdgeInsets.all(24),
-                        children: _groupedQuizzes.entries.map((entry) {
-                          final key = entry.key;
-                          final quizzes = entry.value;
-                          final isExpanded = _expandedFormations[key] ?? true;
-
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 32),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
-                            elevation: 4,
-                            shadowColor: Colors.grey.shade200,
+                    else
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: TextField(
+                              decoration: InputDecoration(
+                                hintText: 'Rechercher un quiz...',
+                                prefixIcon: Icon(Icons.search, color: Colors.grey.shade400),
+                                filled: true,
+                                fillColor: Colors.grey.shade50,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: BorderSide(color: Colors.grey.shade100),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: BorderSide(color: Colors.grey.shade100),
+                                ),
+                                contentPadding: const EdgeInsets.all(24),
+                              ),
+                              onChanged: (value) {
+                                setState(() => _searchQuery = value);
+                                _loadData();
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: DropdownButtonFormField<int?>(
+                              value: _selectedFormationId,
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(Icons.filter_list, color: Colors.grey.shade400),
+                                filled: true,
+                                fillColor: Colors.grey.shade50,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                  borderSide: BorderSide(color: Colors.grey.shade100),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                              ),
+                              items: [
+                                const DropdownMenuItem(value: null, child: Text('Toutes les formations')),
+                                ..._formations.map((f) => DropdownMenuItem(value: f.id, child: Text(f.titre))),
+                              ],
+                              onChanged: (v) {
+                                setState(() => _selectedFormationId = v);
+                                _loadData();
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          ElevatedButton.icon(
+                            onPressed: _showCreateQuizDialog,
+                            icon: const Icon(Icons.add, color: Colors.white),
+                            label: const Text(
+                              'NOUVEAU QUIZ',
+                              style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: FormateurTheme.accent,
+                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+                              elevation: 8,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+              // Content
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _groupedQuizzes.isEmpty
+                        ? Center(
                             child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // Formation Header
-                                InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      _expandedFormations[key] = !isExpanded;
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(40),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade50.withOpacity(0.8),
-                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
-                                      border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 48,
-                                          height: 48,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(20),
-                                            border: Border.all(color: Colors.grey.shade200),
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              _getFormationName(key)[0],
-                                              style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w900,
-                                                color: FormateurTheme.accent,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                _getFormationName(key),
-                                                style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w900,
-                                                  color: Colors.black87,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: FormateurTheme.accent.withOpacity(0.05),
-                                                  border: Border.all(
-                                                    color: FormateurTheme.accent.withOpacity(0.2),
-                                                  ),
-                                                  borderRadius: BorderRadius.circular(8),
-                                                ),
-                                                child: Text(
-                                                  '${quizzes.length} ${quizzes.length > 1 ? "Quizzes" : "Quiz"}',
-                                                  style: const TextStyle(
-                                                    fontSize: 9,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: FormateurTheme.accent,
-                                                    letterSpacing: 1.2,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Icon(
-                                          isExpanded ? Icons.expand_less : Icons.expand_more,
-                                          color: Colors.grey.shade400,
-                                        ),
-                                      ],
-                                    ),
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(48),
+                                    border: Border.all(color: Colors.grey.shade100),
+                                  ),
+                                  child: Icon(Icons.inbox, size: 40, color: Colors.grey.shade200),
+                                ),
+                                const SizedBox(height: 24),
+                                const Text(
+                                  'Aucun quiz disponible',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.black87,
                                   ),
                                 ),
-                                // Quiz List
-                                if (isExpanded)
-                                  ...quizzes.map((quiz) => _buildQuizRow(quiz)),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'UTILISEZ LE BOUTON "NOUVEAU QUIZ" POUR COMMENCER.',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.grey.shade400,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
                               ],
                             ),
-                          );
-                        }).toList(),
-                      ),
-          ),
-        ],
+                          )
+                        : ListView(
+                            padding: EdgeInsets.all(isMobile ? 12 : 24),
+                            children: _groupedQuizzes.entries.map((entry) {
+                              final key = entry.key;
+                              final quizzes = entry.value;
+                              final isExpanded = _expandedFormations[key] ?? true;
+
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 24),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isMobile ? 24 : 40)),
+                                elevation: 4,
+                                shadowColor: Colors.grey.shade200,
+                                child: Column(
+                                  children: [
+                                    // Formation Header
+                                    InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          _expandedFormations[key] = !isExpanded;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: EdgeInsets.all(isMobile ? 16 : 40),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade50.withOpacity(0.8),
+                                          borderRadius: BorderRadius.vertical(top: Radius.circular(isMobile ? 24 : 40)),
+                                          border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: isMobile ? 40 : 48,
+                                              height: isMobile ? 40 : 48,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius: BorderRadius.circular(isMobile ? 12 : 20),
+                                                border: Border.all(color: Colors.grey.shade200),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  _getFormationName(key).isNotEmpty ? _getFormationName(key)[0] : '?',
+                                                  style: TextStyle(
+                                                    fontSize: isMobile ? 16 : 18,
+                                                    fontWeight: FontWeight.w900,
+                                                    color: FormateurTheme.accent,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    _getFormationName(key),
+                                                    style: TextStyle(
+                                                      fontSize: isMobile ? 14 : 16,
+                                                      fontWeight: FontWeight.w900,
+                                                      color: Colors.black87,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                    decoration: BoxDecoration(
+                                                      color: FormateurTheme.accent.withOpacity(0.05),
+                                                      border: Border.all(
+                                                        color: FormateurTheme.accent.withOpacity(0.2),
+                                                      ),
+                                                      borderRadius: BorderRadius.circular(8),
+                                                    ),
+                                                    child: Text(
+                                                      '${quizzes.length} ${quizzes.length > 1 ? "Quizzes" : "Quiz"}',
+                                                      style: const TextStyle(
+                                                        fontSize: 9,
+                                                        fontWeight: FontWeight.w700,
+                                                        color: FormateurTheme.accent,
+                                                        letterSpacing: 1.2,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Icon(
+                                              isExpanded ? Icons.expand_less : Icons.expand_more,
+                                              color: Colors.grey.shade400,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    // Quiz List
+                                    if (isExpanded)
+                                      ...quizzes.map((quiz) => _buildQuizRow(quiz, isMobile)),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildQuizRow(Quiz quiz) {
+  Widget _buildQuizRow(Quiz quiz, bool isMobile) {
+    if (isMobile) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: Colors.grey.shade50)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        quiz.titre,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        quiz.description ?? 'Apprentissage interactif',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade400,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                _buildStatusBadge(quiz.status),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    quiz.niveau,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.access_time, size: 12, color: Colors.grey.shade400),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${quiz.duree}m',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey.shade400,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: FormateurTheme.accent.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${quiz.nbQuestions} Qs',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: FormateurTheme.accent,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => QuizDetailPage(quizId: quiz.id),
+                      ),
+                    ).then((_) => _loadData());
+                  },
+                  icon: const Icon(Icons.visibility, size: 16),
+                  label: const Text('VOIR', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  style: TextButton.styleFrom(foregroundColor: FormateurTheme.accent),
+                ),
+                TextButton.icon(
+                  onPressed: () => _deleteQuiz(quiz.id),
+                  icon: const Icon(Icons.delete, size: 16),
+                  label: const Text('SUPPRIMER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  style: TextButton.styleFrom(foregroundColor: Colors.grey),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
       decoration: BoxDecoration(
