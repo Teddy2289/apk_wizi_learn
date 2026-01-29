@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
 import 'package:wizi_learn/core/network/api_client.dart';
 import 'package:wizi_learn/features/formateur/data/repositories/analytics_repository.dart';
+import 'package:intl/intl.dart';
 import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/stagiaire_profile_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/widgets/formateur_drawer_menu.dart';
@@ -78,11 +79,21 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
         foregroundColor: FormateurTheme.textPrimary,
         elevation: 0,
         centerTitle: false,
+        leading: Navigator.canPop(context) 
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+              onPressed: () => Navigator.pop(context),
+            )
+          : null,
         titleTextStyle: const TextStyle(
           color: FormateurTheme.textPrimary,
           fontWeight: FontWeight.w900,
-          fontSize: 20,
+          fontSize: 18,
           fontFamily: 'Montserrat',
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: FormateurTheme.border, height: 1),
         ),
       ),
       drawer: FormateurDrawerMenu(
@@ -92,50 +103,107 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
           ? const Center(child: CircularProgressIndicator(color: FormateurTheme.accent))
           : Column(
               children: [
-                // Search Bar
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: FormateurTheme.cardShadow,
-                      border: Border.all(color: FormateurTheme.border),
-                    ),
-                    child: TextField(
-                      onChanged: _filterStagiaires,
-                      decoration: const InputDecoration(
-                        hintText: 'Rechercher un stagiaire...',
-                        hintStyle: TextStyle(color: FormateurTheme.textTertiary, fontSize: 14),
-                        prefixIcon: Icon(Icons.search, color: FormateurTheme.textTertiary),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                      ),
-                    ),
-                  ),
-                ),
+                _buildPremiumHeader(),
                 
                 // List
                 Expanded(
-                  child: _filteredStagiaires.isEmpty
-                      ? Center(
-                          child: Text(
-                            _searchQuery.isEmpty ? 'Aucun stagiaire trouvé' : 'Aucun résultat',
-                            style: const TextStyle(color: FormateurTheme.textSecondary, fontWeight: FontWeight.bold),
+                  child: RefreshIndicator(
+                    onRefresh: _loadData,
+                    color: FormateurTheme.accent,
+                    child: _filteredStagiaires.isEmpty
+                        ? _buildEmptyState()
+                        : ListView.separated(
+                            padding: const EdgeInsets.all(24),
+                            itemCount: _filteredStagiaires.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 16),
+                            itemBuilder: (context, index) {
+                              final s = _filteredStagiaires[index];
+                              return _buildStagiaireCard(s);
+                            },
                           ),
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                          itemCount: _filteredStagiaires.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 16),
-                          itemBuilder: (context, index) {
-                            final s = _filteredStagiaires[index];
-                            return _buildStagiaireCard(s);
-                          },
-                        ),
+                  ),
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildPremiumHeader() {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: FormateurTheme.accent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.people_alt_rounded, size: 12, color: FormateurTheme.accentDark),
+                SizedBox(width: 8),
+                Text(
+                  'GESTION STAGIAIRES',
+                  style: TextStyle(
+                    color: FormateurTheme.accentDark,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Mes Stagiaires',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              color: FormateurTheme.textPrimary,
+              letterSpacing: -1,
+              height: 1.1,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "Gérez et suivez la progression de vos apprenants en temps réel.",
+            style: TextStyle(
+              color: FormateurTheme.textSecondary,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildSearchBar(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: FormateurTheme.background,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: FormateurTheme.border),
+      ),
+      child: TextField(
+        onChanged: _filterStagiaires,
+        decoration: const InputDecoration(
+          hintText: 'Rechercher un apprenant...',
+          hintStyle: TextStyle(color: FormateurTheme.textTertiary, fontSize: 13, fontWeight: FontWeight.w700),
+          prefixIcon: Icon(Icons.search_rounded, color: FormateurTheme.accent, size: 20),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(vertical: 16),
+        ),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+      ),
     );
   }
 
@@ -149,14 +217,21 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
       displayName = name.isNotEmpty ? name : 'Stagiaire';
     }
     
-    final String finalName = displayName;
     final int averageScore = int.tryParse(stagiaire['average_score']?.toString() ?? '0') ?? 0;
     final int points = int.tryParse(stagiaire['total_points']?.toString() ?? '0') ?? 0;
     final int streak = int.tryParse(stagiaire['total_logins']?.toString() ?? '0') ?? 0;
+    final String lastActive = (stagiaire['last_active'] ?? '').toString();
+    final String telephone = (stagiaire['telephone'] ?? '').toString();
+
+    DateTime? lastActiveDate;
+    if (lastActive.isNotEmpty) {
+      try {
+        lastActiveDate = DateTime.parse(lastActive);
+      } catch (_) {}
+    }
 
     return Container(
       decoration: FormateurTheme.premiumCardDecoration,
-      margin: const EdgeInsets.only(bottom: 4),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -168,33 +243,24 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
         },
         borderRadius: BorderRadius.circular(24),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: FormateurTheme.accent.withOpacity(0.2), width: 2),
-                    ),
-                    child: CircleAvatar(
-                      radius: 28,
-                      backgroundColor: FormateurTheme.background,
-                      backgroundImage: stagiaire['image'] != null && stagiaire['image'].toString().isNotEmpty 
-                          ? NetworkImage(AppConstants.getUserImageUrl(stagiaire['image'].toString())) : 
-                          (stagiaire['avatar'] != null && stagiaire['avatar'].toString().isNotEmpty 
-                              ? NetworkImage(AppConstants.getUserImageUrl(stagiaire['avatar'].toString())) : null),
-                      child: ((stagiaire['image'] == null || stagiaire['image'].toString().isEmpty) && 
-                              (stagiaire['avatar'] == null || stagiaire['avatar'].toString().isEmpty) && 
-                              finalName != 'Stagiaire')
-                          ? Text(
-                              finalName[0].toUpperCase(),
-                              style: const TextStyle(color: FormateurTheme.accentDark, fontWeight: FontWeight.w900, fontSize: 18),
-                            )
-                          : null,
-                    ),
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: FormateurTheme.accent.withOpacity(0.1),
+                    backgroundImage: stagiaire['avatar'] != null && stagiaire['avatar'].toString().isNotEmpty 
+                        ? NetworkImage(AppConstants.getUserImageUrl(stagiaire['avatar'].toString())) : null,
+                    child: (stagiaire['avatar'] == null || stagiaire['avatar'].toString().isEmpty)
+                        ? Text(
+                            displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                            style: const TextStyle(color: FormateurTheme.accentDark, fontWeight: FontWeight.w900, fontSize: 18),
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -202,23 +268,63 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          finalName.toUpperCase(),
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: FormateurTheme.textPrimary, letterSpacing: -0.5),
+                          displayName,
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: FormateurTheme.textPrimary, letterSpacing: -0.5),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          stagiaire['email'] ?? '',
-                          style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 11, fontWeight: FontWeight.w600),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.mail_outline_rounded, size: 14, color: FormateurTheme.textTertiary),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                stagiaire['email'] ?? '',
+                                style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 12, fontWeight: FontWeight.w600),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
+                        if (telephone.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.phone_outlined, size: 14, color: FormateurTheme.textTertiary),
+                              const SizedBox(width: 6),
+                              Text(
+                                telephone,
+                                style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_ios_rounded, color: FormateurTheme.border, size: 16),
+                  const Icon(Icons.chevron_right_rounded, color: FormateurTheme.border, size: 24),
                 ],
               ),
               const SizedBox(height: 20),
+              if (lastActiveDate != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.history_rounded, size: 14, color: FormateurTheme.accent),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Dernière activité : ',
+                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: FormateurTheme.accent.withOpacity(0.7), letterSpacing: 0.5),
+                      ),
+                      Text(
+                        DateFormat('dd/MM/yyyy HH:mm').format(lastActiveDate),
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: FormateurTheme.textPrimary),
+                      ),
+                    ],
+                  ),
+                ),
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: FormateurTheme.background,
                   borderRadius: BorderRadius.circular(16),
@@ -228,7 +334,7 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _buildMiniMetric('SCORE', '$averageScore%', FormateurTheme.success),
-                    _buildMiniMetric('POINTS', '$points', FormateurTheme.accentDark),
+                    // _buildMiniMetric('POINTS', '$points', FormateurTheme.accentDark),
                     _buildMiniMetric('SÉRIE', '${streak}j', Colors.orange),
                   ],
                 ),
@@ -253,6 +359,29 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
           style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 0.5),
         ),
       ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: const Icon(Icons.people_outline_rounded, size: 48, color: FormateurTheme.border),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'AUCUN STAGIAIRE TROUVÉ',
+            style: TextStyle(color: FormateurTheme.textTertiary, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.0),
+          ),
+        ],
+      ),
     );
   }
 }

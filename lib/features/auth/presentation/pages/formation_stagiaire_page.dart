@@ -531,7 +531,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
           ),
           const SizedBox(width: 12),
           Text(
-            '${l.avgScore}% AVG',
+            '${l.avgScore}% MOYENNE',
             style: theme.textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.bold,
               fontSize: 10,

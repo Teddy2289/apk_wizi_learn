@@ -21,6 +21,9 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
   List<DemandeSuivi> _filteredDemandes = [];
   final TextEditingController _searchController = TextEditingController();
 
+  // Expanded students tracking (using ID as string key)
+  final Map<String, bool> _expandedGroups = {};
+
   @override
   void initState() {
     super.initState();
@@ -46,6 +49,12 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
       setState(() {
         _demandes = data;
         _filteredDemandes = data;
+        
+        // Auto-expand all groups initially
+        for (var d in data) {
+          _expandedGroups[d.stagiaireId.toString()] = true;
+        }
+        
         _loading = false;
       });
     } catch (e) {
@@ -71,10 +80,10 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
 
   @override
   Widget build(BuildContext context) {
-    // Grouping logic
-    final groupedDemandes = <int, List<DemandeSuivi>>{};
+    // Grouping logic by Stagiaire
+    final groups = <int, List<DemandeSuivi>>{};
     for (final d in _filteredDemandes) {
-      groupedDemandes.putIfAbsent(d.stagiaireId, () => []).add(d);
+      groups.putIfAbsent(d.stagiaireId, () => []).add(d);
     }
 
     return Scaffold(
@@ -108,15 +117,11 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
                     color: FormateurTheme.accent,
                     child: _filteredDemandes.isEmpty
                         ? _buildEmptyState()
-                        : ListView.separated(
+                        : ListView(
                             padding: const EdgeInsets.all(24),
-                            itemCount: groupedDemandes.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 24),
-                            itemBuilder: (context, index) {
-                              final studentId = groupedDemandes.keys.elementAt(index);
-                              final studentDemandes = groupedDemandes[studentId]!;
-                              return _buildStudentGroupCard(studentDemandes);
-                            },
+                            children: groups.entries.map((entry) {
+                              return _buildStudentGroupCard(entry.value);
+                            }).toList(),
                           ),
                   ),
           ),
@@ -206,45 +211,88 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
 
   Widget _buildStudentGroupCard(List<DemandeSuivi> demandes) {
     final first = demandes.first;
+    final studentId = first.stagiaireId.toString();
+    final isExpanded = _expandedGroups[studentId] ?? true;
+
     return Container(
+      margin: const EdgeInsets.only(bottom: 24),
       decoration: FormateurTheme.premiumCardDecoration,
       child: Column(
         children: [
-          // Student Header
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: FormateurTheme.accent.withOpacity(0.1),
-                  child: Text(
-                    first.stagiaireName[0].toUpperCase(),
-                    style: const TextStyle(color: FormateurTheme.accentDark, fontWeight: FontWeight.w900),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        first.stagiaireName.toUpperCase(),
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: FormateurTheme.textPrimary),
+          // Student Header (Accordion Toggle)
+          InkWell(
+            onTap: () {
+              setState(() {
+                _expandedGroups[studentId] = !isExpanded;
+              });
+            },
+            borderRadius: BorderRadius.circular(24),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: FormateurTheme.accent.withOpacity(0.1),
+                    child: Text(
+                      first.stagiaireName[0].toUpperCase(),
+                      style: const TextStyle(
+                        color: FormateurTheme.accentDark, 
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18
                       ),
-                      Text(
-                        '${demandes.length} ${demandes.length > 1 ? 'DEMANDES' : 'DEMANDE'}',
-                        style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 10, fontWeight: FontWeight.w900),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          first.stagiaireName.toUpperCase(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900, 
+                            fontSize: 14, 
+                            color: FormateurTheme.textPrimary,
+                            letterSpacing: -0.2
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: FormateurTheme.accent.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: FormateurTheme.accent.withOpacity(0.1)),
+                          ),
+                          child: Text(
+                            '${demandes.length} ${demandes.length > 1 ? "DEMANDES" : "DEMANDE"}',
+                            style: const TextStyle(
+                              color: FormateurTheme.accentDark, 
+                              fontSize: 9, 
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    isExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                    color: FormateurTheme.textTertiary,
+                    size: 28,
+                  ),
+                ],
+              ),
             ),
           ),
-          const Divider(height: 1, thickness: 1, color: FormateurTheme.border),
-          // Demands List
-          ...demandes.map((d) => _buildDemandeListItem(d)),
+          
+          if (isExpanded) ...[
+            const Divider(height: 1, thickness: 1, color: FormateurTheme.border),
+            // Demands List (Formations)
+            ...demandes.map((d) => _buildDemandeListItem(d)),
+          ],
         ],
       ),
     );
@@ -280,7 +328,7 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
     } catch (_) {}
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: FormateurTheme.border)),
       ),
@@ -291,14 +339,19 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
-                  demande.formation.toUpperCase(),
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: FormateurTheme.textPrimary, letterSpacing: -0.2),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: Row(
+                  children: [
+                    const Icon(Icons.book_rounded, size: 14, color: FormateurTheme.accentDark),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        demande.formation.toUpperCase(),
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: FormateurTheme.textPrimary),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -312,11 +365,11 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             children: [
               const Icon(Icons.calendar_today_rounded, size: 12, color: FormateurTheme.textTertiary),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Text(
                 date != null ? DateFormat('dd/MM/yyyy HH:mm').format(date) : demande.date,
                 style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 11, fontWeight: FontWeight.bold),
@@ -324,17 +377,28 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
             ],
           ),
           if (demande.motif != null && demande.motif!.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               width: double.infinity,
               decoration: BoxDecoration(
                 color: FormateurTheme.background,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: FormateurTheme.border.withOpacity(0.5)),
               ),
-              child: Text(
-                demande.motif!,
-                style: const TextStyle(color: FormateurTheme.textSecondary, fontSize: 11, fontStyle: FontStyle.italic, fontWeight: FontWeight.w500),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'MOTIF DE LA DEMANDE',
+                    style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    demande.motif!,
+                    style: const TextStyle(color: FormateurTheme.textSecondary, fontSize: 11, fontStyle: FontStyle.italic, fontWeight: FontWeight.w500, height: 1.4),
+                  ),
+                ],
               ),
             ),
           ],

@@ -217,6 +217,12 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
         foregroundColor: FormateurTheme.textPrimary,
         elevation: 0,
         centerTitle: false,
+        leading: Navigator.canPop(context) 
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         titleTextStyle: const TextStyle(
           color: FormateurTheme.textPrimary,
           fontWeight: FontWeight.w900,

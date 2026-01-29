@@ -430,6 +430,19 @@ class _FormateurQuizManagementPageState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (Navigator.canPop(context))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                          style: IconButton.styleFrom(
+                            backgroundColor: FormateurTheme.background,
+                            foregroundColor: FormateurTheme.textPrimary,
+                            padding: const EdgeInsets.all(12),
+                          ),
+                        ),
+                      ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
