@@ -136,7 +136,7 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'HALL OF FAME',
+                          'Suivez l\'excellence de vos stagiaires en temps réel.',
                           style: TextStyle(
                             color: FormateurTheme.accentDark,
                             fontSize: 10,
@@ -147,14 +147,14 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Suivez l\'excellence de vos stagiaires en temps réel.',
-                    style: TextStyle(
-                      color: FormateurTheme.textSecondary,
-                      fontSize: 14,
-                    ),
-                  ),
+                  // const SizedBox(height: 12),
+                  // const Text(
+                  //   'Suivez l\'excellence de vos stagiaires en temps réel.',
+                  //   style: TextStyle(
+                  //     color: FormateurTheme.textSecondary,
+                  //     fontSize: 14,
+                  //   ),
+                  // ),
                 ],
               ),
             ),

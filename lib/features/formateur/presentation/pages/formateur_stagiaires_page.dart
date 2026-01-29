@@ -150,37 +150,14 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
     }
     
     final String finalName = displayName;
+    final int averageScore = int.tryParse(stagiaire['average_score']?.toString() ?? '0') ?? 0;
+    final int points = int.tryParse(stagiaire['total_points']?.toString() ?? '0') ?? 0;
+    final int streak = int.tryParse(stagiaire['total_logins']?.toString() ?? '0') ?? 0;
 
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: FormateurTheme.cardShadow,
-        border: Border.all(color: FormateurTheme.border),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          radius: 24,
-          backgroundColor: FormateurTheme.accent.withOpacity(0.1),
-          backgroundImage: stagiaire['image'] != null && stagiaire['image'].toString().isNotEmpty 
-              ? NetworkImage(AppConstants.getUserImageUrl(stagiaire['image'].toString())) : null,
-          child: ((stagiaire['image'] == null || stagiaire['image'].toString().isEmpty) && finalName != 'Stagiaire')
-              ? Text(
-                  finalName[0].toUpperCase(),
-                  style: const TextStyle(color: FormateurTheme.accentDark, fontWeight: FontWeight.bold),
-                )
-              : ((stagiaire['image'] == null || stagiaire['image'].toString().isEmpty) ? const Icon(Icons.person, color: FormateurTheme.accentDark) : null),
-        ),
-        title: Text(
-          finalName,
-          style: const TextStyle(fontWeight: FontWeight.bold, color: FormateurTheme.textPrimary),
-        ),
-        subtitle: Text(
-          stagiaire['email'] ?? '',
-          style: const TextStyle(color: FormateurTheme.textSecondary, fontSize: 12),
-        ),
-        trailing: const Icon(Icons.chevron_right, color: FormateurTheme.textTertiary),
+      decoration: FormateurTheme.premiumCardDecoration,
+      margin: const EdgeInsets.only(bottom: 4),
+      child: InkWell(
         onTap: () {
           Navigator.push(
             context,
@@ -189,7 +166,93 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
             ),
           );
         },
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: FormateurTheme.accent.withOpacity(0.2), width: 2),
+                    ),
+                    child: CircleAvatar(
+                      radius: 28,
+                      backgroundColor: FormateurTheme.background,
+                      backgroundImage: stagiaire['image'] != null && stagiaire['image'].toString().isNotEmpty 
+                          ? NetworkImage(AppConstants.getUserImageUrl(stagiaire['image'].toString())) : 
+                          (stagiaire['avatar'] != null && stagiaire['avatar'].toString().isNotEmpty 
+                              ? NetworkImage(AppConstants.getUserImageUrl(stagiaire['avatar'].toString())) : null),
+                      child: ((stagiaire['image'] == null || stagiaire['image'].toString().isEmpty) && 
+                              (stagiaire['avatar'] == null || stagiaire['avatar'].toString().isEmpty) && 
+                              finalName != 'Stagiaire')
+                          ? Text(
+                              finalName[0].toUpperCase(),
+                              style: const TextStyle(color: FormateurTheme.accentDark, fontWeight: FontWeight.w900, fontSize: 18),
+                            )
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          finalName.toUpperCase(),
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: FormateurTheme.textPrimary, letterSpacing: -0.5),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          stagiaire['email'] ?? '',
+                          style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 11, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios_rounded, color: FormateurTheme.border, size: 16),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                decoration: BoxDecoration(
+                  color: FormateurTheme.background,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: FormateurTheme.border.withOpacity(0.5)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildMiniMetric('SCORE', '$averageScore%', FormateurTheme.success),
+                    _buildMiniMetric('POINTS', '$points', FormateurTheme.accentDark),
+                    _buildMiniMetric('SÉRIE', '${streak}j', Colors.orange),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
+    );
+  }
+
+  Widget _buildMiniMetric(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: color, letterSpacing: -1),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 0.5),
+        ),
+      ],
     );
   }
 }

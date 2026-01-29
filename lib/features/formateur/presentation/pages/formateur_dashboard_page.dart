@@ -11,9 +11,13 @@ import 'package:wizi_learn/features/formateur/data/repositories/formation_manage
 import 'package:wizi_learn/features/formateur/data/repositories/agenda_repository.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/stagiaire_profile_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/theme/formateur_theme.dart';
+import 'package:wizi_learn/features/formateur/presentation/widgets/dashboard_footer.dart';
 import 'package:wizi_learn/features/formateur/presentation/widgets/dashboard_shimmer.dart';
 import 'package:wizi_learn/features/formateur/presentation/widgets/formateur_drawer_menu.dart';
-import 'package:wizi_learn/features/formateur/presentation/widgets/agenda_section.dart';
+import 'package:wizi_learn/features/formateur/presentation/widgets/online_stagiaires_card.dart';
+import 'package:wizi_learn/features/formateur/presentation/widgets/formations_view_card.dart';
+import 'package:wizi_learn/features/formateur/presentation/widgets/formateur_view_card.dart';
+import 'package:wizi_learn/features/formateur/presentation/widgets/inactive_stagiaires_table.dart';
 import 'package:wizi_learn/core/constants/route_constants.dart';
 import 'package:wizi_learn/core/constants/app_constants.dart';
 
@@ -32,13 +36,19 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
   DashboardSummary? _summary;
   List<InactiveStagiaire> _inactiveStagiaires = [];
   List<OnlineStagiaire> _onlineStagiaires = [];
-  List<FormationWithStats> _formations = [];
-  List<AgendaEvent> _agendaEvents = [];
   PerformanceRankings? _rankings;
   bool _loading = true;
-  String? _selectedFormationId;
-  String _selectedFilter = 'all'; // all, active, formation
-  String _searchQuery = '';
+  
+  // Pagination states for middle section cards
+  int _formationsPage = 1;
+  int _formationsLastPage = 1;
+  int _formationsTotal = 0;
+  List<FormationDashboardStats> _paginatedFormations = [];
+  
+  int _formateursPage = 1;
+  int _formateursLastPage = 1;
+  int _formateursTotal = 0;
+  List<Map<String, dynamic>> _paginatedFormateurs = [];
 
   @override
   void initState() {
@@ -56,21 +66,15 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
   Future<void> _loadData() async {
     setState(() => _loading = true);
     try {
-      if (_formations.isEmpty) {
-        _formations = await _formationRepository.getAvailableFormations();
-      }
-
       final results = await Future.wait([
         _analyticsRepository.getDashboardSummary(
-          period: 7,
-          formationId: _selectedFormationId,
+          period: 30,
+          formationsPage: _formationsPage,
+          formateursPage: _formateursPage,
         ),
         _analyticsRepository.getInactiveStagiaires(days: 7),
         _analyticsRepository.getOnlineStagiaires(),
-        _analyticsRepository.getStudentsComparison(
-          formationId: _selectedFormationId,
-        ),
-        _agendaRepository.getAgenda(),
+        _analyticsRepository.getStudentsComparison(),
       ]);
 
       if (mounted) {
@@ -79,7 +83,19 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
           _inactiveStagiaires = results[1] as List<InactiveStagiaire>;
           _onlineStagiaires = results[2] as List<OnlineStagiaire>;
           _rankings = PerformanceRankings.fromJson(results[3] as Map<String, dynamic>);
-          _agendaEvents = results[4] as List<AgendaEvent>;
+          
+          // Update pagination state from summary metadata
+          if (_summary != null) {
+            _formationsTotal = _summary!.formationsMeta.total;
+            _formationsLastPage = _summary!.formationsMeta.lastPage;
+            // The formations list is already the current page data
+            _paginatedFormations = _summary!.formations;
+            
+            _formateursTotal = _summary!.formateursMeta.total;
+            _formateursLastPage = _summary!.formateursMeta.lastPage;
+            _paginatedFormateurs = _summary!.formateurs.cast<Map<String, dynamic>>();
+          }
+          
           _loading = false;
         });
       }
@@ -87,6 +103,18 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
       debugPrint('Erreur chargement données: $e');
       if (mounted) setState(() => _loading = false);
     }
+  }
+  
+  void _onFormationsPageChanged(int page) {
+    if (page < 1 || page > _formationsLastPage) return;
+    setState(() => _formationsPage = page);
+    _loadData();
+  }
+  
+  void _onFormateursPageChanged(int page) {
+    if (page < 1 || page > _formateursLastPage) return;
+    setState(() => _formateursPage = page);
+    _loadData();
   }
 
   @override
@@ -141,81 +169,31 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                       padding: const EdgeInsets.all(24.0),
                       child: Column(
                         children: [
-                          // Critical Alerts
-                          if (_inactiveStagiaires.isNotEmpty) ...[
-                            _buildCriticalAlertsSection(),
-                            const SizedBox(height: 24),
-                          ],
-
                           // Stats Grid
                           if (_summary != null) ...[
                             _buildStatsGrid(),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 64),
                           ],
 
-                          // Agenda Section (NEW)
-                          AgendaSection(
-                            events: _agendaEvents,
-                            onRefreshRequested: _loadData,
+                          // 3-Column Middle Section (Matching React)
+                          _build3ColumnMiddleSection(),
+                          const SizedBox(height: 64),
+
+                          // Performance & Engagement Section
+                          if (_rankings != null) _buildPerformanceSection(),
+                          const SizedBox(height: 64),
+
+                          // Inactive Stagiaires Table
+                          InactiveStagiairesTable(
+                            stagiaires: _inactiveStagiaires,
+                            loading: false,
                           ),
-                          const SizedBox(height: 24),
-                          
-                          // Quick Actions
-                          _buildQuickActions(),
-                          const SizedBox(height: 32),
-
-                          // Sections Header
-                          Row(
-                            children: [
-                              Container(
-                                width: 4,
-                                height: 16,
-                                decoration: BoxDecoration(
-                                  color: FormateurTheme.accent,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'ACTIVITÉ EN DIRECT',
-                                style: TextStyle(
-                                  color: FormateurTheme.textPrimary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Search and Filters
-                          _buildSearchAndFilters(),
-                          const SizedBox(height: 24),
-
-                          // Online Stagiaires Section
-                          _buildOnlineStagiairesSection(),
-                          const SizedBox(height: 32),
-
-                          // Top Learners Section (NEW)
-                          if (_rankings != null) ...[
-                            _buildTopLearnersSection(),
-                            const SizedBox(height: 32),
-                          ],
-
-                          // Formation Performance Section (NEW)
-                          if (_summary?.formations.isNotEmpty ?? false) ...[
-                            _buildFormationPerformanceSection(),
-                            const SizedBox(height: 32),
-                          ],
-
-                          // Formation Selector
-                          if (_formations.isNotEmpty) ...[
-                            _buildFormationSelector(),
-                          ],
                         ],
                       ),
                     ),
+                    
+                    // Footer
+                    const DashboardFooter(),
                   ],
                 ),
               ),
@@ -553,142 +531,6 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
     );
   }
 
-  Widget _buildQuickActions() {
-    return Container(
-      decoration: FormateurTheme.premiumCardDecoration.copyWith(
-        color: FormateurTheme.textPrimary,
-        border: Border.all(color: Colors.white12),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildActionButton(Icons.emoji_events_rounded, 'STAGIAIRES', () => Navigator.pushNamed(context, '/formateur/classement')),
-          Container(width: 1, height: 30, color: Colors.white10),
-          _buildActionButton(Icons.campaign_rounded, 'NOTIFIER', () => Navigator.pushNamed(context, '/formateur/send-notification')),
-          Container(width: 1, height: 30, color: Colors.white10),
-          _buildActionButton(Icons.insert_chart_rounded, 'STATS', () => Navigator.pushNamed(context, '/formateur/analytiques')),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton(IconData icon, String label, VoidCallback onPressed) {
-    return InkWell(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onPressed();
-      },
-      child: Column(
-        children: [
-          Icon(icon, color: FormateurTheme.accent, size: 24),
-          const SizedBox(height: 10),
-          Text(label, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.0)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchAndFilters() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: FormateurTheme.border),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: TextField(
-        onChanged: (value) => setState(() => _searchQuery = value),
-        decoration: InputDecoration(
-          hintText: 'Rechercher un apprenant...',
-          hintStyle: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 13, fontWeight: FontWeight.w700),
-          prefixIcon: const Icon(Icons.search, color: FormateurTheme.accent, size: 20),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 20),
-        ),
-        style: const TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  Widget _buildOnlineStagiairesSection() {
-    if (_onlineStagiaires.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-         ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _onlineStagiaires.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final stagiaire = _onlineStagiaires[index];
-            return Container(
-              decoration: FormateurTheme.premiumCardDecoration,
-              child: ListTile(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => StagiaireProfilePage(stagiaireId: stagiaire.id)));
-                },
-                contentPadding: const EdgeInsets.all(16),
-                leading: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: FormateurTheme.success, width: 2)),
-                  child: CircleAvatar(
-                    radius: 20,
-                    backgroundColor: FormateurTheme.background,
-                    backgroundImage: stagiaire.avatar != null && stagiaire.avatar!.isNotEmpty
-                      ? NetworkImage(AppConstants.getUserImageUrl(stagiaire.avatar!)) : null,
-                    child: (stagiaire.avatar == null || stagiaire.avatar!.isEmpty) ? Text(stagiaire.prenom[0], style: const TextStyle(fontWeight: FontWeight.w900)) : null,
-                  ),
-                ),
-                title: Text('${stagiaire.prenom} ${stagiaire.nom}'.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: -0.5)),
-                subtitle: const Row(
-                  children: [
-                    Icon(Icons.circle, color: FormateurTheme.success, size: 8),
-                    SizedBox(width: 6),
-                    Text('EN LIGNE', style: TextStyle(color: FormateurTheme.success, fontSize: 10, fontWeight: FontWeight.w900)),
-                  ],
-                ),
-                trailing: const Icon(Icons.chevron_right_rounded, color: FormateurTheme.border),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFormationSelector() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: FormateurTheme.premiumCardDecoration,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('FILTRER PAR FORMATION', style: TextStyle(color: FormateurTheme.textTertiary, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.0)),
-          const SizedBox(height: 16),
-          DropdownButtonHideUnderline(
-            child: DropdownButton<String?>(
-              value: _selectedFormationId,
-              isExpanded: true,
-              hint: const Text('Toutes les formations', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900)),
-              icon: const Icon(Icons.expand_more_rounded, color: FormateurTheme.accent),
-              items: [
-                const DropdownMenuItem<String?>(value: null, child: Text('Toutes les formations', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900))),
-                ..._formations.map((f) => DropdownMenuItem<String?>(value: f.id.toString(), child: Text(f.titre, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900)))),
-              ],
-              onChanged: (value) {
-                setState(() => _selectedFormationId = value);
-                _loadData();
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildFormationPerformanceSection() {
     if (_summary?.formations.isEmpty ?? true) return const SizedBox.shrink();
@@ -896,4 +738,293 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
       ),
     );
   }
+  
+  Widget _build3ColumnMiddleSection() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 1024) {
+          // Desktop: 3 columns
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: OnlineStagiairesCard(
+                  stagiaires: _onlineStagiaires,
+                  total: _onlineStagiaires.length,
+                  onRefresh: _loadData,
+                ),
+              ),
+              const SizedBox(width: 32),
+              Expanded(
+                child: FormationsViewCard(
+                  formations: _paginatedFormations,
+                  currentPage: _formationsPage,
+                  lastPage: _formationsLastPage,
+                  total: _formationsTotal,
+                  onPageChanged: _onFormationsPageChanged,
+                  onFormationTap: null, // TODO: Navigate to formations page when route is ready
+                ),
+              ),
+              const SizedBox(width: 32),
+              Expanded(
+                child: FormateurViewCard(
+                  formateurs: _paginatedFormateurs,
+                  currentPage: _formateursPage,
+                  lastPage: _formateursLastPage,
+                  total: _formateursTotal,
+                  onPageChanged: _onFormateursPageChanged,
+                  onFormateurTap: null, // TODO: Navigate to arena page when route is ready
+                ),
+              ),
+            ],
+          );
+        } else {
+          // Mobile/Tablet: Stack vertically
+          return Column(
+            children: [
+              OnlineStagiairesCard(
+                stagiaires: _onlineStagiaires,
+                total: _onlineStagiaires.length,
+                onRefresh: _loadData,
+              ),
+              const SizedBox(height: 32),
+              FormationsViewCard(
+                formations: _paginatedFormations,
+                currentPage: _formationsPage,
+                lastPage: _formationsLastPage,
+                total: _formationsTotal,
+                onPageChanged: _onFormationsPageChanged,
+                onFormationTap: null, // TODO: Navigate to formations page when route is ready
+              ),
+              const SizedBox(height: 32),
+              FormateurViewCard(
+                formateurs: _paginatedFormateurs,
+                currentPage: _formateursPage,
+                lastPage: _formateursLastPage,
+                total: _formateursTotal,
+                onPageChanged: _onFormateursPageChanged,
+                onFormateurTap: null, // TODO: Navigate to arena page when route is ready
+              ),
+            ],
+          );
+        }
+      },
+    );
+  }
+  
+  Widget _buildPerformanceSection() {
+    if (_rankings == null) return const SizedBox.shrink();
+
+    return Container(
+      decoration: FormateurTheme.premiumCardDecoration,
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RichText(
+            text: const TextSpan(
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: FormateurTheme.textPrimary, letterSpacing: -1.0),
+              children: [
+                TextSpan(text: 'Performance & '),
+                TextSpan(text: 'Engagement', style: TextStyle(color: FormateurTheme.accent)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Corrélation entre temps de connexion et réussite aux examens.',
+            style: TextStyle(color: FormateurTheme.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 32),
+          
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 900;
+              if (isMobile) {
+                return Column(
+                  children: [
+                    _buildRankingCard(
+                      title: 'Top Quizzers',
+                      subtitle: 'Champions de la révision',
+                      icon: Icons.emoji_events_rounded,
+                      color: FormateurTheme.accentDark,
+                      data: _rankings!.mostQuizzes,
+                      valueKey: 'quiz',
+                    ),
+                    const SizedBox(height: 24),
+                    _buildRankingCard(
+                      title: 'Top Actifs',
+                      subtitle: 'Assiduité exemplaire',
+                      icon: Icons.mouse_rounded,
+                      color: Colors.blue,
+                      data: _rankings!.mostActive,
+                      valueKey: 'login',
+                    ),
+                  ],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _buildRankingCard(
+                      title: 'Top Quizzers',
+                      subtitle: 'Champions de la révision',
+                      icon: Icons.emoji_events_rounded,
+                      color: FormateurTheme.accentDark,
+                      data: _rankings!.mostQuizzes,
+                      valueKey: 'quiz',
+                    ),
+                  ),
+                  const SizedBox(width: 32),
+                  Expanded(
+                    child: _buildRankingCard(
+                      title: 'Top Actifs',
+                      subtitle: 'Assiduité exemplaire',
+                      icon: Icons.mouse_rounded,
+                      color: Colors.blue,
+                      data: _rankings!.mostActive,
+                      valueKey: 'login',
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          
+          // Formation Performance Cards
+          if (_summary?.formations.isNotEmpty ?? false)
+             Padding(
+               padding: const EdgeInsets.only(top: 32),
+               child: _buildFormationPerformanceSection(),
+             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRankingCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required List<StagiairePerformance> data,
+    required String valueKey,
+  }) {
+    // Ranking Card Implementation
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: FormateurTheme.background,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: FormateurTheme.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: color.withOpacity(0.2)),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: FormateurTheme.textPrimary, letterSpacing: -0.5)),
+                  const SizedBox(height: 2),
+                  Text(subtitle.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: FormateurTheme.textTertiary, letterSpacing: 0.5)),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: data.take(5).length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final student = data[index];
+              Color rankBgColor;
+              Color rankTextColor;
+              
+              if (index == 0) {
+                rankBgColor = color;
+                rankTextColor = Colors.white;
+              } else if (index == 1) {
+                rankBgColor = Colors.grey.shade200;
+                rankTextColor = Colors.grey.shade600;
+              } else if (index == 2) {
+                rankBgColor = Colors.orange.shade50;
+                rankTextColor = Colors.orange.shade800;
+              } else {
+                rankBgColor = Colors.white;
+                rankTextColor = FormateurTheme.textTertiary;
+              }
+
+              return Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.transparent),
+                  boxShadow: index == 0 ? [BoxShadow(color: color.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))] : [],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: rankBgColor,
+                        borderRadius: BorderRadius.circular(8),
+                        border: index > 2 ? Border.all(color: FormateurTheme.border) : null,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${index + 1}',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: rankTextColor),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(student.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: FormateurTheme.textPrimary)),
+                          Text(student.email, style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 9, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          valueKey == 'quiz' ? '${student.totalQuizzes}' : '${student.totalLogins}', 
+                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: color)
+                        ),
+                        Text(
+                          valueKey == 'quiz' ? 'QUIZ' : 'LOGS', 
+                          style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 8, fontWeight: FontWeight.w900)
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }
+

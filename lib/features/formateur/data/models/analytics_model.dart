@@ -104,7 +104,9 @@ class DashboardSummary {
   final double avgQuizScore;
   final double totalVideoHours;
   final List<FormationDashboardStats> formations;
-  final List<dynamic> formateurs; // Keeping dynamic for now
+  final List<dynamic> formateurs;
+  final PaginationMeta formationsMeta;
+  final PaginationMeta formateursMeta;
 
   DashboardSummary({
     required this.totalStagiaires,
@@ -117,10 +119,34 @@ class DashboardSummary {
     required this.totalVideoHours,
     required this.formations,
     required this.formateurs,
+    required this.formationsMeta,
+    required this.formateursMeta,
   });
 
 
   factory DashboardSummary.fromJson(Map<String, dynamic> json) {
+    // Helper to extract data list differently if it's paginated or direct list
+    List<dynamic> extractList(dynamic data) {
+      if (data == null) return [];
+      if (data is List) return data;
+      if (data is Map && data.containsKey('data')) {
+        return data['data'] is List ? data['data'] : [];
+      }
+      return [];
+    }
+    
+    // Helper to extract meta
+    PaginationMeta extractMeta(dynamic data) {
+      if (data is Map && data.containsKey('current_page')) {
+        return PaginationMeta.fromJson(Map<String, dynamic>.from(data));
+      }
+      // If it's a list, we calculate basic meta
+      if (data is List) {
+        return PaginationMeta(currentPage: 1, lastPage: 1, total: data.length);
+      }
+      return PaginationMeta.empty();
+    }
+
     return DashboardSummary(
       totalStagiaires: int.tryParse(json['total_stagiaires']?.toString() ?? '0') ?? 0,
       totalFormations: int.tryParse(json['total_formations']?.toString() ?? '0') ?? 0,
@@ -130,20 +156,13 @@ class DashboardSummary {
       neverConnected: int.tryParse(json['never_connected']?.toString() ?? '0') ?? 0,
       avgQuizScore: double.tryParse(json['avg_quiz_score']?.toString() ?? '0') ?? 0.0,
       totalVideoHours: double.tryParse(json['total_video_hours']?.toString() ?? '0') ?? 0.0,
-      formations: (json['formations'] as List?)
-          ?.map((e) => FormationDashboardStats.fromJson(e))
-          .toList() ?? [],
-      formateurs: _parseList(json['formateurs']),
+      formations: extractList(json['formations'])
+          .map((e) => FormationDashboardStats.fromJson(e))
+          .toList(),
+      formateurs: extractList(json['formateurs']),
+      formationsMeta: extractMeta(json['formations']),
+      formateursMeta: extractMeta(json['formateurs']),
     );
-  }
-
-  static List<dynamic> _parseList(dynamic data) {
-    if (data == null) return [];
-    if (data is List) return data;
-    if (data is Map && data.containsKey('data')) {
-      return data['data'] is List ? data['data'] : [];
-    }
-    return [];
   }
 }
 
@@ -176,6 +195,30 @@ class FormationDashboardStats {
   }
 }
 
+class PaginationMeta {
+  final int currentPage;
+  final int lastPage;
+  final int total;
+
+  PaginationMeta({
+    required this.currentPage,
+    required this.lastPage,
+    required this.total,
+  });
+
+  factory PaginationMeta.fromJson(Map<String, dynamic> json) {
+    return PaginationMeta(
+      currentPage: int.tryParse(json['current_page']?.toString() ?? '1') ?? 1,
+      lastPage: int.tryParse(json['last_page']?.toString() ?? '1') ?? 1,
+      total: int.tryParse(json['total']?.toString() ?? '0') ?? 0,
+    );
+  }
+
+  factory PaginationMeta.empty() {
+    return PaginationMeta(currentPage: 1, lastPage: 1, total: 0);
+  }
+}
+
 class InactiveStagiaire {
   final int id;
   final String prenom;
@@ -185,6 +228,9 @@ class InactiveStagiaire {
   final String? lastActivityAt;
   final double daysSinceActivity;
   final bool neverConnected;
+  final String? formationNom;
+  final int daysInactive;
+  final DateTime? lastSeenAt;
 
   InactiveStagiaire({
     required this.id,
@@ -195,7 +241,10 @@ class InactiveStagiaire {
     this.lastActivityAt,
     required this.daysSinceActivity,
     required this.neverConnected,
-  });
+    this.formationNom,
+    int? daysInactive,
+    this.lastSeenAt,
+  }) : daysInactive = daysInactive ?? daysSinceActivity.round();
 
   factory InactiveStagiaire.fromJson(Map<String, dynamic> json) {
     return InactiveStagiaire(
@@ -207,6 +256,13 @@ class InactiveStagiaire {
       lastActivityAt: json['last_activity_at']?.toString(),
       daysSinceActivity: double.tryParse(json['days_since_activity']?.toString() ?? '0') ?? 0.0,
       neverConnected: json['never_connected'] == true || json['never_connected'] == 1,
+      formationNom: json['formation_nom']?.toString() ?? json['formation']?.toString(),
+      daysInactive: int.tryParse(json['days_inactive']?.toString() ?? json['days_since_activity']?.toString() ?? '0'),
+      lastSeenAt: json['last_seen_at'] != null
+          ? DateTime.tryParse(json['last_seen_at'].toString())
+          : (json['last_activity_at'] != null
+              ? DateTime.tryParse(json['last_activity_at'].toString())
+              : null),
     );
   }
 }
@@ -217,7 +273,7 @@ class OnlineStagiaire {
   final String nom;
   final String email;
   final String? avatar;
-  final String lastActivityAt;
+  final DateTime lastActivityAt;
   final List<String> formations;
 
   OnlineStagiaire({
@@ -237,7 +293,9 @@ class OnlineStagiaire {
       nom: json['nom']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       avatar: json['avatar']?.toString(),
-      lastActivityAt: json['last_activity_at']?.toString() ?? 'À l\'instant',
+      lastActivityAt: json['last_activity_at'] != null
+          ? DateTime.tryParse(json['last_activity_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
       formations: (json['formations'] as List?)?.map((e) => e.toString()).toList() ?? [],
     );
   }

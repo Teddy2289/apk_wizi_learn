@@ -78,13 +78,20 @@ class AnalyticsRepository {
   }
 
   /// Get dashboard summary
-  Future<DashboardSummary> getDashboardSummary({int period = 30, String? formationId}) async {
+  Future<DashboardSummary> getDashboardSummary({
+    int period = 30, 
+    String? formationId,
+    int? formationsPage,
+    int? formateursPage,
+  }) async {
     try {
       final response = await apiClient.get(
         '/formateur/dashboard/stats',
         queryParameters: {
           'period': period,
           if (formationId != null) 'formation_id': formationId,
+          if (formationsPage != null) 'formations_page': formationsPage,
+          if (formateursPage != null) 'formateurs_page': formateursPage,
         },
       );
 

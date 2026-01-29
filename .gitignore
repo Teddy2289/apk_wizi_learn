@@ -46,3 +46,12 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 *.hprof
+
+# Credentials
+client_*.json
+*.plist
+*.jks
+*.keystore
+!GoogleService-Info.plist
+!google-services.json
+

@@ -97,7 +97,7 @@ class _FormateurQuizManagementPageState
       (f) => f.id.toString() == key,
       orElse: () => FormationWithStats(
         id: int.tryParse(key) ?? 0,
-        titre: 'Formation #$key',
+        titre: formation.titre,
         categorie: '',
         nbStagiaires: 0,
         nbVideos: 0,

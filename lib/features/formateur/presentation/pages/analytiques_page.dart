@@ -260,31 +260,29 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              f['title'] ?? 'Formation',
+                              f.titre,
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: FormateurTheme.textPrimary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            if (f['stagiaires_count'] != null)
                             Text(
-                              '${f['stagiaires_count']} apprenants',
+                              '${f.studentCount} apprenants',
                               style: const TextStyle(fontSize: 11, color: FormateurTheme.textSecondary),
                             ),
                           ],
                         ),
                       ),
-                      if (f['avg_score'] != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: FormateurTheme.success.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            '${(double.tryParse(f['avg_score'].toString()) ?? 0).toStringAsFixed(0)}%',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: FormateurTheme.success),
-                          ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: FormateurTheme.success.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
                         ),
+                        child: Text(
+                          '${f.avgScore.toStringAsFixed(0)}%',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: FormateurTheme.success),
+                        ),
+                      ),
                     ],
                   ),
                 )),
