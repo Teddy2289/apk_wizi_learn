@@ -213,6 +213,17 @@ class AnalyticsRepository {
     }
   }
 
+  /// Get recent activities (quiz completions) for all students
+  Future<List<dynamic>> getRecentActivity() async {
+    try {
+      final response = await apiClient.get('/formateur/analytics/recent-activity');
+      return _parseList(response.data, key: 'activity');
+    } catch (e) {
+      debugPrint('❌ Erreur activités récentes: $e');
+      return [];
+    }
+  }
+
   /// Helper methods
   List<dynamic> _parseList(dynamic data, {String? key}) {
     if (data == null) return [];
