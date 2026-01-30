@@ -148,7 +148,7 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
                 Icon(Icons.people_alt_rounded, size: 12, color: FormateurTheme.accentDark),
                 SizedBox(width: 8),
                 Text(
-                  'GESTION STAGIAIRES',
+                  'Gestion Stagiaires',
                   style: TextStyle(
                     color: FormateurTheme.accentDark,
                     fontSize: 9,
@@ -333,9 +333,9 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildMiniMetric('SCORE', '$averageScore%', FormateurTheme.success),
+                    _buildMiniMetric('Score', '$averageScore%', FormateurTheme.success),
                     // _buildMiniMetric('POINTS', '$points', FormateurTheme.accentDark),
-                    _buildMiniMetric('SÉRIE', '${streak}j', Colors.orange),
+                    _buildMiniMetric('Série', '${streak}j', Colors.orange),
                   ],
                 ),
               ),
@@ -377,7 +377,7 @@ class _FormateurStagiairesPageState extends State<FormateurStagiairesPage> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'AUCUN STAGIAIRE TROUVÉ',
+            'Aucun stagiaire trouvé',
             style: TextStyle(color: FormateurTheme.textTertiary, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.0),
           ),
         ],

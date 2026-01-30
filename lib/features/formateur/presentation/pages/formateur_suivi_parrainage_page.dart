@@ -165,7 +165,7 @@ class _FormateurSuiviParrainagePageState extends State<FormateurSuiviParrainageP
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                    const Text(
-                    'TOTAL POINTS',
+                    'Total Points',
                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1),
                   ),
                   const SizedBox(height: 4),
@@ -191,7 +191,7 @@ class _FormateurSuiviParrainagePageState extends State<FormateurSuiviParrainageP
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'GAINS (ESTIMÉS)',
+                    'Gains (estimés)',
                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1),
                   ),
                   const SizedBox(height: 4),
@@ -327,7 +327,7 @@ class _FormateurSuiviParrainagePageState extends State<FormateurSuiviParrainageP
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    parrainage.filleulStatut.toUpperCase(),
+                    parrainage.filleulStatut,
                     style: const TextStyle(
                       color: FormateurTheme.success,
                       fontSize: 10,

@@ -91,7 +91,7 @@ class _QuizDetailPageState extends State<QuizDetailPage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text('RÉPONSES', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: FormateurTheme.textTertiary)),
+                const Text('Réponses', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: FormateurTheme.textTertiary)),
                 const SizedBox(height: 8),
                 ...options.asMap().entries.map((entry) {
                   final index = entry.key;
@@ -218,7 +218,7 @@ class _QuizDetailPageState extends State<QuizDetailPage> {
             TextButton.icon(
               onPressed: _publishQuiz,
               icon: const Icon(Icons.public, size: 16),
-              label: const Text('PUBLIER', style: TextStyle(fontWeight: FontWeight.bold)),
+              label: const Text('Publier', style: TextStyle(fontWeight: FontWeight.bold)),
               style: TextButton.styleFrom(foregroundColor: FormateurTheme.accentDark),
             ),
            const SizedBox(width: 8),
@@ -250,7 +250,7 @@ class _QuizDetailPageState extends State<QuizDetailPage> {
                                   color: _quiz!.status == 'actif' ? FormateurTheme.success.withOpacity(0.1) : FormateurTheme.orangeAccent.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: Text(_quiz!.status.toUpperCase(), style: TextStyle(color: _quiz!.status == 'actif' ? FormateurTheme.success : FormateurTheme.orangeAccent, fontWeight: FontWeight.bold, fontSize: 10)),
+                                child: Text(_quiz!.status, style: TextStyle(color: _quiz!.status == 'actif' ? FormateurTheme.success : FormateurTheme.orangeAccent, fontWeight: FontWeight.bold, fontSize: 10)),
                               ),
                               const SizedBox(width: 12),
                               Text('${_quiz!.questions.length} Questions', style: const TextStyle(color: FormateurTheme.textSecondary, fontWeight: FontWeight.bold)),
@@ -266,7 +266,7 @@ class _QuizDetailPageState extends State<QuizDetailPage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const Text('QUESTIONS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: FormateurTheme.textTertiary, letterSpacing: 1.5)),
+                    const Text('Questions', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: FormateurTheme.textTertiary, letterSpacing: 1.5)),
                     const SizedBox(height: 16),
                     
                     if (_quiz!.questions.isEmpty)
@@ -291,7 +291,7 @@ class _QuizDetailPageState extends State<QuizDetailPage> {
          onPressed: _addQuestion,
          backgroundColor: FormateurTheme.accentDark,
          icon: const Icon(Icons.add, color: Colors.white),
-         label: const Text('AJOUTER UNE QUESTION', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+         label: const Text('Ajouter une question', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
        ),
     );
   }
@@ -307,7 +307,7 @@ class _QuizDetailPageState extends State<QuizDetailPage> {
       ),
       child: ExpansionTile(
         title: Text(q.content, style: const TextStyle(fontWeight: FontWeight.bold, color: FormateurTheme.textPrimary)),
-        subtitle: Text('${q.points} pt(s) • ${q.type.toUpperCase()}', style: const TextStyle(fontSize: 12, color: FormateurTheme.textSecondary)),
+        subtitle: Text('${q.points} pt(s) • ${q.type}', style: const TextStyle(fontSize: 12, color: FormateurTheme.textSecondary)),
         trailing: IconButton(
           icon: const Icon(Icons.delete_outline, color: FormateurTheme.error),
           onPressed: () => _deleteQuestion(q.id),

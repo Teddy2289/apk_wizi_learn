@@ -150,7 +150,7 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
                 const Icon(Icons.history_edu_rounded, size: 12, color: FormateurTheme.accentDark),
                 const SizedBox(width: 8),
                 Text(
-                  'ADMINISTRATION',
+                  'Administration',
                   style: TextStyle(
                     color: FormateurTheme.accentDark,
                     fontSize: 9,
@@ -249,7 +249,7 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          first.stagiaireName.toUpperCase(),
+                          first.stagiaireName,
                           style: const TextStyle(
                             fontWeight: FontWeight.w900, 
                             fontSize: 14, 
@@ -266,7 +266,7 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
                             border: Border.all(color: FormateurTheme.accent.withOpacity(0.1)),
                           ),
                           child: Text(
-                            '${demandes.length} ${demandes.length > 1 ? "DEMANDES" : "DEMANDE"}',
+                            '${demandes.length} ${demandes.length > 1 ? "Demandes" : "Demande"}',
                             style: const TextStyle(
                               color: FormateurTheme.accentDark, 
                               fontSize: 9, 
@@ -305,21 +305,21 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
     switch (demande.statut.toLowerCase()) {
       case 'en_attente':
         statusColor = Colors.amber;
-        statusLabel = 'EN ATTENTE';
+        statusLabel = 'En attente';
         break;
       case 'valide':
       case 'complete':
         statusColor = FormateurTheme.success;
-        statusLabel = 'VALIDÉ';
+        statusLabel = 'Validé';
         break;
       case 'rejete':
       case 'refuse':
         statusColor = FormateurTheme.error;
-        statusLabel = 'REJETÉ';
+        statusLabel = 'Rejeté';
         break;
       default:
         statusColor = FormateurTheme.textTertiary;
-        statusLabel = demande.statut.toUpperCase();
+        statusLabel = demande.statut;
     }
 
     DateTime? date;
@@ -345,7 +345,7 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        demande.formation.toUpperCase(),
+                        demande.formation,
                         style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: FormateurTheme.textPrimary),
                       ),
                     ),
@@ -390,7 +390,7 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'MOTIF DE LA DEMANDE',
+                    'Motif de la demande',
                     style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1),
                   ),
                   const SizedBox(height: 6),
@@ -422,7 +422,7 @@ class _FormateurSuiviDemandesPageState extends State<FormateurSuiviDemandesPage>
           ),
           const SizedBox(height: 16),
           const Text(
-            'AUCUNE DEMANDE TROUVÉE',
+            'Aucune demande trouvée',
             style: TextStyle(color: FormateurTheme.textTertiary, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.0),
           ),
         ],

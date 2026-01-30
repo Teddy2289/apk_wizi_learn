@@ -100,7 +100,7 @@ class _GestionFormationsPageState extends State<GestionFormationsPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('SÉLECTIONNEZ LES APPRENANTS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: FormateurTheme.textTertiary, letterSpacing: 1.2)),
+                const Text('Sélectionnez les apprenants', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: FormateurTheme.textTertiary, letterSpacing: 1.2)),
                 const SizedBox(height: 12),
                 Flexible(
                   child: ListView.separated(
@@ -209,22 +209,22 @@ class _GestionFormationsPageState extends State<GestionFormationsPage> {
               ),
               const SizedBox(height: 24),
               Text(
-                formation.titre.toUpperCase(),
+                formation.titre,
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: FormateurTheme.textPrimary, letterSpacing: -0.5),
               ),
               const SizedBox(height: 24),
               // Stats Cards
               Row(
                 children: [
-                  _StatCard('TOTAL', stats.totalStagiaires.toString(), Colors.blue),
+                  _StatCard('Total', stats.totalStagiaires.toString(), Colors.blue),
                   const SizedBox(width: 12),
-                  _StatCard('COMPLÉTÉ', stats.completed.toString(), FormateurTheme.success),
+                  _StatCard('Complété', stats.completed.toString(), FormateurTheme.success),
                   const SizedBox(width: 12),
-                  _StatCard('EN COURS', stats.inProgress.toString(), FormateurTheme.orangeAccent),
+                  _StatCard('En cours', stats.inProgress.toString(), FormateurTheme.orangeAccent),
                 ],
               ),
               const SizedBox(height: 32),
-              const Text('STAGIAIRES INSCRITS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: FormateurTheme.textTertiary, letterSpacing: 1.5)),
+              const Text('Stagiaires inscrits', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: FormateurTheme.textTertiary, letterSpacing: 1.5)),
               const SizedBox(height: 16),
               Expanded(
                 child: ListView.separated(
@@ -380,7 +380,7 @@ class _GestionFormationsPageState extends State<GestionFormationsPage> {
                                                   ),
                                                   const SizedBox(height: 4),
                                                   Text(
-                                                    formation.categorie.toUpperCase(),
+                                                    formation.categorie,
                                                     style: const TextStyle(
                                                       fontSize: 10,
                                                       fontWeight: FontWeight.bold,
@@ -441,7 +441,7 @@ class _GestionFormationsPageState extends State<GestionFormationsPage> {
                                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                                 ),
-                                                child: const Text('DÉTAILS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 1)),
+                                                child: const Text('Détails', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 1)),
                                               ),
                                             ),
                                             const SizedBox(width: 12),
@@ -449,7 +449,7 @@ class _GestionFormationsPageState extends State<GestionFormationsPage> {
                                               child: ElevatedButton.icon(
                                                 onPressed: () => _showAssignDialog(formation),
                                                 icon: const Icon(Icons.add, size: 18),
-                                                label: const Text('ASSIGNER', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 1)),
+                                                label: const Text('Assigner', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 1)),
                                                 style: ElevatedButton.styleFrom(
                                                   backgroundColor: FormateurTheme.accentDark,
                                                   foregroundColor: Colors.white,

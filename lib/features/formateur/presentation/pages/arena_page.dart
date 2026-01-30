@@ -234,7 +234,7 @@ class _ArenaPageState extends State<ArenaPage> {
                         children: [
                           const Icon(LucideIcons.trophy, size: 64, color: FormateurTheme.border),
                           const SizedBox(height: 16),
-                          const Text('L\'ARÈNE EST VIDE', style: TextStyle(color: FormateurTheme.textTertiary, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                          const Text('L\'arène est vide', style: TextStyle(color: FormateurTheme.textTertiary, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                           const SizedBox(height: 8),
                           if (_searchQuery.isNotEmpty)
                              Text('Aucun résultat pour "$_searchQuery"', style: const TextStyle(color: FormateurTheme.textSecondary)),
@@ -273,7 +273,7 @@ class _ArenaPageState extends State<ArenaPage> {
           ),
           alignment: Alignment.center,
           child: Text(
-            label.toUpperCase(),
+            label,
             style: TextStyle(
               color: isSelected ? Colors.white : FormateurTheme.textTertiary,
               fontSize: 10,
@@ -389,7 +389,7 @@ class _ArenaPageState extends State<ArenaPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${f.prenom} ${f.nom}'.toUpperCase(),
+                          '${f.prenom} ${f.nom}',
                           style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: FormateurTheme.textPrimary, letterSpacing: -0.5),
                         ),
                         const SizedBox(height: 4),
@@ -412,7 +412,7 @@ class _ArenaPageState extends State<ArenaPage> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '${f.totalPoints} PTS',
+                        '${f.totalPoints} pts',
                         style: const TextStyle(color: FormateurTheme.accentDark, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
                       ),
                       const SizedBox(height: 8),
@@ -443,7 +443,7 @@ class _ArenaPageState extends State<ArenaPage> {
                     ? const Padding(
                         padding: EdgeInsets.all(24.0),
                         child: Text(
-                          'AUCUN DÉFI RELEVÉ PAR CETTE ÉQUIPE',
+                          'Aucun défi relevé par cette équipe',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: FormateurTheme.textTertiary, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1, fontStyle: FontStyle.italic),
                         ),
@@ -477,7 +477,7 @@ class _ArenaPageState extends State<ArenaPage> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text('${s.prenom} ${s.nom}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: FormateurTheme.textPrimary)),
-                                      Text('${s.points} PTS', style: const TextStyle(color: FormateurTheme.accentDark, fontSize: 10, fontWeight: FontWeight.w900)),
+                                      Text('${s.points} pts', style: const TextStyle(color: FormateurTheme.accentDark, fontSize: 10, fontWeight: FontWeight.w900)),
                                     ],
                                   ),
                                 ),

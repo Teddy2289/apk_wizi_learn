@@ -208,7 +208,7 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
           ),
           alignment: Alignment.center,
           child: Text(
-            label.toUpperCase(),
+            label,
             style: TextStyle(
               color: isSelected ? Colors.white : FormateurTheme.textTertiary,
               fontWeight: FontWeight.bold,
@@ -234,7 +234,7 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'PÉRIMÈTRE D\'ANALYSE',
+            'Périmètre d\'analyse',
             style: TextStyle(
               color: FormateurTheme.textTertiary,
               fontSize: 10,
@@ -264,7 +264,7 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
             items: [
               const DropdownMenuItem(
                 value: 'global',
-                child: Text('TOUS MES STAGIAIRES'),
+                child: Text('Tous mes stagiaires'),
               ),
               ..._formations.map((f) => DropdownMenuItem(
                 value: f['id'].toString(),
@@ -284,8 +284,8 @@ class _FormateurClassementPageState extends State<FormateurClassementPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStatDetail('COMPÉTITEURS', '${_ranking.length}', Icons.people_outline),
-              _buildStatDetail('LEADER', _ranking.isNotEmpty ? '${_ranking.first['total_points']}' : '0', Icons.emoji_events_outlined),
+              _buildStatDetail('Compétiteurs', '${_ranking.length}', Icons.people_outline),
+              _buildStatDetail('Leader', _ranking.isNotEmpty ? '${_ranking.first['total_points']}' : '0', Icons.emoji_events_outlined),
             ],
           ),
         ],

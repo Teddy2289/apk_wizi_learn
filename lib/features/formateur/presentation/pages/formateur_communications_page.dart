@@ -49,8 +49,8 @@ class _FormateurCommunicationsPageState extends State<FormateurCommunicationsPag
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           indicatorWeight: 3,
           tabs: const [
-            Tab(icon: Icon(Icons.notifications_outlined), text: 'NOTIFICATIONS FCM'),
-            Tab(icon: Icon(Icons.mail_outline), text: 'EMAILS'),
+            Tab(icon: Icon(Icons.notifications_outlined), text: 'Notifications FCM'),
+            Tab(icon: Icon(Icons.mail_outline), text: 'Emails'),
           ],
         ),
       ),

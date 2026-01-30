@@ -136,7 +136,7 @@ class _FormateurVideosPageState extends State<FormateurVideosPage> {
                 const Icon(Icons.video_collection_rounded, size: 12, color: FormateurTheme.accentDark),
                 const SizedBox(width: 8),
                 Text(
-                  'MÉDIATHÈQUE',
+                  'Médiathèque',
                   style: TextStyle(
                     color: FormateurTheme.accentDark,
                     fontSize: 9,
@@ -192,11 +192,11 @@ class _FormateurVideosPageState extends State<FormateurVideosPage> {
             child: const Icon(Icons.school_rounded, color: FormateurTheme.accentDark, size: 20),
           ),
           title: Text(
-            formation.titre.toUpperCase(),
+            formation.titre,
             style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: FormateurTheme.textPrimary, letterSpacing: -0.2),
           ),
           subtitle: Text(
-            '${formation.videos.length} UNITÉS VIDÉO',
+            '${formation.videos.length} Unités vidéo',
             style: const TextStyle(fontSize: 10, color: FormateurTheme.textTertiary, fontWeight: FontWeight.w900, letterSpacing: 0.5),
           ),
           trailing: const Icon(Icons.expand_more_rounded, color: FormateurTheme.border),
@@ -305,7 +305,7 @@ class _VideoStatsSheetState extends State<_VideoStatsSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('STATISTIQUES VIDÉO', style: TextStyle(color: FormateurTheme.textTertiary, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+                    const Text('Statistiques vidéo', style: TextStyle(color: FormateurTheme.textTertiary, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
                     Text(
                       widget.titre,
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: FormateurTheme.textPrimary, letterSpacing: -0.5),
@@ -332,7 +332,7 @@ class _VideoStatsSheetState extends State<_VideoStatsSheet> {
             ),
             const SizedBox(height: 32),
             const Text(
-              'AUDIENCE PAR STAGIAIRE',
+              'Audience par stagiaire',
               style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1.2),
             ),
             const SizedBox(height: 16),
@@ -419,7 +419,7 @@ class _VideoStatsSheetState extends State<_VideoStatsSheet> {
             ),
             const SizedBox(height: 12),
             Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: FormateurTheme.textPrimary, letterSpacing: -1)),
-            Text(label.toUpperCase(), style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 0.5)),
+            Text(label, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 0.5)),
           ],
         ),
       ),

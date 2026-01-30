@@ -266,7 +266,7 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
         highlightElevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         icon: const Icon(Icons.add_rounded, color: FormateurTheme.accent, size: 24),
-        label: const Text('NOUVEAU QUIZ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+        label: const Text('Nouveau Quiz', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
       ),
     );
   }
@@ -291,7 +291,7 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
                 const Icon(Icons.architecture_rounded, size: 12, color: FormateurTheme.accentDark),
                 const SizedBox(width: 8),
                 Text(
-                  'ATELIER DE CONCEPTION',
+                  'Atelier de conception',
                   style: TextStyle(
                     color: FormateurTheme.accentDark,
                     fontSize: 9,
@@ -338,7 +338,7 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
             value: _filterFormationId.isEmpty ? null : _filterFormationId,
             items: [
                const DropdownMenuItem(value: '', child: Text('Toutes les formations', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900))),
-               ..._formations.map((f) => DropdownMenuItem(value: f['id'].toString(), child: Text((f['nom'] ?? f['titre'] ?? '').toString().toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900)))),
+               ..._formations.map((f) => DropdownMenuItem(value: f['id'].toString(), child: Text((f['nom'] ?? f['titre'] ?? '').toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900)))),
             ],
             onChanged: (v) => setState(() => _filterFormationId = v ?? ''),
           ),
@@ -348,9 +348,9 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
             value: _filterStatus.isEmpty ? null : _filterStatus,
             items: [
                const DropdownMenuItem(value: '', child: Text('Tous les statuts', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900))),
-               const DropdownMenuItem(value: 'actif', child: Text('ACTIF', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900))),
-               const DropdownMenuItem(value: 'brouillon', child: Text('BROUILLON', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900))),
-               const DropdownMenuItem(value: 'archive', child: Text('ARCHIVÉ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900))),
+               const DropdownMenuItem(value: 'actif', child: Text('Actif', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900))),
+               const DropdownMenuItem(value: 'brouillon', child: Text('Brouillon', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900))),
+               const DropdownMenuItem(value: 'archive', child: Text('Archivé', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900))),
             ],
             onChanged: (v) => setState(() => _filterStatus = v ?? ''),
           ),
@@ -391,7 +391,7 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 16),
-          child: Text(formationTitle.toUpperCase(), style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+          child: Text(formationTitle, style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
         ),
         ...quizzes.map((q) => _buildQuizCard(q)),
         const SizedBox(height: 24),
@@ -414,7 +414,7 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
           decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
           child: Icon(Icons.assignment_rounded, color: statusColor, size: 24),
         ),
-        title: Text(quiz['titre']?.toString().toUpperCase() ?? '', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: FormateurTheme.textPrimary, letterSpacing: -0.2)),
+        title: Text(quiz['titre']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: FormateurTheme.textPrimary, letterSpacing: -0.2)),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 8.0),
           child: Row(
@@ -426,7 +426,7 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
                Container(
                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                  decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-                 child: Text(status.toUpperCase(), style: TextStyle(color: statusColor, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                 child: Text(status, style: TextStyle(color: statusColor, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                ),
             ],
           ),
@@ -461,7 +461,7 @@ class _QuizCreatorPageState extends State<QuizCreatorPage> {
             child: const Icon(Icons.quiz_outlined, size: 48, color: FormateurTheme.border),
           ),
           const SizedBox(height: 24),
-          const Text('VOTRE ATELIER EST VIDE', style: TextStyle(color: FormateurTheme.textTertiary, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.5)),
+          const Text('Votre atelier est vide', style: TextStyle(color: FormateurTheme.textTertiary, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.5)),
         ],
       ),
     );

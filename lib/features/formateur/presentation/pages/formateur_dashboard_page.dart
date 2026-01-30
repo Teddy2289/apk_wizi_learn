@@ -239,7 +239,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                     const Icon(Icons.analytics_outlined, size: 12, color: FormateurTheme.accentDark),
                     const SizedBox(width: 8),
                     Text(
-                      'ESPACE FORMATEUR',
+                      'Espace Formateur',
                       style: TextStyle(
                         color: FormateurTheme.accentDark,
                         fontSize: 9,
@@ -310,7 +310,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'ATTENTION',
+                    'Attention',
                     style: TextStyle(
                       color: FormateurTheme.orangeAccent,
                       fontSize: 10,
@@ -408,7 +408,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                       foregroundColor: FormateurTheme.accentDark,
                       textStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11),
                     ),
-                    child: const Text('VOIR PROFIL'),
+                    child: const Text('Voir profil'),
                   ),
                 ],
               ),
@@ -504,7 +504,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
               ),
               const SizedBox(height: 4),
               Text(
-                title.toUpperCase(),
+                title,
                 style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 0.5),
               ),
               if (subValue != null) ...[
@@ -542,7 +542,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
            mainAxisAlignment: MainAxisAlignment.spaceBetween,
            children: [
              const Text(
-               'PERFORMANCE PAR FORMATION',
+               'Performance par formation',
                style: TextStyle(color: FormateurTheme.textTertiary, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5),
              ),
              Container(
@@ -640,7 +640,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'TOP PERFORMANCE',
+          'Top performance',
           style: TextStyle(color: FormateurTheme.textTertiary, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5),
         ),
         const SizedBox(height: 20),
@@ -664,8 +664,8 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                   unselectedLabelColor: FormateurTheme.textTertiary,
                   labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11),
                   tabs: const [
-                    Tab(text: 'TOP QUIZ'),
-                    Tab(text: 'TOP ACTIFS'),
+                    Tab(text: 'Top Quiz'),
+                    Tab(text: 'Top Actifs'),
                   ],
                 ),
               ),
@@ -717,7 +717,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(s.name.toUpperCase(), style: const TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.w900, fontSize: 12)),
+                Text(s.name, style: const TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.w900, fontSize: 12)),
                 Text(s.email, style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 10, fontWeight: FontWeight.w600)),
               ],
             ),

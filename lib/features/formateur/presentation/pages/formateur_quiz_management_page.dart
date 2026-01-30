@@ -141,7 +141,7 @@ class _FormateurQuizManagementPageState
         border: Border.all(color: textColor.withOpacity(0.2)),
       ),
       child: Text(
-        displayText.toUpperCase(),
+        displayText,
         style: TextStyle(
           color: textColor,
           fontSize: 9,
@@ -179,7 +179,7 @@ class _FormateurQuizManagementPageState
                   child: Column(
                     children: [
                       const Text(
-                        'CRÉER UN NOUVEAU QUIZ',
+                        'Créer un nouveau quiz',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 24,
@@ -189,7 +189,7 @@ class _FormateurQuizManagementPageState
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'PARAMÉTREZ VOTRE ÉVALUATION INTERACTIF',
+                        'Paramétrez votre évaluation interactive',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.8),
                           fontSize: 10,
@@ -212,7 +212,7 @@ class _FormateurQuizManagementPageState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildFormField(
-                        label: 'TITRE DU QUIZ',
+                        label: 'Titre du quiz',
                         child: TextField(
                           controller: titleController,
                           decoration: InputDecoration(
@@ -259,7 +259,7 @@ class _FormateurQuizManagementPageState
                           const SizedBox(width: 16),
                           Expanded(
                             child: _buildFormField(
-                              label: 'DURÉE (MIN)',
+                              label: 'Durée (min)',
                               child: TextFormField(
                                 initialValue: duree.toString(),
                                 keyboardType: TextInputType.number,
@@ -282,7 +282,7 @@ class _FormateurQuizManagementPageState
                       ),
                       const SizedBox(height: 16),
                       _buildFormField(
-                        label: 'FORMATION ASSOCIÉE',
+                        label: 'Formation associée',
                         child: DropdownButtonFormField<int?>(
                           value: formationId,
                           decoration: InputDecoration(
@@ -328,7 +328,7 @@ class _FormateurQuizManagementPageState
                             elevation: 8,
                           ),
                           child: const Text(
-                            'GÉNÉRER LE MODULE',
+                            'Générer le module',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w900,
@@ -548,7 +548,7 @@ class _FormateurQuizManagementPageState
                               onPressed: _showCreateQuizDialog,
                               icon: const Icon(Icons.add, color: Colors.white),
                               label: const Text(
-                                'NOUVEAU QUIZ',
+                                'Nouveau Quiz',
                                 style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
                               ),
                               style: ElevatedButton.styleFrom(
@@ -617,7 +617,7 @@ class _FormateurQuizManagementPageState
                             onPressed: _showCreateQuizDialog,
                             icon: const Icon(Icons.add, color: Colors.white),
                             label: const Text(
-                              'NOUVEAU QUIZ',
+                              'Nouveau Quiz',
                               style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
                             ),
                             style: ElevatedButton.styleFrom(
@@ -662,7 +662,7 @@ class _FormateurQuizManagementPageState
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'UTILISEZ LE BOUTON "NOUVEAU QUIZ" POUR COMMENCER.',
+                                  'Utilisez le bouton "Nouveau Quiz" pour commencer.',
                                   style: TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w700,
