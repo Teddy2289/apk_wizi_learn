@@ -234,15 +234,8 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
             Container(
               height: 160,
               width: double.infinity,
-              decoration: BoxDecoration(
                 color: FormateurTheme.accent,
-                image: DecorationImage(
-                  image: const AssetImage('assets/images/pattern.png'),
-                  fit: BoxFit.cover,
-                  opacity: 0.1,
-                  colorFilter: ColorFilter.mode(Colors.white.withOpacity(0.1), BlendMode.srcOver),
-                ),
-              ),
+                // Pattern removed to fix 404 error
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -318,7 +311,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        s.fullName.toUpperCase(),
+                        s.fullName,
                         style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: FormateurTheme.textPrimary, letterSpacing: -0.5),
                       ),
                       const SizedBox(width: 8),
@@ -329,7 +322,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          'ACTIF',
+                          'Actif',
                           style: TextStyle(
                             color: FormateurTheme.accentDark,
                             fontSize: 9,
@@ -349,7 +342,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      stats.currentBadge.toUpperCase(),
+                      stats.currentBadge.toUpperCase(), // Keep badge upper for style
                       style: const TextStyle(color: FormateurTheme.accent, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5),
                     ),
                   ),
@@ -390,9 +383,9 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
           unselectedLabelColor: FormateurTheme.textTertiary,
           labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.0),
           tabs: const [
-            Tab(text: 'VUE D\'ENSEMBLE'),
-            Tab(text: 'PERFORMANCES'),
-            Tab(text: 'SÉCURITÉ'),
+            Tab(text: 'Vue d\'ensemble'),
+            Tab(text: 'Performances'),
+            Tab(text: 'Sécurité'),
           ],
         ),
       ),
@@ -413,7 +406,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
           const SizedBox(height: 28),
 
           // Formations Section
-          _buildSectionHeader('FORMATIONS EN COURS', Icons.school_rounded, '${_profile!.formations.length}'),
+          _buildSectionHeader('Formations en cours', Icons.school_rounded, '${_profile!.formations.length}'),
           const SizedBox(height: 12),
           if (_profile!.formations.isEmpty)
             _buildEmptyState(Icons.school_outlined, 'Aucune formation active')
@@ -423,7 +416,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
           // Contacts Section (Équipe Dédiée)
           if (_profile!.contacts != null && _profile!.contacts!.hasAny) ...[
             const SizedBox(height: 28),
-            _buildSectionHeader('ÉQUIPE DÉDIÉE', Icons.people_alt_rounded, null),
+            _buildSectionHeader('Équipe dédiée', Icons.people_alt_rounded, null),
             const SizedBox(height: 12),
             _buildContactsSection(),
           ],
@@ -441,13 +434,13 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
         padding: const EdgeInsets.all(20),
         children: [
           // Activity Chart placeholder (mini visualization)
-          _buildSectionHeader('ENGAGEMENT 30 JOURS', Icons.trending_up_rounded, null),
+          _buildSectionHeader('Engagement 30 jours', Icons.trending_up_rounded, null),
           const SizedBox(height: 12),
           _buildActivityChart(),
           const SizedBox(height: 28),
 
           // Recent Activities
-          _buildSectionHeader('ACTIVITÉS RÉCENTES', Icons.history_rounded, null),
+          _buildSectionHeader('Activités récentes', Icons.history_rounded, null),
           const SizedBox(height: 12),
           if (_profile!.activity.recentActivities.isEmpty)
             _buildEmptyState(Icons.timeline_rounded, 'Aucune activité récente')
@@ -457,7 +450,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
           const SizedBox(height: 28),
 
           // Quiz History
-          _buildSectionHeader('HISTORIQUE QUIZ', Icons.quiz_rounded, '${_profile!.quizHistory.length}'),
+          _buildSectionHeader('Historique Quiz', Icons.quiz_rounded, '${_profile!.quizHistory.length}'),
           const SizedBox(height: 12),
           if (_profile!.quizHistory.isEmpty)
             _buildEmptyState(Icons.quiz_outlined, 'Aucun quiz effectué')
@@ -478,7 +471,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
         padding: const EdgeInsets.all(20),
         children: [
           // Contact Info Cards
-          _buildSectionHeader('COORDONNÉES', Icons.contact_mail_rounded, null),
+          _buildSectionHeader('Coordonnées', Icons.contact_mail_rounded, null),
           const SizedBox(height: 12),
           _buildInfoCard(Icons.alternate_email_rounded, 'Email', s.email),
           if (s.telephone != null && s.telephone!.isNotEmpty)
@@ -491,7 +484,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
           const SizedBox(height: 28),
 
           // Login History
-          _buildSectionHeader('HISTORIQUE DE CONNEXION', Icons.security_rounded, null),
+          _buildSectionHeader('Historique de connexion', Icons.security_rounded, null),
           const SizedBox(height: 12),
           if (_profile!.loginHistory.isEmpty)
             _buildEmptyState(Icons.security_outlined, 'Aucun historique de connexion')
@@ -548,7 +541,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
       children: [
         _buildStatCard(Icons.star_rounded, 'Points', stats.totalPoints.toString(), const Color(0xFFF59E0B)),
         _buildStatCard(Icons.school_rounded, 'Formations', '${stats.formationsCompleted}/${stats.formationsCompleted + stats.formationsInProgress}', const Color(0xFF3B82F6)),
-        _buildStatCard(Icons.analytics_rounded, 'Score Moyen', '${(stats.averageScore * 10).toInt()}%', const Color(0xFF10B981)),
+        _buildStatCard(Icons.analytics_rounded, 'Score Moy.', '${(stats.averageScore * 10).toInt()}%', const Color(0xFF10B981)),
         _buildStatCard(Icons.timer_rounded, 'Temps Total', '${(stats.totalTimeMinutes / 60).round()}h', const Color(0xFF8B5CF6)),
         if (_profile!.videoStats != null)
           _buildStatCard(Icons.play_circle_rounded, 'Vidéos', '${_profile!.videoStats!.totalWatched}', const Color(0xFFEC4899)),
@@ -586,7 +579,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label.toUpperCase(), style: TextStyle(color: FormateurTheme.textTertiary, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+              Text(label, style: TextStyle(color: FormateurTheme.textTertiary, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
               Text(value, style: TextStyle(color: FormateurTheme.textPrimary, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -1)),
             ],
           ),
@@ -656,7 +649,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
                 child: Text(
-                  f.isCompleted ? 'VALIDÉE' : '${f.progress * 10}%',
+                  f.isCompleted ? 'Validée' : '${f.progress * 10}%',
                   style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 11),
                 ),
               ),
@@ -697,7 +690,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(l.name.toUpperCase(), style: const TextStyle(color: FormateurTheme.textSecondary, fontSize: 9, fontWeight: FontWeight.w900)),
+          Text(l.name, style: const TextStyle(color: FormateurTheme.textSecondary, fontSize: 10, fontWeight: FontWeight.w900)),
           const SizedBox(width: 6),
           Text('${l.avgScore.toInt()}%', style: const TextStyle(color: FormateurTheme.textPrimary, fontSize: 10, fontWeight: FontWeight.w900)),
         ],
@@ -727,7 +720,7 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(title.toUpperCase(), style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
+          child: Text(title, style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
         ),
         ...contacts.map((c) => _buildContactCard(c, null)),
       ],
@@ -848,50 +841,95 @@ class _StagiaireProfilePageState extends State<StagiaireProfilePage>
   }
 
   Widget _buildQuizHistoryItem(QuizResult q) {
-    final color = q.percentage >= 70 ? FormateurTheme.success : q.percentage >= 50 ? FormateurTheme.orangeAccent : FormateurTheme.error;
+    // Score color based on score out of 10 (React parity)
+    final color = q.score >= 8 ? FormateurTheme.success : q.score >= 5 ? FormateurTheme.orangeAccent : FormateurTheme.error;
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: FormateurTheme.border.withOpacity(0.5)),
+        border: Border.all(color: FormateurTheme.border.withOpacity(0.3)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-            alignment: Alignment.center,
-            child: Text('${q.percentage.toInt()}%', style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 14)),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(q.category.toUpperCase(), style: TextStyle(color: FormateurTheme.accentDark, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-                Text(q.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: FormateurTheme.textPrimary)),
-                const SizedBox(height: 4),
-                Row(
+          // Top row: Category + Title | Score badge
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.timer_outlined, size: 12, color: FormateurTheme.textTertiary),
-                    const SizedBox(width: 4),
-                    Text('${(q.timeSpent / 60).floor()}m ${q.timeSpent % 60}s', style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 10, fontWeight: FontWeight.w700)),
-                    const SizedBox(width: 12),
-                    Icon(Icons.calendar_today_outlined, size: 12, color: FormateurTheme.textTertiary),
-                    const SizedBox(width: 4),
-                    Text(_formatDateShort(q.completedAt), style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 10, fontWeight: FontWeight.w700)),
+                    Text(
+                      q.category.toUpperCase(),
+                      style: TextStyle(color: FormateurTheme.accentDark, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      q.title.isNotEmpty ? q.title : 'Participation',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: FormateurTheme.textPrimary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              // Score badge (percentage)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${q.percentage.toInt()}%',
+                  style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 16),
+                ),
+              ),
+            ],
           ),
-          Text('${q.score}/${q.maxScore}', style: const TextStyle(fontWeight: FontWeight.w900, color: FormateurTheme.textPrimary, fontSize: 13)),
+          const SizedBox(height: 12),
+          // Footer row: Time spent | Date+Time
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.timer_outlined, size: 12, color: FormateurTheme.textTertiary),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${(q.timeSpent / 60).floor()}m ${q.timeSpent % 60}s',
+                    style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 10, fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Icon(Icons.calendar_today_outlined, size: 12, color: FormateurTheme.textTertiary),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatDateTimeFull(q.completedAt),
+                    style: const TextStyle(color: FormateurTheme.textTertiary, fontSize: 10, fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  String _formatDateTimeFull(String date) {
+    try {
+      final dt = DateTime.parse(date);
+      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return date;
+    }
   }
 
   Widget _buildInfoCard(IconData icon, String label, String value) {

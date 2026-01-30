@@ -120,7 +120,16 @@ class AnalyticsRepository {
         '/formateur/analytics/performance',
         queryParameters: formationId != null ? {'formation_id': formationId} : null,
       );
+      
+      if (response.data is List) {
+        return {
+          'performance': response.data,
+          'rankings': {'most_quizzes': [], 'most_active': []}
+        };
+      }
+      
       if (response.data is Map) return response.data;
+      
       return {'performance': [], 'rankings': {'most_quizzes': [], 'most_active': []}};
     } catch (e) {
       debugPrint('❌ Erreur comparaison stagiaires: $e');

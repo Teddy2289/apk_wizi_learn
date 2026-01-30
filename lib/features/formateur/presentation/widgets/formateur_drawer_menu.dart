@@ -102,8 +102,16 @@ class FormateurDrawerMenu extends StatelessWidget {
               },
             ),
             _MenuItem(
+              icon: Icons.stadium_rounded, // or gamepad_outlined
+              label: 'Arène des Formateurs',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/formateur/arena');
+              },
+            ),
+            _MenuItem(
               icon: Icons.leaderboard_outlined,
-              label: 'Classement',
+              label: 'Classement Général',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, '/formateur/classement');

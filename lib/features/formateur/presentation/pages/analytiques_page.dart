@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -111,7 +112,7 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
     return Scaffold(
       backgroundColor: FormateurTheme.background,
       appBar: AppBar(
-        title: const Text('Analytiques'), // Shortened for cleaner look
+            title: const Text('Analytiques'), // Shortened for cleaner look
         backgroundColor: Colors.transparent,
         foregroundColor: FormateurTheme.textPrimary,
         elevation: 0,
@@ -135,11 +136,11 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
           unselectedLabelColor: FormateurTheme.textTertiary,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1),
           tabs: const [
-            Tab(text: 'VUE D\'ENSEMBLE'),
-            Tab(text: 'FORMATIONS'),
-            Tab(text: 'TAUX RÉUSSITE'),
-            Tab(text: 'ACTIVITÉ'),
-            Tab(text: 'STAGIAIRES'),
+            Tab(text: 'Vue d\'ensemble'),
+            Tab(text: 'Formations'),
+            Tab(text: 'Taux réussite'),
+            Tab(text: 'Activité'),
+            Tab(text: 'Stagiaires'),
           ],
         ),
       ),
@@ -170,9 +171,9 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
                               child: Text('Toutes les formations', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                             ),
                             ..._formations.map((f) => DropdownMenuItem<String?>(
-                              value: f.id.toString(),
-                              child: Text(f.titre, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                            )),
+                                  value: f.id.toString(),
+                                  child: Text(f.titre, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                )),
                           ],
                           onChanged: (value) {
                             setState(() => _selectedFormationId = value);
@@ -253,8 +254,8 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
           // Top Formations Section
           if (_summary!.formations.isNotEmpty) ...[
             const Text(
-              'TOP FORMATIONS',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1.5),
+              'Top Formations',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 0.5),
             ),
             const SizedBox(height: 16),
             ..._summary!.formations.take(5).map((f) => Container(
@@ -324,8 +325,8 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
         padding: const EdgeInsets.all(24),
         children: [
           const Text(
-            'PERFORMANCE QUIZ',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1.5),
+            'Performance Quiz',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 0.5),
           ),
           const SizedBox(height: 20),
           if (_successStats.isEmpty)
@@ -354,7 +355,7 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  stat.quizName.toUpperCase(),
+                                  stat.quizName,
                                   style: const TextStyle(fontWeight: FontWeight.w800, color: FormateurTheme.textPrimary, fontSize: 13),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -412,70 +413,106 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
         padding: const EdgeInsets.all(24),
         children: [
           const Text(
-            'ACTIVITÉ QUOTIDIENNE',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1.5),
+            'Activité Quotidienne',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 0.5),
           ),
           const SizedBox(height: 20),
           Container(
+            height: 300,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: FormateurTheme.border),
-               boxShadow: FormateurTheme.cardShadow,
+              boxShadow: FormateurTheme.cardShadow,
             ),
-            child: Column(
-              children: _activityByDay.map((day) {
-                final maxCount = _activityByDay.isEmpty ? 1 : _activityByDay.map((d) => d.activityCount).reduce((a, b) => a > b ? a : b);
-                final barWidth = maxCount > 0 ? day.activityCount / maxCount : 0.0;
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 40,
-                        child: Text(day.day, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: FormateurTheme.textTertiary)),
-                      ),
-                      Expanded(
-                        child: Container(
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: FormateurTheme.background,
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: FractionallySizedBox(
-                            alignment: Alignment.centerLeft,
-                            widthFactor: barWidth > 0 ? barWidth : 0.02,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [FormateurTheme.accent, FormateurTheme.accentDark],
-                                ),
-                                borderRadius: BorderRadius.circular(5),
-                                boxShadow: [
-                                  BoxShadow(color: FormateurTheme.accent.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))
-                                ]
+            child: _activityByDay.isEmpty
+                ? const Center(child: Text("Pas d'activité récente"))
+                : BarChart(
+                    BarChartData(
+                      alignment: BarChartAlignment.spaceAround,
+                      maxY: (_activityByDay.isEmpty ? 10 : _activityByDay.map((e) => e.activityCount).reduce((a, b) => a > b ? a : b) * 1.2).toDouble(),
+                      barTouchData: BarTouchData(
+                        enabled: true,
+                        touchTooltipData: BarTouchTooltipData(
+                          getTooltipColor: (_) => FormateurTheme.accentDark,
+                          tooltipPadding: const EdgeInsets.all(8),
+                          tooltipMargin: 8,
+                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                            return BarTooltipItem(
+                              rod.toY.round().toString(),
+                              const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        '${day.activityCount}',
-                        style: const TextStyle(color: FormateurTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 11),
+                      titlesData: FlTitlesData(
+                        show: true,
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (double value, TitleMeta meta) {
+                              if (value.toInt() >= 0 && value.toInt() < _activityByDay.length) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text(
+                                    _activityByDay[value.toInt()].day,
+                                    style: const TextStyle(
+                                      color: FormateurTheme.textSecondary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                            reservedSize: 30,
+                          ),
+                        ),
+                        leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                       ),
-                    ],
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        horizontalInterval: 5,
+                        getDrawingHorizontalLine: (value) => FlLine(
+                          color: FormateurTheme.border,
+                          strokeWidth: 1,
+                          dashArray: [5, 5],
+                        ),
+                      ),
+                      borderData: FlBorderData(show: false),
+                      barGroups: _activityByDay.asMap().entries.map((entry) {
+                        return BarChartGroupData(
+                          x: entry.key,
+                          barRods: [
+                            BarChartRodData(
+                              toY: entry.value.activityCount.toDouble(),
+                              color: FormateurTheme.accent,
+                              width: 12,
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                              backDrawRodData: BackgroundBarChartRodData(
+                                show: true,
+                                toY: (_activityByDay.isEmpty ? 10 : _activityByDay.map((e) => e.activityCount).reduce((a, b) => a > b ? a : b) * 1.2).toDouble(),
+                                color: FormateurTheme.background,
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
                   ),
-                );
-              }).toList(),
-            ),
           ),
           const SizedBox(height: 32),
           const Text(
-            'TAUX D\'ABANDON',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 1.5),
+            'Taux d\'abandon',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: FormateurTheme.textTertiary, letterSpacing: 0.5),
           ),
           const SizedBox(height: 20),
           ..._dropoutStats.take(5).map((dropout) => Container(
@@ -552,8 +589,8 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'TENDANCE DE PERFORMANCE',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1),
+                'Tendance',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 0.5),
               ),
               const SizedBox(height: 4),
               Text(
@@ -585,72 +622,122 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
       padding: const EdgeInsets.all(24),
       children: [
         const Text(
-          'PERFORMANCE DES FORMATIONS',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1.5),
+          'Performance des Formations',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 0.5),
         ),
         const SizedBox(height: 20),
-        ..._formationsPerformance.map((f) => Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(20),
+        Container(
+          height: 350,
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: FormateurTheme.cardShadow,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                f['nom'] ?? f['titre'] ?? 'Sans Nom',
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF1E293B)),
+          child: BarChart(
+            BarChartData(
+              alignment: BarChartAlignment.spaceEvenly,
+              maxY: 100,
+              barTouchData: BarTouchData(
+                enabled: true,
+                touchTooltipData: BarTouchTooltipData(
+                  getTooltipColor: (_) => FormateurTheme.accentDark,
+                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                    final formationName = groupIndex < _formationsPerformance.length
+                        ? (_formationsPerformance[groupIndex]['nom'] ?? '')
+                        : '';
+                    final metric = rodIndex == 0 ? 'Complétion' : 'Score';
+                    return BarTooltipItem(
+                      '$formationName\n$metric: ${rod.toY.round()}%',
+                      const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    );
+                  },
+                ),
               ),
-              const SizedBox(height: 16),
-              _buildMetricBar('Taux de complétion', (f['completion_rate'] ?? 0).toDouble(), const Color(0xFFF7931E)),
-              const SizedBox(height: 12),
-              _buildMetricBar('Score moyen', (f['average_score'] ?? 0).toDouble(), const Color(0xFFFACC15)),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.group_rounded, size: 14, color: Color(0xFF94A3B8)),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${f['total_stagiaires']} stagiaires inscrits',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B)),
+              titlesData: FlTitlesData(
+                show: true,
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (double value, TitleMeta meta) {
+                      if (value.toInt() >= 0 && value.toInt() < _formationsPerformance.length) {
+                        final name = _formationsPerformance[value.toInt()]['nom'] ?? '';
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            name.length > 10 ? '${name.substring(0, 8)}...' : name,
+                            style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 10),
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                    reservedSize: 30,
                   ),
-                ],
+                ),
+                leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
               ),
-            ],
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval: 20,
+                getDrawingHorizontalLine: (value) => FlLine(
+                  color: FormateurTheme.border,
+                  strokeWidth: 1,
+                  dashArray: [5, 5],
+                ),
+              ),
+              borderData: FlBorderData(show: false),
+              barGroups: _formationsPerformance.asMap().entries.map((entry) {
+                final f = entry.value;
+                return BarChartGroupData(
+                  x: entry.key,
+                  barsSpace: 4,
+                  barRods: [
+                    BarChartRodData(
+                      toY: (f['completion_rate'] ?? 0).toDouble(),
+                      color: const Color(0xFFF7931E),
+                      width: 12,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    BarChartRodData(
+                      toY: (f['average_score'] ?? 0).toDouble(),
+                      color: const Color(0xFFFACC15),
+                      width: 12,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
           ),
-        )),
+        ),
+        const SizedBox(height: 24),
+        // Legend
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(children: [
+              Container(width: 12, height: 12, decoration: BoxDecoration(color: const Color(0xFFF7931E), borderRadius: BorderRadius.circular(4))),
+              const SizedBox(width: 8),
+              const Text('Taux Complétion', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+            ]),
+            const SizedBox(width: 24),
+            Row(children: [
+              Container(width: 12, height: 12, decoration: BoxDecoration(color: const Color(0xFFFACC15), borderRadius: BorderRadius.circular(4))),
+              const SizedBox(width: 8),
+              const Text('Score Moyen', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+            ]),
+          ],
+        ),
       ],
     );
   }
 
-  Widget _buildMetricBar(String label, double value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-            Text('${value.toStringAsFixed(1)}%', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: color)),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Container(
-          height: 8,
-          width: double.infinity,
-          decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(4)),
-          child: FractionallySizedBox(
-            alignment: Alignment.centerLeft,
-            widthFactor: (value / 100).clamp(0, 1),
-            child: Container(decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4))),
-          ),
-        ),
-      ],
-    );
-  }
+
 
   Widget _buildStagiairesTab() {
     if (_studentsComparison.isEmpty) {
@@ -665,51 +752,115 @@ class _AnalytiquesPageState extends State<AnalytiquesPage> with SingleTickerProv
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'COMPARAISON DES STAGIAIRES',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 1.5),
+              'Comparaison des Stagiaires',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 0.5),
             ),
             const SizedBox(height: 20),
             Container(
+              width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: FormateurTheme.cardShadow,
               ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columnSpacing: 24,
-                  horizontalMargin: 20,
-                  headingTextStyle: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1E293B), fontSize: 11),
-                  columns: const [
-                    DataColumn(label: Text('STAGIAIRE')),
-                    DataColumn(label: Text('POINTS')),
-                    DataColumn(label: Text('COMPLÉTIONS')),
-                    DataColumn(label: Text('SCORE MOY.')),
-                  ],
-                  rows: _studentsComparison.map((s) => DataRow(
-                    cells: [
-                      DataCell(Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 12,
-                            backgroundColor: const Color(0xFFF1F5F9),
-                            backgroundImage: s['image'] != null && s['image'].isNotEmpty 
-                                ? NetworkImage(AppConstants.getMediaUrl(s['image'])) 
-                                : null,
-                            child: s['image'] == null || s['image'].isEmpty 
-                                ? Text(s['name']?.substring(0, 1) ?? '', style: const TextStyle(fontSize: 8)) 
-                                : null,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(s['name'] ?? 'Inconnu', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                        ],
-                      )),
-                      DataCell(Text('${s['total_points'] ?? 0} Pts', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Color(0xFFFACC15)))),
-                      DataCell(Text('${s['completed_quizzes'] ?? 0}/${s['total_quizzes'] ?? 0}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-                      DataCell(Text('${(s['avg_score'] ?? 0).toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF10B981)))),
+              child: Theme(
+                data: Theme.of(context).copyWith(
+                  dividerColor: Colors.transparent,
+                  dataTableTheme: DataTableThemeData(
+                    headingRowColor: MaterialStateProperty.all(const Color(0xFFF8FAFC)),
+                    dataRowColor: MaterialStateProperty.resolveWith((states) {
+                      if (states.contains(MaterialState.selected)) return const Color(0xFFF1F5F9);
+                      return Colors.white;
+                    }),
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columnSpacing: 24,
+                    horizontalMargin: 24,
+                    headingRowHeight: 48,
+                    dataRowMinHeight: 60,
+                    dataRowMaxHeight: 60,
+                    border: TableBorder(
+                      bottom: BorderSide(color: const Color(0xFFE2E8F0).withOpacity(0.5)),
+                      horizontalInside: BorderSide(color: const Color(0xFFE2E8F0).withOpacity(0.5)),
+                    ),
+                    headingTextStyle: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF64748B), fontSize: 11, letterSpacing: 0.5),
+                    columns: const [
+                      DataColumn(label: Text('Stagiaire')),
+                      DataColumn(label: Text('Points', textAlign: TextAlign.center)),
+                      DataColumn(label: Text('Complétions', textAlign: TextAlign.center)),
+                      DataColumn(label: Text('Score Moy.', textAlign: TextAlign.center)),
                     ],
-                  )).toList(),
+                    rows: _studentsComparison.map((s) => DataRow(
+                      cells: [
+                        DataCell(
+                          Row(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
+                                ),
+                                child: CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: const Color(0xFFF1F5F9),
+                                  backgroundImage: s['image'] != null && s['image'].isNotEmpty 
+                                      ? NetworkImage(AppConstants.getMediaUrl(s['image'])) 
+                                      : null,
+                                  child: s['image'] == null || s['image'].isEmpty 
+                                      ? Text(s['name']?.substring(0, 1).toUpperCase() ?? '', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF94A3B8))) 
+                                      : null,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(s['name'] ?? 'Inconnu', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B))),
+                            ],
+                          ),
+                        ),
+                        DataCell(
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF9C3),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '${s['total_points'] ?? 0} Pts',
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: Color(0xFFCA8A04)),
+                            ),
+                          ),
+                        ),
+                        DataCell(Text('${s['completed_quizzes'] ?? 0}/${s['total_quizzes'] ?? 0}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF475569)))),
+                        DataCell(
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 40,
+                                height: 4,
+                                child: LinearProgressIndicator(
+                                  value: (s['avg_score'] ?? 0) / 100,
+                                  backgroundColor: const Color(0xFFF1F5F9),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    (s['avg_score'] ?? 0) >= 70 ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                                  ),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${(s['avg_score'] ?? 0).toStringAsFixed(0)}%',
+                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF1E293B)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )).toList(),
+                  ),
                 ),
               ),
             ),

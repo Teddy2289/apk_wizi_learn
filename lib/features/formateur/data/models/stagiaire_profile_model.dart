@@ -356,7 +356,8 @@ class QuizResult {
   final String title;
   final String category;
   final int score;
-  final int maxScore;
+  final int correctAnswers;
+  final int totalQuestions;
   final String completedAt;
   final int timeSpent;
 
@@ -365,24 +366,38 @@ class QuizResult {
     required this.title,
     required this.category,
     required this.score,
-    required this.maxScore,
+    required this.correctAnswers,
+    required this.totalQuestions,
     required this.completedAt,
     required this.timeSpent,
   });
 
   factory QuizResult.fromJson(Map<String, dynamic> json) {
+    // Handle nested quiz object from API (React parity)
+    final quizData = json['quiz'] as Map<String, dynamic>?;
+    
     return QuizResult(
-      quizId: int.tryParse(json['quiz_id']?.toString() ?? '0') ?? 0,
-      title: json['title']?.toString() ?? '',
-      category: json['category']?.toString() ?? '',
+      quizId: int.tryParse(json['quiz_id']?.toString() ?? quizData?['id']?.toString() ?? '0') ?? 0,
+      // Title from nested quiz.titre or fallback
+      title: quizData?['titre']?.toString() ?? json['title']?.toString() ?? 'Quiz',
+      // Category from nested quiz.formation.categorie or fallback
+      category: (quizData?['formation'] as Map<String, dynamic>?)?['categorie']?.toString() 
+          ?? json['category']?.toString() 
+          ?? 'Général',
+      // Score is on 10 (0-10 scale)
       score: int.tryParse(json['score']?.toString() ?? '0') ?? 0,
-      maxScore: int.tryParse(json['max_score']?.toString() ?? '100') ?? 100,
-      completedAt: json['completed_at']?.toString() ?? '',
-      timeSpent: int.tryParse(json['time_spent']?.toString() ?? '0') ?? 0,
+      correctAnswers: int.tryParse(json['correctAnswers']?.toString() ?? '0') ?? 0,
+      totalQuestions: int.tryParse(json['totalQuestions']?.toString() ?? '10') ?? 10,
+      completedAt: json['completedAt']?.toString() ?? json['completed_at']?.toString() ?? '',
+      timeSpent: int.tryParse(json['timeSpent']?.toString() ?? json['time_spent']?.toString() ?? '0') ?? 0,
     );
   }
 
-  double get percentage => maxScore > 0 ? (score / maxScore) * 100 : 0;
+  // Score percentage based on 10-point scale
+  double get percentage => score * 10.0;
+  
+  // Display score out of 10
+  int get maxScore => 10;
 }
 
 class FormationLevel {
