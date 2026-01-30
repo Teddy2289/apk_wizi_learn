@@ -1263,7 +1263,7 @@ class _TrainingPageState extends State<TrainingPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                formation.titre.toUpperCase(),
+                formation.titre,
                 style: TextStyle(
                   fontSize: isLandscape ? 14 : 16,
                   fontWeight: FontWeight.w700,

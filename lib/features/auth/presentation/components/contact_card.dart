@@ -506,7 +506,7 @@ class ContactCard extends StatelessWidget {
 
   // Méthodes utilitaires (conservées de la version originale)
   String _getFormattedName() {
-    String nom = contact.name.isNotEmpty ? contact.name.toUpperCase() : '';
+    String nom = contact.name.isNotEmpty ? contact.name : '';
     String prenom =
         contact.prenom?.isNotEmpty == true
             ? '${contact.prenom![0].toUpperCase()}${contact.prenom!.substring(1).toLowerCase()}'

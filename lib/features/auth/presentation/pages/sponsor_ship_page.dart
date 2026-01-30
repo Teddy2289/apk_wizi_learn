@@ -80,7 +80,7 @@ class _SponsorshipPageState extends State<SponsorshipPage> {
       final user = await _authRepository.getMe();
       final connectedUserId = user.id.toString();
 
-      final userName = user.name.toUpperCase();
+      final userName = user.name;
       final stagiairePrenom = user.stagiaire?.prenom ?? '';
       final fullName =
           userName.isNotEmpty && stagiairePrenom.isNotEmpty

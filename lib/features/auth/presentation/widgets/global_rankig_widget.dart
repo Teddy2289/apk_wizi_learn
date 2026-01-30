@@ -790,7 +790,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                     // Nom du stagiaire - FORMATÉ
                     Tooltip(
                       message:
-                          '${ranking.stagiaire.prenom} ${ranking.stagiaire.nom.toUpperCase()}',
+                          '${ranking.stagiaire.prenom} ${ranking.stagiaire.nom}',
                       child: Text(
                         _formatName(
                           ranking.stagiaire.prenom,
@@ -814,7 +814,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                       const SizedBox(height: 2),
                       Tooltip(
                         message: ranking.formateurs
-                            .map((f) => '${f.prenom} ${f.nom.toUpperCase()}')
+                            .map((f) => '${f.prenom} ${f.nom}')
                             .join(', '),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -1060,7 +1060,7 @@ class _GlobalRankingWidgetState extends State<GlobalRankingWidget> {
                                       Expanded(
                                         child: Tooltip(
                                           message:
-                                              '${formateur.prenom} ${formateur.nom.toUpperCase()}',
+                                              '${formateur.prenom} ${formateur.nom}',
                                           child: Text(
                                             _formatName(
                                               formateur.prenom,

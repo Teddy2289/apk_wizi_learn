@@ -352,12 +352,17 @@ class PerformanceRankings {
   });
 
   factory PerformanceRankings.fromJson(Map<String, dynamic> json) {
+    // Handle nesting for Node.js API (rankings: { most_quizzes: [], most_active: [] })
+    final Map<String, dynamic> source = json.containsKey('rankings') && json['rankings'] is Map<String, dynamic>
+        ? json['rankings'] as Map<String, dynamic>
+        : json;
+
     return PerformanceRankings(
-      mostQuizzes: (json['most_quizzes'] as List?)
+      mostQuizzes: (source['most_quizzes'] as List?)
               ?.map((e) => StagiairePerformance.fromJson(e))
               .toList() ??
           [],
-      mostActive: (json['most_active'] as List?)
+      mostActive: (source['most_active'] as List?)
               ?.map((e) => StagiairePerformance.fromJson(e))
               .toList() ??
           [],

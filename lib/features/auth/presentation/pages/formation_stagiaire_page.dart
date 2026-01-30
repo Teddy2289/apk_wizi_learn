@@ -319,7 +319,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          (formation.category.titre).toUpperCase(),
+                          formation.category.titre,
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -381,7 +381,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                   const SizedBox(height: 8),
                   _buildInfoRow(
                     Icons.person,
-                    'Formateur: ${formation.formateur!.prenom} ${formation.formateur!.nom.toUpperCase()}',
+                    'Formateur: ${formation.formateur!.prenom} ${formation.formateur!.nom}',
                     theme,
                     color: Colors.blue,
                   ),
@@ -445,7 +445,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'SCORE MOYEN',
+                                  'Score moyen',
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
@@ -465,7 +465,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  'QUIZ COMPLÉTÉS',
+                                  'Quiz complétés',
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
@@ -518,7 +518,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              l.name.toUpperCase(),
+              l.name,
               style: theme.textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 fontSize: 10,
@@ -531,7 +531,7 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
           ),
           const SizedBox(width: 12),
           Text(
-            '${l.avgScore}% MOYENNE',
+            '${l.avgScore}% Moyenne',
             style: theme.textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.bold,
               fontSize: 10,

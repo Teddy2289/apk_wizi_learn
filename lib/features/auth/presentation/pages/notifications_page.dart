@@ -128,7 +128,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
             child: Text(
-              dateLabel.toUpperCase(),
+              dateLabel,
               style: const TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 12,
