@@ -64,7 +64,7 @@ class FormateurDrawerMenu extends StatelessWidget {
           _buildMenuSection('PRINCIPAL', [
             _MenuItem(
               icon: Icons.dashboard_outlined,
-              label: 'Dashboard',
+              label: 'Tableau de bord',
               onTap: () => Navigator.pop(context),
             ),
             _MenuItem(

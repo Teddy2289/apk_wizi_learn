@@ -748,7 +748,7 @@ class _FormateurQuizManagementPageState
                                                       borderRadius: BorderRadius.circular(8),
                                                     ),
                                                     child: Text(
-                                                      '${quizzes.length} ${quizzes.length > 1 ? "Quizzes" : "Quiz"}',
+                                                      '${quizzes.length} Quiz',
                                                       style: const TextStyle(
                                                         fontSize: 9,
                                                         fontWeight: FontWeight.w700,

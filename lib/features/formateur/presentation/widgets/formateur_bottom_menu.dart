@@ -59,7 +59,7 @@ class FormateurBottomMenu extends StatelessWidget {
             NavigationDestination(
               icon: Icon(Icons.grid_view_outlined),
               selectedIcon: Icon(Icons.grid_view_rounded),
-              label: 'Dashboard',
+              label: 'Tableau de bord',
             ),
             NavigationDestination(
               icon: Icon(Icons.campaign_outlined),

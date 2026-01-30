@@ -122,7 +122,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
     return Scaffold(
       backgroundColor: FormateurTheme.background,
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: const Text('Tableau de bord'),
         backgroundColor: Colors.white,
         foregroundColor: FormateurTheme.textPrimary,
         elevation: 0,
@@ -665,7 +665,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                   labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11),
                   tabs: const [
                     Tab(text: 'Top Quiz'),
-                    Tab(text: 'Top Actifs'),
+                    Tab(text: 'Meilleurs Actifs'),
                   ],
                 ),
               ),
@@ -726,7 +726,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: FormateurTheme.border)),
             child: Text(
-              type == 'quiz' ? '${s.totalQuizzes} quiz' : '${s.totalLogins} logs',
+              type == 'quiz' ? '${s.totalQuizzes} quiz' : '${s.totalLogins} connexions',
               style: TextStyle(
                 color: type == 'quiz' ? FormateurTheme.accentDark : Colors.blue,
                 fontWeight: FontWeight.w900,
@@ -832,7 +832,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Corrélation entre temps de connexion et réussite aux examens.',
+            'Corrélation entre assiduité et réussite aux examens.',
             style: TextStyle(color: FormateurTheme.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 32),
@@ -844,7 +844,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                 return Column(
                   children: [
                     _buildRankingCard(
-                      title: 'Top Quizzers',
+                      title: 'Top Quizzeurs',
                       subtitle: 'Champions de la révision',
                       icon: Icons.emoji_events_rounded,
                       color: FormateurTheme.accentDark,
@@ -853,7 +853,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                     ),
                     const SizedBox(height: 24),
                     _buildRankingCard(
-                      title: 'Top Actifs',
+                      title: 'Meilleurs Actifs',
                       subtitle: 'Assiduité exemplaire',
                       icon: Icons.mouse_rounded,
                       color: Colors.blue,
@@ -868,7 +868,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                 children: [
                   Expanded(
                     child: _buildRankingCard(
-                      title: 'Top Quizzers',
+                      title: 'Top Quizzeurs',
                       subtitle: 'Champions de la révision',
                       icon: Icons.emoji_events_rounded,
                       color: FormateurTheme.accentDark,
@@ -879,7 +879,7 @@ class _FormateurDashboardPageState extends State<FormateurDashboardPage> {
                   const SizedBox(width: 32),
                   Expanded(
                     child: _buildRankingCard(
-                      title: 'Top Actifs',
+                      title: 'Meilleurs Actifs',
                       subtitle: 'Assiduité exemplaire',
                       icon: Icons.mouse_rounded,
                       color: Colors.blue,
