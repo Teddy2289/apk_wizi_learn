@@ -31,5 +31,6 @@ class RouteConstants {
   static const String profileEdit = '/profile/edit';
   static const String formateurSuiviDemandes = '/formateur/suivi-demandes';
   static const String formateurSuiviParrainage = '/formateur/suivi-parrainage';
+  static const String formateurGuide = '/formateur/guide';
 }
 

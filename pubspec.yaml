@@ -75,6 +75,7 @@ dependencies:
   device_info_plus: ^12.2.0
   package_info_plus: ^9.0.0
   fl_chart: ^1.1.1
+  flutter_markdown: ^0.7.4+1
 
   # Google Calendar Integration
   google_sign_in: ^6.2.2
@@ -95,11 +96,11 @@ dependencies:
   bloc: any
   provider: any
   youtube_explode_dart: any
+  integration_test:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
-    sdk: flutter
-  integration_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: "^0.14.4"

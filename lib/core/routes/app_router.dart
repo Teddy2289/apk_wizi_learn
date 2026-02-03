@@ -35,6 +35,7 @@ import 'package:wizi_learn/features/formateur/presentation/pages/formateur_suivi
 import 'package:wizi_learn/features/formateur/presentation/pages/formateur_suivi_parrainage_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/arena_page.dart';
 import 'package:wizi_learn/features/formateur/presentation/pages/formateur_quiz_management_page.dart';
+import 'package:wizi_learn/features/formateur/presentation/pages/formateur_guide_page.dart';
 
 
 class AppRouter {
@@ -168,6 +169,10 @@ class AppRouter {
       case '/formateur/arena':
         return MaterialPageRoute(
           builder: (_) => const ArenaPage(),
+        );
+      case RouteConstants.formateurGuide:
+        return MaterialPageRoute(
+          builder: (_) => const FormateurGuidePage(),
         );
 
 

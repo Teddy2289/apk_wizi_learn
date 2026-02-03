@@ -152,6 +152,14 @@ class FormateurDrawerMenu extends StatelessWidget {
                 // Navigator.pushNamed(context, '/formateur/settings');
               },
             ),
+            _MenuItem(
+              icon: Icons.book_outlined,
+              label: 'Guide d\'utilisation',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, RouteConstants.formateurGuide);
+              },
+            ),
              _MenuItem(
               icon: Icons.help_outline,
               label: 'Aide & Support',
