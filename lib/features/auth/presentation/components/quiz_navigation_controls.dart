@@ -8,6 +8,7 @@ class QuizNavigationControls extends StatelessWidget {
   final List<Question> questions;
   final List<String> playedQuizIds;
   final bool isCompact;
+  final VoidCallback? onRestartQuiz;
 
   const QuizNavigationControls({
     super.key,
@@ -15,6 +16,7 @@ class QuizNavigationControls extends StatelessWidget {
     required this.questions,
     required this.playedQuizIds,
     this.isCompact = false,
+    this.onRestartQuiz,
   });
 
   @override
@@ -183,6 +185,7 @@ class QuizNavigationControls extends StatelessWidget {
                   ...results,
                   'playedQuizIds': playedQuizIds,
                 },
+                onRestartQuiz: onRestartQuiz,
               ),
             ),
           );
@@ -284,6 +287,7 @@ class QuizNavigationControls extends StatelessWidget {
           (localResults['totalQuestions'] as int?) ?? questions.length,
           timeSpent: (localResults['timeSpent'] as int?) ?? 0,
           quizResult: localResults,
+          onRestartQuiz: onRestartQuiz,
         ),
       ),
     );

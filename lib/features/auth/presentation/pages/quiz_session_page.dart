@@ -241,6 +241,22 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     });
   }
 
+  void _handleRestartQuiz() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => QuizSessionPage(
+              quiz: widget.quiz,
+              questions: widget.questions,
+              isRestart: true,
+              quizAdventureEnabled: widget.quizAdventureEnabled,
+              playedQuizIds: widget.playedQuizIds,
+            ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -622,6 +638,7 @@ Téléchargez Wizi Learn pour tester vos connaissances !
         questions: widget.questions,
         playedQuizIds: widget.playedQuizIds,
         isCompact: isLandscape, // Mode compact en paysage
+        onRestartQuiz: _handleRestartQuiz,
       ),
     );
   }
