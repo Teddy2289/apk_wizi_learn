@@ -436,59 +436,59 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: styles['color'].withOpacity(0.1)),
                     ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Score moyen',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: styles['color'],
-                                  ),
-                                ),
-                                Text(
-                                  '${formation.stats!.averageScore}%',
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.w900,
-                                    color: styles['color'],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'Quiz complétés',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: styles['color'],
-                                  ),
-                                ),
-                                Text(
-                                  '${formation.stats!.totalCompletions}',
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.w900,
-                                    color: styles['color'],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        const Divider(height: 1),
-                        const SizedBox(height: 12),
-                        ...formation.stats!.levels.map((l) => _buildLevelStatRow(l, theme)),
-                      ],
-                    ),
+                    // child: Column(
+                    //   children: [
+                    //     Row(
+                    //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    //       children: [
+                    //         // Column(
+                    //         //   crossAxisAlignment: CrossAxisAlignment.start,
+                    //         //   children: [
+                    //         //     Text(
+                    //         //       'Score moyen',
+                    //         //       style: TextStyle(
+                    //         //         fontSize: 10,
+                    //         //         fontWeight: FontWeight.bold,
+                    //         //         color: styles['color'],
+                    //         //       ),
+                    //         //     ),
+                    //         //     Text(
+                    //         //       '${formation.stats!.averageScore}%',
+                    //         //       style: theme.textTheme.titleLarge?.copyWith(
+                    //         //         fontWeight: FontWeight.w900,
+                    //         //         color: styles['color'],
+                    //         //       ),
+                    //         //     ),
+                    //         //   ],
+                    //         // ),
+                    //         Column(
+                    //           crossAxisAlignment: CrossAxisAlignment.end,
+                    //           children: [
+                    //             Text(
+                    //               'Quiz complétés',
+                    //               style: TextStyle(
+                    //                 fontSize: 10,
+                    //                 fontWeight: FontWeight.bold,
+                    //                 color: styles['color'],
+                    //               ),
+                    //             ),
+                    //             Text(
+                    //               '${formation.stats!.totalCompletions}',
+                    //               style: theme.textTheme.titleLarge?.copyWith(
+                    //                 fontWeight: FontWeight.w900,
+                    //                 color: styles['color'],
+                    //               ),
+                    //             ),
+                    //           ],
+                    //         ),
+                    //       ],
+                    //     ),
+                    //     const SizedBox(height: 16),
+                    //     const Divider(height: 1),
+                    //     const SizedBox(height: 12),
+                    //     ...formation.stats!.levels.map((l) => _buildLevelStatRow(l, theme)),
+                    //   ],
+                    // ),
                   ),
                 ],
               ],
@@ -529,15 +529,15 @@ class _FormationStagiairePageState extends State<FormationStagiairePage> {
             '${l.completions} QUIZ',
             style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
           ),
-          const SizedBox(width: 12),
-          Text(
-            '${l.avgScore}% Moyenne',
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 10,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
+          // const SizedBox(width: 12),
+          // Text(
+          //   '${l.avgScore}% Moyenne',
+          //   style: theme.textTheme.bodySmall?.copyWith(
+          //     fontWeight: FontWeight.bold,
+          //     fontSize: 10,
+          //     color: theme.colorScheme.onSurface,
+          //   ),
+          // ),
         ],
       ),
     );
