@@ -57,98 +57,86 @@ class FormationRepository {
 
   Future<List<Formation>> getCatalogueFormations({int? stagiaireId}) async {
     try {
-      final response = await apiClient.get(AppConstants.formationStagiaire);
+      final path = stagiaireId != null 
+          ? '/stagiaire/$stagiaireId/formations' 
+          : AppConstants.formationStagiaire;
+      final response = await apiClient.get(path);
       final data = response.data;
 
-      if (data is Map && data['data'] is List) {
-        final List<Formation> catalogueFormations = [];
-        final formationList = data['data'];
+      // debugPrint('🟡 DEBUG getCatalogueFormations: Reçu type ${data.runtimeType}');
 
-        for (final formationItem in formationList) {
-          try {
-            final catalogue = formationItem['catalogue'] ?? {};
-            final formation = formationItem['formation'] ?? {};
-            final formateur = formationItem['formateur'] ?? {};
-            final pivot = formationItem['pivot'] ?? {};
-
-            // Extraction des dates depuis le pivot
-            final String? dateDebut = pivot['date_debut']?.toString();
-            final String? dateFin = pivot['date_fin']?.toString();
-
-            // debugPrint(
-            //   'Formation: \n  titre: ${formation['titre']} \n  date_debut: $dateDebut \n  date_fin: $dateFin',
-            // );
-
-            catalogueFormations.add(
-              Formation(
-                id: formation['id'] ?? 0,
-                titre: formation['titre'] ?? 'Titre inconnu',
-                description:
-                    formation['description'] ?? 'Description non disponible',
-                prerequis: catalogue['prerequis'],
-                imageUrl: catalogue['image_url'],
-                cursusPdf: catalogue['cursus_pdf'],
-                cursusPdfUrl:
-                    catalogue['cursusPdfUrl'] ??
-                    catalogue['cursus_pdf'],
-                tarif:
-                    double.tryParse(catalogue['tarif']?.toString() ?? '0') ?? 0,
-                certification: catalogue['certification'],
-                statut: formation['statut'] ?? 0,
-                duree: formation['duree']?.toString() ?? '0',
-                objectifs: catalogue['objectifs'] ?? formation['objectifs'],
-                programme: catalogue['programme'] ?? formation['programme'],
-                modalites: catalogue['modalites'] ?? formation['modalites'],
-                modalitesAccompagnement:
-                    catalogue['modalites_accompagnement'] ??
-                    formation['modalites_accompagnement'],
-                moyensPedagogiques:
-                    catalogue['moyens_pedagogiques'] ??
-                    formation['moyens_pedagogiques'],
-                modalitesSuivi:
-                    catalogue['modalites_suivi'] ??
-                    formation['modalites_suivi'],
-                evaluation: catalogue['evaluation'] ?? formation['evaluation'],
-                lieu: catalogue['lieu'] ?? formation['lieu'],
-                niveau: catalogue['niveau'] ?? formation['niveau'],
-                publicCible:
-                    catalogue['public_cible'] ?? formation['public_cible'],
-                nombreParticipants:
-                    catalogue['nombre_participants'] ??
-                    formation['nombre_participants'],
-                category: FormationCategory(
-                  id: catalogue['id'] ?? formation['id'] ?? 0,
-                  titre:
-                      catalogue['titre'] ??
-                      formation['titre'] ??
-                      'Titre inconnu',
-                  categorie:
-                      catalogue['categorie'] ??
-                      formation['categorie'] ??
-                      'Autre',
-                ),
-                stagiaires:
-                    (catalogue['stagiaires'] as List?)
-                        ?.map((s) => StagiaireModel.fromJson(s ?? {}))
-                        .toList(),
-                formateur:
-                    formateur.isNotEmpty
-                        ? FormateurModel.fromJson(formateur)
-                        : null,
-                dateDebut: dateDebut,
-                dateFin: dateFin,
-              ),
-            );
-          } catch (e) {
-            debugPrint('Erreur lors du parsing d\'une formation: $e');
-            continue; // Continue avec les formations suivantes
-          }
-        }
-
-        return catalogueFormations;
+      List<dynamic> list;
+      if (data is List) {
+        list = data;
+      } else if (data is Map && data['data'] is List) {
+        list = data['data'];
+      } else if (data is Map && data['formations'] is List) {
+        // Au cas où le champ s'appelle 'formations'
+        list = data['formations'];
+      } else {
+        debugPrint('🔴 DEBUG getCatalogueFormations: Structure inattendue. Data: $data');
+        throw Exception('Structure inattendue de la réponse: type ${data.runtimeType}');
       }
 
-      throw Exception('Structure inattendue de la réponse');
+      final List<Formation> catalogueFormations = [];
+      for (final formationItem in list) {
+        try {
+          if (formationItem == null) continue;
+          
+          final catalogue = formationItem['catalogue'] ?? {};
+          final formation = formationItem['formation'] ?? formationItem; // Fallback si plat
+          final formateur = formationItem['formateur'] ?? {};
+          final pivot = formationItem['pivot'] ?? {};
+
+          // Extraction des dates depuis le pivot
+          final String? dateDebut = pivot['date_debut']?.toString() ?? formationItem['date_debut']?.toString();
+          final String? dateFin = pivot['date_fin']?.toString() ?? formationItem['date_fin']?.toString();
+
+          catalogueFormations.add(
+            Formation(
+              id: formation['id'] is int ? formation['id'] : int.tryParse(formation['id']?.toString() ?? '0') ?? 0,
+              titre: formation['titre'] ?? 'Titre inconnu',
+              description: formation['description'] ?? 'Description non disponible',
+              prerequis: catalogue['prerequis'],
+              imageUrl: catalogue['image_url'],
+              cursusPdf: catalogue['cursus_pdf'],
+              cursusPdfUrl: catalogue['cursusPdfUrl'] ?? catalogue['cursus_pdf'],
+              tarif: double.tryParse(catalogue['tarif']?.toString() ?? '0') ?? 0,
+              certification: catalogue['certification'],
+              statut: formation['statut'] is int ? formation['statut'] : int.tryParse(formation['statut']?.toString() ?? '0') ?? 1,
+              duree: formation['duree']?.toString() ?? '0',
+              objectifs: catalogue['objectifs'] ?? formation['objectifs'],
+              programme: catalogue['programme'] ?? formation['programme'],
+              modalites: catalogue['modalites'] ?? formation['modalites'],
+              modalitesAccompagnement: catalogue['modalites_accompagnement'] ?? formation['modalites_accompagnement'],
+              moyensPedagogiques: catalogue['moyens_pedagogiques'] ?? formation['moyens_pedagogiques'],
+              modalitesSuivi: catalogue['modalites_suivi'] ?? formation['modalites_suivi'],
+              evaluation: catalogue['evaluation'] ?? formation['evaluation'],
+              lieu: catalogue['lieu'] ?? formation['lieu'],
+              niveau: catalogue['niveau'] ?? formation['niveau'],
+              publicCible: catalogue['public_cible'] ?? formation['public_cible'],
+              nombreParticipants: formation['nombre_participants'] is int ? formation['nombre_participants'] : int.tryParse(formation['nombre_participants']?.toString() ?? '0'),
+              category: FormationCategory(
+                id: catalogue['id'] ?? formation['id'] ?? 0,
+                titre: catalogue['titre'] ?? formation['titre'] ?? 'Titre inconnu',
+                categorie: catalogue['categorie'] ?? formation['categorie'] ?? 'Autre',
+              ),
+              stagiaires: (catalogue['stagiaires'] as List?)
+                  ?.map((s) => StagiaireModel.fromJson(s ?? {}))
+                  .toList(),
+              formateur: formateur.isNotEmpty ? FormateurModel.fromJson(formateur) : null,
+              dateDebut: dateDebut,
+              dateFin: dateFin,
+              stats: formationItem['stats'] != null ? FormationStats.fromJson(formationItem['stats']) : null,
+            ),
+          );
+        } catch (e) {
+          debugPrint('Erreur lors du parsing d\'une formation: $e');
+          continue; 
+        }
+      }
+
+      return catalogueFormations;
     } catch (e) {
       debugPrint('Erreur getCatalogueFormations: $e');
       rethrow;
